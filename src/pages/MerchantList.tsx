@@ -1,10 +1,10 @@
-
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowLeft, Bell, Filter, MapPin, Clock, Star } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
+import BottomNavigation from '@/components/BottomNavigation';
 
 const MerchantList = () => {
   const [sortBy, setSortBy] = useState('best-rate');
