@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Link } from "react-router-dom";
+import { User, AtSign, Mail, Phone, Eye, EyeOff, Check } from "lucide-react";
 
 const SignUp = () => {
   const [userType, setUserType] = useState<'customer' | 'merchant'>('customer');
@@ -18,6 +19,8 @@ const SignUp = () => {
     referralCode: '',
     agreeToTerms: false
   });
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const handleInputChange = (field: string, value: string | boolean) => {
     setFormData(prev => ({
@@ -28,7 +31,6 @@ const SignUp = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle form submission
     console.log('Form submitted:', formData, 'User type:', userType);
   };
 
@@ -57,49 +59,61 @@ const SignUp = () => {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Form Fields */}
+          {/* Full Name Input with Icon */}
           <div className="space-y-2">
             <Label htmlFor="fullName" className="text-sm font-medium text-gray-700" style={{ fontFamily: 'Inter' }}>
               Full Name
             </Label>
-            <Input
-              id="fullName"
-              type="text"
-              value={formData.fullName}
-              onChange={(e) => handleInputChange('fullName', e.target.value)}
-              className="h-12 bg-white border border-gray-300 rounded-xl px-4"
-              placeholder="Enter your full name"
-            />
+            <div className="relative">
+              <User size={20} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
+              <Input
+                id="fullName"
+                type="text"
+                value={formData.fullName}
+                onChange={(e) => handleInputChange('fullName', e.target.value)}
+                className="h-12 bg-white border border-gray-300 rounded-xl pl-12 pr-4"
+                placeholder="Enter your full name"
+              />
+            </div>
           </div>
 
+          {/* Username Input with Icon */}
           <div className="space-y-2">
             <Label htmlFor="username" className="text-sm font-medium text-gray-700" style={{ fontFamily: 'Inter' }}>
               Username
             </Label>
-            <Input
-              id="username"
-              type="text"
-              value={formData.username}
-              onChange={(e) => handleInputChange('username', e.target.value)}
-              className="h-12 bg-white border border-gray-300 rounded-xl px-4"
-              placeholder="Choose a username"
-            />
+            <div className="relative">
+              <AtSign size={20} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
+              <Input
+                id="username"
+                type="text"
+                value={formData.username}
+                onChange={(e) => handleInputChange('username', e.target.value)}
+                className="h-12 bg-white border border-gray-300 rounded-xl pl-12 pr-4"
+                placeholder="Choose a username"
+              />
+            </div>
           </div>
 
+          {/* Email Input with Icon */}
           <div className="space-y-2">
             <Label htmlFor="email" className="text-sm font-medium text-gray-700" style={{ fontFamily: 'Inter' }}>
               Email Address
             </Label>
-            <Input
-              id="email"
-              type="email"
-              value={formData.email}
-              onChange={(e) => handleInputChange('email', e.target.value)}
-              className="h-12 bg-white border border-gray-300 rounded-xl px-4"
-              placeholder="Enter your email"
-            />
+            <div className="relative">
+              <Mail size={20} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
+              <Input
+                id="email"
+                type="email"
+                value={formData.email}
+                onChange={(e) => handleInputChange('email', e.target.value)}
+                className="h-12 bg-white border border-gray-300 rounded-xl pl-12 pr-4"
+                placeholder="Enter your email"
+              />
+            </div>
           </div>
 
+          {/* Phone Input with Icon */}
           <div className="space-y-2">
             <Label htmlFor="phone" className="text-sm font-medium text-gray-700" style={{ fontFamily: 'Inter' }}>
               Phone Number
@@ -109,49 +123,78 @@ const SignUp = () => {
                 <span className="text-xl mr-2">🇳🇬</span>
                 <span className="text-sm text-gray-600">+234</span>
               </div>
-              <Input
-                id="phone"
-                type="tel"
-                value={formData.phoneNumber}
-                onChange={(e) => handleInputChange('phoneNumber', e.target.value)}
-                className="h-12 bg-white border border-gray-300 rounded-r-xl border-l-0 px-4 flex-1"
-                placeholder="8012345678"
-              />
+              <div className="relative flex-1">
+                <Phone size={20} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
+                <Input
+                  id="phone"
+                  type="tel"
+                  value={formData.phoneNumber}
+                  onChange={(e) => handleInputChange('phoneNumber', e.target.value)}
+                  className="h-12 bg-white border border-gray-300 rounded-r-xl border-l-0 pl-12 pr-4"
+                  placeholder="8012345678"
+                />
+              </div>
             </div>
           </div>
 
+          {/* Password Input with Icon */}
           <div className="space-y-2">
             <Label htmlFor="password" className="text-sm font-medium text-gray-700" style={{ fontFamily: 'Inter' }}>
               Password
             </Label>
-            <Input
-              id="password"
-              type="password"
-              value={formData.password}
-              onChange={(e) => handleInputChange('password', e.target.value)}
-              className="h-12 bg-white border border-gray-300 rounded-xl px-4"
-              placeholder="Create a strong password"
-            />
+            <div className="relative">
+              <Input
+                id="password"
+                type={showPassword ? "text" : "password"}
+                value={formData.password}
+                onChange={(e) => handleInputChange('password', e.target.value)}
+                className="h-12 bg-white border border-gray-300 rounded-xl px-4 pr-12"
+                placeholder="Create a strong password"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-500"
+              >
+                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+              </button>
+            </div>
           </div>
 
+          {/* Confirm Password Input with Icon */}
           <div className="space-y-2">
             <Label htmlFor="confirmPassword" className="text-sm font-medium text-gray-700" style={{ fontFamily: 'Inter' }}>
               Confirm Password
             </Label>
-            <Input
-              id="confirmPassword"
-              type="password"
-              value={formData.confirmPassword}
-              onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
-              className="h-12 bg-white border border-gray-300 rounded-xl px-4"
-              placeholder="Confirm your password"
-            />
+            <div className="relative">
+              <Input
+                id="confirmPassword"
+                type={showConfirmPassword ? "text" : "password"}
+                value={formData.confirmPassword}
+                onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
+                className="h-12 bg-white border border-gray-300 rounded-xl px-4 pr-12"
+                placeholder="Confirm your password"
+              />
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-500"
+              >
+                {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+              </button>
+            </div>
           </div>
 
+          {/* Referral Code Input with Icon */}
           <div className="space-y-2">
-            <Label htmlFor="referralCode" className="text-sm font-medium text-gray-700" style={{ fontFamily: 'Inter' }}>
-              Referral Code (Optional)
-            </Label>
+            <div className="flex items-center space-x-2">
+              <Label htmlFor="referralCode" className="text-sm font-medium text-gray-700" style={{ fontFamily: 'Inter' }}>
+                Referral Code (Optional)
+              </Label>
+              <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center">
+                <Check size={12} className="text-white" />
+              </div>
+            </div>
             <Input
               id="referralCode"
               type="text"

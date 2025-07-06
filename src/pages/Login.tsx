@@ -32,8 +32,9 @@ const Login = () => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-white to-gray-50 px-6 py-8">
       <div className="max-w-sm mx-auto">
-        {/* Header */}
+        {/* Welcome Message with Emoji */}
         <div className="text-center mb-8">
+          <div className="text-4xl mb-4">👋</div>
           <h1 className="text-2xl font-semibold text-black mb-2" style={{ fontFamily: 'Poppins' }}>
             Welcome Back
           </h1>
