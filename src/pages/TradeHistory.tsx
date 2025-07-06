@@ -172,7 +172,7 @@ const TradeHistory = () => {
                     <span>{transaction.nairaAmount}</span>
                   </div>
                   <p className="text-sm font-medium text-gray-900 mt-1">
-                    Total: {transaction total}
+                    Total: {transaction.total}
                   </p>
                 </div>
               </div>
