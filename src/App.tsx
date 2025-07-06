@@ -12,6 +12,7 @@ import BuySell from "./pages/BuySell";
 import Settings from "./pages/Settings";
 import Notifications from "./pages/Notifications";
 import MerchantSelection from "./pages/MerchantSelection";
+import MerchantList from "./pages/MerchantList";
 import SelectCoin from "./pages/SelectCoin";
 import NotFound from "./pages/NotFound";
 
@@ -32,6 +33,7 @@ const App = () => (
           <Route path="/settings" element={<Settings />} />
           <Route path="/notifications" element={<Notifications />} />
           <Route path="/merchant-selection" element={<MerchantSelection />} />
+          <Route path="/merchant-list" element={<MerchantList />} />
           <Route path="/select-coin" element={<SelectCoin />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
