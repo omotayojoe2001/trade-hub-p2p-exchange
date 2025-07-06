@@ -20,8 +20,8 @@ const BottomNavigation = () => {
           <Link
             key={item.path}
             to={item.path}
-            className={`flex flex-col items-center ${
-              location.pathname === item.path ? 'text-blue-600' : 'text-gray-400'
+            className={`flex flex-col items-center transition-colors ${
+              location.pathname === item.path ? 'text-blue-600' : 'text-gray-400 hover:text-gray-600'
             }`}
           >
             <div className="w-6 h-6 mb-1">{item.icon}</div>

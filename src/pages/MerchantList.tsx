@@ -85,7 +85,7 @@ const MerchantList = () => {
 
   const handleMerchantSelect = (merchantId: number) => {
     console.log('Selected merchant:', merchantId);
-    // Navigate to trade details or initiate trade
+    navigate('/sell-crypto');
   };
 
   return (
@@ -150,7 +150,7 @@ const MerchantList = () => {
       {/* Merchant List */}
       <div className="p-4 space-y-4 pb-20">
         {merchants.map((merchant) => (
-          <Card key={merchant.id} className="p-4 bg-white border border-gray-200 rounded-xl">
+          <Card key={merchant.id} className="p-4 bg-white border border-gray-200 rounded-xl hover:shadow-md transition-shadow">
             {/* Merchant Header */}
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center">
@@ -213,37 +213,13 @@ const MerchantList = () => {
               onClick={() => handleMerchantSelect(merchant.id)}
               className="w-full h-10 bg-blue-500 hover:bg-blue-600 text-white font-medium rounded-lg"
             >
-              View Trade Details
+              Select This Merchant
             </Button>
           </Card>
         ))}
       </div>
 
-      {/* Bottom Navigation */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 py-2">
-        <div className="flex justify-around">
-          <button className="flex flex-col items-center py-2">
-            <div className="w-6 h-6 mb-1">🏠</div>
-            <span className="text-xs text-gray-600">Home</span>
-          </button>
-          <button className="flex flex-col items-center py-2">
-            <div className="w-6 h-6 mb-1">🔄</div>
-            <span className="text-xs text-blue-500 font-medium">Trade</span>
-          </button>
-          <button className="flex flex-col items-center py-2">
-            <div className="w-6 h-6 mb-1">📊</div>
-            <span className="text-xs text-gray-600">Txns</span>
-          </button>
-          <button className="flex flex-col items-center py-2">
-            <div className="w-6 h-6 mb-1">🎧</div>
-            <span className="text-xs text-gray-600">Support</span>
-          </button>
-          <button className="flex flex-col items-center py-2">
-            <div className="w-6 h-6 mb-1">⚙️</div>
-            <span className="text-xs text-gray-600">Settings</span>
-          </button>
-        </div>
-      </div>
+      <BottomNavigation />
     </div>
   );
 };

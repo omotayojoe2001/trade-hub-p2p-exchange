@@ -1,13 +1,14 @@
-
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { ArrowLeft, Search, Users } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 const SelectCoin = () => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedCoin, setSelectedCoin] = useState<string | null>(null);
+  const navigate = useNavigate();
 
   const coins = [
     {
@@ -73,12 +74,25 @@ const SelectCoin = () => {
     coin.symbol.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const handleCoinSelect = (coinId: string) => {
+    setSelectedCoin(coinId);
+    navigate('/merchant-selection');
+  };
+
+  const handleAutoMatch = () => {
+    navigate('/sell-crypto');
+  };
+
+  const handleBrowseSellers = () => {
+    navigate('/merchant-list');
+  };
+
   return (
     <div className="min-h-screen bg-white">
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-gray-100">
         <div className="flex items-center">
-          <Link to="/merchant-selection" className="mr-4">
+          <Link to="/buy-sell" className="mr-4">
             <ArrowLeft size={24} className="text-gray-700" />
           </Link>
           <div>
@@ -107,7 +121,7 @@ const SelectCoin = () => {
         {/* Coins List */}
         <div className="space-y-4 mb-6">
           {filteredCoins.map((coin) => (
-            <Card key={coin.id} className="p-4 bg-white border border-gray-200 rounded-lg">
+            <Card key={coin.id} className="p-4 bg-white border border-gray-200 rounded-lg hover:shadow-md transition-shadow cursor-pointer">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center">
                   <div className={`w-12 h-12 ${coin.iconBg} rounded-full flex items-center justify-center mr-3`}>
@@ -161,6 +175,7 @@ const SelectCoin = () => {
               </div>
 
               <Button 
+                onClick={() => handleCoinSelect(coin.id)}
                 className={`w-full h-10 rounded-lg font-semibold ${
                   coin.sellers > 0 
                     ? 'bg-blue-600 hover:bg-blue-700 text-white' 
@@ -192,13 +207,14 @@ const SelectCoin = () => {
         {/* Bottom Actions */}
         <div className="flex space-x-4">
           <Button 
-            variant="outline" 
-            className="flex-1 h-12 border-gray-300 text-gray-700 hover:bg-gray-50"
+            onClick={handleAutoMatch}
+            className="flex-1 h-12 bg-gray-800 text-white hover:bg-gray-900"
           >
             <span className="mr-2">🤖</span>
             Auto Match
           </Button>
           <Button 
+            onClick={handleBrowseSellers}
             className="flex-1 h-12 bg-blue-600 hover:bg-blue-700 text-white"
           >
             <Users size={16} className="mr-2" />

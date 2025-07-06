@@ -2,9 +2,22 @@
 import React, { useState } from 'react';
 import { Bell, ArrowUpRight, ArrowDownLeft, HelpCircle, Clock, Shield } from 'lucide-react';
 import { Button } from "@/components/ui/button";
+import { useNavigate } from 'react-router-dom';
 import BottomNavigation from '@/components/BottomNavigation';
 
 const BuySell = () => {
+  const [hoveredCard, setHoveredCard] = useState<string | null>(null);
+  const navigate = useNavigate();
+
+  const handleSellCrypto = () => {
+    navigate('/select-coin');
+  };
+
+  const handleBuyCrypto = () => {
+    // For now, just show an alert or navigate to a buy flow
+    console.log('Buy crypto flow - to be implemented');
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
       {/* Header */}
@@ -30,14 +43,25 @@ const BuySell = () => {
       {/* Trade Options */}
       <div className="p-4 space-y-4">
         {/* Buy Crypto Card */}
-        <div className="bg-white rounded-xl p-4 border border-gray-200">
+        <div 
+          className={`bg-white rounded-xl p-4 border border-gray-200 cursor-pointer transition-all duration-200 ${
+            hoveredCard === 'buy' ? 'shadow-lg border-blue-300 transform scale-105' : 'hover:shadow-md'
+          }`}
+          onMouseEnter={() => setHoveredCard('buy')}
+          onMouseLeave={() => setHoveredCard(null)}
+          onClick={handleBuyCrypto}
+        >
           <div className="flex items-start justify-between mb-3">
             <div className="flex items-center">
-              <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-3">
+              <div className={`w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-3 transition-colors ${
+                hoveredCard === 'buy' ? 'bg-blue-200' : ''
+              }`}>
                 <ArrowUpRight size={20} className="text-blue-600" />
               </div>
               <div>
-                <h3 className="text-lg font-semibold text-blue-600 mb-1">Buy Crypto</h3>
+                <h3 className={`text-lg font-semibold text-blue-600 mb-1 transition-colors ${
+                  hoveredCard === 'buy' ? 'text-blue-700' : ''
+                }`}>Buy Crypto</h3>
                 <p className="text-gray-600 text-sm mb-1">Send ₦, Receive BTC/USDT</p>
                 <p className="text-gray-500 text-xs">You have Naira, want to get crypto</p>
               </div>
@@ -52,21 +76,34 @@ const BuySell = () => {
               <Clock size={14} className="mr-1" />
               <span>Fast processing</span>
             </div>
-            <Button className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg">
+            <Button className={`bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg transition-all ${
+              hoveredCard === 'buy' ? 'bg-blue-600 shadow-md' : ''
+            }`}>
               Start
             </Button>
           </div>
         </div>
 
         {/* Sell Crypto Card */}
-        <div className="bg-white rounded-xl p-4 border border-gray-200">
+        <div 
+          className={`bg-white rounded-xl p-4 border border-gray-200 cursor-pointer transition-all duration-200 ${
+            hoveredCard === 'sell' ? 'shadow-lg border-green-300 transform scale-105' : 'hover:shadow-md'
+          }`}
+          onMouseEnter={() => setHoveredCard('sell')}
+          onMouseLeave={() => setHoveredCard(null)}
+          onClick={handleSellCrypto}
+        >
           <div className="flex items-start justify-between mb-3">
             <div className="flex items-center">
-              <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center mr-3">
+              <div className={`w-8 h-8 bg-green-100 rounded-full flex items-center justify-center mr-3 transition-colors ${
+                hoveredCard === 'sell' ? 'bg-green-200' : ''
+              }`}>
                 <ArrowDownLeft size={20} className="text-green-600" />
               </div>
               <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-1">Sell Crypto</h3>
+                <h3 className={`text-lg font-semibold text-gray-900 mb-1 transition-colors ${
+                  hoveredCard === 'sell' ? 'text-green-700' : ''
+                }`}>Sell Crypto</h3>
                 <p className="text-gray-600 text-sm mb-1">Send BTC/USDT, Receive ₦</p>
                 <p className="text-gray-500 text-xs">You have crypto, want to get cash</p>
               </div>
@@ -81,7 +118,12 @@ const BuySell = () => {
               <Shield size={14} className="mr-1" />
               <span>Secure escrow</span>
             </div>
-            <Button variant="outline" className="border-gray-300 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-50">
+            <Button 
+              variant="outline" 
+              className={`border-gray-300 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-50 transition-all ${
+                hoveredCard === 'sell' ? 'border-green-300 bg-green-50 text-green-700' : ''
+              }`}
+            >
               Start
             </Button>
           </div>

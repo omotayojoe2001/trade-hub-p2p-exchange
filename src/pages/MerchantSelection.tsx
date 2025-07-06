@@ -10,19 +10,19 @@ const MerchantSelection = () => {
 
   const handleContinue = () => {
     if (selectedOption === 'auto') {
-      // Navigate to auto-match flow
-      console.log('Auto-match selected');
+      // Auto-match goes directly to sell crypto page
+      navigate('/sell-crypto');
     } else if (selectedOption === 'manual') {
-      // Navigate to merchant list page
+      // Manual selection goes to merchant list
       navigate('/merchant-list');
     }
   };
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Header */}
+      {/* Header */}  
       <div className="flex items-center p-4 border-b border-gray-100">
-        <Link to="/buy-sell" className="mr-4">
+        <Link to="/select-coin" className="mr-4">
           <ArrowLeft size={24} className="text-gray-600" />
         </Link>
         <div className="flex items-center">
@@ -46,10 +46,10 @@ const MerchantSelection = () => {
         <div className="space-y-4 mb-8">
           {/* Auto-Match Option */}
           <div 
-            className={`border rounded-lg p-4 cursor-pointer transition-colors ${
+            className={`border rounded-lg p-4 cursor-pointer transition-all duration-200 ${
               selectedOption === 'auto' 
-                ? 'border-green-500 bg-green-50' 
-                : 'border-gray-200 bg-white'
+                ? 'border-green-500 bg-green-50 shadow-md' 
+                : 'border-gray-200 bg-white hover:shadow-sm'
             }`}
             onClick={() => setSelectedOption('auto')}
           >
@@ -70,7 +70,7 @@ const MerchantSelection = () => {
                   </p>
                 </div>
               </div>
-              <div className={`w-6 h-6 rounded-full border-2 ${
+              <div className={`w-6 h-6 rounded-full border-2 transition-all ${
                 selectedOption === 'auto' 
                   ? 'border-green-500 bg-green-500' 
                   : 'border-gray-300'
@@ -94,10 +94,10 @@ const MerchantSelection = () => {
 
           {/* Manual Select Option */}
           <div 
-            className={`border rounded-lg p-4 cursor-pointer transition-colors ${
+            className={`border rounded-lg p-4 cursor-pointer transition-all duration-200 ${
               selectedOption === 'manual' 
-                ? 'border-blue-500 bg-blue-50' 
-                : 'border-gray-200 bg-white'
+                ? 'border-blue-500 bg-blue-50 shadow-md' 
+                : 'border-gray-200 bg-white hover:shadow-sm'
             }`}
             onClick={() => setSelectedOption('manual')}
           >
@@ -113,7 +113,7 @@ const MerchantSelection = () => {
                   </p>
                 </div>
               </div>
-              <div className={`w-6 h-6 rounded-full border-2 ${
+              <div className={`w-6 h-6 rounded-full border-2 transition-all ${
                 selectedOption === 'manual' 
                   ? 'border-blue-500 bg-blue-500' 
                   : 'border-gray-300'
@@ -148,9 +148,9 @@ const MerchantSelection = () => {
 
         {/* Continue Button */}
         <Button 
-          className={`w-full h-12 rounded-lg text-white font-semibold ${
+          className={`w-full h-12 rounded-lg text-white font-semibold transition-all ${
             selectedOption 
-              ? 'bg-blue-500 hover:bg-blue-600' 
+              ? 'bg-blue-500 hover:bg-blue-600 shadow-md' 
               : 'bg-gray-300 cursor-not-allowed'
           }`}
           onClick={handleContinue}
@@ -161,7 +161,7 @@ const MerchantSelection = () => {
 
         {/* Back to Home */}
         <div className="text-center mt-6">
-          <Link to="/" className="text-gray-500 text-sm hover:text-gray-700">
+          <Link to="/" className="text-gray-500 text-sm hover:text-gray-700 transition-colors">
             Back to Home
           </Link>
         </div>
