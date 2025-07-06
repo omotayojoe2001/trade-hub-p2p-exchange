@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { Search, ArrowDown, ArrowUp, Clock, CheckCircle, XCircle } from 'lucide-react';
 import { Button } from "@/components/ui/button";
+import BottomNavigation from '@/components/BottomNavigation';
 
 const MyTrades = () => {
   const [activeTab, setActiveTab] = useState('ongoing');
@@ -90,7 +91,7 @@ const MyTrades = () => {
   };
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white pb-20">
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-gray-100">
         <div className="flex items-center">
@@ -221,31 +222,7 @@ const MyTrades = () => {
         ))}
       </div>
 
-      {/* Bottom Navigation */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 py-3">
-        <div className="flex justify-around">
-          <button className="flex flex-col items-center text-gray-400">
-            <div className="w-6 h-6 mb-1">🏠</div>
-            <span className="text-xs">Home</span>
-          </button>
-          <button className="flex flex-col items-center text-gray-400">
-            <div className="w-6 h-6 mb-1">🔄</div>
-            <span className="text-xs">Buy/Sell</span>
-          </button>
-          <button className="flex flex-col items-center text-blue-600">
-            <div className="w-6 h-6 mb-1">💼</div>
-            <span className="text-xs font-medium">My Trades</span>
-          </button>
-          <button className="flex flex-col items-center text-gray-400">
-            <div className="w-6 h-6 mb-1">📋</div>
-            <span className="text-xs">Transactions</span>
-          </button>
-          <button className="flex flex-col items-center text-gray-400">
-            <div className="w-6 h-6 mb-1">⚙️</div>
-            <span className="text-xs">Settings</span>
-          </button>
-        </div>
-      </div>
+      <BottomNavigation />
     </div>
   );
 };

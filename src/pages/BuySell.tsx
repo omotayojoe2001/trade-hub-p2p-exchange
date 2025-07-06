@@ -1,203 +1,154 @@
 
 import React, { useState } from 'react';
-import { ArrowLeftRight, ArrowDown, Bell, Settings } from 'lucide-react';
+import { Bell, ArrowUpRight, ArrowDownLeft, HelpCircle, Clock, Shield } from 'lucide-react';
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Link } from 'react-router-dom';
 import BottomNavigation from '@/components/BottomNavigation';
 
 const BuySell = () => {
-  const [activeTab, setActiveTab] = useState('buy');
-  const [amount, setAmount] = useState('');
-  const [selectedCoin, setSelectedCoin] = useState('BTC');
-
-  const coins = [
-    { name: 'Bitcoin', symbol: 'BTC' },
-    { name: 'Ethereum', symbol: 'ETH' },
-    { name: 'Litecoin', symbol: 'LTC' },
-  ];
-
-  const [paymentMethod, setPaymentMethod] = useState('bank');
-  const [bankDetails, setBankDetails] = useState({
-    accountName: '',
-    accountNumber: '',
-    bankName: '',
-  });
-
-  const handleTabChange = (tab: string) => {
-    setActiveTab(tab);
-  };
-
-  const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setAmount(e.target.value);
-  };
-
-  const handleCoinSelect = (coin: string) => {
-    setSelectedCoin(coin);
-  };
-
-  const handlePaymentMethodChange = (method: string) => {
-    setPaymentMethod(method);
-  };
-
-  const handleBankDetailsChange = (field: string, value: string) => {
-    setBankDetails(prev => ({
-      ...prev,
-      [field]: value,
-    }));
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    console.log('Form submitted:', {
-      activeTab,
-      amount,
-      selectedCoin,
-      paymentMethod,
-      bankDetails,
-    });
-  };
-
   return (
-    <div className="min-h-screen bg-white pb-20">
+    <div className="min-h-screen bg-gray-50 pb-20">
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-gray-100">
-        <div>
-          <h1 className="text-xl font-semibold text-gray-900">Buy & Sell</h1>
-          <p className="text-sm text-gray-500 mt-1">Trade cryptocurrencies instantly</p>
+      <div className="flex items-center justify-between p-4 bg-white">
+        <div className="flex items-center">
+          <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center mr-3">
+            <span className="text-white font-bold text-sm">B</span>
+          </div>
+          <span className="text-xl font-semibold text-gray-900">CryptoTrade</span>
         </div>
-        <div className="flex items-center space-x-2">
-          <Link to="/notifications">
-            <div className="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center">
-              <Bell size={16} className="text-yellow-600" />
-            </div>
-          </Link>
-          <Link to="/settings">
-            <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
-              <Settings size={16} className="text-gray-600" />
-            </div>
-          </Link>
+        <div className="relative">
+          <Bell size={24} className="text-gray-600" />
+          <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full"></div>
         </div>
       </div>
 
-      {/* Tabs */}
-      <div className="flex justify-around p-4">
-        <button
-          className={`px-6 py-2 rounded-full font-medium text-sm ${
-            activeTab === 'buy' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-700'
-          }`}
-          onClick={() => handleTabChange('buy')}
-        >
-          Buy
-        </button>
-        <button
-          className={`px-6 py-2 rounded-full font-medium text-sm ${
-            activeTab === 'sell' ? 'bg-red-500 text-white' : 'bg-gray-100 text-gray-700'
-          }`}
-          onClick={() => handleTabChange('sell')}
-        >
-          Sell
-        </button>
+      {/* Title Section */}
+      <div className="p-4 bg-white border-b border-gray-100">
+        <h1 className="text-2xl font-bold text-gray-900 mb-2">Buy or Sell Crypto</h1>
+        <p className="text-gray-600">Start a new trade by choosing what you want to do.</p>
       </div>
 
-      {/* Amount Input */}
+      {/* Trade Options */}
       <div className="p-4 space-y-4">
-        <div className="space-y-2">
-          <label htmlFor="amount" className="block text-sm font-medium text-gray-700">
-            Enter Amount
-          </label>
-          <Input
-            type="number"
-            id="amount"
-            className="w-full h-12 bg-gray-50 border border-gray-300 rounded-lg px-4 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            placeholder="0.00"
-            value={amount}
-            onChange={handleAmountChange}
-          />
+        {/* Buy Crypto Card */}
+        <div className="bg-white rounded-xl p-4 border border-gray-200">
+          <div className="flex items-start justify-between mb-3">
+            <div className="flex items-center">
+              <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-3">
+                <ArrowUpRight size={20} className="text-blue-600" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-blue-600 mb-1">Buy Crypto</h3>
+                <p className="text-gray-600 text-sm mb-1">Send ₦, Receive BTC/USDT</p>
+                <p className="text-gray-500 text-xs">You have Naira, want to get crypto</p>
+              </div>
+            </div>
+            <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
+              <HelpCircle size={16} className="text-gray-400" />
+            </div>
+          </div>
+          
+          <div className="flex items-center justify-between">
+            <div className="flex items-center text-gray-500 text-sm">
+              <Clock size={14} className="mr-1" />
+              <span>Fast processing</span>
+            </div>
+            <Button className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg">
+              Start
+            </Button>
+          </div>
         </div>
 
-        {/* Coin Selection */}
-        <div className="space-y-2">
-          <label className="block text-sm font-medium text-gray-700">
-            Select Cryptocurrency
-          </label>
-          <div className="flex space-x-3">
-            {coins.map((coin) => (
-              <button
-                key={coin.symbol}
-                className={`px-4 py-2 rounded-full font-medium text-sm ${
-                  selectedCoin === coin.symbol ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-700'
-                }`}
-                onClick={() => handleCoinSelect(coin.symbol)}
-              >
-                {coin.name} ({coin.symbol})
+        {/* Sell Crypto Card */}
+        <div className="bg-white rounded-xl p-4 border border-gray-200">
+          <div className="flex items-start justify-between mb-3">
+            <div className="flex items-center">
+              <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center mr-3">
+                <ArrowDownLeft size={20} className="text-green-600" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-1">Sell Crypto</h3>
+                <p className="text-gray-600 text-sm mb-1">Send BTC/USDT, Receive ₦</p>
+                <p className="text-gray-500 text-xs">You have crypto, want to get cash</p>
+              </div>
+            </div>
+            <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
+              <HelpCircle size={16} className="text-gray-400" />
+            </div>
+          </div>
+          
+          <div className="flex items-center justify-between">
+            <div className="flex items-center text-gray-500 text-sm">
+              <Shield size={14} className="mr-1" />
+              <span>Secure escrow</span>
+            </div>
+            <Button variant="outline" className="border-gray-300 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-50">
+              Start
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      {/* Info Banner */}
+      <div className="mx-4 mb-4">
+        <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+          <div className="flex items-start">
+            <div className="w-6 h-6 bg-yellow-400 rounded-full flex items-center justify-center mr-3 mt-0.5">
+              <span className="text-white text-xs">💡</span>
+            </div>
+            <div className="flex-1">
+              <p className="text-gray-800 text-sm mb-2">
+                <span className="font-medium">Not sure? Tap Buy if you're funding with Naira.</span>
+              </p>
+              <button className="text-blue-600 text-sm font-medium">
+                How Escrow Works? →
               </button>
-            ))}
+            </div>
           </div>
         </div>
+      </div>
 
-        {/* Payment Method */}
-        <div className="space-y-2">
-          <label className="block text-sm font-medium text-gray-700">
-            Select Payment Method
-          </label>
-          <div className="flex space-x-3">
-            <button
-              className={`px-4 py-2 rounded-full font-medium text-sm ${
-                paymentMethod === 'bank' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-700'
-              }`}
-              onClick={() => handlePaymentMethodChange('bank')}
-            >
-              Bank Transfer
-            </button>
-            <button
-              className={`px-4 py-2 rounded-full font-medium text-sm ${
-                paymentMethod === 'card' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-700'
-              }`}
-              onClick={() => handlePaymentMethodChange('card')}
-            >
-              Credit Card
-            </button>
+      {/* Trade in Progress */}
+      <div className="mx-4 mb-4">
+        <div className="bg-orange-50 border border-orange-200 rounded-xl p-4">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center">
+              <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center mr-3">
+                <span className="text-white text-sm">⚡</span>
+              </div>
+              <div>
+                <h4 className="font-semibold text-gray-900">Trade in Progress</h4>
+                <p className="text-gray-600 text-sm">Started 1 hour ago</p>
+              </div>
+            </div>
+            <span className="bg-orange-100 text-orange-700 px-3 py-1 rounded-full text-xs font-medium">
+              Pending
+            </span>
           </div>
+          
+          <div className="grid grid-cols-3 gap-4 mb-4">
+            <div>
+              <p className="text-gray-500 text-xs mb-1">Type</p>
+              <p className="font-medium text-gray-900 text-sm">Selling BTC</p>
+            </div>
+            <div>
+              <p className="text-gray-500 text-xs mb-1">Amount</p>
+              <p className="font-medium text-gray-900 text-sm">0.0045 BTC</p>
+            </div>
+            <div>
+              <p className="text-gray-500 text-xs mb-1">Value</p>
+              <p className="font-medium text-gray-900 text-sm">₦125,000</p>
+            </div>
+          </div>
+          
+          <div className="flex items-center text-gray-600 text-sm mb-4">
+            <div className="w-2 h-2 bg-gray-400 rounded-full mr-2"></div>
+            <span>Waiting for merchant to pay</span>
+          </div>
+          
+          <Button className="w-full bg-orange-500 hover:bg-orange-600 text-white py-3 rounded-lg font-medium">
+            🔍 Resume Trade
+          </Button>
         </div>
-
-        {/* Bank Details (if bank transfer is selected) */}
-        {paymentMethod === 'bank' && (
-          <div className="space-y-2">
-            <label className="block text-sm font-medium text-gray-700">
-              Enter Bank Details
-            </label>
-            <Input
-              type="text"
-              placeholder="Account Name"
-              className="w-full h-12 bg-gray-50 border border-gray-300 rounded-lg px-4 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              value={bankDetails.accountName}
-              onChange={(e) => handleBankDetailsChange('accountName', e.target.value)}
-            />
-            <Input
-              type="text"
-              placeholder="Account Number"
-              className="w-full h-12 bg-gray-50 border border-gray-300 rounded-lg px-4 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              value={bankDetails.accountNumber}
-              onChange={(e) => handleBankDetailsChange('accountNumber', e.target.value)}
-            />
-            <Input
-              type="text"
-              placeholder="Bank Name"
-              className="w-full h-12 bg-gray-50 border border-gray-300 rounded-lg px-4 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              value={bankDetails.bankName}
-              onChange={(e) => handleBankDetailsChange('bankName', e.target.value)}
-            />
-          </div>
-        )}
-
-        {/* Submit Button */}
-        <Button
-          className="w-full h-12 bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded-lg text-sm"
-          onClick={handleSubmit}
-        >
-          {activeTab === 'buy' ? 'Buy Now' : 'Sell Now'}
-        </Button>
       </div>
 
       <BottomNavigation />
