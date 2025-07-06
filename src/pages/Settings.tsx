@@ -3,169 +3,208 @@ import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
+import { Bell, ArrowLeft, ChevronRight, Edit, Users, Copy } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 const Settings = () => {
   const [fingerprintEnabled, setFingerprintEnabled] = useState(true);
 
   return (
-    <div className="min-h-screen bg-gray-50 px-6 py-8">
+    <div className="min-h-screen bg-white">
       {/* Header */}
-      <h1 className="text-2xl font-semibold text-gray-800 mb-6" style={{ fontFamily: 'Poppins' }}>
-        Settings
-      </h1>
+      <div className="flex items-center justify-between p-4 border-b border-gray-100">
+        <div className="flex items-center">
+          <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center mr-3">
+            <span className="text-white font-semibold text-lg">SJ</span>
+          </div>
+          <h1 className="text-xl font-semibold text-gray-900">Settings</h1>
+        </div>
+        <Bell size={24} className="text-gray-600" />
+      </div>
 
-      {/* KYC Banner */}
-      <Card className="p-4 bg-gray-50 border border-gray-300 rounded-xl mb-6">
-        <div className="flex justify-between items-center">
-          <p className="text-sm font-medium text-gray-800" style={{ fontFamily: 'Inter' }}>
-            Complete KYC verification
-          </p>
-          <Button className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm" style={{ fontFamily: 'Poppins' }}>
+      <div className="p-4 space-y-6">
+        {/* KYC Banner */}
+        <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 flex items-center justify-between">
+          <div className="flex items-center">
+            <div className="w-6 h-6 bg-orange-500 rounded-full flex items-center justify-center mr-3">
+              <span className="text-white text-sm">⚠</span>
+            </div>
+            <span className="text-sm font-medium text-gray-800">Complete KYC verification</span>
+          </div>
+          <Button className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 text-sm rounded-lg">
             Verify Now
           </Button>
         </div>
-      </Card>
 
-      {/* Profile Section */}
-      <div className="mb-6">
-        <div className="border-b border-gray-200 pb-2 mb-4">
-          <h2 className="text-base font-medium text-gray-800" style={{ fontFamily: 'Poppins' }}>
-            Profile & Account
-          </h2>
-        </div>
-        <Card className="p-4 bg-white rounded-xl shadow-sm">
-          <div className="flex justify-between items-start">
-            <div>
-              <h3 className="text-lg font-semibold text-gray-800 mb-1" style={{ fontFamily: 'Poppins' }}>
-                Sarah Johnson
-              </h3>
-              <p className="text-sm text-gray-600" style={{ fontFamily: 'Inter' }}>
-                sarah.johnson@example.com
-              </p>
-            </div>
-            <Button variant="ghost" className="text-blue-500 text-sm font-medium" style={{ fontFamily: 'Inter' }}>
-              Edit Profile
-            </Button>
-          </div>
-        </Card>
-      </div>
-
-      {/* Bank Accounts */}
-      <div className="mb-6">
-        <div className="border-b border-gray-200 pb-2 mb-4">
-          <h2 className="text-base font-medium text-gray-800" style={{ fontFamily: 'Poppins' }}>
-            Bank Accounts
-          </h2>
-        </div>
-        <Card className="bg-white rounded-xl shadow-sm overflow-hidden">
-          <div className="p-4 border-b border-gray-100">
-            <div className="flex justify-between items-center">
+        {/* Profile & Account */}
+        <div>
+          <h2 className="text-base font-semibold text-blue-600 mb-4">Profile & Account</h2>
+          <Card className="p-4 bg-white border border-gray-200 rounded-lg">
+            <div className="flex items-center justify-between mb-3">
               <div>
-                <p className="font-medium text-gray-800" style={{ fontFamily: 'Poppins' }}>
-                  GT Bank
-                </p>
-                <p className="text-sm text-gray-500" style={{ fontFamily: 'Inter' }}>
-                  ••••4875
-                </p>
+                <h3 className="text-lg font-semibold text-gray-900">Sarah Johnson</h3>
+                <p className="text-sm text-gray-600">sarah.johnson@example.com</p>
+              </div>
+              <div className="flex items-center text-green-600">
+                <span className="text-sm mr-1">✓</span>
+                <span className="text-sm font-medium">Verified</span>
               </div>
             </div>
+            <Button variant="ghost" className="w-full bg-gray-100 text-gray-700 hover:bg-gray-200 flex items-center justify-center">
+              <Edit size={16} className="mr-2" />
+              Edit Profile
+            </Button>
+          </Card>
+        </div>
+
+        {/* Bank Accounts */}
+        <div>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-base font-semibold text-blue-600">Bank Accounts</h2>
+            <span className="text-sm text-blue-600 font-medium">Manage All</span>
           </div>
-          <div className="p-4">
-            <Button variant="ghost" className="text-blue-500 text-sm font-medium" style={{ fontFamily: 'Inter' }}>
-              + Add Account
+          <div className="space-y-3">
+            <Card className="p-4 bg-white border border-gray-200 rounded-lg">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
+                    <span className="text-blue-600 text-sm font-bold">🏦</span>
+                  </div>
+                  <div>
+                    <p className="font-medium text-gray-900">GTBank</p>
+                    <p className="text-sm text-gray-500">••••4875</p>
+                  </div>
+                </div>
+                <button className="text-gray-400">
+                  <span className="text-lg">⋮</span>
+                </button>
+              </div>
+            </Card>
+            <Card className="p-4 bg-white border border-gray-200 rounded-lg">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
+                    <span className="text-blue-600 text-sm font-bold">🏦</span>
+                  </div>
+                  <div>
+                    <p className="font-medium text-gray-900">First Bank</p>
+                    <p className="text-sm text-gray-500">••••2390</p>
+                  </div>
+                </div>
+                <button className="text-gray-400">
+                  <span className="text-lg">⋮</span>
+                </button>
+              </div>
+            </Card>
+            <Button variant="ghost" className="w-full bg-gray-100 text-gray-700 hover:bg-gray-200 flex items-center justify-center">
+              <span className="mr-2">+</span>
+              Add Account
             </Button>
           </div>
-        </Card>
-      </div>
+        </div>
 
-      {/* Referral Program */}
-      <div className="mb-6">
-        <Card className="p-4 bg-white rounded-xl shadow-sm">
-          <div className="grid grid-cols-2 gap-4 mb-4">
-            <div className="text-center border-r border-gray-200">
-              <p className="text-xs font-semibold text-gray-500 mb-1" style={{ fontFamily: 'Inter' }}>
-                Total Referrals
-              </p>
-              <p className="text-base font-semibold text-gray-800" style={{ fontFamily: 'Poppins' }}>
-                18
-              </p>
+        {/* Referral Program */}
+        <div>
+          <h2 className="text-base font-semibold text-blue-600 mb-4">Referral Program</h2>
+          <Card className="p-4 bg-white border border-gray-200 rounded-lg">
+            <div className="grid grid-cols-2 gap-4 mb-4">
+              <div className="text-center">
+                <p className="text-sm text-gray-500 mb-1">Total Referrals</p>
+                <p className="text-2xl font-bold text-gray-900">18</p>
+              </div>
+              <div className="text-center">
+                <p className="text-sm text-gray-500 mb-1">Earnings</p>
+                <p className="text-2xl font-bold text-gray-900">₦36,200</p>
+              </div>
             </div>
-            <div className="text-center">
-              <p className="text-xs font-semibold text-gray-500 mb-1" style={{ fontFamily: 'Inter' }}>
-                Earnings
-              </p>
-              <p className="text-base font-semibold text-gray-800" style={{ fontFamily: 'Poppins' }}>
-                ₦36,200
-              </p>
+            <div className="space-y-2 mb-4">
+              <p className="text-sm text-gray-600">Lifetime Commission Rate</p>
+              <p className="text-lg font-semibold text-gray-900">5%</p>
+              <div className="flex items-center justify-between bg-gray-50 p-3 rounded-lg">
+                <div>
+                  <p className="text-sm text-gray-500">Referral Code</p>
+                  <p className="font-mono font-medium text-gray-900">cryptohub</p>
+                </div>
+                <Copy size={20} className="text-gray-400" />
+              </div>
             </div>
-          </div>
-          
-          <div className="space-y-2 mb-4">
-            <p className="text-sm text-gray-600" style={{ fontFamily: 'Inter' }}>
-              Lifetime Commission Rate: 5%
-            </p>
-            <p className="text-sm text-blue-500" style={{ fontFamily: 'monospace' }}>
-              Referral Code: cryptohub
-            </p>
-          </div>
-          
-          <div className="text-center">
-            <Button variant="ghost" className="text-blue-500 text-sm font-medium" style={{ fontFamily: 'Inter' }}>
+            <Button variant="ghost" className="w-full bg-gray-100 text-gray-700 hover:bg-gray-200 flex items-center justify-center">
+              <Users size={16} className="mr-2" />
               View All Referrals
             </Button>
-          </div>
-        </Card>
-      </div>
+          </Card>
+        </div>
 
-      {/* Security & Preferences */}
-      <div className="mb-6">
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <span className="text-sm font-medium text-gray-800" style={{ fontFamily: 'Inter' }}>
-              Change Password
-            </span>
-            <Switch checked={false} />
-          </div>
-          
-          <div className="flex items-center justify-between">
-            <span className="text-sm font-medium text-gray-800" style={{ fontFamily: 'Inter' }}>
-              Enable Fingerprint
-            </span>
-            <Switch 
-              checked={fingerprintEnabled} 
-              onCheckedChange={setFingerprintEnabled}
-            />
-          </div>
-          
-          <div className="flex items-center justify-between">
-            <span className="text-sm font-medium text-gray-800" style={{ fontFamily: 'Inter' }}>
-              Logout of Other Devices
-            </span>
-            <Switch checked={false} />
+        {/* Security & Access */}
+        <div>
+          <h2 className="text-base font-semibold text-blue-600 mb-4">Security & Access</h2>
+          <div className="space-y-4">
+            <div className="flex items-center justify-between py-3">
+              <div className="flex items-center">
+                <span className="text-gray-400 mr-3">🔑</span>
+                <span className="text-gray-900 font-medium">Change Password</span>
+              </div>
+              <ChevronRight size={20} className="text-gray-400" />
+            </div>
+            <div className="flex items-center justify-between py-3">
+              <div className="flex items-center">
+                <span className="text-gray-400 mr-3">🔒</span>
+                <span className="text-gray-900 font-medium">Enable Fingerprint</span>
+              </div>
+              <Switch 
+                checked={fingerprintEnabled} 
+                onCheckedChange={setFingerprintEnabled}
+              />
+            </div>
+            <div className="flex items-center justify-between py-3">
+              <div className="flex items-center">
+                <span className="text-gray-400 mr-3">📱</span>
+                <span className="text-gray-900 font-medium">Logout of Other Devices</span>
+              </div>
+              <ChevronRight size={20} className="text-gray-400" />
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Legal/Help */}
-      <div className="mb-6">
-        <div className="space-y-3">
-          <p className="text-sm font-medium text-gray-600" style={{ fontFamily: 'Inter' }}>
-            Help & Legal | FAQs | Terms
-          </p>
-          <p className="text-sm font-medium text-blue-500" style={{ fontFamily: 'Inter' }}>
-            Contact Support [✓]
-          </p>
-          <p className="text-xs font-light text-gray-400" style={{ fontFamily: 'Inter' }}>
-            App Version: v1.0.0
-          </p>
+        {/* Help & Legal */}
+        <div>
+          <h2 className="text-base font-semibold text-blue-600 mb-4">Help & Legal</h2>
+          <div className="space-y-4">
+            <div className="flex items-center justify-between py-3">
+              <div className="flex items-center">
+                <span className="text-gray-400 mr-3">❓</span>
+                <span className="text-gray-900 font-medium">FAQ: How does P2P work?</span>
+              </div>
+              <ChevronRight size={20} className="text-gray-400" />
+            </div>
+            <div className="flex items-center justify-between py-3">
+              <div className="flex items-center">
+                <span className="text-gray-400 mr-3">📄</span>
+                <span className="text-gray-900 font-medium">Terms & Conditions</span>
+              </div>
+              <ChevronRight size={20} className="text-gray-400" />
+            </div>
+            <div className="flex items-center justify-between py-3">
+              <div className="flex items-center">
+                <span className="text-gray-400 mr-3">💬</span>
+                <span className="text-gray-900 font-medium">Contact Support</span>
+              </div>
+              <ChevronRight size={20} className="text-gray-400" />
+            </div>
+          </div>
         </div>
-      </div>
 
-      {/* Logout Button */}
-      <div className="text-center">
-        <Button className="h-10 bg-transparent text-red-400 font-medium hover:bg-red-50" style={{ fontFamily: 'Poppins' }}>
-          Logout
-        </Button>
+        {/* App Version */}
+        <div className="text-center py-4">
+          <p className="text-sm text-gray-400">App Version: v1.0.0</p>
+        </div>
+
+        {/* Logout Button */}
+        <div className="pb-8">
+          <Button className="w-full bg-transparent text-red-500 hover:bg-red-50 font-medium border-0">
+            Logout
+          </Button>
+        </div>
       </div>
     </div>
   );

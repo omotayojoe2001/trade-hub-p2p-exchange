@@ -3,20 +3,20 @@ import React, { useState } from 'react';
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import SelectMerchantPopup from '../components/SelectMerchantPopup';
+import { useNavigate } from 'react-router-dom';
 
 const BuySell = () => {
   const [buyFastProcessing, setBuyFastProcessing] = useState(false);
   const [sellSecureEscrow, setSellSecureEscrow] = useState(false);
   const [notSureChecked, setNotSureChecked] = useState(false);
-  const [showMerchantPopup, setShowMerchantPopup] = useState(false);
+  const navigate = useNavigate();
 
   const handleSellStart = () => {
-    setShowMerchantPopup(true);
+    navigate('/merchant-selection');
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 px-6 py-8">
+    <div className="min-h-screen bg-white px-6 py-8">
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-2xl font-semibold text-gray-800 mb-2" style={{ fontFamily: 'Poppins' }}>
@@ -160,12 +160,6 @@ const BuySell = () => {
           </div>
         </div>
       </Card>
-
-      {/* Select Merchant Popup */}
-      <SelectMerchantPopup 
-        isOpen={showMerchantPopup}
-        onClose={() => setShowMerchantPopup(false)}
-      />
     </div>
   );
 };

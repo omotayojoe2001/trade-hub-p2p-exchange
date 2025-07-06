@@ -11,6 +11,8 @@ import Coins from "./pages/Coins";
 import BuySell from "./pages/BuySell";
 import Settings from "./pages/Settings";
 import Notifications from "./pages/Notifications";
+import MerchantSelection from "./pages/MerchantSelection";
+import SelectCoin from "./pages/SelectCoin";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -29,6 +31,8 @@ const App = () => (
           <Route path="/buy-sell" element={<BuySell />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/notifications" element={<Notifications />} />
+          <Route path="/merchant-selection" element={<MerchantSelection />} />
+          <Route path="/select-coin" element={<SelectCoin />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
