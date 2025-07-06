@@ -4,31 +4,34 @@ import { Link } from 'react-router-dom';
 import { ArrowUp, ArrowDown, Clock, Building2, Bell, Settings, TrendingUp, ChevronRight, Star, DollarSign, Zap } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import BottomNavigation from '@/components/BottomNavigation';
 
 const Index = () => {
   return (
-    <div className="min-h-screen bg-blue-600 px-4 py-6">
+    <div className="min-h-screen bg-white px-4 py-6 pb-20">
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 bg-blue-700 rounded-full flex items-center justify-center">
-            <span className="text-white text-lg">👤</span>
+          <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+            <span className="text-blue-600 text-lg">👤</span>
           </div>
           <div>
-            <p className="text-blue-200 text-sm">Good Morning</p>
-            <h1 className="text-white text-lg font-medium">Sarah Johnson</h1>
+            <p className="text-gray-500 text-sm">Good Morning</p>
+            <h1 className="text-gray-900 text-lg font-medium">Sarah Johnson</h1>
           </div>
         </div>
         <div className="flex items-center space-x-3">
           <Link to="/notifications">
-            <Bell size={24} className="text-white" />
+            <Bell size={24} className="text-gray-600" />
           </Link>
-          <Settings size={24} className="text-white" />
+          <Link to="/settings">
+            <Settings size={24} className="text-gray-600" />
+          </Link>
         </div>
       </div>
 
       {/* Stats Card */}
-      <Card className="bg-white rounded-2xl p-6 mb-6 shadow-sm">
+      <Card className="bg-white rounded-2xl p-6 mb-6 shadow-sm border border-gray-200">
         <div className="grid grid-cols-2 gap-6 mb-6">
           <div>
             <div className="flex items-center mb-2">
@@ -46,15 +49,15 @@ const Index = () => {
           </div>
         </div>
         
-        {/* Time Filters */}
+        {/* Time Filters - Responsive */}
         <div className="flex space-x-2">
-          <button className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium">
+          <button className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium flex-1 sm:flex-none">
             Today
           </button>
-          <button className="bg-gray-100 text-gray-600 px-4 py-2 rounded-lg text-sm font-medium">
+          <button className="bg-gray-100 text-gray-600 px-4 py-2 rounded-lg text-sm font-medium flex-1 sm:flex-none">
             This Week
           </button>
-          <button className="bg-gray-100 text-gray-600 px-4 py-2 rounded-lg text-sm font-medium">
+          <button className="bg-gray-100 text-gray-600 px-4 py-2 rounded-lg text-sm font-medium flex-1 sm:flex-none">
             This Month
           </button>
         </div>
@@ -62,40 +65,40 @@ const Index = () => {
 
       {/* Quick Actions */}
       <div className="mb-6">
-        <h2 className="text-white text-lg font-semibold mb-4">Quick Actions</h2>
+        <h2 className="text-gray-900 text-lg font-semibold mb-4">Quick Actions</h2>
         <div className="grid grid-cols-4 gap-4">
           <Link to="/buy-sell" className="flex flex-col items-center">
             <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mb-2">
               <ArrowUp size={24} className="text-green-500" />
             </div>
-            <span className="text-white text-sm font-medium">Buy</span>
+            <span className="text-gray-700 text-sm font-medium">Buy</span>
           </Link>
           <Link to="/buy-sell" className="flex flex-col items-center">
             <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mb-2">
               <ArrowDown size={24} className="text-red-500" />
             </div>
-            <span className="text-white text-sm font-medium">Sell</span>
+            <span className="text-gray-700 text-sm font-medium">Sell</span>
           </Link>
-          <Link to="/coins" className="flex flex-col items-center">
+          <Link to="/trade-history" className="flex flex-col items-center">
             <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mb-2">
               <Clock size={24} className="text-blue-500" />
             </div>
-            <span className="text-white text-sm font-medium">History</span>
+            <span className="text-gray-700 text-sm font-medium">History</span>
           </Link>
           <Link to="/settings" className="flex flex-col items-center">
             <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mb-2">
               <Building2 size={24} className="text-purple-500" />
             </div>
-            <span className="text-white text-sm font-medium">Bank</span>
+            <span className="text-gray-700 text-sm font-medium">Bank</span>
           </Link>
         </div>
       </div>
 
       {/* Recent Trades */}
       <div className="mb-6">
-        <h2 className="text-white text-lg font-semibold mb-4">Recent Trades</h2>
+        <h2 className="text-gray-900 text-lg font-semibold mb-4">Recent Trades</h2>
         <div className="space-y-3">
-          <div className="bg-white p-4 rounded-xl flex items-center justify-between">
+          <div className="bg-white p-4 rounded-xl border border-gray-200 flex items-center justify-between">
             <div className="flex items-center">
               <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center mr-3">
                 <span className="text-green-500 text-lg">✓</span>
@@ -107,7 +110,7 @@ const Index = () => {
             </div>
             <span className="text-xs text-gray-500">2m ago</span>
           </div>
-          <div className="bg-white p-4 rounded-xl flex items-center justify-between">
+          <div className="bg-white p-4 rounded-xl border border-gray-200 flex items-center justify-between">
             <div className="flex items-center">
               <div className="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center mr-3">
                 <Clock size={16} className="text-yellow-500" />
@@ -137,7 +140,7 @@ const Index = () => {
       </Card>
 
       {/* Platform Updates */}
-      <div className="bg-white p-4 rounded-xl mb-6">
+      <div className="bg-white p-4 rounded-xl mb-6 border border-gray-200">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center">
             <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-3">
@@ -153,9 +156,9 @@ const Index = () => {
       {/* Coin Filters */}
       <div className="flex space-x-4 mb-4">
         <button className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium">All</button>
-        <button className="text-white text-sm font-medium">Favorites</button>
-        <button className="text-white text-sm font-medium">DeFi</button>
-        <button className="text-white text-sm font-medium">NFT</button>
+        <button className="text-gray-600 text-sm font-medium">Favorites</button>
+        <button className="text-gray-600 text-sm font-medium">DeFi</button>
+        <button className="text-gray-600 text-sm font-medium">NFT</button>
       </div>
 
       {/* Trending Coins */}
@@ -163,13 +166,13 @@ const Index = () => {
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center">
             <span className="text-orange-400 text-lg mr-2">🔥</span>
-            <h2 className="text-white text-lg font-semibold">Trending Coins</h2>
+            <h2 className="text-gray-900 text-lg font-semibold">Trending Coins</h2>
           </div>
-          <Link to="/coins" className="text-blue-300 text-sm font-medium">See All</Link>
+          <Link to="/coins" className="text-blue-500 text-sm font-medium">See All</Link>
         </div>
         
         <div className="space-y-3">
-          <div className="bg-white p-4 rounded-xl flex items-center justify-between">
+          <div className="bg-white p-4 rounded-xl border border-gray-200 flex items-center justify-between">
             <div className="flex items-center">
               <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center mr-3">
                 <span className="text-orange-500 font-bold">₿</span>
@@ -192,7 +195,7 @@ const Index = () => {
             </div>
           </div>
           
-          <div className="bg-white p-4 rounded-xl flex items-center justify-between">
+          <div className="bg-white p-4 rounded-xl border border-gray-200 flex items-center justify-between">
             <div className="flex items-center">
               <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mr-3">
                 <span className="text-blue-500 font-bold">Ξ</span>
@@ -217,8 +220,8 @@ const Index = () => {
         </div>
       </div>
 
-      {/* Refer & Earn + My Rewards */}
-      <div className="grid grid-cols-2 gap-4 mb-6">
+      {/* Refer & Earn and My Rewards - Stacked */}
+      <div className="space-y-4 mb-6">
         <Card className="bg-gradient-to-r from-orange-500 to-pink-500 p-4 rounded-xl text-white">
           <div className="flex items-center justify-between mb-2">
             <h3 className="font-semibold">Refer & Earn</h3>
@@ -227,7 +230,7 @@ const Index = () => {
           <p className="text-sm text-orange-100">Earn points when you invite friends</p>
         </Card>
         
-        <Card className="bg-white p-4 rounded-xl">
+        <Card className="bg-white p-4 rounded-xl border border-gray-200">
           <div className="flex items-center justify-between mb-2">
             <h3 className="font-semibold text-gray-900">My Rewards</h3>
             <span className="text-2xl">🏆</span>
@@ -240,11 +243,11 @@ const Index = () => {
       <div className="mb-6">
         <div className="flex items-center mb-4">
           <Star size={20} className="text-yellow-400 mr-2" />
-          <h2 className="text-white text-lg font-semibold">Unlock Premium Features</h2>
+          <h2 className="text-gray-900 text-lg font-semibold">Unlock Premium Features</h2>
         </div>
         
         <div className="space-y-3">
-          <div className="bg-white p-4 rounded-xl flex items-center justify-between">
+          <div className="bg-white p-4 rounded-xl border border-gray-200 flex items-center justify-between">
             <div className="flex items-center">
               <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center mr-3">
                 <DollarSign size={20} className="text-green-500" />
@@ -259,7 +262,7 @@ const Index = () => {
             </div>
           </div>
           
-          <div className="bg-white p-4 rounded-xl flex items-center justify-between">
+          <div className="bg-white p-4 rounded-xl border border-gray-200 flex items-center justify-between">
             <div className="flex items-center">
               <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mr-3">
                 <Zap size={20} className="text-blue-500" />
@@ -275,6 +278,8 @@ const Index = () => {
           </div>
         </div>
       </div>
+
+      <BottomNavigation />
     </div>
   );
 };

@@ -3,8 +3,9 @@ import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Eye, EyeOff, Fingerprint } from "lucide-react";
+import ConfirmationSuccess from '@/components/ConfirmationSuccess';
 
 const Login = () => {
   const [formData, setFormData] = useState({
@@ -12,6 +13,8 @@ const Login = () => {
     password: ''
   });
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmation, setShowConfirmation] = useState(false);
+  const navigate = useNavigate();
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({
@@ -23,10 +26,17 @@ const Login = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     console.log('Login submitted:', formData);
+    setShowConfirmation(true);
   };
 
   const handleBiometricLogin = () => {
     console.log('Biometric login attempted');
+    setShowConfirmation(true);
+  };
+
+  const handleConfirmationClose = () => {
+    setShowConfirmation(false);
+    navigate('/');
   };
 
   return (
@@ -128,6 +138,13 @@ const Login = () => {
           </div>
         </form>
       </div>
+
+      <ConfirmationSuccess
+        isOpen={showConfirmation}
+        onClose={handleConfirmationClose}
+        title="Login Successful!"
+        message="Welcome back! You have been successfully logged in to your account."
+      />
     </div>
   );
 };

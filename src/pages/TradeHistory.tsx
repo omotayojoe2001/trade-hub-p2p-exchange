@@ -1,7 +1,7 @@
-
 import React, { useState } from 'react';
-import { Calendar, ChevronDown, Search, ArrowDown } from 'lucide-react';
-import { Button } from "@/components/ui/button";
+import { Calendar, ChevronDown, Search, ArrowDown, Bell, Settings } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import BottomNavigation from '@/components/BottomNavigation';
 
 const TradeHistory = () => {
   const [dateRange, setDateRange] = useState('Date Range');
@@ -114,7 +114,7 @@ const TradeHistory = () => {
   };
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white pb-20">
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-gray-100">
         <div>
@@ -122,16 +122,20 @@ const TradeHistory = () => {
           <p className="text-sm text-gray-500 mt-1">Track all your completed and pending trades</p>
         </div>
         <div className="flex items-center space-x-2">
-          <div className="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center">
-            <span className="text-yellow-600">🔔</span>
-          </div>
-          <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
-            <span className="text-gray-600">👤</span>
-          </div>
+          <Link to="/notifications">
+            <div className="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center">
+              <Bell size={16} className="text-yellow-600" />
+            </div>
+          </Link>
+          <Link to="/settings">
+            <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
+              <Settings size={16} className="text-gray-600" />
+            </div>
+          </Link>
         </div>
       </div>
 
-      {/* Filters */}
+      {/* Filters - Not sticky to avoid content overlap */}
       <div className="p-4 space-y-4">
         <div className="flex space-x-3">
           <button className="flex items-center bg-gray-50 border border-gray-200 rounded-lg px-4 py-2 text-gray-700 hover:bg-gray-100">
@@ -155,7 +159,7 @@ const TradeHistory = () => {
       </div>
 
       {/* Transactions List */}
-      <div className="px-4 space-y-4 pb-20">
+      <div className="px-4 space-y-4">
         {transactions.map((transaction) => (
           <div key={transaction.id} className="bg-white border border-gray-200 rounded-xl p-4">
             <div className="flex items-start justify-between mb-3">
@@ -203,31 +207,7 @@ const TradeHistory = () => {
         ))}
       </div>
 
-      {/* Bottom Navigation */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 py-3">
-        <div className="flex justify-around">
-          <button className="flex flex-col items-center text-gray-400">
-            <div className="w-6 h-6 mb-1">🏠</div>
-            <span className="text-xs">Home</span>
-          </button>
-          <button className="flex flex-col items-center text-gray-400">
-            <div className="w-6 h-6 mb-1">🔄</div>
-            <span className="text-xs">Buy/Sell</span>
-          </button>
-          <button className="flex flex-col items-center text-gray-400">
-            <div className="w-6 h-6 mb-1">💼</div>
-            <span className="text-xs">My Trades</span>
-          </button>
-          <button className="flex flex-col items-center text-blue-600">
-            <div className="w-6 h-6 mb-1">📋</div>
-            <span className="text-xs font-medium">Transactions</span>
-          </button>
-          <button className="flex flex-col items-center text-gray-400">
-            <div className="w-6 h-6 mb-1">⚙️</div>
-            <span className="text-xs">Settings</span>
-          </button>
-        </div>
-      </div>
+      <BottomNavigation />
     </div>
   );
 };
