@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Search, Plus, Clock, Trophy, Bank } from 'lucide-react';
+import { Search, Plus, Clock, Trophy, Banknote } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 
@@ -67,7 +67,7 @@ const Index = () => {
         </Link>
         <Link to="/settings" className="flex flex-col items-center">
           <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mb-2">
-            <Bank size={24} className="text-blue-500" />
+            <Banknote size={24} className="text-blue-500" />
           </div>
           <span className="text-xs font-medium text-gray-800" style={{ fontFamily: 'Inter' }}>Bank</span>
         </Link>
@@ -182,7 +182,7 @@ const Index = () => {
         </h3>
         <div className="space-y-3">
           <div className="bg-white p-4 rounded-xl shadow-sm flex items-center">
-            <Bank size={24} className="text-blue-500 mr-3" />
+            <Banknote size={24} className="text-blue-500 mr-3" />
             <div>
               <p className="font-medium text-gray-800" style={{ fontFamily: 'Inter' }}>Withdraw USD</p>
               <p className="text-xs text-gray-600" style={{ fontFamily: 'Inter' }}>Cash pickup available</p>
