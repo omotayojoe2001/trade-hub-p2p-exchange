@@ -20,7 +20,9 @@ const Index = () => {
           </div>
         </div>
         <div className="flex items-center space-x-3">
-          <Bell size={24} className="text-white" />
+          <Link to="/notifications">
+            <Bell size={24} className="text-white" />
+          </Link>
           <Settings size={24} className="text-white" />
         </div>
       </div>
