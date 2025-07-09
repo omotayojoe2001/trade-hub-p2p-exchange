@@ -136,30 +136,34 @@ const Index = () => {
       <div className="mb-6">
         <h2 className="text-gray-900 text-lg font-semibold mb-4">Recent Trades</h2>
         <div className="space-y-3">
-          <div className="bg-white p-4 rounded-xl border border-gray-200 flex items-center justify-between">
-            <div className="flex items-center">
-              <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center mr-3">
-                <span className="text-green-500 text-lg">✓</span>
+          <Link to="/trade-completed" className="block">
+            <div className="bg-white p-4 rounded-xl border border-gray-200 flex items-center justify-between hover:shadow-sm transition-shadow">
+              <div className="flex items-center">
+                <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center mr-3">
+                  <span className="text-green-500 text-lg">✓</span>
+                </div>
+                <div>
+                  <p className="font-semibold text-gray-900">Trade #124 Completed</p>
+                  <p className="text-sm text-gray-500">BTC/USD • $45,230</p>
+                </div>
               </div>
-              <div>
-                <p className="font-semibold text-gray-900">Trade #124 Completed</p>
-                <p className="text-sm text-gray-500">BTC/USD • $45,230</p>
-              </div>
+              <span className="text-xs text-gray-500">2m ago</span>
             </div>
-            <span className="text-xs text-gray-500">2m ago</span>
-          </div>
-          <div className="bg-white p-4 rounded-xl border border-gray-200 flex items-center justify-between">
-            <div className="flex items-center">
-              <div className="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center mr-3">
-                <Clock size={16} className="text-yellow-500" />
+          </Link>
+          <Link to="/trade-details" className="block">
+            <div className="bg-white p-4 rounded-xl border border-gray-200 flex items-center justify-between hover:shadow-sm transition-shadow">
+              <div className="flex items-center">
+                <div className="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center mr-3">
+                  <Clock size={16} className="text-yellow-500" />
+                </div>
+                <div>
+                  <p className="font-semibold text-gray-900">Trade #123 Pending</p>
+                  <p className="text-sm text-gray-500">ETH/USD • $3,120</p>
+                </div>
               </div>
-              <div>
-                <p className="font-semibold text-gray-900">Trade #123 Pending</p>
-                <p className="text-sm text-gray-500">ETH/USD • $3,120</p>
-              </div>
+              <span className="text-xs text-gray-500">5m ago</span>
             </div>
-            <span className="text-xs text-gray-500">5m ago</span>
-          </div>
+          </Link>
         </div>
       </div>
 
@@ -172,24 +176,28 @@ const Index = () => {
           </div>
           <div className="text-2xl">💵</div>
         </div>
-        <Button className="bg-white text-green-600 hover:bg-gray-100 mt-3 w-full font-medium">
-          Upgrade to Premium
-        </Button>
+        <Link to="/premium">
+          <Button className="bg-white text-green-600 hover:bg-gray-100 mt-3 w-full font-medium">
+            Upgrade to Premium
+          </Button>
+        </Link>
       </Card>
 
       {/* Platform Updates */}
-      <div className="bg-white p-4 rounded-xl mb-6 border border-gray-200">
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center">
-            <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-3">
-              <span className="text-blue-500 text-lg">📢</span>
+      <Link to="/notifications" className="block">
+        <div className="bg-white p-4 rounded-xl mb-6 border border-gray-200 hover:shadow-sm transition-shadow">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center">
+              <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-3">
+                <span className="text-blue-500 text-lg">📢</span>
+              </div>
+              <span className="font-semibold text-gray-900">Platform Updates</span>
             </div>
-            <span className="font-semibold text-gray-900">Platform Updates</span>
+            <ChevronRight size={20} className="text-gray-400" />
           </div>
-          <ChevronRight size={20} className="text-gray-400" />
+          <p className="text-sm text-gray-600">Maintenance notices & news</p>
         </div>
-        <p className="text-sm text-gray-600">Maintenance notices & news</p>
-      </div>
+      </Link>
 
       {/* Coin Filters */}
       <div className="flex space-x-4 mb-4">
@@ -260,13 +268,15 @@ const Index = () => {
 
       {/* Refer & Earn and My Rewards - Stacked */}
       <div className="space-y-4 mb-6">
-        <Card className="bg-gradient-to-r from-orange-500 to-pink-500 p-4 rounded-xl text-white">
-          <div className="flex items-center justify-between mb-2">
-            <h3 className="font-semibold">Refer & Earn</h3>
-            <span className="text-2xl">🎁</span>
-          </div>
-          <p className="text-sm text-orange-100">Earn points when you invite friends</p>
-        </Card>
+        <Link to="/referrals" className="block">
+          <Card className="bg-gradient-to-r from-orange-500 to-pink-500 p-4 rounded-xl text-white hover:shadow-lg transition-shadow">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="font-semibold">Refer & Earn</h3>
+              <span className="text-2xl">🎁</span>
+            </div>
+            <p className="text-sm text-orange-100">Earn points when you invite friends</p>
+          </Card>
+        </Link>
         
         <Card className="bg-white p-4 rounded-xl border border-gray-200">
           <div className="flex items-center justify-between mb-2">

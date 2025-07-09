@@ -29,6 +29,7 @@ import Referrals from "./pages/Referrals";
 import ProfileSettings from "./pages/ProfileSettings";
 import Security from "./pages/Security";
 import PaymentMethods from "./pages/PaymentMethods";
+import HelpSupport from "./pages/HelpSupport";
 
 const queryClient = new QueryClient();
 
@@ -50,6 +51,11 @@ const App = () => (
             <Route path="/settings" element={<Settings />} />
             <Route path="/notifications" element={<Notifications />} />
             <Route path="/premium" element={<Premium />} />
+            <Route path="/referrals" element={<Referrals />} />
+            <Route path="/profile-settings" element={<ProfileSettings />} />
+            <Route path="/security" element={<Security />} />
+            <Route path="/payment-methods" element={<PaymentMethods />} />
+            <Route path="/help-support" element={<HelpSupport />} />
             <Route path="/merchant-selection" element={<MerchantSelection />} />
             <Route path="/merchant-list" element={<MerchantList />} />
             <Route path="/select-coin" element={<SelectCoin />} />
