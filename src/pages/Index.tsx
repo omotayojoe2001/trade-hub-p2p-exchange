@@ -1,12 +1,44 @@
 
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { ArrowUp, ArrowDown, Clock, Building2, Bell, Settings, TrendingUp, ChevronRight, Star, DollarSign, Zap } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import BottomNavigation from '@/components/BottomNavigation';
+import UserTypeToggle from '@/components/UserTypeToggle';
+import TrackingNotification from '@/components/TrackingNotification';
+import { useAuth } from '@/hooks/useAuth';
 
 const Index = () => {
+  const { user, profile, loading } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!loading && !user) {
+      navigate('/auth');
+    } else if (user && profile && !profile.profile_completed) {
+      navigate('/profile-setup');
+    }
+  }, [user, profile, loading, navigate]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return null;
+  }
+
+  const displayName = profile?.display_name || user.email?.split('@')[0] || 'User';
+  const userType = profile?.user_type || 'customer';
+
   return (
     <div className="min-h-screen bg-white px-4 py-6 pb-20">
       {/* Header */}
@@ -17,7 +49,7 @@ const Index = () => {
           </div>
           <div>
             <p className="text-gray-500 text-sm">Good Morning</p>
-            <h1 className="text-gray-900 text-lg font-medium">Sarah Johnson</h1>
+            <h1 className="text-gray-900 text-lg font-medium">{displayName}</h1>
           </div>
         </div>
         <div className="flex items-center space-x-3">
@@ -29,6 +61,12 @@ const Index = () => {
           </Link>
         </div>
       </div>
+
+      {/* User Type Toggle */}
+      <UserTypeToggle className="mb-4" />
+
+      {/* Active Trade Tracking */}
+      <TrackingNotification />
 
       {/* Stats Card */}
       <Card className="bg-white rounded-2xl p-6 mb-6 shadow-sm border border-gray-200">

@@ -14,7 +14,170 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      profiles: {
+        Row: {
+          created_at: string | null
+          display_name: string | null
+          id: string
+          is_merchant: boolean | null
+          phone_number: string | null
+          profile_completed: boolean | null
+          updated_at: string | null
+          user_id: string
+          user_type: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          display_name?: string | null
+          id?: string
+          is_merchant?: boolean | null
+          phone_number?: string | null
+          profile_completed?: boolean | null
+          updated_at?: string | null
+          user_id: string
+          user_type?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          display_name?: string | null
+          id?: string
+          is_merchant?: boolean | null
+          phone_number?: string | null
+          profile_completed?: boolean | null
+          updated_at?: string | null
+          user_id?: string
+          user_type?: string | null
+        }
+        Relationships: []
+      }
+      referrals: {
+        Row: {
+          created_at: string | null
+          id: string
+          referred_id: string
+          referrer_id: string
+          reward_amount: number | null
+          status: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          referred_id: string
+          referrer_id: string
+          reward_amount?: number | null
+          status?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          referred_id?: string
+          referrer_id?: string
+          reward_amount?: number | null
+          status?: string | null
+        }
+        Relationships: []
+      }
+      trade_updates: {
+        Row: {
+          created_at: string | null
+          id: string
+          new_status: string
+          notes: string | null
+          old_status: string | null
+          trade_id: string
+          updated_by: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          new_status: string
+          notes?: string | null
+          old_status?: string | null
+          trade_id: string
+          updated_by: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          new_status?: string
+          notes?: string | null
+          old_status?: string | null
+          trade_id?: string
+          updated_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trade_updates_trade_id_fkey"
+            columns: ["trade_id"]
+            isOneToOne: false
+            referencedRelation: "trades"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      trades: {
+        Row: {
+          amount: number
+          bank_account_details: Json | null
+          buyer_id: string
+          coin_type: string
+          created_at: string | null
+          expires_at: string | null
+          id: string
+          is_demo: boolean | null
+          naira_amount: number
+          notes: string | null
+          payment_method: string | null
+          rate: number
+          receipt_url: string | null
+          seller_id: string | null
+          status: string
+          trade_type: string
+          transaction_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          amount: number
+          bank_account_details?: Json | null
+          buyer_id: string
+          coin_type: string
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          is_demo?: boolean | null
+          naira_amount: number
+          notes?: string | null
+          payment_method?: string | null
+          rate: number
+          receipt_url?: string | null
+          seller_id?: string | null
+          status?: string
+          trade_type: string
+          transaction_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          amount?: number
+          bank_account_details?: Json | null
+          buyer_id?: string
+          coin_type?: string
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          is_demo?: boolean | null
+          naira_amount?: number
+          notes?: string | null
+          payment_method?: string | null
+          rate?: number
+          receipt_url?: string | null
+          seller_id?: string | null
+          status?: string
+          trade_type?: string
+          transaction_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
