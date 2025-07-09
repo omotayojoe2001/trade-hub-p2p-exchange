@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Search, ArrowDown, ArrowUp, Clock, CheckCircle, XCircle } from 'lucide-react';
 import { Button } from "@/components/ui/button";
@@ -32,7 +31,8 @@ const MyTrades = () => {
       status: 'waiting_confirmation',
       progress: 75,
       startTime: 'June 28, 09:15 AM',
-      avatar: '👩'
+      avatar: '👩',
+      awaitingUserAction: true
     },
     {
       id: 3,
@@ -90,6 +90,14 @@ const MyTrades = () => {
     }
   };
 
+  const handleConfirmPayment = (tradeId: number) => {
+    // Simulate payment confirmation
+    console.log('Confirming payment for trade:', tradeId);
+    // In real app, this would update the trade status
+  };
+
+  const incompleteTradesCount = trades.filter(trade => trade.awaitingUserAction).length;
+
   return (
     <div className="min-h-screen bg-white pb-20">
       {/* Header */}
@@ -104,6 +112,25 @@ const MyTrades = () => {
           <span className="text-white text-xs">●</span>
         </div>
       </div>
+
+      {/* Notification Banner */}
+      {incompleteTradesCount > 0 && (
+        <div className="mx-4 mt-4 bg-orange-50 border border-orange-200 rounded-lg p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center">
+              <div className="w-2 h-2 bg-orange-500 rounded-full mr-3 animate-pulse"></div>
+              <div>
+                <p className="text-orange-800 font-medium text-sm">
+                  {incompleteTradesCount} trade{incompleteTradesCount > 1 ? 's' : ''} awaiting your confirmation
+                </p>
+                <p className="text-orange-600 text-xs">
+                  Please confirm if you've received payment
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Search */}
       <div className="p-4">
@@ -207,7 +234,7 @@ const MyTrades = () => {
               </div>
             </div>
 
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between mb-3">
               <div className="flex-1 mr-4">
                 <div className="w-full bg-gray-200 rounded-full h-2">
                   <div
@@ -218,6 +245,16 @@ const MyTrades = () => {
               </div>
               <span className="text-sm font-medium text-gray-600">{trade.progress}%</span>
             </div>
+
+            {/* Action Button for Waiting Confirmation */}
+            {trade.status === 'waiting_confirmation' && trade.awaitingUserAction && (
+              <Button
+                onClick={() => handleConfirmPayment(trade.id)}
+                className="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg text-sm"
+              >
+                Confirm Payment Received
+              </Button>
+            )}
           </div>
         ))}
       </div>

@@ -12,8 +12,51 @@ const TradeCompleted = () => {
   };
 
   const handleDownloadReceipt = () => {
-    // Download receipt functionality
-    console.log('Downloading receipt');
+    // Create receipt data
+    const receiptData = {
+      tradeId: 'TXN-20241209-001',
+      date: 'Dec 9, 2024, 2:45 PM',
+      amountSold: '0.0032 BTC',
+      rate: '₦1,755,000/BTC',
+      totalReceived: '₦561,600',
+      platformFee: '₦2,808 (0.5%)',
+      netAmount: '₦558,792',
+      merchant: 'MercyPay',
+      bankAccount: 'GTBank • • • • 4875'
+    };
+
+    // Create downloadable receipt
+    const receiptContent = `
+TRADE RECEIPT
+====================
+Transaction ID: ${receiptData.tradeId}
+Date: ${receiptData.date}
+
+TRADE DETAILS
+====================
+Amount Sold: ${receiptData.amountSold}
+Rate: ${receiptData.rate}
+Total Received: ${receiptData.totalReceived}
+Platform Fee: ${receiptData.platformFee}
+Net Amount: ${receiptData.netAmount}
+
+MERCHANT DETAILS
+====================
+Merchant: ${receiptData.merchant}
+Bank Account: ${receiptData.bankAccount}
+
+Thank you for using our platform!
+    `;
+
+    const blob = new Blob([receiptContent], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `receipt-${receiptData.tradeId}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   };
 
   const handleNewTrade = () => {

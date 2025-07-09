@@ -44,13 +44,14 @@ const PaymentStatus = () => {
     if (received) {
       navigate('/trade-completed');
     } else {
-      // Handle dispute case - for now just close dialog
-      console.log('User reported no payment received - opening dispute');
+      // User can check payment later from My Trades section
+      console.log('User reported no payment received - redirecting to My Trades');
+      navigate('/my-trades');
     }
   };
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white overflow-x-hidden">
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-gray-100">
         <div className="flex items-center">
@@ -164,25 +165,30 @@ const PaymentStatus = () => {
       </div>
 
       {/* Action Buttons */}
-      <div className="px-6 space-y-3">
-        <Button className="w-full bg-gray-100 text-gray-700 py-3 rounded-lg hover:bg-gray-200 flex items-center justify-center">
-          <Bell size={16} className="mr-2" />
-          Remind Merchant
-        </Button>
-        
-        <Button className="w-full bg-blue-50 text-blue-600 py-3 rounded-lg hover:bg-blue-100 flex items-center justify-center">
-          <MessageSquare size={16} className="mr-2" />
-          Message Merchant
-        </Button>
-        
-        <Button variant="outline" className="w-full border-red-300 text-red-600 py-3 rounded-lg hover:bg-red-50 flex items-center justify-center">
-          <AlertTriangle size={16} className="mr-2" />
-          Report/Dispute
-        </Button>
+      <div className="px-4 sm:px-6 space-y-3">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <Button className="w-full bg-gray-100 text-gray-700 py-3 rounded-lg hover:bg-gray-200 flex items-center justify-center">
+            <Bell size={16} className="mr-2" />
+            <span className="hidden sm:inline">Remind Merchant</span>
+            <span className="sm:hidden">Remind</span>
+          </Button>
+          
+          <Button className="w-full bg-blue-50 text-blue-600 py-3 rounded-lg hover:bg-blue-100 flex items-center justify-center">
+            <MessageSquare size={16} className="mr-2" />
+            <span className="hidden sm:inline">Message Merchant</span>
+            <span className="sm:hidden">Message</span>
+          </Button>
+          
+          <Button variant="outline" className="w-full border-red-300 text-red-600 py-3 rounded-lg hover:bg-red-50 flex items-center justify-center">
+            <AlertTriangle size={16} className="mr-2" />
+            <span className="hidden sm:inline">Report/Dispute</span>
+            <span className="sm:hidden">Report</span>
+          </Button>
+        </div>
       </div>
 
       {/* Trade Summary */}
-      <div className="p-6 mt-6">
+      <div className="p-4 sm:p-6 mt-6">
         <div className="flex items-center mb-4">
           <FileText size={20} className="text-gray-600 mr-2" />
           <h3 className="text-lg font-semibold text-gray-900">Trade Summary</h3>
@@ -212,7 +218,7 @@ const PaymentStatus = () => {
       </div>
 
       {/* Security Notice */}
-      <div className="p-6">
+      <div className="p-4 sm:p-6">
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
           <div className="flex items-start">
             <Shield size={20} className="text-blue-600 mr-3 mt-0.5" />
