@@ -14,6 +14,7 @@ import Coins from "./pages/Coins";
 import BuySell from "./pages/BuySell";
 import Settings from "./pages/Settings";
 import Notifications from "./pages/Notifications";
+import Premium from "./pages/Premium";
 import MerchantSelection from "./pages/MerchantSelection";
 import MerchantList from "./pages/MerchantList";
 import SelectCoin from "./pages/SelectCoin";
@@ -44,6 +45,7 @@ const App = () => (
             <Route path="/buy-sell" element={<BuySell />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/notifications" element={<Notifications />} />
+            <Route path="/premium" element={<Premium />} />
             <Route path="/merchant-selection" element={<MerchantSelection />} />
             <Route path="/merchant-list" element={<MerchantList />} />
             <Route path="/select-coin" element={<SelectCoin />} />

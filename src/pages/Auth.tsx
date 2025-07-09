@@ -1,18 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Eye, EyeOff, Mail, Lock, User, Phone, AtSign, Gift, Store } from 'lucide-react';
+import { Eye, EyeOff, User, AtSign, Mail, Phone, Fingerprint, Database, ArrowLeft, Gift, Check } from 'lucide-react';
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [formData, setFormData] = useState({
@@ -23,7 +23,8 @@ const Auth = () => {
     username: '',
     phoneNumber: '',
     referralCode: '',
-    userType: 'customer'
+    userType: 'customer',
+    agreeToTerms: false
   });
   
   const navigate = useNavigate();
@@ -123,288 +124,429 @@ const Auth = () => {
     }
   };
 
+  if (isLogin) {
+    return (
+      <div className="min-h-screen bg-white px-4 py-8">
+        <div className="max-w-sm mx-auto">
+          {/* Logo/Icon */}
+          <div className="text-center mb-8">
+            <div className="w-16 h-16 bg-blue-500 rounded-2xl flex items-center justify-center mx-auto mb-6">
+              <Database size={32} className="text-white" />
+            </div>
+            <h1 className="text-2xl font-bold text-black mb-2">
+              Welcome Back 👋
+            </h1>
+            <p className="text-sm text-gray-600">
+              Login to continue your crypto trades
+            </p>
+          </div>
+
+          <form onSubmit={handleLogin} className="space-y-6">
+            {/* Email/Username Input */}
+            <div className="space-y-2">
+              <Label htmlFor="email" className="text-sm font-medium text-gray-700">
+                Email or Username
+              </Label>
+              <div className="relative">
+                <User size={18} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                <Input
+                  id="email"
+                  name="email"
+                  type="text"
+                  value={formData.email}
+                  onChange={handleInputChange}
+                  className="h-12 bg-white border border-gray-300 rounded-lg pl-10 pr-4 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="sarah@example.com or sarah123"
+                  required
+                />
+              </div>
+            </div>
+
+            {/* Password Input */}
+            <div className="space-y-2">
+              <div className="flex justify-between items-center">
+                <Label htmlFor="password" className="text-sm font-medium text-gray-700">
+                  Password
+                </Label>
+                <Link to="/forgot-password" className="text-xs text-blue-500 font-medium">
+                  Forgot Password?
+                </Link>
+              </div>
+              <div className="relative">
+                <Input
+                  id="password"
+                  name="password"
+                  type={showPassword ? "text" : "password"}
+                  value={formData.password}
+                  onChange={handleInputChange}
+                  className="h-12 bg-white border border-gray-300 rounded-lg px-4 pr-12 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="••••••••"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400"
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
+            </div>
+
+            {/* Biometric Option */}
+            <div className="bg-gray-50 rounded-lg p-4 text-center">
+              <button
+                type="button"
+                className="flex items-center justify-center space-x-2 mx-auto"
+              >
+                <Fingerprint size={20} className="text-blue-500" />
+                <span className="text-sm font-medium text-gray-700">
+                  🔒 Tap to login with fingerprint
+                </span>
+              </button>
+            </div>
+
+            {error && (
+              <Alert variant="destructive">
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
+
+            {/* CTA Button */}
+            <Button
+              type="submit"
+              className="w-full h-12 bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded-lg text-sm"
+              disabled={loading}
+            >
+              {loading ? 'Signing in...' : 'Login to Account'}
+            </Button>
+
+            {/* Footer Link */}
+            <div className="text-center pt-4">
+              <p className="text-sm text-gray-600">
+                📱 Don't have an account?{' '}
+                <button
+                  type="button"
+                  onClick={() => setIsLogin(false)}
+                  className="text-blue-500 font-medium"
+                >
+                  Create one
+                </button>
+              </p>
+            </div>
+
+            {/* Security Note */}
+            <div className="text-center pt-6">
+              <div className="flex items-center justify-center space-x-1 text-xs text-gray-500">
+                <span>🔒</span>
+                <span>Your credentials are encrypted. Login is protected by 256-bit security</span>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-bold">CryptoHub</CardTitle>
-          <CardDescription>
-            {isLogin ? 'Sign in to your account' : 'Create your account'}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Tabs value={isLogin ? 'login' : 'signup'} onValueChange={(value) => setIsLogin(value === 'login')}>
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="login">Login</TabsTrigger>
-              <TabsTrigger value="signup">Sign Up</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="login">
-              <form onSubmit={handleLogin} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                    <Input
-                      id="email"
-                      name="email"
-                      type="email"
-                      placeholder="Enter your email"
-                      value={formData.email}
-                      onChange={handleInputChange}
-                      className="pl-10"
-                      required
-                    />
-                  </div>
+    <div className="min-h-screen bg-white px-4 py-6">
+      <div className="max-w-sm mx-auto">
+        {/* Header */}
+        <div className="flex items-center mb-8">
+          <button 
+            onClick={() => setIsLogin(true)}
+            className="p-2 -ml-2"
+          >
+            <ArrowLeft size={20} className="text-gray-600" />
+          </button>
+          <h1 className="text-lg font-semibold text-black ml-2">
+            Create Account
+          </h1>
+        </div>
+
+        <div className="mb-8">
+          <h2 className="text-xl font-semibold text-black mb-2">
+            Join CryptoHub
+          </h2>
+          <p className="text-sm text-gray-600">
+            Create your account to start trading crypto securely
+          </p>
+        </div>
+
+        <form onSubmit={handleSignUp} className="space-y-4">
+          {/* Full Name Input */}
+          <div className="space-y-1">
+            <Label htmlFor="displayName" className="text-sm font-medium text-gray-700">
+              Full Name
+            </Label>
+            <div className="relative">
+              <User size={18} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+              <Input
+                id="displayName"
+                name="displayName"
+                type="text"
+                value={formData.displayName}
+                onChange={handleInputChange}
+                className="h-12 bg-white border border-gray-300 rounded-lg pl-10 pr-4 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                placeholder="Enter your full name"
+                required
+              />
+            </div>
+          </div>
+
+          {/* Username Input */}
+          <div className="space-y-1">
+            <Label htmlFor="username" className="text-sm font-medium text-gray-700">
+              Username
+            </Label>
+            <div className="relative">
+              <AtSign size={18} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+              <Input
+                id="username"
+                name="username"
+                type="text"
+                value={formData.username}
+                onChange={handleInputChange}
+                className="h-12 bg-white border border-gray-300 rounded-lg pl-10 pr-4 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                placeholder="Choose a username"
+                required
+              />
+            </div>
+          </div>
+
+          {/* Email Input */}
+          <div className="space-y-1">
+            <Label htmlFor="email" className="text-sm font-medium text-gray-700">
+              Email Address
+            </Label>
+            <div className="relative">
+              <Mail size={18} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+              <Input
+                id="email"
+                name="email"
+                type="email"
+                value={formData.email}
+                onChange={handleInputChange}
+                className="h-12 bg-white border border-gray-300 rounded-lg pl-10 pr-4 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                placeholder="Enter your email"
+                required
+              />
+            </div>
+          </div>
+
+          {/* Phone Input */}
+          <div className="space-y-1">
+            <Label htmlFor="phoneNumber" className="text-sm font-medium text-gray-700">
+              Phone Number
+            </Label>
+            <div className="flex">
+              <div className="flex items-center bg-white border border-gray-300 border-r-0 rounded-l-lg px-3">
+                <span className="text-lg mr-1">🇳🇬</span>
+                <span className="text-sm text-gray-600">+234</span>
+              </div>
+              <div className="relative flex-1">
+                <Phone size={18} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                <Input
+                  id="phoneNumber"
+                  name="phoneNumber"
+                  type="tel"
+                  value={formData.phoneNumber}
+                  onChange={handleInputChange}
+                  className="h-12 bg-white border border-gray-300 rounded-r-lg border-l-0 pl-10 pr-4 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="8012345678"
+                  required
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Password Input */}
+          <div className="space-y-1">
+            <Label htmlFor="password" className="text-sm font-medium text-gray-700">
+              Password
+            </Label>
+            <div className="relative">
+              <Input
+                id="password"
+                name="password"
+                type={showPassword ? "text" : "password"}
+                value={formData.password}
+                onChange={handleInputChange}
+                className="h-12 bg-white border border-gray-300 rounded-lg px-4 pr-12 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                placeholder="Create a strong password"
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400"
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
+          </div>
+
+          {/* Confirm Password Input */}
+          <div className="space-y-1">
+            <Label htmlFor="confirmPassword" className="text-sm font-medium text-gray-700">
+              Confirm Password
+            </Label>
+            <div className="relative">
+              <Input
+                id="confirmPassword"
+                name="confirmPassword"
+                type={showConfirmPassword ? "text" : "password"}
+                value={formData.confirmPassword}
+                onChange={handleInputChange}
+                className="h-12 bg-white border border-gray-300 rounded-lg px-4 pr-12 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                placeholder="Confirm your password"
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400"
+              >
+                {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
+          </div>
+
+          {/* Referral Code Input */}
+          <div className="space-y-1">
+            <div className="flex items-center space-x-2">
+              <Label htmlFor="referralCode" className="text-sm font-medium text-gray-700">
+                Referral Code (Optional)
+              </Label>
+              <div className="w-4 h-4 bg-green-500 rounded-full flex items-center justify-center">
+                <Check size={10} className="text-white" />
+              </div>
+            </div>
+            <Input
+              id="referralCode"
+              name="referralCode"
+              type="text"
+              value={formData.referralCode}
+              onChange={handleInputChange}
+              className="h-12 bg-white border border-gray-300 rounded-lg px-4 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              placeholder="Enter referral code"
+            />
+            <p className="text-xs text-gray-500">
+              Enter a referral code if you have one. If not, cryptohub will be used by default.
+            </p>
+          </div>
+
+          {/* Referral Banner */}
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+            <div className="flex items-start">
+              <span className="text-sm mr-2">📌</span>
+              <p className="text-xs text-blue-700">
+                🎁 Earn with Referrals! You'll get a % commission on every trade made by users you refer.
+              </p>
+            </div>
+          </div>
+
+          {/* User Type Toggle */}
+          <div className="space-y-2">
+            <Label className="text-sm font-medium text-gray-700">
+              Sign Up As
+            </Label>
+            <div className="space-y-3">
+              <button
+                type="button"
+                onClick={() => setFormData({...formData, userType: 'customer'})}
+                className={`w-full p-4 rounded-lg border-2 transition-all flex items-center space-x-3 ${
+                  formData.userType === 'customer'
+                    ? 'border-blue-500 bg-blue-50'
+                    : 'border-gray-200 hover:border-gray-300'
+                }`}
+              >
+                <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                  <User size={20} className="text-blue-600" />
                 </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="password">Password</Label>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                    <Input
-                      id="password"
-                      name="password"
-                      type={showPassword ? "text" : "password"}
-                      placeholder="Enter your password"
-                      value={formData.password}
-                      onChange={handleInputChange}
-                      className="pl-10 pr-10"
-                      required
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-3 text-gray-400 hover:text-gray-600"
-                    >
-                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                    </button>
-                  </div>
+                <div className="text-left flex-1">
+                  <h4 className="font-semibold text-sm text-black">Customer</h4>
+                  <p className="text-xs text-gray-600">Buy or sell crypto directly. Fast, secure, reliable.</p>
                 </div>
-
-                {error && (
-                  <Alert variant="destructive">
-                    <AlertDescription>{error}</AlertDescription>
-                  </Alert>
-                )}
-
-                <Button type="submit" className="w-full" disabled={loading}>
-                  {loading ? 'Signing in...' : 'Sign In'}
-                </Button>
-              </form>
-            </TabsContent>
-            
-            <TabsContent value="signup">
-              <form onSubmit={handleSignUp} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="displayName">Full Name</Label>
-                  <div className="relative">
-                    <User className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                    <Input
-                      id="displayName"
-                      name="displayName"
-                      type="text"
-                      placeholder="Enter your full name"
-                      value={formData.displayName}
-                      onChange={handleInputChange}
-                      className="pl-10"
-                      required
-                    />
-                  </div>
+                <div className={`w-5 h-5 rounded-full border-2 ${
+                  formData.userType === 'customer' ? 'border-blue-500 bg-blue-500' : 'border-gray-300'
+                }`}>
+                  {formData.userType === 'customer' && (
+                    <div className="w-full h-full rounded-full bg-white scale-50"></div>
+                  )}
                 </div>
+              </button>
 
-                <div className="space-y-2">
-                  <Label htmlFor="username">Username</Label>
-                  <div className="relative">
-                    <AtSign className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                    <Input
-                      id="username"
-                      name="username"
-                      type="text"
-                      placeholder="Choose a username"
-                      value={formData.username}
-                      onChange={handleInputChange}
-                      className="pl-10"
-                      required
-                    />
-                  </div>
+              <button
+                type="button"
+                onClick={() => setFormData({...formData, userType: 'merchant'})}
+                className={`w-full p-4 rounded-lg border-2 transition-all flex items-center space-x-3 ${
+                  formData.userType === 'merchant'
+                    ? 'border-green-500 bg-green-50'
+                    : 'border-gray-200 hover:border-gray-300'
+                }`}
+              >
+                <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                  <Gift size={20} className="text-green-600" />
                 </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email Address</Label>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                    <Input
-                      id="email"
-                      name="email"
-                      type="email"
-                      placeholder="Enter your email"
-                      value={formData.email}
-                      onChange={handleInputChange}
-                      className="pl-10"
-                      required
-                    />
-                  </div>
+                <div className="text-left flex-1">
+                  <h4 className="font-semibold text-sm text-black">Merchant</h4>
+                  <p className="text-xs text-gray-600">Become a trusted trader. Handle orders and receive payments.</p>
                 </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="phoneNumber">Phone Number</Label>
-                  <div className="relative">
-                    <Phone className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                    <Input
-                      id="phoneNumber"
-                      name="phoneNumber"
-                      type="tel"
-                      placeholder="+234 Phone Number"
-                      value={formData.phoneNumber}
-                      onChange={handleInputChange}
-                      className="pl-10"
-                      required
-                    />
-                  </div>
+                <div className={`w-5 h-5 rounded-full border-2 ${
+                  formData.userType === 'merchant' ? 'border-green-500 bg-green-500' : 'border-gray-300'
+                }`}>
+                  {formData.userType === 'merchant' && (
+                    <div className="w-full h-full rounded-full bg-white scale-50"></div>
+                  )}
                 </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="password">Password</Label>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                    <Input
-                      id="password"
-                      name="password"
-                      type={showPassword ? "text" : "password"}
-                      placeholder="Create a password"
-                      value={formData.password}
-                      onChange={handleInputChange}
-                      className="pl-10 pr-10"
-                      required
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-3 text-gray-400 hover:text-gray-600"
-                    >
-                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                    </button>
-                  </div>
-                </div>
+              </button>
+            </div>
+          </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="confirmPassword">Confirm Password</Label>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                    <Input
-                      id="confirmPassword"
-                      name="confirmPassword"
-                      type={showPassword ? "text" : "password"}
-                      placeholder="Confirm your password"
-                      value={formData.confirmPassword}
-                      onChange={handleInputChange}
-                      className="pl-10 pr-10"
-                      required
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-3 text-gray-400 hover:text-gray-600"
-                    >
-                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                    </button>
-                  </div>
-                </div>
+          {/* Terms Checkbox */}
+          <div className="flex items-start space-x-2 py-2">
+            <Checkbox
+              id="terms"
+              checked={formData.agreeToTerms}
+              onCheckedChange={(checked) => setFormData({...formData, agreeToTerms: checked as boolean})}
+              className="mt-1"
+            />
+            <Label htmlFor="terms" className="text-xs text-gray-600 leading-relaxed">
+              I agree to the Terms and Privacy Policy
+            </Label>
+          </div>
 
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="referralCode">Referral Code (Optional)</Label>
-                    <div className="relative">
-                      <Gift className="absolute left-3 top-3 h-4 w-4 text-blue-500" />
-                      <Input
-                        id="referralCode"
-                        name="referralCode"
-                        type="text"
-                        placeholder="Enter referral code"
-                        value={formData.referralCode}
-                        onChange={handleInputChange}
-                        className="pl-10 bg-white"
-                      />
-                    </div>
-                    <p className="text-xs text-blue-600">
-                      Enter a referral code if you have one. If not, CryptoHub will be used by default.
-                    </p>
-                  </div>
-                  
-                  <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-lg">
-                    <div className="flex items-center space-x-2 text-green-700">
-                      <Gift className="h-4 w-4" />
-                      <span className="font-medium text-sm">Earn with Referrals!</span>
-                    </div>
-                    <p className="text-xs text-green-600 mt-1">
-                      You'll get a % commission on every transaction made by your referrals — for life. Use a code or share yours after signup.
-                    </p>
-                  </div>
-                </div>
+          {error && (
+            <Alert variant="destructive">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
 
-                <div className="space-y-3">
-                  <Label className="text-base font-medium">Sign Up As</Label>
-                  <div className="grid grid-cols-2 gap-3">
-                    <button
-                      type="button"
-                      onClick={() => setFormData({...formData, userType: 'customer'})}
-                      className={`p-3 rounded-lg border-2 transition-all ${
-                        formData.userType === 'customer' 
-                          ? 'border-blue-500 bg-blue-50 text-blue-700' 
-                          : 'border-gray-200 hover:border-gray-300'
-                      }`}
-                    >
-                      <User className="h-6 w-6 mx-auto mb-1 text-blue-600" />
-                      <div className="text-center">
-                        <h4 className="font-semibold text-sm">Customer</h4>
-                        <p className="text-xs text-gray-600">Buy or sell crypto directly. Fast, secure, reliable.</p>
-                      </div>
-                    </button>
+          {/* CTA Button */}
+          <Button
+            type="submit"
+            className="w-full h-12 bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded-lg text-sm"
+            disabled={!formData.agreeToTerms || loading}
+          >
+            {loading ? 'Creating Account...' : 'Create Account'}
+          </Button>
 
-                    <button
-                      type="button"
-                      onClick={() => setFormData({...formData, userType: 'merchant'})}
-                      className={`p-3 rounded-lg border-2 transition-all ${
-                        formData.userType === 'merchant' 
-                          ? 'border-green-500 bg-green-50 text-green-700' 
-                          : 'border-gray-200 hover:border-gray-300'
-                      }`}
-                    >
-                      <Store className="h-6 w-6 mx-auto mb-1 text-green-600" />
-                      <div className="text-center">
-                        <h4 className="font-semibold text-sm">Merchant</h4>
-                        <p className="text-xs text-gray-600">Become a trusted trader. Handle orders and receive payments.</p>
-                      </div>
-                    </button>
-                  </div>
-                </div>
-
-                {error && (
-                  <Alert variant="destructive">
-                    <AlertDescription>{error}</AlertDescription>
-                  </Alert>
-                )}
-
-                <Button type="submit" className="w-full" disabled={loading}>
-                  {loading ? 'Creating Account...' : 'Create Account'}
-                </Button>
-
-                <p className="text-center text-sm text-gray-600">
-                  Already have an account?{' '}
-                  <button
-                    type="button"
-                    onClick={() => setIsLogin(true)}
-                    className="text-blue-600 font-medium hover:underline"
-                  >
-                    Log In
-                  </button>
-                </p>
-              </form>
-            </TabsContent>
-          </Tabs>
-        </CardContent>
-      </Card>
+          {/* Footer Link */}
+          <div className="text-center pt-4">
+            <p className="text-sm text-gray-600">
+              Already have an account?{' '}
+              <button
+                type="button"
+                onClick={() => setIsLogin(true)}
+                className="text-blue-500 font-medium"
+              >
+                Log In
+              </button>
+            </p>
+          </div>
+        </form>
+      </div>
     </div>
   );
 };
