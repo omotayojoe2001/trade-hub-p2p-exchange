@@ -85,7 +85,8 @@ const MerchantList = () => {
 
   const handleMerchantSelect = (merchantId: number) => {
     console.log('Selected merchant:', merchantId);
-    navigate('/sell-crypto');
+    // Navigate to trade details with merchant selected
+    navigate('/trade-details', { state: { merchantId } });
   };
 
   return (

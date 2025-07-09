@@ -1,10 +1,54 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { ArrowLeft, MoreVertical, Building2, Bell, MessageSquare, AlertTriangle, FileText, Shield } from 'lucide-react';
 import { Button } from "@/components/ui/button";
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import PaymentConfirmationDialog from '@/components/PaymentConfirmationDialog';
 
 const PaymentStatus = () => {
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [timeLeft, setTimeLeft] = useState(29 * 60 + 45); // 29:45 in seconds
+  const navigate = useNavigate();
+
+  // Simulate timer countdown
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setTimeLeft(prev => {
+        if (prev <= 1) {
+          clearInterval(interval);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    // Simulate payment notification after some time
+    const paymentNotificationTimer = setTimeout(() => {
+      setShowConfirmDialog(true);
+    }, 10000); // Show after 10 seconds for demo
+
+    return () => {
+      clearInterval(interval);
+      clearTimeout(paymentNotificationTimer);
+    };
+  }, []);
+
+  const formatTime = (seconds: number) => {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+  };
+
+  const handlePaymentConfirmation = (received: boolean) => {
+    setShowConfirmDialog(false);
+    if (received) {
+      navigate('/trade-completed');
+    } else {
+      // Handle dispute case - for now just close dialog
+      console.log('User reported no payment received - opening dispute');
+    }
+  };
+
   return (
     <div className="min-h-screen bg-white">
       {/* Header */}
@@ -112,7 +156,7 @@ const PaymentStatus = () => {
               <span className="text-white text-xs">⚠</span>
             </div>
             <div className="text-left">
-              <p className="text-orange-800 font-medium">Auto-refund in 29:45</p>
+              <p className="text-orange-800 font-medium">Auto-refund in {formatTime(timeLeft)}</p>
               <p className="text-orange-600 text-sm">If merchant doesn't respond</p>
             </div>
           </div>
@@ -178,6 +222,13 @@ const PaymentStatus = () => {
           </div>
         </div>
       </div>
+
+      {/* Payment Confirmation Dialog */}
+      <PaymentConfirmationDialog 
+        isOpen={showConfirmDialog}
+        onClose={() => setShowConfirmDialog(false)}
+        onConfirm={handlePaymentConfirmation}
+      />
     </div>
   );
 };

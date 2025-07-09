@@ -19,6 +19,7 @@ import TradeHistory from "./pages/TradeHistory";
 import PaymentStatus from "./pages/PaymentStatus";
 import TradeDetails from "./pages/TradeDetails";
 import SellCrypto from "./pages/SellCrypto";
+import TradeCompleted from "./pages/TradeCompleted";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -45,6 +46,7 @@ const App = () => (
           <Route path="/payment-status" element={<PaymentStatus />} />
           <Route path="/trade-details" element={<TradeDetails />} />
           <Route path="/sell-crypto" element={<SellCrypto />} />
+          <Route path="/trade-completed" element={<TradeCompleted />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

@@ -10,8 +10,8 @@ const MerchantSelection = () => {
 
   const handleContinue = () => {
     if (selectedOption === 'auto') {
-      // Auto-match goes directly to sell crypto page
-      navigate('/sell-crypto');
+      // Auto-match goes directly to trade details with auto-matched merchant
+      navigate('/trade-details', { state: { isAutoMatch: true } });
     } else if (selectedOption === 'manual') {
       // Manual selection goes to merchant list
       navigate('/merchant-list');

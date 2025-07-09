@@ -31,7 +31,7 @@ const TradeDetails = () => {
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-gray-100">
         <div className="flex items-center">
-          <Link to="/sell-crypto">
+          <Link to="/merchant-selection">
             <ArrowLeft size={24} className="text-gray-700 mr-4" />
           </Link>
           <h1 className="text-lg font-semibold text-gray-900">Trade Details</h1>

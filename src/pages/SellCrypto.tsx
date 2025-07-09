@@ -30,7 +30,7 @@ const SellCrypto = () => {
   };
 
   const handleSendTradeRequest = () => {
-    navigate('/trade-details');
+    navigate('/merchant-selection');
   };
 
   return (
