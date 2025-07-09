@@ -1,6 +1,7 @@
 
 import React from 'react';
-import { ArrowLeft, Bell, ChevronRight, User, Shield, CreditCard, HelpCircle, LogOut } from 'lucide-react';
+import { ArrowLeft, Bell, ChevronRight, User, Shield, CreditCard, HelpCircle, LogOut, Gift } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import BottomNavigation from '@/components/BottomNavigation';
 
 const Settings = () => {
@@ -9,31 +10,43 @@ const Settings = () => {
       icon: <User size={20} className="text-blue-600" />,
       title: 'Profile Settings',
       description: 'Manage your personal information',
-      hasChevron: true
+      hasChevron: true,
+      link: '/profile-settings'
     },
     {
       icon: <Shield size={20} className="text-green-600" />,
       title: 'Security',
       description: '2FA, password, and privacy settings',
-      hasChevron: true
+      hasChevron: true,
+      link: '/security'
     },
     {
       icon: <CreditCard size={20} className="text-purple-600" />,
       title: 'Payment Methods',
       description: 'Manage your bank accounts and cards',
-      hasChevron: true
+      hasChevron: true,
+      link: '/payment-methods'
     },
     {
       icon: <Bell size={20} className="text-orange-600" />,
       title: 'Notifications',
       description: 'Push notifications and email alerts',
-      hasChevron: true
+      hasChevron: true,
+      link: '/notifications'
+    },
+    {
+      icon: <Gift size={20} className="text-pink-600" />,
+      title: 'Referrals',
+      description: 'Invite friends and earn rewards',
+      hasChevron: true,
+      link: '/referrals'
     },
     {
       icon: <HelpCircle size={20} className="text-gray-600" />,
       title: 'Help & Support',
       description: 'Contact us and view FAQs',
-      hasChevron: true
+      hasChevron: true,
+      link: '/help-support'
     }
   ];
 
@@ -53,9 +66,10 @@ const Settings = () => {
       {/* Settings Options */}
       <div className="p-4 space-y-4">
         {settingsOptions.map((option, index) => (
-          <div
+          <Link
             key={index}
-            className="bg-white rounded-lg p-4 border border-gray-200 cursor-pointer hover:shadow-sm transition-shadow"
+            to={option.link}
+            className="block bg-white rounded-lg p-4 border border-gray-200 cursor-pointer hover:shadow-sm transition-shadow"
           >
             <div className="flex items-center justify-between">
               <div className="flex items-center">
@@ -71,7 +85,7 @@ const Settings = () => {
                 <ChevronRight size={20} className="text-gray-400" />
               )}
             </div>
-          </div>
+          </Link>
         ))}
       </div>
 

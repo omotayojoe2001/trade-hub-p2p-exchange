@@ -25,6 +25,10 @@ import TradeDetails from "./pages/TradeDetails";
 import SellCrypto from "./pages/SellCrypto";
 import TradeCompleted from "./pages/TradeCompleted";
 import NotFound from "./pages/NotFound";
+import Referrals from "./pages/Referrals";
+import ProfileSettings from "./pages/ProfileSettings";
+import Security from "./pages/Security";
+import PaymentMethods from "./pages/PaymentMethods";
 
 const queryClient = new QueryClient();
 
