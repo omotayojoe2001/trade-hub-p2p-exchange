@@ -30,6 +30,25 @@ import ProfileSettings from "./pages/ProfileSettings";
 import Security from "./pages/Security";
 import PaymentMethods from "./pages/PaymentMethods";
 import HelpSupport from "./pages/HelpSupport";
+import SplashScreen from "./pages/SplashScreen";
+import OnboardingSlides from "./pages/OnboardingSlides";
+import EmailVerification from "./pages/EmailVerification";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
+import Enable2FA from "./pages/Enable2FA";
+import CoinDetail from "./pages/CoinDetail";
+import BuyCrypto from "./pages/BuyCrypto";
+import BuyCryptoMatch from "./pages/BuyCryptoMatch";
+import BuyCryptoPayment from "./pages/BuyCryptoPayment";
+import BuyCryptoWaiting from "./pages/BuyCryptoWaiting";
+import BuyCryptoSuccess from "./pages/BuyCryptoSuccess";
+import BuyCryptoCancel from "./pages/BuyCryptoCancel";
+import BuyCryptoDispute from "./pages/BuyCryptoDispute";
+import SellCryptoMatch from "./pages/SellCryptoMatch";
+import SellCryptoWaiting from "./pages/SellCryptoWaiting";
+import SellCryptoConfirmReceipt from "./pages/SellCryptoConfirmReceipt";
+import SellCryptoCancel from "./pages/SellCryptoCancel";
+import SellCryptoDispute from "./pages/SellCryptoDispute";
 
 const queryClient = new QueryClient();
 
@@ -56,6 +75,20 @@ const App = () => (
             <Route path="/security" element={<Security />} />
             <Route path="/payment-methods" element={<PaymentMethods />} />
             <Route path="/help-support" element={<HelpSupport />} />
+            <Route path="/splash" element={<SplashScreen />} />
+            <Route path="/onboarding" element={<OnboardingSlides />} />
+            <Route path="/email-verification" element={<EmailVerification />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/enable-2fa" element={<Enable2FA />} />
+            <Route path="/coin/:coinId" element={<CoinDetail />} />
+            <Route path="/buy-crypto" element={<BuyCrypto />} />
+            <Route path="/buy-crypto-match" element={<BuyCryptoMatch />} />
+            <Route path="/buy-crypto-payment" element={<BuyCryptoPayment />} />
+            <Route path="/buy-crypto-waiting" element={<BuyCryptoWaiting />} />
+            <Route path="/buy-crypto-success" element={<BuyCryptoSuccess />} />
+            <Route path="/buy-crypto-cancel" element={<BuyCryptoCancel />} />
+            <Route path="/buy-crypto-dispute" element={<BuyCryptoDispute />} />
             <Route path="/merchant-selection" element={<MerchantSelection />} />
             <Route path="/merchant-list" element={<MerchantList />} />
             <Route path="/select-coin" element={<SelectCoin />} />
@@ -64,6 +97,11 @@ const App = () => (
             <Route path="/payment-status" element={<PaymentStatus />} />
             <Route path="/trade-details" element={<TradeDetails />} />
             <Route path="/sell-crypto" element={<SellCrypto />} />
+            <Route path="/sell-crypto-match" element={<SellCryptoMatch />} />
+            <Route path="/sell-crypto-waiting" element={<SellCryptoWaiting />} />
+            <Route path="/sell-crypto-confirm-receipt" element={<SellCryptoConfirmReceipt />} />
+            <Route path="/sell-crypto-cancel" element={<SellCryptoCancel />} />
+            <Route path="/sell-crypto-dispute" element={<SellCryptoDispute />} />
             <Route path="/trade-completed" element={<TradeCompleted />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
