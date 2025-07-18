@@ -23,7 +23,7 @@ const BuyCryptoSuccess = () => {
   };
 
   const handleGoHome = () => {
-    navigate("/");
+    navigate("/home");
   };
 
   const handleViewTrades = () => {

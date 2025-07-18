@@ -60,7 +60,7 @@ Thank you for using our platform!
   };
 
   const handleNewTrade = () => {
-    navigate('/');
+    navigate('/home');
   };
 
   return (
@@ -68,7 +68,7 @@ Thank you for using our platform!
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-gray-100">
         <div className="flex items-center">
-          <Link to="/">
+          <Link to="/home">
             <ArrowLeft size={24} className="text-gray-700 mr-4" />
           </Link>
           <h1 className="text-lg font-semibold text-gray-900">Trade Completed</h1>

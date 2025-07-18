@@ -24,7 +24,7 @@ const Enable2FA = () => {
   };
 
   const handleSkip = () => {
-    navigate("/");
+    navigate("/home");
   };
 
   return (

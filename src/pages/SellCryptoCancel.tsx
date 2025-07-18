@@ -24,7 +24,7 @@ const SellCryptoCancel = () => {
   const handleConfirmCancel = () => {
     const finalReason = reason === "Other" ? customReason : reason;
     console.log("Sell trade cancelled:", finalReason);
-    navigate("/");
+    navigate("/home");
   };
 
   const handleGoBack = () => {

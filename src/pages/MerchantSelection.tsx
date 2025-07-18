@@ -161,7 +161,7 @@ const MerchantSelection = () => {
 
         {/* Back to Home */}
         <div className="text-center mt-6">
-          <Link to="/" className="text-gray-500 text-sm hover:text-gray-700 transition-colors">
+          <Link to="/home" className="text-gray-500 text-sm hover:text-gray-700 transition-colors">
             Back to Home
           </Link>
         </div>

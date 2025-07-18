@@ -3,8 +3,11 @@ import React from 'react';
 import { ArrowLeft, Bell, ChevronRight, User, Shield, CreditCard, HelpCircle, LogOut, Gift } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import BottomNavigation from '@/components/BottomNavigation';
+import { useAuth } from '@/hooks/useAuth';
 
 const Settings = () => {
+  const { signOut } = useAuth();
+  
   const settingsOptions = [
     {
       icon: <User size={20} className="text-blue-600" />,
@@ -91,7 +94,10 @@ const Settings = () => {
 
       {/* Logout */}
       <div className="p-4">
-        <div className="bg-white rounded-lg p-4 border border-red-200 cursor-pointer hover:bg-red-50 transition-colors">
+        <div 
+          className="bg-white rounded-lg p-4 border border-red-200 cursor-pointer hover:bg-red-50 transition-colors"
+          onClick={signOut}
+        >
           <div className="flex items-center">
             <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center mr-3">
               <LogOut size={20} className="text-red-600" />

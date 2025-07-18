@@ -12,7 +12,7 @@ const EmailVerification = () => {
   const handleVerify = () => {
     // TODO: Implement email verification logic
     console.log("Verifying code:", code);
-    navigate("/");
+    navigate("/home");
   };
 
   const handleResend = () => {

@@ -6,7 +6,7 @@ const BottomNavigation = () => {
   const location = useLocation();
 
   const navItems = [
-    { path: '/', icon: '🏠', label: 'Home' },
+    { path: '/home', icon: '🏠', label: 'Home' },
     { path: '/buy-sell', icon: '🔄', label: 'Buy/Sell' },
     { path: '/my-trades', icon: '💼', label: 'My Trades' },
     { path: '/trade-history', icon: '📋', label: 'Transactions' },

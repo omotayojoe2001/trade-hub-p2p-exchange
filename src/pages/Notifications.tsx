@@ -100,7 +100,7 @@ const Notifications = () => {
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <div className="bg-white px-4 py-4 flex items-center border-b border-gray-100">
-        <Link to="/" className="mr-4">
+        <Link to="/home" className="mr-4">
           <ArrowLeft size={24} className="text-gray-700" />
         </Link>
         <h1 className="text-lg font-semibold text-gray-900">Notifications</h1>
