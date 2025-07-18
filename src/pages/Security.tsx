@@ -152,9 +152,11 @@ const Security = () => {
                 />
               </div>
 
-              <Button className="w-full">
-                Verify and Enable 2FA
-              </Button>
+              <Link to="/enable-2fa">
+                <Button className="w-full">
+                  Verify and Enable 2FA
+                </Button>
+              </Link>
             </div>
           )}
         </Card>

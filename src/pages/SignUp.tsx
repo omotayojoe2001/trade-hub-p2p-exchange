@@ -4,10 +4,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { User, AtSign, Mail, Phone, Eye, EyeOff, Check } from "lucide-react";
 
 const SignUp = () => {
+  const navigate = useNavigate();
   const [userType, setUserType] = useState<'customer' | 'merchant'>('customer');
   const [formData, setFormData] = useState({
     fullName: '',
@@ -32,6 +33,8 @@ const SignUp = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     console.log('Form submitted:', formData, 'User type:', userType);
+    // Redirect to email verification after successful signup
+    navigate('/email-verification');
   };
 
   return (

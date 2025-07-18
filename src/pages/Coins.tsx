@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
 import { Search, TrendingUp, ChevronDown } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
@@ -152,9 +153,10 @@ const Coins = () => {
       <div className="px-4">
         <div className="bg-white rounded-lg">
           {filteredCoins.map((coin, index) => (
-            <div
+            <Link 
               key={coin.symbol}
-              className={`p-4 flex items-center justify-between ${
+              to={`/coin/${coin.name.toLowerCase()}`}
+              className={`block p-4 flex items-center justify-between hover:bg-gray-50 transition-colors ${
                 index !== filteredCoins.length - 1 ? 'border-b border-gray-100' : ''
               }`}
             >
@@ -184,7 +186,7 @@ const Coins = () => {
                   {coin.change}
                 </p>
               </div>
-            </div>
+            </Link>
           ))}
         </div>
 

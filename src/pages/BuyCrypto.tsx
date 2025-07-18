@@ -25,6 +25,7 @@ const BuyCrypto = () => {
   };
 
   const handleContinue = () => {
+    // Navigate to match screen with the entered amount
     navigate("/buy-crypto-match", { state: { amount, nairaAmount } });
   };
 

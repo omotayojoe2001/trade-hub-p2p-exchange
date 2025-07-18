@@ -218,51 +218,55 @@ const Index = () => {
         </div>
         
         <div className="space-y-3">
-          <div className="bg-white p-4 rounded-xl border border-gray-200 flex items-center justify-between">
-            <div className="flex items-center">
-              <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center mr-3">
-                <span className="text-orange-500 font-bold">₿</span>
-              </div>
-              <div>
-                <p className="font-semibold text-gray-900">Bitcoin</p>
-                <p className="text-sm text-gray-500">BTC</p>
-              </div>
-            </div>
-            <div className="text-right">
-              <p className="font-bold text-gray-900">$68,523</p>
+          <Link to="/coin/bitcoin" className="block">
+            <div className="bg-white p-4 rounded-xl border border-gray-200 flex items-center justify-between hover:bg-gray-50 transition-colors">
               <div className="flex items-center">
-                <span className="text-green-500 text-sm font-semibold">+5.2%</span>
-                <div className="ml-2 flex space-x-1">
-                  <div className="w-1 h-4 bg-green-500 rounded"></div>
-                  <div className="w-1 h-3 bg-green-500 rounded"></div>
-                  <div className="w-1 h-5 bg-green-500 rounded"></div>
+                <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center mr-3">
+                  <span className="text-orange-500 font-bold">₿</span>
+                </div>
+                <div>
+                  <p className="font-semibold text-gray-900">Bitcoin</p>
+                  <p className="text-sm text-gray-500">BTC</p>
+                </div>
+              </div>
+              <div className="text-right">
+                <p className="font-bold text-gray-900">$68,523</p>
+                <div className="flex items-center">
+                  <span className="text-green-500 text-sm font-semibold">+5.2%</span>
+                  <div className="ml-2 flex space-x-1">
+                    <div className="w-1 h-4 bg-green-500 rounded"></div>
+                    <div className="w-1 h-3 bg-green-500 rounded"></div>
+                    <div className="w-1 h-5 bg-green-500 rounded"></div>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
+          </Link>
           
-          <div className="bg-white p-4 rounded-xl border border-gray-200 flex items-center justify-between">
-            <div className="flex items-center">
-              <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mr-3">
-                <span className="text-blue-500 font-bold">Ξ</span>
-              </div>
-              <div>
-                <p className="font-semibold text-gray-900">Ethereum</p>
-                <p className="text-sm text-gray-500">ETH</p>
-              </div>
-            </div>
-            <div className="text-right">
-              <p className="font-bold text-gray-900">$3,847</p>
+          <Link to="/coin/ethereum" className="block">
+            <div className="bg-white p-4 rounded-xl border border-gray-200 flex items-center justify-between hover:bg-gray-50 transition-colors">
               <div className="flex items-center">
-                <span className="text-green-500 text-sm font-semibold">+3.8%</span>
-                <div className="ml-2 flex space-x-1">
-                  <div className="w-1 h-3 bg-green-500 rounded"></div>
-                  <div className="w-1 h-4 bg-green-500 rounded"></div>
-                  <div className="w-1 h-2 bg-green-500 rounded"></div>
+                <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mr-3">
+                  <span className="text-blue-500 font-bold">Ξ</span>
+                </div>
+                <div>
+                  <p className="font-semibold text-gray-900">Ethereum</p>
+                  <p className="text-sm text-gray-500">ETH</p>
+                </div>
+              </div>
+              <div className="text-right">
+                <p className="font-bold text-gray-900">$3,847</p>
+                <div className="flex items-center">
+                  <span className="text-green-500 text-sm font-semibold">+3.8%</span>
+                  <div className="ml-2 flex space-x-1">
+                    <div className="w-1 h-3 bg-green-500 rounded"></div>
+                    <div className="w-1 h-4 bg-green-500 rounded"></div>
+                    <div className="w-1 h-2 bg-green-500 rounded"></div>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
+          </Link>
         </div>
       </div>
 
