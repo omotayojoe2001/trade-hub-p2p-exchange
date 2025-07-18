@@ -36,7 +36,7 @@ const Login = () => {
 
   const handleConfirmationClose = () => {
     setShowConfirmation(false);
-    navigate('/');
+    navigate('/home');
   };
 
   return (

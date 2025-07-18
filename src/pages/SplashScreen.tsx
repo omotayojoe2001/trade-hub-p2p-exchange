@@ -1,16 +1,25 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
 
 const SplashScreen = () => {
   const navigate = useNavigate();
+  const { user, loading } = useAuth();
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      navigate("/onboarding");
+      // If user is authenticated, go to home, otherwise go to onboarding
+      if (!loading) {
+        if (user) {
+          navigate("/home");
+        } else {
+          navigate("/onboarding");
+        }
+      }
     }, 2000);
 
     return () => clearTimeout(timer);
-  }, [navigate]);
+  }, [navigate, user, loading]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary to-primary-variant flex items-center justify-center">
