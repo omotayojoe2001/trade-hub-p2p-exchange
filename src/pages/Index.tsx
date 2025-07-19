@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/card";
 import BottomNavigation from '@/components/BottomNavigation';
 import UserTypeToggle from '@/components/UserTypeToggle';
 import TrackingNotification from '@/components/TrackingNotification';
+import TrendingCoins from '@/components/TrendingCoins';
 import { useAuth } from '@/hooks/useAuth';
 
 const Index = () => {
@@ -208,67 +209,7 @@ const Index = () => {
       </div>
 
       {/* Trending Coins */}
-      <div className="mb-6">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center">
-            <span className="text-orange-400 text-lg mr-2">🔥</span>
-            <h2 className="text-gray-900 text-lg font-semibold">Trending Coins</h2>
-          </div>
-          <Link to="/coins" className="text-blue-500 text-sm font-medium">See All</Link>
-        </div>
-        
-        <div className="space-y-3">
-          <Link to="/coin/bitcoin" className="block">
-            <div className="bg-white p-4 rounded-xl border border-gray-200 flex items-center justify-between hover:bg-gray-50 transition-colors">
-              <div className="flex items-center">
-                <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center mr-3">
-                  <span className="text-orange-500 font-bold">₿</span>
-                </div>
-                <div>
-                  <p className="font-semibold text-gray-900">Bitcoin</p>
-                  <p className="text-sm text-gray-500">BTC</p>
-                </div>
-              </div>
-              <div className="text-right">
-                <p className="font-bold text-gray-900">$68,523</p>
-                <div className="flex items-center">
-                  <span className="text-green-500 text-sm font-semibold">+5.2%</span>
-                  <div className="ml-2 flex space-x-1">
-                    <div className="w-1 h-4 bg-green-500 rounded"></div>
-                    <div className="w-1 h-3 bg-green-500 rounded"></div>
-                    <div className="w-1 h-5 bg-green-500 rounded"></div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </Link>
-          
-          <Link to="/coin/ethereum" className="block">
-            <div className="bg-white p-4 rounded-xl border border-gray-200 flex items-center justify-between hover:bg-gray-50 transition-colors">
-              <div className="flex items-center">
-                <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mr-3">
-                  <span className="text-blue-500 font-bold">Ξ</span>
-                </div>
-                <div>
-                  <p className="font-semibold text-gray-900">Ethereum</p>
-                  <p className="text-sm text-gray-500">ETH</p>
-                </div>
-              </div>
-              <div className="text-right">
-                <p className="font-bold text-gray-900">$3,847</p>
-                <div className="flex items-center">
-                  <span className="text-green-500 text-sm font-semibold">+3.8%</span>
-                  <div className="ml-2 flex space-x-1">
-                    <div className="w-1 h-3 bg-green-500 rounded"></div>
-                    <div className="w-1 h-4 bg-green-500 rounded"></div>
-                    <div className="w-1 h-2 bg-green-500 rounded"></div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </Link>
-        </div>
-      </div>
+      <TrendingCoins />
 
       {/* Refer & Earn and My Rewards - Stacked */}
       <div className="space-y-4 mb-6">
