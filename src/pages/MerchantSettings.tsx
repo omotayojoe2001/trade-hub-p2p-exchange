@@ -5,7 +5,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Settings, TrendingUp, Shield, Clock, DollarSign } from 'lucide-react';
+import { Checkbox } from "@/components/ui/checkbox";
+import { Badge } from "@/components/ui/badge";
+import { ArrowLeft, Settings, TrendingUp, Shield, Clock, DollarSign, Coins, Globe, CreditCard, MapPin, Calendar } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -13,10 +15,9 @@ import BottomNavigation from '@/components/BottomNavigation';
 
 interface MerchantSettings {
   merchant_type: 'auto' | 'manual';
-  btc_buy_rate: number | null;
-  btc_sell_rate: number | null;
-  usdt_buy_rate: number | null;
-  usdt_sell_rate: number | null;
+  supported_coins: string[];
+  supported_currencies: string[];
+  exchange_rates: Record<string, { buy_rate: number | null; sell_rate: number | null }>;
   min_trade_amount: number;
   max_trade_amount: number;
   auto_accept_trades: boolean;
@@ -25,15 +26,31 @@ interface MerchantSettings {
   accepts_new_trades: boolean;
   avg_response_time_minutes: number;
   payment_methods: string[];
+  service_locations: string[];
+  business_hours: {
+    enabled: boolean;
+    monday: { start: string; end: string; enabled: boolean };
+    tuesday: { start: string; end: string; enabled: boolean };
+    wednesday: { start: string; end: string; enabled: boolean };
+    thursday: { start: string; end: string; enabled: boolean };
+    friday: { start: string; end: string; enabled: boolean };
+    saturday: { start: string; end: string; enabled: boolean };
+    sunday: { start: string; end: string; enabled: boolean };
+  };
+  requires_kyc: boolean;
+  min_customer_rating: number;
 }
 
 const MerchantSettings = () => {
   const [settings, setSettings] = useState<MerchantSettings>({
     merchant_type: 'manual',
-    btc_buy_rate: null,
-    btc_sell_rate: null,
-    usdt_buy_rate: null,
-    usdt_sell_rate: null,
+    supported_coins: ['BTC', 'USDT'],
+    supported_currencies: ['NGN'],
+    exchange_rates: {
+      BTC: { buy_rate: null, sell_rate: null },
+      USDT: { buy_rate: null, sell_rate: null },
+      ETH: { buy_rate: null, sell_rate: null }
+    },
     min_trade_amount: 1000,
     max_trade_amount: 10000000,
     auto_accept_trades: false,
@@ -41,14 +58,37 @@ const MerchantSettings = () => {
     is_online: true,
     accepts_new_trades: true,
     avg_response_time_minutes: 10,
-    payment_methods: ['bank_transfer']
+    payment_methods: ['bank_transfer'],
+    service_locations: ['Nigeria'],
+    business_hours: {
+      enabled: false,
+      monday: { start: '09:00', end: '17:00', enabled: true },
+      tuesday: { start: '09:00', end: '17:00', enabled: true },
+      wednesday: { start: '09:00', end: '17:00', enabled: true },
+      thursday: { start: '09:00', end: '17:00', enabled: true },
+      friday: { start: '09:00', end: '17:00', enabled: true },
+      saturday: { start: '10:00', end: '15:00', enabled: false },
+      sunday: { start: '10:00', end: '15:00', enabled: false }
+    },
+    requires_kyc: false,
+    min_customer_rating: 0
   });
 
   const [loading, setLoading] = useState(false);
-  const [currentBtcPrice, setCurrentBtcPrice] = useState<number>(68500);
-  const [currentUsdtPrice, setCurrentUsdtPrice] = useState<number>(1);
+  const [currentPrices, setCurrentPrices] = useState<Record<string, number>>({
+    BTC: 68500,
+    USDT: 1,
+    ETH: 3200,
+    DOGE: 0.15,
+    ADA: 0.45
+  });
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  const availableCoins = ['BTC', 'USDT', 'ETH', 'DOGE', 'ADA', 'BNB', 'XRP', 'SOL', 'MATIC', 'DOT'];
+  const availableCurrencies = ['NGN', 'USD', 'EUR', 'GBP', 'KES', 'ZAR', 'GHS'];
+  const availablePaymentMethods = ['bank_transfer', 'mobile_money', 'paypal', 'wise', 'revolut', 'cash_app', 'zelle', 'western_union'];
+  const availableCountries = ['Nigeria', 'Kenya', 'South Africa', 'Ghana', 'Uganda', 'Rwanda', 'Tanzania', 'Ethiopia'];
 
   useEffect(() => {
     loadMerchantSettings();
@@ -67,21 +107,18 @@ const MerchantSettings = () => {
         .maybeSingle();
 
       if (data) {
-        setSettings({
+        setSettings(prev => ({
+          ...prev,
           merchant_type: data.merchant_type as 'auto' | 'manual',
-          btc_buy_rate: data.btc_buy_rate,
-          btc_sell_rate: data.btc_sell_rate,
-          usdt_buy_rate: data.usdt_buy_rate,
-          usdt_sell_rate: data.usdt_sell_rate,
-          min_trade_amount: data.min_trade_amount,
-          max_trade_amount: data.max_trade_amount,
-          auto_accept_trades: data.auto_accept_trades,
-          auto_release_escrow: data.auto_release_escrow,
-          is_online: data.is_online,
-          accepts_new_trades: data.accepts_new_trades,
-          avg_response_time_minutes: data.avg_response_time_minutes,
-          payment_methods: Array.isArray(data.payment_methods) ? data.payment_methods as string[] : ['bank_transfer']
-        });
+          min_trade_amount: data.min_trade_amount || prev.min_trade_amount,
+          max_trade_amount: data.max_trade_amount || prev.max_trade_amount,
+          auto_accept_trades: data.auto_accept_trades ?? prev.auto_accept_trades,
+          auto_release_escrow: data.auto_release_escrow ?? prev.auto_release_escrow,
+          is_online: data.is_online ?? prev.is_online,
+          accepts_new_trades: data.accepts_new_trades ?? prev.accepts_new_trades,
+          avg_response_time_minutes: data.avg_response_time_minutes || prev.avg_response_time_minutes,
+          payment_methods: Array.isArray(data.payment_methods) ? data.payment_methods as string[] : prev.payment_methods
+        }));
       }
     } catch (error) {
       console.error('Error loading merchant settings:', error);
@@ -90,10 +127,20 @@ const MerchantSettings = () => {
 
   const fetchCurrentPrices = async () => {
     try {
-      const response = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,tether&vs_currencies=usd');
+      const response = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,tether,ethereum,dogecoin,cardano,binancecoin,ripple,solana,matic-network,polkadot&vs_currencies=usd');
       const data = await response.json();
-      setCurrentBtcPrice(data.bitcoin?.usd || 68500);
-      setCurrentUsdtPrice(data.tether?.usd || 1);
+      setCurrentPrices({
+        BTC: data.bitcoin?.usd || 68500,
+        USDT: data.tether?.usd || 1,
+        ETH: data.ethereum?.usd || 3200,
+        DOGE: data.dogecoin?.usd || 0.15,
+        ADA: data.cardano?.usd || 0.45,
+        BNB: data.binancecoin?.usd || 300,
+        XRP: data.ripple?.usd || 0.60,
+        SOL: data.solana?.usd || 180,
+        MATIC: data['matic-network']?.usd || 0.85,
+        DOT: data.polkadot?.usd || 7.5
+      });
     } catch (error) {
       console.error('Error fetching prices:', error);
     }
@@ -187,6 +234,64 @@ const MerchantSettings = () => {
           </div>
         </Card>
 
+        {/* Supported Coins */}
+        <Card className="p-4">
+          <div className="flex items-center mb-4">
+            <Coins size={20} className="text-orange-600 mr-2" />
+            <h2 className="text-lg font-semibold text-gray-900">Supported Cryptocurrencies</h2>
+          </div>
+          
+          <div className="grid grid-cols-2 gap-3">
+            {availableCoins.map((coin) => (
+              <div key={coin} className="flex items-center space-x-2">
+                <Checkbox
+                  id={`coin-${coin}`}
+                  checked={settings.supported_coins.includes(coin)}
+                  onCheckedChange={(checked) => {
+                    setSettings(prev => ({
+                      ...prev,
+                      supported_coins: checked 
+                        ? [...prev.supported_coins, coin]
+                        : prev.supported_coins.filter(c => c !== coin)
+                    }));
+                  }}
+                />
+                <Label htmlFor={`coin-${coin}`} className="flex items-center">
+                  {coin} <span className="text-xs text-gray-500 ml-1">${currentPrices[coin]?.toLocaleString()}</span>
+                </Label>
+              </div>
+            ))}
+          </div>
+        </Card>
+
+        {/* Supported Currencies */}
+        <Card className="p-4">
+          <div className="flex items-center mb-4">
+            <Globe size={20} className="text-blue-600 mr-2" />
+            <h2 className="text-lg font-semibold text-gray-900">Supported Currencies</h2>
+          </div>
+          
+          <div className="grid grid-cols-3 gap-3">
+            {availableCurrencies.map((currency) => (
+              <div key={currency} className="flex items-center space-x-2">
+                <Checkbox
+                  id={`currency-${currency}`}
+                  checked={settings.supported_currencies.includes(currency)}
+                  onCheckedChange={(checked) => {
+                    setSettings(prev => ({
+                      ...prev,
+                      supported_currencies: checked 
+                        ? [...prev.supported_currencies, currency]
+                        : prev.supported_currencies.filter(c => c !== currency)
+                    }));
+                  }}
+                />
+                <Label htmlFor={`currency-${currency}`}>{currency}</Label>
+              </div>
+            ))}
+          </div>
+        </Card>
+
         {/* Exchange Rates */}
         <Card className="p-4">
           <div className="flex items-center mb-4">
@@ -197,72 +302,119 @@ const MerchantSettings = () => {
           <div className="space-y-4">
             <div className="bg-blue-50 p-3 rounded-lg">
               <p className="text-sm text-blue-600 mb-2">Current Market Prices:</p>
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <span>BTC: ${currentBtcPrice.toLocaleString()}</span>
-                <span>USDT: ${currentUsdtPrice}</span>
+              <div className="grid grid-cols-2 gap-2 text-sm">
+                {settings.supported_coins.map(coin => (
+                  <span key={coin}>{coin}: ${currentPrices[coin]?.toLocaleString()}</span>
+                ))}
               </div>
-              <p className="text-xs text-blue-500 mt-2">Suggested rates include 1-3% margin</p>
+              <p className="text-xs text-blue-500 mt-2">Set your rates with 1-3% margin</p>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="btc_buy_rate">BTC Buy Rate (₦)</Label>
-                <Input
-                  id="btc_buy_rate"
-                  type="number"
-                  placeholder={calculateNairaRate(currentBtcPrice, -1).toLocaleString()}
-                  value={settings.btc_buy_rate || ''}
-                  onChange={(e) => setSettings(prev => ({ 
-                    ...prev, 
-                    btc_buy_rate: e.target.value ? Number(e.target.value) : null 
-                  }))}
-                />
-                <p className="text-xs text-gray-500 mt-1">Rate when you buy BTC from customers</p>
+            {settings.supported_coins.map((coin) => (
+              <div key={coin} className="border rounded-lg p-3">
+                <h3 className="font-medium mb-2">{coin} Rates</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  {settings.supported_currencies.map((currency) => (
+                    <div key={`${coin}-${currency}`} className="space-y-2">
+                      <div>
+                        <Label>Buy Rate ({currency})</Label>
+                        <Input
+                          type="number"
+                          placeholder={`${coin} buy rate in ${currency}`}
+                          value={settings.exchange_rates[coin]?.buy_rate || ''}
+                          onChange={(e) => setSettings(prev => ({
+                            ...prev,
+                            exchange_rates: {
+                              ...prev.exchange_rates,
+                              [coin]: {
+                                ...prev.exchange_rates[coin],
+                                buy_rate: e.target.value ? Number(e.target.value) : null
+                              }
+                            }
+                          }))}
+                        />
+                      </div>
+                      <div>
+                        <Label>Sell Rate ({currency})</Label>
+                        <Input
+                          type="number"
+                          placeholder={`${coin} sell rate in ${currency}`}
+                          value={settings.exchange_rates[coin]?.sell_rate || ''}
+                          onChange={(e) => setSettings(prev => ({
+                            ...prev,
+                            exchange_rates: {
+                              ...prev.exchange_rates,
+                              [coin]: {
+                                ...prev.exchange_rates[coin],
+                                sell_rate: e.target.value ? Number(e.target.value) : null
+                              }
+                            }
+                          }))}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
+            ))}
+          </div>
+        </Card>
 
-              <div>
-                <Label htmlFor="btc_sell_rate">BTC Sell Rate (₦)</Label>
-                <Input
-                  id="btc_sell_rate"
-                  type="number"
-                  placeholder={calculateNairaRate(currentBtcPrice, 2).toLocaleString()}
-                  value={settings.btc_sell_rate || ''}
-                  onChange={(e) => setSettings(prev => ({ 
-                    ...prev, 
-                    btc_sell_rate: e.target.value ? Number(e.target.value) : null 
-                  }))}
+        {/* Payment Methods */}
+        <Card className="p-4">
+          <div className="flex items-center mb-4">
+            <CreditCard size={20} className="text-purple-600 mr-2" />
+            <h2 className="text-lg font-semibold text-gray-900">Payment Methods</h2>
+          </div>
+          
+          <div className="grid grid-cols-2 gap-3">
+            {availablePaymentMethods.map((method) => (
+              <div key={method} className="flex items-center space-x-2">
+                <Checkbox
+                  id={`payment-${method}`}
+                  checked={settings.payment_methods.includes(method)}
+                  onCheckedChange={(checked) => {
+                    setSettings(prev => ({
+                      ...prev,
+                      payment_methods: checked 
+                        ? [...prev.payment_methods, method]
+                        : prev.payment_methods.filter(m => m !== method)
+                    }));
+                  }}
                 />
-                <p className="text-xs text-gray-500 mt-1">Rate when you sell BTC to customers</p>
+                <Label htmlFor={`payment-${method}`} className="capitalize">
+                  {method.replace('_', ' ')}
+                </Label>
               </div>
+            ))}
+          </div>
+        </Card>
 
-              <div>
-                <Label htmlFor="usdt_buy_rate">USDT Buy Rate (₦)</Label>
-                <Input
-                  id="usdt_buy_rate"
-                  type="number"
-                  placeholder={calculateNairaRate(currentUsdtPrice, -1).toString()}
-                  value={settings.usdt_buy_rate || ''}
-                  onChange={(e) => setSettings(prev => ({ 
-                    ...prev, 
-                    usdt_buy_rate: e.target.value ? Number(e.target.value) : null 
-                  }))}
+        {/* Service Locations */}
+        <Card className="p-4">
+          <div className="flex items-center mb-4">
+            <MapPin size={20} className="text-red-600 mr-2" />
+            <h2 className="text-lg font-semibold text-gray-900">Service Locations</h2>
+          </div>
+          
+          <div className="grid grid-cols-2 gap-3">
+            {availableCountries.map((country) => (
+              <div key={country} className="flex items-center space-x-2">
+                <Checkbox
+                  id={`location-${country}`}
+                  checked={settings.service_locations.includes(country)}
+                  onCheckedChange={(checked) => {
+                    setSettings(prev => ({
+                      ...prev,
+                      service_locations: checked 
+                        ? [...prev.service_locations, country]
+                        : prev.service_locations.filter(l => l !== country)
+                    }));
+                  }}
                 />
+                <Label htmlFor={`location-${country}`}>{country}</Label>
               </div>
-
-              <div>
-                <Label htmlFor="usdt_sell_rate">USDT Sell Rate (₦)</Label>
-                <Input
-                  id="usdt_sell_rate"
-                  type="number"
-                  placeholder={calculateNairaRate(currentUsdtPrice, 2).toString()}
-                  value={settings.usdt_sell_rate || ''}
-                  onChange={(e) => setSettings(prev => ({ 
-                    ...prev, 
-                    usdt_sell_rate: e.target.value ? Number(e.target.value) : null 
-                  }))}
-                />
-              </div>
-            </div>
+            ))}
           </div>
         </Card>
 
@@ -339,6 +491,85 @@ const MerchantSettings = () => {
           </Card>
         )}
 
+        {/* Business Hours */}
+        <Card className="p-4">
+          <div className="flex items-center mb-4">
+            <Calendar size={20} className="text-indigo-600 mr-2" />
+            <h2 className="text-lg font-semibold text-gray-900">Business Hours</h2>
+          </div>
+          
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <Label>Enable Business Hours</Label>
+                <p className="text-sm text-gray-600">Set specific times when you accept trades</p>
+              </div>
+              <Switch
+                checked={settings.business_hours.enabled}
+                onCheckedChange={(checked) => setSettings(prev => ({ 
+                  ...prev, 
+                  business_hours: { ...prev.business_hours, enabled: checked }
+                }))}
+              />
+            </div>
+
+            {settings.business_hours.enabled && (
+              <div className="space-y-3">
+                {Object.entries(settings.business_hours).map(([day, hours]) => {
+                  if (day === 'enabled' || typeof hours === 'boolean') return null;
+                  const dayHours = hours as { start: string; end: string; enabled: boolean };
+                  return (
+                    <div key={day} className="flex items-center space-x-4">
+                      <div className="w-20">
+                        <Checkbox
+                          checked={dayHours.enabled}
+                          onCheckedChange={(checked) => setSettings(prev => ({
+                            ...prev,
+                            business_hours: {
+                              ...prev.business_hours,
+                              [day]: { ...dayHours, enabled: checked as boolean }
+                            }
+                          }))}
+                        />
+                        <Label className="capitalize ml-2">{day}</Label>
+                      </div>
+                      {dayHours.enabled && (
+                        <>
+                          <Input
+                            type="time"
+                            value={dayHours.start}
+                            onChange={(e) => setSettings(prev => ({
+                              ...prev,
+                              business_hours: {
+                                ...prev.business_hours,
+                                [day]: { ...dayHours, start: e.target.value }
+                              }
+                            }))}
+                            className="w-24"
+                          />
+                          <span>to</span>
+                          <Input
+                            type="time"
+                            value={dayHours.end}
+                            onChange={(e) => setSettings(prev => ({
+                              ...prev,
+                              business_hours: {
+                                ...prev.business_hours,
+                                [day]: { ...dayHours, end: e.target.value }
+                              }
+                            }))}
+                            className="w-24"
+                          />
+                        </>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </Card>
+
         {/* Status Settings */}
         <Card className="p-4">
           <div className="flex items-center mb-4">
@@ -375,8 +606,22 @@ const MerchantSettings = () => {
               />
             </div>
 
+            <div className="flex items-center justify-between">
+              <div>
+                <Label>Require KYC Verification</Label>
+                <p className="text-sm text-gray-600">Only trade with verified customers</p>
+              </div>
+              <Switch
+                checked={settings.requires_kyc}
+                onCheckedChange={(checked) => setSettings(prev => ({ 
+                  ...prev, 
+                  requires_kyc: checked 
+                }))}
+              />
+            </div>
+
             <div>
-              <Label htmlFor="response_time">Average Response Time (minutes)</Label>
+              <Label htmlFor="response_time">Average Response Time</Label>
               <Select
                 value={settings.avg_response_time_minutes.toString()}
                 onValueChange={(value) => setSettings(prev => ({ 
@@ -393,6 +638,27 @@ const MerchantSettings = () => {
                   <SelectItem value="15">15 minutes</SelectItem>
                   <SelectItem value="30">30 minutes</SelectItem>
                   <SelectItem value="60">1 hour</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label htmlFor="min_rating">Minimum Customer Rating</Label>
+              <Select
+                value={settings.min_customer_rating.toString()}
+                onValueChange={(value) => setSettings(prev => ({ 
+                  ...prev, 
+                  min_customer_rating: Number(value) 
+                }))}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="0">No minimum</SelectItem>
+                  <SelectItem value="3">3+ stars</SelectItem>
+                  <SelectItem value="4">4+ stars</SelectItem>
+                  <SelectItem value="4.5">4.5+ stars</SelectItem>
                 </SelectContent>
               </Select>
             </div>
