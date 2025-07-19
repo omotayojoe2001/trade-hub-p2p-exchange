@@ -1,16 +1,17 @@
 
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { Home, ArrowUpDown, Briefcase, History, Settings } from 'lucide-react';
 
 const BottomNavigation = () => {
   const location = useLocation();
 
   const navItems = [
-    { path: '/home', icon: '🏠', label: 'Home' },
-    { path: '/buy-sell', icon: '🔄', label: 'Buy/Sell' },
-    { path: '/my-trades', icon: '💼', label: 'My Trades' },
-    { path: '/trade-history', icon: '📋', label: 'Transactions' },
-    { path: '/settings', icon: '⚙️', label: 'Settings' }
+    { path: '/home', icon: Home, label: 'Home' },
+    { path: '/buy-sell', icon: ArrowUpDown, label: 'Buy/Sell' },
+    { path: '/my-trades', icon: Briefcase, label: 'My Trades' },
+    { path: '/trade-history', icon: History, label: 'Transactions' },
+    { path: '/settings', icon: Settings, label: 'Settings' }
   ];
 
   return (
@@ -24,7 +25,7 @@ const BottomNavigation = () => {
               location.pathname === item.path ? 'text-blue-600' : 'text-gray-400 hover:text-gray-600'
             }`}
           >
-            <div className="w-6 h-6 mb-1">{item.icon}</div>
+            <item.icon className="w-5 h-5 mb-1" />
             <span className={`text-xs ${
               location.pathname === item.path ? 'font-medium' : ''
             }`}>

@@ -1,11 +1,14 @@
-import React, { useState } from 'react';
-import { Calendar, ChevronDown, Search, ArrowDown, Bell, Settings } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import React, { useState, useMemo } from 'react';
+import { Calendar, ChevronDown, Search, ArrowDown, Bell, Settings, RefreshCw } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
 import BottomNavigation from '@/components/BottomNavigation';
 
 const TradeHistory = () => {
+  const navigate = useNavigate();
   const [dateRange, setDateRange] = useState('Date Range');
   const [statusFilter, setStatusFilter] = useState('All Status');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const transactions = [
     {
@@ -113,6 +116,30 @@ const TradeHistory = () => {
     }
   };
 
+  const filteredTransactions = useMemo(() => {
+    return transactions.filter(transaction => {
+      const matchesSearch = searchQuery === '' || 
+        transaction.amount.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        transaction.txId.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        transaction.coin.toLowerCase().includes(searchQuery.toLowerCase());
+      
+      const matchesStatus = statusFilter === 'All Status' || transaction.status === statusFilter.toLowerCase();
+      
+      return matchesSearch && matchesStatus;
+    });
+  }, [transactions, searchQuery, statusFilter]);
+
+  const handleRefresh = () => {
+    setIsRefreshing(true);
+    setTimeout(() => {
+      setIsRefreshing(false);
+    }, 1000);
+  };
+
+  const handleTransactionClick = (txId: string) => {
+    navigate(`/trade-details/${txId}`);
+  };
+
   return (
     <div className="min-h-screen bg-white pb-20">
       {/* Header */}
@@ -135,33 +162,63 @@ const TradeHistory = () => {
         </div>
       </div>
 
-      {/* Filters - Not sticky to avoid content overlap */}
-      <div className="p-4 space-y-4">
+      {/* Search Bar */}
+      <div className="p-4">
+        <div className="relative">
+          <Search size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Search transactions..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+          />
+        </div>
+      </div>
+
+      {/* Filters */}
+      <div className="px-4 pb-4">
         <div className="flex space-x-3">
+          <select 
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="flex items-center bg-gray-50 border border-gray-200 rounded-lg px-4 py-2 text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-primary"
+          >
+            <option value="All Status">All Status</option>
+            <option value="completed">Completed</option>
+            <option value="pending">Pending</option>
+            <option value="failed">Failed</option>
+          </select>
           <button className="flex items-center bg-gray-50 border border-gray-200 rounded-lg px-4 py-2 text-gray-700 hover:bg-gray-100">
             <Calendar size={16} className="mr-2" />
             <span className="text-sm">{dateRange}</span>
           </button>
-          <button className="flex items-center bg-gray-50 border border-gray-200 rounded-lg px-4 py-2 text-gray-700 hover:bg-gray-100">
-            <span className="text-sm mr-2">{statusFilter}</span>
-            <ChevronDown size={16} />
+          <button 
+            onClick={handleRefresh}
+            className="bg-gray-50 border border-gray-200 rounded-lg p-2 text-gray-700 hover:bg-gray-100 disabled:opacity-50"
+            disabled={isRefreshing}
+          >
+            <RefreshCw size={16} className={isRefreshing ? 'animate-spin' : ''} />
           </button>
-          <button className="bg-gray-50 border border-gray-200 rounded-lg p-2 text-gray-700 hover:bg-gray-100">
-            <Search size={16} />
-          </button>
-        </div>
-
-        {/* Pull to refresh */}
-        <div className="flex items-center justify-center py-4 text-gray-500">
-          <ArrowDown size={16} className="mr-2" />
-          <span className="text-sm">Pull to refresh</span>
         </div>
       </div>
 
+      {/* Pull to refresh indicator */}
+      {isRefreshing && (
+        <div className="flex items-center justify-center py-4 text-gray-500">
+          <RefreshCw size={16} className="mr-2 animate-spin" />
+          <span className="text-sm">Refreshing...</span>
+        </div>
+      )}
+
       {/* Transactions List */}
       <div className="px-4 space-y-4">
-        {transactions.map((transaction) => (
-          <div key={transaction.id} className="bg-white border border-gray-200 rounded-xl p-4">
+        {filteredTransactions.map((transaction) => (
+          <div 
+            key={transaction.id} 
+            onClick={() => handleTransactionClick(transaction.txId)}
+            className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+          >
             <div className="flex items-start justify-between mb-3">
               <div className="flex items-center">
                 <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center mr-3">
