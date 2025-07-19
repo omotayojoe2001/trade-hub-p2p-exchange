@@ -2,13 +2,33 @@
 import React, { useState } from 'react';
 import { ArrowLeft, MoreVertical, Copy, Upload, Camera, AlertTriangle } from 'lucide-react';
 import { Button } from "@/components/ui/button";
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 
 const TradeDetails = () => {
+  const { txId: urlTxId } = useParams();
   const [txId, setTxId] = useState('');
   const [proofUploaded, setProofUploaded] = useState(false);
   const [isButtonEnabled, setIsButtonEnabled] = useState(false);
   const navigate = useNavigate();
+
+  // Mock transaction data - in real app, this would come from API
+  const transactionDetails = {
+    id: urlTxId || 'TXN123456789',
+    amount: '0.05 BTC',
+    nairaAmount: '₦45,200,000',
+    total: '₦2,260,000',
+    rate: '45,200,000',
+    date: '2023-10-26',
+    time: '14:30',
+    status: 'completed',
+    coin: 'BTC',
+    walletAddress: 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh',
+    merchant: {
+      name: 'John Merchant',
+      rating: 4.8,
+      trades: 234
+    }
+  };
 
   const handleTxIdChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -31,12 +51,33 @@ const TradeDetails = () => {
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-gray-100">
         <div className="flex items-center">
-          <Link to="/merchant-selection">
+          <Link to="/trade-history">
             <ArrowLeft size={24} className="text-gray-700 mr-4" />
           </Link>
-          <h1 className="text-lg font-semibold text-gray-900">Trade Details</h1>
+          <div>
+            <h1 className="text-lg font-semibold text-gray-900">Transaction Details</h1>
+            <p className="text-sm text-gray-500">{transactionDetails.id}</p>
+          </div>
         </div>
         <MoreVertical size={24} className="text-gray-700" />
+      </div>
+
+      {/* Transaction Summary */}
+      <div className="p-6 bg-gray-50 border-b">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">{transactionDetails.amount}</h2>
+          <p className="text-lg text-gray-600">@ {transactionDetails.nairaAmount} per {transactionDetails.coin}</p>
+          <p className="text-xl font-semibold text-gray-900 mt-2">Total: {transactionDetails.total}</p>
+          <div className="flex items-center justify-center mt-3">
+            <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+              transactionDetails.status === 'completed' ? 'bg-green-100 text-green-700' :
+              transactionDetails.status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
+              'bg-red-100 text-red-700'
+            }`}>
+              {transactionDetails.status.charAt(0).toUpperCase() + transactionDetails.status.slice(1)}
+            </span>
+          </div>
+        </div>
       </div>
 
       {/* QR Code Section */}
@@ -62,29 +103,35 @@ const TradeDetails = () => {
 
         {/* Address Section */}
         <div className="mb-6">
-          <h3 className="text-sm font-medium text-gray-700 mb-2">BTC Address</h3>
+          <h3 className="text-sm font-medium text-gray-700 mb-2">{transactionDetails.coin} Address</h3>
           <div className="bg-gray-50 rounded-lg p-3 flex items-center justify-between">
-            <span className="text-sm text-gray-900 font-mono">bc1qxy2kgdygjrsqtzq2n0yrf249</span>
+            <span className="text-sm text-gray-900 font-mono">{transactionDetails.walletAddress}</span>
             <button className="text-blue-600">
               <Copy size={16} />
             </button>
           </div>
-          <div className="bg-gray-50 rounded-lg p-3 mt-1">
-            <span className="text-sm text-gray-900 font-mono">3p83kkfjhx0wlh</span>
-          </div>
         </div>
 
-        {/* Amount Details */}
+        {/* Transaction Details */}
         <div className="space-y-3 mb-6">
           <div className="flex justify-between">
-            <span className="text-gray-600">Amount to Send:</span>
-            <span className="font-semibold text-gray-900">0.0032 BTC</span>
+            <span className="text-gray-600">Transaction ID:</span>
+            <span className="font-mono text-sm text-gray-900">{transactionDetails.id}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-gray-600">Estimated Value:</span>
-            <span className="font-semibold text-gray-900">₦561,600</span>
+            <span className="text-gray-600">Date & Time:</span>
+            <span className="font-semibold text-gray-900">{transactionDetails.date} • {transactionDetails.time}</span>
           </div>
-          <p className="text-sm text-gray-500 text-center">Network Fee Not Included</p>
+          <div className="flex justify-between">
+            <span className="text-gray-600">Merchant:</span>
+            <div className="text-right">
+              <span className="font-semibold text-gray-900">{transactionDetails.merchant.name}</span>
+              <div className="flex items-center text-sm text-gray-500">
+                <span className="text-yellow-500 mr-1">⭐</span>
+                <span>{transactionDetails.merchant.rating} ({transactionDetails.merchant.trades} trades)</span>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Timer */}
