@@ -21,7 +21,7 @@ interface UseCryptoDataReturn {
   refetch: () => void;
 }
 
-const COINMARKETCAP_API_KEY = 'b54bcf4d-1bca-4e8e-9a24-22ff2c3d462c'; // Public demo key
+const COINGECKO_API_BASE = 'https://api.coingecko.com/api/v3';
 
 export const useCryptoData = (limit: number = 20): UseCryptoDataReturn => {
   const [cryptoData, setCryptoData] = useState<CryptoData[]>([]);
@@ -33,11 +33,11 @@ export const useCryptoData = (limit: number = 20): UseCryptoDataReturn => {
       setLoading(true);
       setError(null);
       
+      // Use CoinGecko API which supports CORS
       const response = await fetch(
-        `https://pro-api.coinmarketcap.com/v1/cryptocurrency/listings/latest?limit=${limit}&convert=USD`,
+        `${COINGECKO_API_BASE}/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=${limit}&page=1&sparkline=false&price_change_percentage=24h`,
         {
           headers: {
-            'X-CMC_PRO_API_KEY': COINMARKETCAP_API_KEY,
             'Accept': 'application/json',
           },
         }
@@ -48,7 +48,23 @@ export const useCryptoData = (limit: number = 20): UseCryptoDataReturn => {
       }
 
       const data = await response.json();
-      setCryptoData(data.data || []);
+      
+      // Transform CoinGecko data to match our interface
+      const transformedData = data.map((coin: any) => ({
+        id: parseInt(coin.market_cap_rank) || 0,
+        name: coin.name,
+        symbol: coin.symbol.toUpperCase(),
+        quote: {
+          USD: {
+            price: coin.current_price,
+            percent_change_24h: coin.price_change_percentage_24h || 0,
+            market_cap: coin.market_cap,
+            volume_24h: coin.total_volume,
+          },
+        },
+      }));
+      
+      setCryptoData(transformedData);
     } catch (err) {
       console.error('Error fetching crypto data:', err);
       setError('Failed to fetch crypto data');
