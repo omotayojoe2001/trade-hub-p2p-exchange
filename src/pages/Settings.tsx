@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { ArrowLeft, Bell, ChevronRight, User, Shield, CreditCard, HelpCircle, LogOut, Gift } from 'lucide-react';
+import { ArrowLeft, Bell, ChevronRight, User, Shield, CreditCard, HelpCircle, LogOut, Gift, Wallet, TrendingUp } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import BottomNavigation from '@/components/BottomNavigation';
 import { useAuth } from '@/hooks/useAuth';
@@ -29,6 +29,20 @@ const Settings = () => {
       description: 'Manage your bank accounts and cards',
       hasChevron: true,
       link: '/payment-methods'
+    },
+    {
+      icon: <Wallet size={20} className="text-indigo-600" />,
+      title: 'Crypto Wallet',
+      description: 'Manage your cryptocurrency wallets',
+      hasChevron: true,
+      link: '/crypto-wallet'
+    },
+    {
+      icon: <TrendingUp size={20} className="text-emerald-600" />,
+      title: 'Merchant Settings',
+      description: 'Configure rates and trading preferences',
+      hasChevron: true,
+      link: '/merchant-settings'
     },
     {
       icon: <Bell size={20} className="text-orange-600" />,

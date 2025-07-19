@@ -14,6 +14,205 @@ export type Database = {
   }
   public: {
     Tables: {
+      crypto_wallets: {
+        Row: {
+          available_balance: number | null
+          coin_type: string
+          created_at: string
+          deposit_address: string
+          escrow_balance: number | null
+          id: string
+          private_key_encrypted: string | null
+          updated_at: string
+          user_id: string
+          wallet_type: string
+        }
+        Insert: {
+          available_balance?: number | null
+          coin_type: string
+          created_at?: string
+          deposit_address: string
+          escrow_balance?: number | null
+          id?: string
+          private_key_encrypted?: string | null
+          updated_at?: string
+          user_id: string
+          wallet_type?: string
+        }
+        Update: {
+          available_balance?: number | null
+          coin_type?: string
+          created_at?: string
+          deposit_address?: string
+          escrow_balance?: number | null
+          id?: string
+          private_key_encrypted?: string | null
+          updated_at?: string
+          user_id?: string
+          wallet_type?: string
+        }
+        Relationships: []
+      }
+      escrow_transactions: {
+        Row: {
+          amount: number
+          coin_type: string
+          created_at: string
+          deposit_confirmed_at: string | null
+          deposit_tx_hash: string | null
+          escrow_address: string
+          id: string
+          release_confirmed_at: string | null
+          release_tx_hash: string | null
+          status: string
+          trade_id: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          coin_type: string
+          created_at?: string
+          deposit_confirmed_at?: string | null
+          deposit_tx_hash?: string | null
+          escrow_address: string
+          id?: string
+          release_confirmed_at?: string | null
+          release_tx_hash?: string | null
+          status?: string
+          trade_id: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          coin_type?: string
+          created_at?: string
+          deposit_confirmed_at?: string | null
+          deposit_tx_hash?: string | null
+          escrow_address?: string
+          id?: string
+          release_confirmed_at?: string | null
+          release_tx_hash?: string | null
+          status?: string
+          trade_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "escrow_transactions_trade_id_fkey"
+            columns: ["trade_id"]
+            isOneToOne: false
+            referencedRelation: "trades"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      merchant_ratings: {
+        Row: {
+          communication_rating: number | null
+          created_at: string
+          customer_id: string
+          id: string
+          merchant_id: string
+          rating: number
+          reliability_rating: number | null
+          review_text: string | null
+          speed_rating: number | null
+          trade_id: string
+        }
+        Insert: {
+          communication_rating?: number | null
+          created_at?: string
+          customer_id: string
+          id?: string
+          merchant_id: string
+          rating: number
+          reliability_rating?: number | null
+          review_text?: string | null
+          speed_rating?: number | null
+          trade_id: string
+        }
+        Update: {
+          communication_rating?: number | null
+          created_at?: string
+          customer_id?: string
+          id?: string
+          merchant_id?: string
+          rating?: number
+          reliability_rating?: number | null
+          review_text?: string | null
+          speed_rating?: number | null
+          trade_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "merchant_ratings_trade_id_fkey"
+            columns: ["trade_id"]
+            isOneToOne: false
+            referencedRelation: "trades"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      merchant_settings: {
+        Row: {
+          accepts_new_trades: boolean | null
+          auto_accept_trades: boolean | null
+          auto_release_escrow: boolean | null
+          avg_response_time_minutes: number | null
+          btc_buy_rate: number | null
+          btc_sell_rate: number | null
+          created_at: string
+          id: string
+          is_online: boolean | null
+          max_trade_amount: number | null
+          merchant_type: string
+          min_trade_amount: number | null
+          payment_methods: Json | null
+          updated_at: string
+          usdt_buy_rate: number | null
+          usdt_sell_rate: number | null
+          user_id: string
+        }
+        Insert: {
+          accepts_new_trades?: boolean | null
+          auto_accept_trades?: boolean | null
+          auto_release_escrow?: boolean | null
+          avg_response_time_minutes?: number | null
+          btc_buy_rate?: number | null
+          btc_sell_rate?: number | null
+          created_at?: string
+          id?: string
+          is_online?: boolean | null
+          max_trade_amount?: number | null
+          merchant_type?: string
+          min_trade_amount?: number | null
+          payment_methods?: Json | null
+          updated_at?: string
+          usdt_buy_rate?: number | null
+          usdt_sell_rate?: number | null
+          user_id: string
+        }
+        Update: {
+          accepts_new_trades?: boolean | null
+          auto_accept_trades?: boolean | null
+          auto_release_escrow?: boolean | null
+          avg_response_time_minutes?: number | null
+          btc_buy_rate?: number | null
+          btc_sell_rate?: number | null
+          created_at?: string
+          id?: string
+          is_online?: boolean | null
+          max_trade_amount?: number | null
+          merchant_type?: string
+          min_trade_amount?: number | null
+          payment_methods?: Json | null
+          updated_at?: string
+          usdt_buy_rate?: number | null
+          usdt_sell_rate?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string | null

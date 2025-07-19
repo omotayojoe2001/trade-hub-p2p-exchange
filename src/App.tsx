@@ -49,6 +49,9 @@ import SellCryptoWaiting from "./pages/SellCryptoWaiting";
 import SellCryptoConfirmReceipt from "./pages/SellCryptoConfirmReceipt";
 import SellCryptoCancel from "./pages/SellCryptoCancel";
 import SellCryptoDispute from "./pages/SellCryptoDispute";
+import MerchantSettings from "./pages/MerchantSettings";
+import CryptoWallet from "./pages/CryptoWallet";
+import RateMerchant from "./pages/RateMerchant";
 
 const queryClient = new QueryClient();
 
@@ -104,6 +107,9 @@ const App = () => (
             <Route path="/sell-crypto-cancel" element={<SellCryptoCancel />} />
             <Route path="/sell-crypto-dispute" element={<SellCryptoDispute />} />
             <Route path="/trade-completed" element={<TradeCompleted />} />
+            <Route path="/merchant-settings" element={<MerchantSettings />} />
+            <Route path="/crypto-wallet" element={<CryptoWallet />} />
+            <Route path="/rate-merchant" element={<RateMerchant />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
