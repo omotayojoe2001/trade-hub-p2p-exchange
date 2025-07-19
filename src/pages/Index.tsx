@@ -8,13 +8,11 @@ import BottomNavigation from '@/components/BottomNavigation';
 import UserTypeToggle from '@/components/UserTypeToggle';
 import TrackingNotification from '@/components/TrackingNotification';
 import TrendingCoins from '@/components/TrendingCoins';
-import { PaymentForm } from '@/components/PaymentForm';
-import { useCurrencyConverter } from '@/hooks/useCurrencyConverter';
 import { useAuth } from '@/hooks/useAuth';
 
 const Index = () => {
   const { user, profile, loading } = useAuth();
-  const { rates, loading: currencyLoading, formatCurrency, baseCurrency } = useCurrencyConverter();
+  
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -87,9 +85,7 @@ const Index = () => {
               <DollarSign size={16} className="text-blue-500 mr-2" />
               <span className="text-gray-500 text-sm">USD to NGN Rate</span>
             </div>
-            <p className="text-3xl font-bold text-gray-900">
-              {currencyLoading ? '...' : rates.NGN ? `₦${rates.NGN.toFixed(2)}` : '₦1,650'}
-            </p>
+            <p className="text-3xl font-bold text-gray-900">₦1,650</p>
           </div>
         </div>
         
@@ -129,15 +125,12 @@ const Index = () => {
             </div>
             <span className="text-gray-700 text-sm font-medium">History</span>
           </Link>
-          <div className="flex flex-col items-center cursor-pointer" onClick={() => {
-            const paymentSection = document.getElementById('payment-section');
-            paymentSection?.scrollIntoView({ behavior: 'smooth' });
-          }}>
+          <Link to="/merchant-list" className="flex flex-col items-center">
             <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mb-2">
-              <CreditCard size={24} className="text-purple-500" />
+              <Building2 size={24} className="text-purple-500" />
             </div>
-            <span className="text-gray-700 text-sm font-medium">Pay</span>
-          </div>
+            <span className="text-gray-700 text-sm font-medium">Bank</span>
+          </Link>
         </div>
       </div>
 
@@ -219,68 +212,6 @@ const Index = () => {
       {/* Trending Coins */}
       <TrendingCoins />
 
-      {/* Currency Conversion & Payment Section */}
-      <div id="payment-section" className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-        {/* Currency Conversion Card */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <DollarSign className="w-5 h-5" />
-              Currency Converter
-            </CardTitle>
-            <CardDescription>
-              Live exchange rates from {baseCurrency}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {currencyLoading ? (
-              <div className="text-center py-4">Loading rates...</div>
-            ) : (
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <div className="text-sm font-medium">Major Currencies</div>
-                  <div className="space-y-1 text-sm">
-                    <div className="flex justify-between">
-                      <span>EUR (€):</span>
-                      <span>{rates.EUR ? rates.EUR.toFixed(4) : 'N/A'}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>GBP (£):</span>
-                      <span>{rates.GBP ? rates.GBP.toFixed(4) : 'N/A'}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>JPY (¥):</span>
-                      <span>{rates.JPY ? rates.JPY.toFixed(2) : 'N/A'}</span>
-                    </div>
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <div className="text-sm font-medium">African Currencies</div>
-                  <div className="space-y-1 text-sm">
-                    <div className="flex justify-between">
-                      <span>NGN (₦):</span>
-                      <span className="font-medium text-primary">
-                        {rates.NGN ? rates.NGN.toFixed(2) : 'N/A'}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>GHS (₵):</span>
-                      <span>{rates.GHS ? rates.GHS.toFixed(2) : 'N/A'}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>KES (KSh):</span>
-                      <span>{rates.KES ? rates.KES.toFixed(2) : 'N/A'}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Payment Form */}
-        <PaymentForm />
-      </div>
 
       {/* Refer & Earn and My Rewards - Stacked */}
       <div className="space-y-4 mb-6">
