@@ -183,7 +183,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      create_checkout_session: {
+        Args: {
+          amount_cents: number
+          currency?: string
+          success_url?: string
+          cancel_url?: string
+        }
+        Returns: Json
+      }
     }
     Enums: {
       [_ in never]: never
