@@ -110,21 +110,26 @@ const Auth = () => {
         return;
       }
 
-      if (data.user && !data.session) {
-        // User created but needs email verification
+      if (data.user) {
+        // Store email for verification regardless of session state
         sessionStorage.setItem('verification-email', formData.email);
-        toast({
-          title: "Account created successfully!",
-          description: "Please check your email to verify your account.",
-        });
-        navigate('/email-verification');
-      } else if (data.user && data.session) {
-        // User is automatically confirmed (email confirmation disabled)
-        toast({
-          title: "Account created successfully!",
-          description: "Welcome to CryptoTrade!",
-        });
-        navigate('/profile-setup');
+        
+        if (!data.session) {
+          // User created but needs email verification
+          toast({
+            title: "Account created successfully!",
+            description: "Please check your email to verify your account.",
+          });
+          navigate('/email-verification');
+        } else {
+          // User is automatically confirmed (edge case)
+          toast({
+            title: "Account created successfully!",
+            description: "Welcome to CryptoTrade!",
+          });
+          sessionStorage.removeItem('verification-email');
+          navigate('/profile-setup');
+        }
       }
     } catch (err) {
       setError('An unexpected error occurred');

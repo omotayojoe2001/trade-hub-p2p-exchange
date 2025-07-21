@@ -63,6 +63,7 @@ const EmailVerification = () => {
           description: "No email found. Please try signing up again.",
           variant: "destructive"
         });
+        navigate('/auth');
         return;
       }
 
