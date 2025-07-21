@@ -19,8 +19,19 @@ const EmailVerification = () => {
     
     setLoading(true);
     try {
+      const email = sessionStorage.getItem('verification-email');
+      if (!email) {
+        toast({
+          title: "Error",
+          description: "No email found. Please try signing up again.",
+          variant: "destructive"
+        });
+        navigate('/auth');
+        return;
+      }
+
       const { data, error } = await supabase.auth.verifyOtp({
-        email: sessionStorage.getItem('verification-email') || '',
+        email: email,
         token: code,
         type: 'signup'
       });
@@ -34,13 +45,17 @@ const EmailVerification = () => {
         return;
       }
 
-      if (data.user) {
+      if (data.user && data.session) {
         toast({
           title: "Email verified!",
           description: "Your account has been successfully verified.",
         });
         sessionStorage.removeItem('verification-email');
-        navigate("/profile-setup");
+        
+        // Wait a moment for auth state to settle before navigating
+        setTimeout(() => {
+          navigate("/profile-setup");
+        }, 500);
       }
     } catch (error) {
       toast({

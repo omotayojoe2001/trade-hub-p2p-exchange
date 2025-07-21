@@ -65,12 +65,16 @@ const Auth = () => {
         return;
       }
 
-      if (data.user) {
+      if (data.user && data.session) {
         toast({
           title: "Welcome back!",
           description: "You have successfully signed in.",
         });
-        navigate('/home');
+        
+        // Wait for auth state to settle before navigating
+        setTimeout(() => {
+          navigate('/home');
+        }, 300);
       }
     } catch (err) {
       setError('An unexpected error occurred');
@@ -120,7 +124,10 @@ const Auth = () => {
             title: "Account created successfully!",
             description: "Please check your email to verify your account.",
           });
-          navigate('/email-verification');
+          // Small delay to ensure state is clean before navigation
+          setTimeout(() => {
+            navigate('/email-verification');
+          }, 200);
         } else {
           // User is automatically confirmed (edge case)
           toast({
@@ -128,7 +135,9 @@ const Auth = () => {
             description: "Welcome to CryptoTrade!",
           });
           sessionStorage.removeItem('verification-email');
-          navigate('/profile-setup');
+          setTimeout(() => {
+            navigate('/profile-setup');
+          }, 300);
         }
       }
     } catch (err) {
