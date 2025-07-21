@@ -110,10 +110,19 @@ const Auth = () => {
         return;
       }
 
-      if (data.user) {
+      if (data.user && !data.session) {
+        // User created but needs email verification
+        sessionStorage.setItem('verification-email', formData.email);
         toast({
           title: "Account created successfully!",
           description: "Please check your email to verify your account.",
+        });
+        navigate('/email-verification');
+      } else if (data.user && data.session) {
+        // User is automatically confirmed (email confirmation disabled)
+        toast({
+          title: "Account created successfully!",
+          description: "Welcome to CryptoTrade!",
         });
         navigate('/profile-setup');
       }
