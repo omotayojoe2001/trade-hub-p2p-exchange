@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
@@ -146,8 +147,7 @@ const Auth = () => {
       }
 
       if (data.user) {
-        // Since auto_confirm_email is true, user should be signed in immediately
-        // Create profile directly
+        // Create profile directly since auto_confirm_email is true
         const { error: profileError } = await supabase
           .from('profiles')
           .upsert({
@@ -157,7 +157,7 @@ const Auth = () => {
             phone_number: formData.phoneNumber,
             user_type: formData.userType,
             is_merchant: formData.userType === 'merchant',
-            profile_completed: true
+            profile_completed: false // Allow profile setup to complete it
           });
 
         if (profileError) {
@@ -166,11 +166,11 @@ const Auth = () => {
         
         toast({
           title: "Account created!",
-          description: "Welcome to CryptoHub!",
+          description: "Welcome to CryptoHub! Complete your profile setup.",
         });
         
-        // Force page reload for clean state
-        window.location.href = '/home';
+        // Navigate to profile setup
+        navigate('/profile-setup');
       }
     } catch (err) {
       setError('An unexpected error occurred');

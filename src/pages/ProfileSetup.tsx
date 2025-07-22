@@ -1,9 +1,8 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -13,6 +12,7 @@ const ProfileSetup = () => {
   const [userType, setUserType] = useState('customer');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [currentUser, setCurrentUser] = useState(null);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -23,6 +23,8 @@ const ProfileSetup = () => {
         navigate('/auth');
         return;
       }
+
+      setCurrentUser(session.user);
 
       // Check if user already has a completed profile
       const { data: existingProfile } = await supabase
@@ -59,17 +61,15 @@ const ProfileSetup = () => {
   }, [navigate]);
 
   const handleProfileSetup = async () => {
+    if (!currentUser) {
+      navigate('/auth');
+      return;
+    }
+
     setLoading(true);
     setError('');
 
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        navigate('/auth');
-        return;
-      }
-
       const { error } = await supabase
         .from('profiles')
         .update({
@@ -77,7 +77,7 @@ const ProfileSetup = () => {
           is_merchant: userType === 'merchant',
           profile_completed: true
         })
-        .eq('user_id', user.id);
+        .eq('user_id', currentUser.id);
 
       if (error) {
         setError(error.message);
@@ -112,7 +112,7 @@ const ProfileSetup = () => {
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="space-y-4">
-            <Label className="text-base font-medium">Choose your account type:</Label>
+            <div className="text-base font-medium">Choose your account type:</div>
             
             <div className="grid grid-cols-2 gap-4">
               <button
