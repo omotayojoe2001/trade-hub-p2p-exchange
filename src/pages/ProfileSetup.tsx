@@ -24,35 +24,34 @@ const ProfileSetup = () => {
         return;
       }
 
-      // Check if this is a new user coming from email verification
-      const signupData = sessionStorage.getItem('signup-data');
-      if (signupData) {
-        try {
-          const userData = JSON.parse(signupData);
-          setUserType(userData.user_type || 'customer');
-          
-          // Create initial profile with signup data
-          const { error } = await supabase
-            .from('profiles')
-            .upsert({
-              user_id: session.user.id,
-              display_name: userData.display_name,
-              username: userData.username,
-              phone_number: userData.phone_number,
-              user_type: userData.user_type || 'customer',
-              is_merchant: userData.user_type === 'merchant',
-              profile_completed: false
-            });
+      // Check if user already has a completed profile
+      const { data: existingProfile } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('user_id', session.user.id)
+        .single();
 
-          if (error) {
-            console.error('Error creating profile:', error);
-          }
-          
-          // Clean up signup data
-          sessionStorage.removeItem('signup-data');
-          sessionStorage.removeItem('verification-email');
-        } catch (err) {
-          console.error('Error parsing signup data:', err);
+      if (existingProfile && existingProfile.profile_completed) {
+        // Profile already completed, redirect to home
+        navigate('/home');
+        return;
+      }
+
+      // Check if this is a Google auth user without profile data
+      if (session.user.app_metadata?.provider === 'google') {
+        const { error } = await supabase
+          .from('profiles')
+          .upsert({
+            user_id: session.user.id,
+            display_name: session.user.user_metadata?.full_name || session.user.email?.split('@')[0],
+            username: session.user.email?.split('@')[0] || 'user',
+            user_type: 'customer',
+            is_merchant: false,
+            profile_completed: false
+          });
+
+        if (error) {
+          console.error('Error creating Google profile:', error);
         }
       }
     };
@@ -90,7 +89,8 @@ const ProfileSetup = () => {
         description: `Welcome to CryptoHub as a ${userType}.`,
       });
 
-      navigate('/');
+      // Force page reload for clean state
+      window.location.href = '/home';
     } catch (err) {
       setError('An unexpected error occurred');
     } finally {
