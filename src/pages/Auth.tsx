@@ -70,11 +70,7 @@ const Auth = () => {
           title: "Welcome back!",
           description: "You have successfully signed in.",
         });
-        
-        // Wait for auth state to settle before navigating
-        setTimeout(() => {
-          navigate('/home');
-        }, 300);
+        navigate('/home');
       }
     } catch (err) {
       setError('An unexpected error occurred');
@@ -99,13 +95,7 @@ const Auth = () => {
         email: formData.email,
         password: formData.password,
         options: {
-          emailRedirectTo: `${window.location.origin}/`,
-          data: {
-            display_name: formData.displayName,
-            phone_number: formData.phoneNumber,
-            username: formData.username,
-            user_type: formData.userType
-          }
+          emailRedirectTo: `${window.location.origin}/profile-setup`
         }
       });
 
@@ -115,30 +105,19 @@ const Auth = () => {
       }
 
       if (data.user) {
-        // Store email for verification regardless of session state
         sessionStorage.setItem('verification-email', formData.email);
+        sessionStorage.setItem('signup-data', JSON.stringify({
+          display_name: formData.displayName,
+          phone_number: formData.phoneNumber,
+          username: formData.username,
+          user_type: formData.userType
+        }));
         
-        if (!data.session) {
-          // User created but needs email verification
-          toast({
-            title: "Account created successfully!",
-            description: "Please check your email to verify your account.",
-          });
-          // Small delay to ensure state is clean before navigation
-          setTimeout(() => {
-            navigate('/email-verification');
-          }, 200);
-        } else {
-          // User is automatically confirmed (edge case)
-          toast({
-            title: "Account created successfully!",
-            description: "Welcome to CryptoTrade!",
-          });
-          sessionStorage.removeItem('verification-email');
-          setTimeout(() => {
-            navigate('/profile-setup');
-          }, 300);
-        }
+        toast({
+          title: "Check your email!",
+          description: "We've sent you a verification link.",
+        });
+        navigate('/email-verification');
       }
     } catch (err) {
       setError('An unexpected error occurred');

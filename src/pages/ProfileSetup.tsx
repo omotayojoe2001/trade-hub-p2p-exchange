@@ -21,6 +21,39 @@ const ProfileSetup = () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
         navigate('/auth');
+        return;
+      }
+
+      // Check if this is a new user coming from email verification
+      const signupData = sessionStorage.getItem('signup-data');
+      if (signupData) {
+        try {
+          const userData = JSON.parse(signupData);
+          setUserType(userData.user_type || 'customer');
+          
+          // Create initial profile with signup data
+          const { error } = await supabase
+            .from('profiles')
+            .upsert({
+              user_id: session.user.id,
+              display_name: userData.display_name,
+              username: userData.username,
+              phone_number: userData.phone_number,
+              user_type: userData.user_type || 'customer',
+              is_merchant: userData.user_type === 'merchant',
+              profile_completed: false
+            });
+
+          if (error) {
+            console.error('Error creating profile:', error);
+          }
+          
+          // Clean up signup data
+          sessionStorage.removeItem('signup-data');
+          sessionStorage.removeItem('verification-email');
+        } catch (err) {
+          console.error('Error parsing signup data:', err);
+        }
       }
     };
     checkAuth();

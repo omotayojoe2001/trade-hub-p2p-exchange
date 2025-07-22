@@ -1,72 +1,23 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
-import { Mail, ArrowLeft } from "lucide-react";
+import { Mail, ArrowLeft, CheckCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
 const EmailVerification = () => {
-  const [code, setCode] = useState("");
-  const [loading, setLoading] = useState(false);
   const [resending, setResending] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const handleVerify = async () => {
-    if (code.length !== 6) return;
-    
-    setLoading(true);
-    try {
-      const email = sessionStorage.getItem('verification-email');
-      if (!email) {
-        toast({
-          title: "Error",
-          description: "No email found. Please try signing up again.",
-          variant: "destructive"
-        });
-        navigate('/auth');
-        return;
-      }
-
-      const { data, error } = await supabase.auth.verifyOtp({
-        email: email,
-        token: code,
-        type: 'signup'
-      });
-
-      if (error) {
-        toast({
-          title: "Verification failed",
-          description: error.message,
-          variant: "destructive"
-        });
-        return;
-      }
-
-      if (data.user && data.session) {
-        toast({
-          title: "Email verified!",
-          description: "Your account has been successfully verified.",
-        });
-        sessionStorage.removeItem('verification-email');
-        
-        // Wait a moment for auth state to settle before navigating
-        setTimeout(() => {
-          navigate("/profile-setup");
-        }, 500);
-      }
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "An unexpected error occurred. Please try again.",
-        variant: "destructive"
-      });
-    } finally {
-      setLoading(false);
+  useEffect(() => {
+    // Check if user came here directly without signing up
+    const email = sessionStorage.getItem('verification-email');
+    if (!email) {
+      navigate('/auth');
     }
-  };
+  }, [navigate]);
 
   const handleResend = async () => {
     setResending(true);
@@ -86,7 +37,7 @@ const EmailVerification = () => {
         type: 'signup',
         email: email,
         options: {
-          emailRedirectTo: `${window.location.origin}/`
+          emailRedirectTo: `${window.location.origin}/profile-setup`
         }
       });
 
@@ -98,14 +49,14 @@ const EmailVerification = () => {
         });
       } else {
         toast({
-          title: "Code sent!",
-          description: "A new verification code has been sent to your email.",
+          title: "Link sent!",
+          description: "A new verification link has been sent to your email.",
         });
       }
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to resend code. Please try again.",
+        description: "Failed to resend link. Please try again.",
         variant: "destructive"
       });
     } finally {
@@ -128,55 +79,48 @@ const EmailVerification = () => {
           <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
             <Mail className="w-8 h-8 text-primary" />
           </div>
-          <CardTitle>Verify Your Email</CardTitle>
+          <CardTitle>Check Your Email</CardTitle>
           <p className="text-muted-foreground">
-            We've sent a verification code to your email address
+            We've sent a verification link to your email address
           </p>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Verification Code</label>
-            <div className="flex justify-center">
-              <InputOTP 
-                maxLength={6} 
-                value={code} 
-                onChange={(value) => setCode(value)}
-              >
-                <InputOTPGroup>
-                  <InputOTPSlot index={0} />
-                  <InputOTPSlot index={1} />
-                  <InputOTPSlot index={2} />
-                  <InputOTPSlot index={3} />
-                  <InputOTPSlot index={4} />
-                  <InputOTPSlot index={5} />
-                </InputOTPGroup>
-              </InputOTP>
+        <CardContent className="space-y-6">
+          <div className="text-center space-y-4">
+            <div className="w-20 h-20 bg-green-50 rounded-full flex items-center justify-center mx-auto">
+              <CheckCircle className="w-10 h-10 text-green-500" />
             </div>
-            <p className="text-xs text-muted-foreground text-center">
-              Enter the 6-digit code sent to your email
+            <div>
+              <h3 className="font-semibold text-lg mb-2">Verification Link Sent!</h3>
+              <p className="text-sm text-muted-foreground">
+                Click the link in your email to verify your account and complete the signup process.
+              </p>
+            </div>
+          </div>
+          
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <p className="text-sm text-blue-700">
+              💡 <strong>Next steps:</strong>
+              <br />
+              1. Check your email inbox (and spam folder)
+              <br />
+              2. Click the verification link
+              <br />
+              3. You'll be redirected back to complete your profile
             </p>
           </div>
           
-          <Button 
-            onClick={handleVerify} 
-            className="w-full" 
-            disabled={code.length !== 6 || loading}
-          >
-            {loading ? "Verifying..." : "Verify Email"}
-          </Button>
-          
           <div className="text-center">
-            <p className="text-sm text-muted-foreground">
-              Didn't receive the code?{" "}
-              <Button 
-                variant="link" 
-                onClick={handleResend} 
-                className="p-0"
-                disabled={resending}
-              >
-                {resending ? "Sending..." : "Resend"}
-              </Button>
+            <p className="text-sm text-muted-foreground mb-3">
+              Didn't receive the email?
             </p>
+            <Button 
+              onClick={handleResend} 
+              variant="outline"
+              className="w-full"
+              disabled={resending}
+            >
+              {resending ? "Sending..." : "Resend Verification Link"}
+            </Button>
           </div>
         </CardContent>
       </Card>
