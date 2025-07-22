@@ -95,8 +95,8 @@ const Auth = () => {
           title: "Welcome back!",
           description: "You have successfully signed in.",
         });
-        // Force page reload for clean state
-        window.location.href = '/home';
+        // Navigate without full page reload
+        navigate('/home');
       }
     } catch (err) {
       setError('An unexpected error occurred');

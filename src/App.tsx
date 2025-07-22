@@ -8,8 +8,6 @@ import { AuthProvider } from "./hooks/useAuth";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import ProfileSetup from "./pages/ProfileSetup";
-import SignUp from "./pages/SignUp";
-import Login from "./pages/Login";
 import Coins from "./pages/Coins";
 import BuySell from "./pages/BuySell";
 import Settings from "./pages/Settings";
@@ -67,8 +65,6 @@ const App = () => (
             <Route path="/home" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/profile-setup" element={<ProfileSetup />} />
-            <Route path="/signup" element={<SignUp />} />
-            <Route path="/login" element={<Login />} />
             <Route path="/coins" element={<Coins />} />
             <Route path="/buy-sell" element={<BuySell />} />
             <Route path="/settings" element={<Settings />} />

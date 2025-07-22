@@ -89,8 +89,8 @@ const ProfileSetup = () => {
         description: `Welcome to CryptoHub as a ${userType}.`,
       });
 
-      // Force page reload for clean state
-      window.location.href = '/home';
+      // Navigate without full page reload
+      navigate('/home');
     } catch (err) {
       setError('An unexpected error occurred');
     } finally {

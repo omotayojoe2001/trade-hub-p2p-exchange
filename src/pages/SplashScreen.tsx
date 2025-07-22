@@ -8,12 +8,12 @@ const SplashScreen = () => {
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      // If user is authenticated, go to home, otherwise go to onboarding
+      // If user is authenticated, go to home, otherwise go to auth
       if (!loading) {
         if (user) {
           navigate("/home");
         } else {
-          navigate("/onboarding");
+          navigate("/auth");
         }
       }
     }, 2000);
