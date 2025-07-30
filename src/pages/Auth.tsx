@@ -10,10 +10,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Eye, EyeOff, User, AtSign, Mail, Phone, Fingerprint, Database, ArrowLeft, Gift, Check } from 'lucide-react';
 import { useBiometricAuth } from "@/hooks/useBiometricAuth";
+import { useAuthStorage } from "@/hooks/useAuthStorage";
 import BiometricPrompt from "@/components/BiometricPrompt";
+import QuickAuthScreen from "@/components/QuickAuthScreen";
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
+  const [showQuickAuth, setShowQuickAuth] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -34,6 +37,7 @@ const Auth = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const { isSupported: biometricSupported, isEnrolled: biometricEnrolled } = useBiometricAuth();
+  const { storedUser, saveUser, clearStoredUser, hasStoredUser } = useAuthStorage();
 
   useEffect(() => {
     // Check if user is already logged in
@@ -41,10 +45,13 @@ const Auth = () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
         navigate('/home');
+      } else if (hasStoredUser()) {
+        // Show quick auth for returning users
+        setShowQuickAuth(true);
       }
     };
     checkSession();
-  }, [navigate]);
+  }, [navigate, hasStoredUser]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
@@ -95,11 +102,24 @@ const Auth = () => {
       }
 
       if (data.user && data.session) {
+        // Get user profile for display name
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('display_name')
+          .eq('user_id', data.user.id)
+          .single();
+
+        // Save user for quick auth
+        saveUser({
+          id: data.user.id,
+          email: data.user.email || formData.email,
+          displayName: profile?.display_name || data.user.user_metadata?.display_name || formData.email
+        });
+
         toast({
           title: "Welcome back!",
           description: "You have successfully signed in.",
         });
-        // Navigate without full page reload
         navigate('/home');
       }
     } catch (err) {
@@ -157,7 +177,6 @@ const Auth = () => {
           .upsert({
             user_id: data.user.id,
             display_name: formData.displayName,
-            username: formData.username,
             phone_number: formData.phoneNumber,
             user_type: formData.userType,
             is_merchant: formData.userType === 'merchant',
@@ -166,7 +185,15 @@ const Auth = () => {
 
         if (profileError) {
           console.error('Profile creation error:', profileError);
+          // Don't stop the flow for profile errors
         }
+
+        // Save user for quick auth
+        saveUser({
+          id: data.user.id,
+          email: data.user.email || formData.email,
+          displayName: formData.displayName
+        });
         
         toast({
           title: "Account created!",
@@ -207,6 +234,21 @@ const Auth = () => {
       setLoading(false);
     }
   };
+
+  // Show quick auth screen for returning users
+  if (showQuickAuth && storedUser) {
+    return (
+      <QuickAuthScreen
+        user={storedUser}
+        onSuccess={() => navigate('/home')}
+        onSwitchAccount={() => {
+          clearStoredUser();
+          setShowQuickAuth(false);
+          setIsLogin(true);
+        }}
+      />
+    );
+  }
 
   if (isLogin) {
     return (
