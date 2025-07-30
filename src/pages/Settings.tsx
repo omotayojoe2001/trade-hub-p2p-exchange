@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { ArrowLeft, Bell, ChevronRight, User, Shield, CreditCard, HelpCircle, LogOut, Gift, Wallet, TrendingUp } from 'lucide-react';
+import { ArrowLeft, Bell, ChevronRight, User, Shield, CreditCard, HelpCircle, LogOut, Gift, TrendingUp, FileCheck } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import BottomNavigation from '@/components/BottomNavigation';
 import { useAuth } from '@/hooks/useAuth';
@@ -31,11 +31,11 @@ const Settings = () => {
       link: '/payment-methods'
     },
     {
-      icon: <Wallet size={20} className="text-indigo-600" />,
-      title: 'Crypto Wallet',
-      description: 'Manage your cryptocurrency wallets',
+      icon: <FileCheck size={20} className="text-blue-600" />,
+      title: 'BVN Verification',
+      description: 'Verify your Bank Verification Number',
       hasChevron: true,
-      link: '/crypto-wallet'
+      link: '/bvn-verification'
     },
     {
       icon: <TrendingUp size={20} className="text-emerald-600" />,
