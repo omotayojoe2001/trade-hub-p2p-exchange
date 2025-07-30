@@ -34,6 +34,7 @@ import EmailVerification from "./pages/EmailVerification";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import Enable2FA from "./pages/Enable2FA";
+import BVNVerification from "./pages/BVNVerification";
 import CoinDetail from "./pages/CoinDetail";
 import BuyCrypto from "./pages/BuyCrypto";
 import BuyCryptoMatch from "./pages/BuyCryptoMatch";
@@ -80,7 +81,8 @@ const App = () => (
             <Route path="/email-verification" element={<EmailVerification />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
-            <Route path="/enable-2fa" element={<Enable2FA />} />
+          <Route path="/enable-2fa" element={<Enable2FA />} />
+          <Route path="/bvn-verification" element={<BVNVerification />} />
             <Route path="/coin/:coinId" element={<CoinDetail />} />
             <Route path="/buy-crypto" element={<BuyCrypto />} />
             <Route path="/buy-crypto-match" element={<BuyCryptoMatch />} />

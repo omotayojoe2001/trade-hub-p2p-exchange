@@ -9,6 +9,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Eye, EyeOff, User, AtSign, Mail, Phone, Fingerprint, Database, ArrowLeft, Gift, Check } from 'lucide-react';
+import { useBiometricAuth } from "@/hooks/useBiometricAuth";
+import BiometricPrompt from "@/components/BiometricPrompt";
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -16,6 +18,7 @@ const Auth = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showBiometricPrompt, setShowBiometricPrompt] = useState(false);
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -28,8 +31,9 @@ const Auth = () => {
     agreeToTerms: false
   });
   
-  const navigate = useNavigate();
   const { toast } = useToast();
+  const navigate = useNavigate();
+  const { isSupported: biometricSupported, isEnrolled: biometricEnrolled } = useBiometricAuth();
 
   useEffect(() => {
     // Check if user is already logged in
@@ -274,17 +278,20 @@ const Auth = () => {
             </div>
 
             {/* Biometric Option */}
-            <div className="bg-gray-50 rounded-lg p-4 text-center">
-              <button
-                type="button"
-                className="flex items-center justify-center space-x-2 mx-auto"
-              >
-                <Fingerprint size={20} className="text-blue-500" />
-                <span className="text-sm font-medium text-gray-700">
-                  🔒 Tap to login with fingerprint
-                </span>
-              </button>
-            </div>
+            {biometricSupported && biometricEnrolled && (
+              <div className="bg-gray-50 rounded-lg p-4 text-center">
+                <button
+                  type="button"
+                  onClick={() => setShowBiometricPrompt(true)}
+                  className="flex items-center justify-center space-x-2 mx-auto"
+                >
+                  <Fingerprint size={20} className="text-blue-500" />
+                  <span className="text-sm font-medium text-gray-700">
+                    🔒 Tap to login with biometric
+                  </span>
+                </button>
+              </div>
+            )}
 
             {error && (
               <Alert variant="destructive">
@@ -344,6 +351,22 @@ const Auth = () => {
             </div>
           </form>
         </div>
+        
+        {/* Biometric Authentication Prompt */}
+        {showBiometricPrompt && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <BiometricPrompt
+              title="Login with Biometric"
+              description="Use your fingerprint or face recognition to login quickly"
+              onSuccess={() => {
+                setShowBiometricPrompt(false);
+                navigate('/home');
+              }}
+              onCancel={() => setShowBiometricPrompt(false)}
+              onFallback={() => setShowBiometricPrompt(false)}
+            />
+          </div>
+        )}
       </div>
     );
   }
