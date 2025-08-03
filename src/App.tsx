@@ -51,6 +51,11 @@ import SellCryptoDispute from "./pages/SellCryptoDispute";
 import MerchantSettings from "./pages/MerchantSettings";
 import CryptoWallet from "./pages/CryptoWallet";
 import RateMerchant from "./pages/RateMerchant";
+import BuyCryptoFlow from "./pages/BuyCryptoFlow";
+import MerchantDashboard from "./pages/MerchantDashboard";
+import PremiumPayment from "./pages/PremiumPayment";
+import PremiumDashboard from "./pages/PremiumDashboard";
+import NotificationsDemo from "./pages/NotificationsDemo";
 
 const queryClient = new QueryClient();
 
@@ -108,6 +113,11 @@ const App = () => (
             <Route path="/merchant-settings" element={<MerchantSettings />} />
             <Route path="/crypto-wallet" element={<CryptoWallet />} />
             <Route path="/rate-merchant" element={<RateMerchant />} />
+            <Route path="/buy-crypto-flow" element={<BuyCryptoFlow />} />
+            <Route path="/merchant-dashboard" element={<MerchantDashboard />} />
+            <Route path="/premium-payment" element={<PremiumPayment />} />
+            <Route path="/premium-dashboard" element={<PremiumDashboard />} />
+            <Route path="/notifications-demo" element={<NotificationsDemo />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

@@ -274,6 +274,37 @@ const Index = () => {
         </div>
       </div>
 
+      {/* Demo Features */}
+      <div className="mb-6">
+        <h2 className="text-gray-900 text-lg font-semibold mb-4">🎬 Demo Features</h2>
+        <div className="grid grid-cols-2 gap-3">
+          <Link to="/merchant-dashboard" className="bg-orange-100 p-3 rounded-lg">
+            <div className="text-center">
+              <span className="text-orange-600 text-lg">🏪</span>
+              <p className="text-sm font-medium text-orange-700 mt-1">Merchant View</p>
+            </div>
+          </Link>
+          <Link to="/notifications-demo" className="bg-blue-100 p-3 rounded-lg">
+            <div className="text-center">
+              <span className="text-blue-600 text-lg">🔔</span>
+              <p className="text-sm font-medium text-blue-700 mt-1">Push Notifications</p>
+            </div>
+          </Link>
+          <Link to="/premium-dashboard" className="bg-purple-100 p-3 rounded-lg">
+            <div className="text-center">
+              <span className="text-purple-600 text-lg">👑</span>
+              <p className="text-sm font-medium text-purple-700 mt-1">Premium View</p>
+            </div>
+          </Link>
+          <Link to="/buy-crypto-flow" className="bg-green-100 p-3 rounded-lg">
+            <div className="text-center">
+              <span className="text-green-600 text-lg">💱</span>
+              <p className="text-sm font-medium text-green-700 mt-1">Buy Crypto</p>
+            </div>
+          </Link>
+        </div>
+      </div>
+
       <BottomNavigation />
     </div>
   );

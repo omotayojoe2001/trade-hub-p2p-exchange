@@ -14,8 +14,7 @@ const BuySell = () => {
   };
 
   const handleBuyCrypto = () => {
-    // For now, just show an alert or navigate to a buy flow
-    console.log('Buy crypto flow - to be implemented');
+    navigate('/buy-crypto-flow');
   };
 
   return (

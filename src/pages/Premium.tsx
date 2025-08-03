@@ -124,6 +124,7 @@ const Premium = () => {
 
         {/* Subscribe Button */}
         <Button 
+          onClick={() => navigate('/premium-payment')}
           className="w-full h-14 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-lg text-base mb-8"
         >
           Subscribe Now
