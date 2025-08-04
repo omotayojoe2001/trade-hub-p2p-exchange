@@ -52,6 +52,7 @@ import MerchantSettings from "./pages/MerchantSettings";
 import CryptoWallet from "./pages/CryptoWallet";
 import RateMerchant from "./pages/RateMerchant";
 import BuyCryptoFlow from "./pages/BuyCryptoFlow";
+import BuyCryptoMerchantSelection from "./pages/BuyCryptoMerchantSelection";
 import MerchantDashboard from "./pages/MerchantDashboard";
 import PremiumPayment from "./pages/PremiumPayment";
 import PremiumDashboard from "./pages/PremiumDashboard";
@@ -90,8 +91,9 @@ const App = () => (
           <Route path="/bvn-verification" element={<BVNVerification />} />
             <Route path="/coin/:coinId" element={<CoinDetail />} />
             <Route path="/buy-crypto" element={<BuyCrypto />} />
-            <Route path="/buy-crypto-match" element={<BuyCryptoMatch />} />
-            <Route path="/buy-crypto-payment" element={<BuyCryptoPayment />} />
+          <Route path="/buy-crypto-merchant-selection" element={<BuyCryptoMerchantSelection />} />
+          <Route path="/buy-crypto-match" element={<BuyCryptoMatch />} />
+          <Route path="/buy-crypto-payment" element={<BuyCryptoPayment />} />
             <Route path="/buy-crypto-waiting" element={<BuyCryptoWaiting />} />
             <Route path="/buy-crypto-success" element={<BuyCryptoSuccess />} />
             <Route path="/buy-crypto-cancel" element={<BuyCryptoCancel />} />

@@ -37,11 +37,10 @@ const BuyCryptoFlow = () => {
   };
 
   const handleContinue = () => {
-    navigate('/buy-crypto-match', { 
+    navigate('/buy-crypto-merchant-selection', { 
       state: { 
         nairaAmount, 
-        btcAmount,
-        type: 'buy' 
+        btcAmount
       } 
     });
   };

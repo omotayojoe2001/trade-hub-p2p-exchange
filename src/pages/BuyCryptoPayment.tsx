@@ -1,16 +1,25 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Clock, Copy, AlertCircle } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { ArrowLeft, Clock, Copy, AlertCircle, Upload, Send, Paperclip } from "lucide-react";
 
 const BuyCryptoPayment = () => {
   const [countdown, setCountdown] = useState(15 * 60); // 15 minutes
   const [isPaid, setIsPaid] = useState(false);
+  const [message, setMessage] = useState("");
+  const [uploadedFile, setUploadedFile] = useState(null);
+  const [messages, setMessages] = useState([
+    { id: 1, sender: "merchant", text: "Please send the exact amount to the account details provided.", time: "2:30 PM" },
+    { id: 2, sender: "merchant", text: "After payment, please upload your receipt and click 'Mark as Paid'.", time: "2:30 PM" }
+  ]);
   const navigate = useNavigate();
   const location = useLocation();
   const { amount, nairaAmount } = location.state || {};
+  const fileInputRef = useRef(null);
 
   useEffect(() => {
     if (countdown > 0) {
@@ -54,6 +63,30 @@ const BuyCryptoPayment = () => {
 
   const handleCancel = () => {
     navigate("/buy-crypto-cancel");
+  };
+
+  const handleFileUpload = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      setUploadedFile(file);
+    }
+  };
+
+  const handleSendMessage = () => {
+    if (message.trim()) {
+      const newMessage = {
+        id: messages.length + 1,
+        sender: "user",
+        text: message,
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      };
+      setMessages([...messages, newMessage]);
+      setMessage("");
+    }
+  };
+
+  const triggerFileUpload = () => {
+    fileInputRef.current?.click();
   };
 
   return (
@@ -132,16 +165,118 @@ const BuyCryptoPayment = () => {
                 <ul className="text-muted-foreground space-y-1">
                   <li>• Use the exact reference number provided</li>
                   <li>• Transfer the exact amount shown</li>
+                  <li>• Upload your payment receipt</li>
                   <li>• Click "Mark as Paid" after transfer</li>
-                  <li>• Keep your transfer receipt safe</li>
                 </ul>
               </div>
             </div>
           </CardContent>
         </Card>
 
+        {/* Upload Payment Proof */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm font-medium">Upload Payment Proof</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div 
+              onClick={triggerFileUpload}
+              className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-6 text-center cursor-pointer hover:border-primary/50 transition-colors"
+            >
+              <Upload className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
+              <p className="text-sm text-muted-foreground mb-1">
+                {uploadedFile ? uploadedFile.name : "Tap to upload payment receipt"}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                PNG, JPG or PDF (Max 5MB)
+              </p>
+            </div>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*,application/pdf"
+              onChange={handleFileUpload}
+              className="hidden"
+            />
+            {uploadedFile && (
+              <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                <div className="flex items-center space-x-2">
+                  <Paperclip className="w-4 h-4 text-muted-foreground" />
+                  <span className="text-sm font-medium">{uploadedFile.name}</span>
+                </div>
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  onClick={() => setUploadedFile(null)}
+                >
+                  Remove
+                </Button>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Messaging Section */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm font-medium">Chat with Merchant</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="max-h-40 overflow-y-auto space-y-2">
+              {messages.map((msg) => (
+                <div
+                  key={msg.id}
+                  className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
+                >
+                  <div
+                    className={`max-w-[80%] p-3 rounded-lg ${
+                      msg.sender === 'user'
+                        ? 'bg-primary text-primary-foreground'
+                        : 'bg-muted text-foreground'
+                    }`}
+                  >
+                    <p className="text-sm">{msg.text}</p>
+                    <p className={`text-xs mt-1 ${
+                      msg.sender === 'user' ? 'text-primary-foreground/70' : 'text-muted-foreground'
+                    }`}>
+                      {msg.time}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+            
+            <div className="flex space-x-2">
+              <Textarea
+                placeholder="Type your message..."
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                className="flex-1 min-h-[40px] max-h-[80px]"
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSendMessage();
+                  }
+                }}
+              />
+              <Button 
+                onClick={handleSendMessage}
+                disabled={!message.trim()}
+                size="icon"
+                className="h-10 w-10"
+              >
+                <Send className="w-4 h-4" />
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
         <div className="space-y-3">
-          <Button onClick={handleMarkAsPaid} className="w-full h-12">
+          <Button 
+            onClick={handleMarkAsPaid} 
+            className="w-full h-12"
+            disabled={!uploadedFile}
+          >
             Mark as Paid
           </Button>
           
