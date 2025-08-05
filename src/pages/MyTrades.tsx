@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Search, ArrowDown, ArrowUp, Clock, CheckCircle, XCircle, Filter, Calendar, ArrowUpDown } from 'lucide-react';
+import { Search, ArrowDown, ArrowUp, Clock, CheckCircle, XCircle, Calendar, ArrowUpDown, Bell } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -198,25 +198,33 @@ const MyTrades = () => {
       <div className="bg-white shadow-sm">
         <div className="flex items-center justify-between p-4">
           <div className="flex items-center">
-            <h1 className="text-2xl font-bold text-gray-900">My Trades</h1>
+            <h1 className="text-xl font-bold text-gray-900">My Trades</h1>
           </div>
-          <div className="w-8 h-8 bg-red-500 rounded-full flex items-center justify-center">
-            <span className="text-white text-xs font-bold">{incompleteTradesCount}</span>
-          </div>
+          <button 
+            onClick={() => navigate('/notifications')}
+            className="relative w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center hover:bg-gray-200 transition-colors"
+          >
+            <Bell size={18} className="text-gray-600" />
+            {incompleteTradesCount > 0 && (
+              <div className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center">
+                <span className="text-white text-xs font-bold">{incompleteTradesCount}</span>
+              </div>
+            )}
+          </button>
         </div>
       </div>
 
       {/* Notification Banner */}
       {incompleteTradesCount > 0 && (
-        <div className="mx-4 mt-4 bg-gradient-to-r from-orange-50 to-orange-100 border border-orange-200 rounded-xl p-4 shadow-sm">
+        <div className="mx-4 mt-4 bg-gradient-to-r from-orange-50 to-orange-100 border border-orange-200 rounded-lg p-3 shadow-sm">
           <div className="flex items-center">
-            <div className="w-3 h-3 bg-orange-500 rounded-full mr-3 animate-pulse"></div>
+            <div className="w-2 h-2 bg-orange-500 rounded-full mr-2 animate-pulse"></div>
             <div>
-              <p className="text-orange-900 font-semibold text-sm">
-                {incompleteTradesCount} trade{incompleteTradesCount > 1 ? 's' : ''} awaiting your confirmation
+              <p className="text-orange-900 font-medium text-sm">
+                {incompleteTradesCount} trade{incompleteTradesCount > 1 ? 's' : ''} awaiting confirmation
               </p>
-              <p className="text-orange-700 text-xs mt-1">
-                Please confirm if you've received payment
+              <p className="text-orange-700 text-xs">
+                Please confirm payment received
               </p>
             </div>
           </div>
@@ -224,24 +232,24 @@ const MyTrades = () => {
       )}
 
       {/* Search and Filters */}
-      <div className="p-4 space-y-4">
+      <div className="p-4 space-y-3">
         <div className="relative">
-          <Search size={20} className="absolute left-3 top-3 text-gray-400" />
+          <Search size={18} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
           <input
             type="text"
-            placeholder="Search by merchant or amount"
+            placeholder="Search merchant or amount"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-3 bg-white border border-gray-200 rounded-xl text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm"
+            className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm text-sm"
           />
         </div>
         
         {/* Filters Row */}
-        <div className="flex gap-3 overflow-x-auto pb-2">
+        <div className="flex gap-2 overflow-x-auto pb-1">
           <Select value={typeFilter} onValueChange={setTypeFilter}>
-            <SelectTrigger className="w-32 bg-white rounded-xl border-gray-200 shadow-sm">
-              <div className="flex items-center gap-2">
-                <ArrowUpDown size={16} />
+            <SelectTrigger className="w-28 bg-white rounded-lg border-gray-200 shadow-sm text-sm h-9">
+              <div className="flex items-center gap-1.5">
+                <ArrowUpDown size={14} />
                 <SelectValue placeholder="Type" />
               </div>
             </SelectTrigger>
@@ -257,12 +265,12 @@ const MyTrades = () => {
               <Button
                 variant="outline"
                 className={cn(
-                  "w-36 justify-start text-left font-normal bg-white rounded-xl border-gray-200 shadow-sm",
+                  "w-32 justify-start text-left font-normal bg-white rounded-lg border-gray-200 shadow-sm text-sm h-9",
                   !dateFrom && "text-muted-foreground"
                 )}
               >
-                <Calendar size={16} className="mr-2" />
-                {dateFrom ? format(dateFrom, "MMM dd") : "From Date"}
+                <Calendar size={14} className="mr-1.5" />
+                {dateFrom ? format(dateFrom, "MMM dd") : "From"}
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0" align="start">
@@ -281,12 +289,12 @@ const MyTrades = () => {
               <Button
                 variant="outline"
                 className={cn(
-                  "w-36 justify-start text-left font-normal bg-white rounded-xl border-gray-200 shadow-sm",
+                  "w-32 justify-start text-left font-normal bg-white rounded-lg border-gray-200 shadow-sm text-sm h-9",
                   !dateTo && "text-muted-foreground"
                 )}
               >
-                <Calendar size={16} className="mr-2" />
-                {dateTo ? format(dateTo, "MMM dd") : "To Date"}
+                <Calendar size={14} className="mr-1.5" />
+                {dateTo ? format(dateTo, "MMM dd") : "To"}
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0" align="start">
@@ -308,7 +316,7 @@ const MyTrades = () => {
                 setDateTo(undefined);
                 setTypeFilter('all');
               }}
-              className="px-3 text-gray-500 hover:text-gray-700"
+              className="px-2 text-gray-500 hover:text-gray-700 text-sm h-9"
             >
               Clear
             </Button>
@@ -317,126 +325,110 @@ const MyTrades = () => {
       </div>
 
       {/* Tabs */}
-      <div className="px-4 mb-6">
-        <div className="bg-white rounded-xl p-1 shadow-sm border border-gray-200">
+      <div className="px-4 mb-4">
+        <div className="bg-white rounded-lg p-1 shadow-sm border border-gray-200">
           <div className="flex">
             <button
               onClick={() => setActiveTab('ongoing')}
-              className={`flex-1 py-3 text-sm font-semibold rounded-lg transition-all duration-200 ${
+              className={`flex-1 py-2 text-sm font-medium rounded-md transition-all duration-200 ${
                 activeTab === 'ongoing'
-                  ? 'bg-orange-500 text-white shadow-md'
+                  ? 'bg-orange-500 text-white shadow-sm'
                   : 'text-gray-600 hover:text-orange-500'
               }`}
             >
-              <div className="flex items-center justify-center">
-                <div className={`w-2 h-2 rounded-full mr-2 ${
-                  activeTab === 'ongoing' ? 'bg-white' : 'bg-orange-500'
-                }`}></div>
-                Ongoing
-              </div>
+              Ongoing
             </button>
             <button
               onClick={() => setActiveTab('completed')}
-              className={`flex-1 py-3 text-sm font-semibold rounded-lg transition-all duration-200 ${
+              className={`flex-1 py-2 text-sm font-medium rounded-md transition-all duration-200 ${
                 activeTab === 'completed'
-                  ? 'bg-green-500 text-white shadow-md'
+                  ? 'bg-green-500 text-white shadow-sm'
                   : 'text-gray-600 hover:text-green-500'
               }`}
             >
-              <div className="flex items-center justify-center">
-                <div className={`w-2 h-2 rounded-full mr-2 ${
-                  activeTab === 'completed' ? 'bg-white' : 'bg-green-500'
-                }`}></div>
-                Completed
-              </div>
+              Completed
             </button>
             <button
               onClick={() => setActiveTab('cancelled')}
-              className={`flex-1 py-3 text-sm font-semibold rounded-lg transition-all duration-200 ${
+              className={`flex-1 py-2 text-sm font-medium rounded-md transition-all duration-200 ${
                 activeTab === 'cancelled'
-                  ? 'bg-red-500 text-white shadow-md'
+                  ? 'bg-red-500 text-white shadow-sm'
                   : 'text-gray-600 hover:text-red-500'
               }`}
             >
-              <div className="flex items-center justify-center">
-                <div className={`w-2 h-2 rounded-full mr-2 ${
-                  activeTab === 'cancelled' ? 'bg-white' : 'bg-red-500'
-                }`}></div>
-                Cancelled
-              </div>
+              Cancelled
             </button>
           </div>
         </div>
       </div>
 
       {/* Trades List */}
-      <div className="px-4 space-y-4">
+      <div className="px-4 space-y-3">
         {filteredTrades.length === 0 ? (
-          <div className="text-center py-12">
-            <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Search size={24} className="text-gray-400" />
+          <div className="text-center py-8">
+            <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
+              <Search size={20} className="text-gray-400" />
             </div>
             <p className="text-gray-500 font-medium">No trades found</p>
-            <p className="text-gray-400 text-sm mt-1">Try adjusting your filters</p>
+            <p className="text-gray-400 text-sm">Try adjusting your filters</p>
           </div>
         ) : (
           filteredTrades.map((trade) => (
             <div 
               key={trade.id} 
-              className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+              className="bg-white border border-gray-200 rounded-lg p-3 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
               onClick={() => handleTradeClick(trade.id)}
             >
-              <div className="flex items-start justify-between mb-4">
+              <div className="flex items-start justify-between mb-3">
                 <div className="flex items-center">
-                  <div className={`w-10 h-10 rounded-full flex items-center justify-center mr-3 ${
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center mr-3 ${
                     trade.type === 'buy' ? 'bg-blue-100' : 'bg-green-100'
                   }`}>
                     {trade.type === 'buy' ? (
-                      <ArrowDown size={18} className="text-blue-600" />
+                      <ArrowDown size={14} className="text-blue-600" />
                     ) : (
-                      <ArrowUp size={18} className="text-green-600" />
+                      <ArrowUp size={14} className="text-green-600" />
                     )}
                   </div>
                   <div>
-                    <h3 className="font-semibold text-gray-900 capitalize">
+                    <h3 className="font-medium text-gray-900 capitalize text-sm">
                       {trade.type}ing {trade.coin}
                     </h3>
-                    <p className="text-xl font-bold text-gray-900 mt-1">{trade.amount}</p>
-                    <p className="text-sm text-gray-500">{trade.coinAmount}</p>
+                    <p className="text-lg font-bold text-gray-900">{trade.amount}</p>
+                    <p className="text-xs text-gray-500">{trade.coinAmount}</p>
                   </div>
                 </div>
                 {getStatusBadge(trade.status)}
               </div>
               
-              <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center">
-                  <div className="w-10 h-10 bg-gradient-to-br from-gray-200 to-gray-300 rounded-full flex items-center justify-center mr-3 shadow-sm">
-                    <span className="text-lg">{trade.avatar}</span>
+                  <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center mr-3">
+                    <span className="text-sm">{trade.avatar}</span>
                   </div>
                   <div>
-                    <p className="font-semibold text-gray-900">{trade.merchant}</p>
+                    <p className="font-medium text-gray-900 text-sm">{trade.merchant}</p>
                     <div className="flex items-center">
-                      <span className="text-yellow-500 mr-1">⭐</span>
-                      <span className="text-sm text-gray-600 font-medium">{trade.rating}</span>
+                      <span className="text-yellow-500 mr-1 text-xs">⭐</span>
+                      <span className="text-xs text-gray-600">{trade.rating}</span>
                     </div>
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="text-xs text-gray-500">Started:</p>
-                  <p className="text-sm font-medium text-gray-900">{trade.startTime}</p>
+                  <p className="text-xs text-gray-500">{trade.startTime}</p>
                 </div>
               </div>
 
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex-1 mr-4">
-                  <div className="w-full bg-gray-200 rounded-full h-3">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex-1 mr-3">
+                  <div className="w-full bg-gray-200 rounded-full h-2">
                     <div
-                      className={`h-3 rounded-full transition-all duration-300 ${getProgressColor(trade.status)}`}
+                      className={`h-2 rounded-full transition-all duration-300 ${getProgressColor(trade.status)}`}
                       style={{ width: `${trade.progress}%` }}
                     ></div>
                   </div>
                 </div>
-                <span className="text-sm font-semibold text-gray-600">{trade.progress}%</span>
+                <span className="text-xs font-medium text-gray-600">{trade.progress}%</span>
               </div>
 
               {/* Action Button for Waiting Confirmation */}
@@ -446,7 +438,7 @@ const MyTrades = () => {
                     e.stopPropagation();
                     handleConfirmPayment(trade.id);
                   }}
-                  className="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-xl text-sm font-semibold shadow-sm hover:shadow-md transition-all"
+                  className="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg text-sm font-medium shadow-sm hover:shadow-md transition-all"
                 >
                   Confirm Payment Received
                 </Button>

@@ -4,6 +4,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import GlobalNotifications from "@/components/GlobalNotifications";
 import { AuthProvider } from "./hooks/useAuth";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
@@ -67,6 +68,7 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
+          <GlobalNotifications />
           <Routes>
             <Route path="/" element={<SplashScreen />} />
             <Route path="/home" element={<Index />} />
@@ -104,7 +106,7 @@ const App = () => (
             <Route path="/my-trades" element={<MyTrades />} />
             <Route path="/trade-history" element={<TradeHistory />} />
             <Route path="/payment-status" element={<PaymentStatus />} />
-            <Route path="/trade-details" element={<TradeDetails />} />
+            <Route path="/trade-details/:tradeId" element={<TradeDetails />} />
             <Route path="/sell-crypto" element={<SellCrypto />} />
             <Route path="/sell-crypto-match" element={<SellCryptoMatch />} />
             <Route path="/sell-crypto-waiting" element={<SellCryptoWaiting />} />
