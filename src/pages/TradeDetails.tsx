@@ -11,21 +11,86 @@ const TradeDetails = () => {
   const [isButtonEnabled, setIsButtonEnabled] = useState(false);
   const navigate = useNavigate();
 
-  // Mock transaction data - in real app, this would come from API
-  const transactionDetails = {
+  // Mock transactions data for demo
+  const mockTransactions = [
+    {
+      id: 1,
+      amount: '0.05 BTC',
+      nairaAmount: '₦45,200,000',
+      total: '₦2,260,000',
+      txId: 'TXN123456789',
+      date: '2023-10-26',
+      time: '14:30',
+      merchant: 'Michael Adebayo',
+      merchantAvatar: '👤',
+      rating: 4.8,
+      status: 'completed',
+      coin: 'BTC',
+      type: 'sell',
+      merchantPhone: '+234 801 234 5678',
+      bankAccount: 'GT Bank - 0123456789',
+      walletAddress: 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh'
+    },
+    {
+      id: 2,
+      amount: '1.2 ETH',
+      nairaAmount: '₦3,450,000',
+      total: '₦4,140,000',
+      txId: 'TXN789012345',
+      date: '2023-10-25',
+      time: '09:15',
+      merchant: 'Sarah Johnson',
+      merchantAvatar: '👩',
+      rating: 4.5,
+      status: 'pending',
+      coin: 'ETH',
+      type: 'buy',
+      merchantPhone: '+234 802 345 6789',
+      bankAccount: 'Access Bank - 0987654321',
+      walletAddress: '0x742d35Cc6634C0532925a3b8D563C9A7c3c6b0E2'
+    }
+  ];
+
+  // Find the transaction data based on URL txId
+  const foundTransaction = mockTransactions.find(t => t.txId === urlTxId);
+  
+  // Mock transaction data - use found transaction or default
+  const transactionDetails = foundTransaction ? {
+    id: foundTransaction.txId,
+    amount: foundTransaction.amount,
+    nairaAmount: foundTransaction.nairaAmount,
+    total: foundTransaction.total,
+    date: foundTransaction.date,
+    time: foundTransaction.time,
+    status: foundTransaction.status,
+    coin: foundTransaction.coin,
+    type: foundTransaction.type,
+    walletAddress: foundTransaction.walletAddress,
+    merchant: {
+      name: foundTransaction.merchant,
+      avatar: foundTransaction.merchantAvatar,
+      rating: foundTransaction.rating,
+      phone: foundTransaction.merchantPhone,
+      bankAccount: foundTransaction.bankAccount,
+      trades: Math.floor(Math.random() * 500) + 50
+    }
+  } : {
     id: urlTxId || 'TXN123456789',
     amount: '0.05 BTC',
     nairaAmount: '₦45,200,000',
     total: '₦2,260,000',
-    rate: '45,200,000',
     date: '2023-10-26',
     time: '14:30',
     status: 'completed',
     coin: 'BTC',
+    type: 'sell',
     walletAddress: 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh',
     merchant: {
       name: 'John Merchant',
+      avatar: '👤',
       rating: 4.8,
+      phone: '+234 901 234 5678',
+      bankAccount: 'First Bank - 0123456789',
       trades: 234
     }
   };
@@ -131,6 +196,20 @@ const TradeDetails = () => {
                 <span>{transactionDetails.merchant.rating} ({transactionDetails.merchant.trades} trades)</span>
               </div>
             </div>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-gray-600">Phone:</span>
+            <span className="font-medium text-gray-900">{transactionDetails.merchant.phone}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-gray-600">Bank Account:</span>
+            <span className="font-medium text-gray-900">{transactionDetails.merchant.bankAccount}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-gray-600">Trade Type:</span>
+            <span className={`font-medium ${transactionDetails.type === 'buy' ? 'text-green-600' : 'text-blue-600'}`}>
+              {transactionDetails.type === 'buy' ? 'Buying' : 'Selling'} {transactionDetails.coin}
+            </span>
           </div>
         </div>
 

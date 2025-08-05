@@ -1,5 +1,5 @@
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowUp, ArrowDown, Clock, Building2, Bell, Settings, TrendingUp, ChevronRight, Star, DollarSign, Zap, CreditCard } from 'lucide-react';
 import { Button } from "@/components/ui/button";
@@ -9,9 +9,13 @@ import UserTypeToggle from '@/components/UserTypeToggle';
 import TrackingNotification from '@/components/TrackingNotification';
 import TrendingCoins from '@/components/TrendingCoins';
 import { useAuth } from '@/hooks/useAuth';
+import { useCryptoData } from '@/hooks/useCryptoData';
 
 const Index = () => {
   const { user, profile, loading } = useAuth();
+  const { cryptoData, loading: cryptoLoading, error: cryptoError } = useCryptoData(50);
+  const [selectedTimeFilter, setSelectedTimeFilter] = useState('Today');
+  const [selectedCoinFilter, setSelectedCoinFilter] = useState('All');
   
   const navigate = useNavigate();
 
@@ -40,6 +44,38 @@ const Index = () => {
 
   const displayName = profile?.display_name || user.email?.split('@')[0] || 'User';
   const userType = profile?.user_type || 'customer';
+
+  // Mock data that changes based on time filter
+  const getStatsData = () => {
+    switch (selectedTimeFilter) {
+      case 'Today':
+        return { traders: '3,247', rate: '₦1,650', volume: '₦5.2M' };
+      case 'This Week':
+        return { traders: '18,591', rate: '₦1,648', volume: '₦32.8M' };
+      case 'This Month':
+        return { traders: '67,423', rate: '₦1,652', volume: '₦156.3M' };
+      default:
+        return { traders: '3,247', rate: '₦1,650', volume: '₦5.2M' };
+    }
+  };
+
+  const statsData = getStatsData();
+
+  // Filter crypto data based on coin filter
+  const getFilteredCryptoData = () => {
+    if (!cryptoData) return [];
+    
+    switch (selectedCoinFilter) {
+      case 'Favorites':
+        return cryptoData.filter(coin => ['bitcoin', 'ethereum', 'tether'].includes(coin.id.toString()));
+      case 'DeFi':
+        return cryptoData.filter(coin => ['uniswap', 'aave', 'compound-governance-token'].includes(coin.id.toString()));
+      case 'NFT':
+        return cryptoData.filter(coin => ['enjincoin', 'the-sandbox', 'decentraland'].includes(coin.id.toString()));
+      default:
+        return cryptoData;
+    }
+  };
 
   return (
     <div className="min-h-screen bg-white px-4 py-6 pb-20">
@@ -78,28 +114,32 @@ const Index = () => {
               <TrendingUp size={16} className="text-green-500 mr-2" />
               <span className="text-gray-500 text-sm">Total Traders</span>
             </div>
-            <p className="text-3xl font-bold text-gray-900">12,847</p>
+            <p className="text-3xl font-bold text-gray-900">{statsData.traders}</p>
           </div>
           <div>
             <div className="flex items-center mb-2">
               <DollarSign size={16} className="text-blue-500 mr-2" />
               <span className="text-gray-500 text-sm">USD to NGN Rate</span>
             </div>
-            <p className="text-3xl font-bold text-gray-900">₦1,650</p>
+            <p className="text-3xl font-bold text-gray-900">{statsData.rate}</p>
           </div>
         </div>
         
-        {/* Time Filters - Responsive */}
+        {/* Time Filters - Interactive */}
         <div className="flex space-x-2">
-          <button className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium flex-1 sm:flex-none">
-            Today
-          </button>
-          <button className="bg-gray-100 text-gray-600 px-4 py-2 rounded-lg text-sm font-medium flex-1 sm:flex-none">
-            This Week
-          </button>
-          <button className="bg-gray-100 text-gray-600 px-4 py-2 rounded-lg text-sm font-medium flex-1 sm:flex-none">
-            This Month
-          </button>
+          {['Today', 'This Week', 'This Month'].map((filter) => (
+            <button
+              key={filter}
+              onClick={() => setSelectedTimeFilter(filter)}
+              className={`px-4 py-2 rounded-lg text-sm font-medium flex-1 sm:flex-none transition-colors ${
+                selectedTimeFilter === filter
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
+            >
+              {filter}
+            </button>
+          ))}
         </div>
       </Card>
 
@@ -201,16 +241,64 @@ const Index = () => {
         </div>
       </Link>
 
-      {/* Coin Filters */}
+      {/* Coin Filters - Interactive */}
       <div className="flex space-x-4 mb-4">
-        <button className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium">All</button>
-        <button className="text-gray-600 text-sm font-medium">Favorites</button>
-        <button className="text-gray-600 text-sm font-medium">DeFi</button>
-        <button className="text-gray-600 text-sm font-medium">NFT</button>
+        {['All', 'Favorites', 'DeFi', 'NFT'].map((filter) => (
+          <button
+            key={filter}
+            onClick={() => setSelectedCoinFilter(filter)}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+              selectedCoinFilter === filter
+                ? 'bg-blue-600 text-white'
+                : 'text-gray-600 hover:bg-gray-100'
+            }`}
+          >
+            {filter}
+          </button>
+        ))}
       </div>
 
-      {/* Trending Coins */}
-      <TrendingCoins />
+      {/* Filtered Coins */}
+      {cryptoLoading ? (
+        <div className="text-center py-8">
+          <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading coins...</p>
+        </div>
+      ) : cryptoError ? (
+        <div className="text-center py-8">
+          <p className="text-red-600">Error loading coins</p>
+        </div>
+      ) : (
+        <div className="mb-6">
+          <div className="space-y-3">
+            {getFilteredCryptoData().slice(0, 5).map((coin) => (
+              <Link 
+                key={coin.id} 
+                to={`/coin/${coin.id}`} 
+                className="block bg-white p-4 rounded-xl border border-gray-200 hover:shadow-sm transition-shadow"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center mr-3">
+                      <span className="text-lg">{coin.symbol === 'BTC' ? '₿' : coin.symbol === 'ETH' ? '⧫' : '●'}</span>
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-gray-900">{coin.name}</h3>
+                      <p className="text-sm text-gray-500">{coin.symbol.toUpperCase()}</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-semibold text-gray-900">${coin.current_price.toLocaleString()}</p>
+                    <p className={`text-sm ${coin.price_change_percentage_24h >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                      {coin.price_change_percentage_24h >= 0 ? '+' : ''}{coin.price_change_percentage_24h?.toFixed(2)}%
+                    </p>
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
 
 
       {/* Refer & Earn and My Rewards - Stacked */}
