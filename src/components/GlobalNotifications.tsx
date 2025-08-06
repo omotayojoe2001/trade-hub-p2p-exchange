@@ -52,12 +52,21 @@ const GlobalNotifications = () => {
   ];
 
   useEffect(() => {
-    const timer = setTimeout(() => {
+    // Initial load
+    const initialTimer = setTimeout(() => {
       setNotifications(demoNotifications);
       showNewNotification();
     }, 3000);
 
-    return () => clearTimeout(timer);
+    // Show notifications every 40 seconds consistently
+    const interval = setInterval(() => {
+      showNewNotification();
+    }, 40000); // 40 seconds
+
+    return () => {
+      clearTimeout(initialTimer);
+      clearInterval(interval);
+    };
   }, []);
 
   const showNewNotification = () => {

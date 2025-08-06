@@ -239,9 +239,12 @@ const Auth = () => {
   if (showQuickAuth && storedUser) {
     return (
       <QuickAuthScreen
-        user={storedUser}
+        user={{
+          email: storedUser.email,
+          displayName: storedUser.displayName
+        }}
         onSuccess={() => navigate('/home')}
-        onSwitchAccount={() => {
+        onCancel={() => {
           clearStoredUser();
           setShowQuickAuth(false);
           setIsLogin(true);

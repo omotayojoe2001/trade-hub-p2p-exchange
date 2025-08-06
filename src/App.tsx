@@ -5,7 +5,9 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import GlobalNotifications from "@/components/GlobalNotifications";
-import { AuthProvider } from "./hooks/useAuth";
+import QuickAuthScreen from "@/components/QuickAuthScreen";
+import useInactivityDetector from "@/hooks/useInactivityDetector";
+import { AuthProvider, useAuth } from "./hooks/useAuth";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import ProfileSetup from "./pages/ProfileSetup";
@@ -61,15 +63,33 @@ import NotificationsDemo from "./pages/NotificationsDemo";
 
 const queryClient = new QueryClient();
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <AuthProvider>
-          <GlobalNotifications />
-          <Routes>
+const AppContent = () => {
+  const { user } = useAuth();
+  const { isInactive, resetTimer } = useInactivityDetector();
+
+  const handleQuickAuthSuccess = () => {
+    resetTimer();
+  };
+
+  const handleSignOut = async () => {
+    // Handle sign out logic here if needed
+    resetTimer();
+  };
+
+  return (
+    <>
+      <GlobalNotifications />
+      {isInactive && user && (
+        <QuickAuthScreen
+          user={{
+            email: user.email || '',
+            displayName: user.user_metadata?.display_name || user.email
+          }}
+          onSuccess={handleQuickAuthSuccess}
+          onCancel={handleSignOut}
+        />
+      )}
+      <Routes>
             <Route path="/" element={<SplashScreen />} />
             <Route path="/home" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
@@ -125,6 +145,18 @@ const App = () => (
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
+    </>
+  );
+};
+
+const App = () => (
+  <QueryClientProvider client={queryClient}>
+    <TooltipProvider>
+      <Toaster />
+      <Sonner />
+      <BrowserRouter>
+        <AuthProvider>
+          <AppContent />
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>

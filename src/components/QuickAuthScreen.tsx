@@ -12,19 +12,17 @@ import BiometricPrompt from './BiometricPrompt';
 
 interface QuickAuthScreenProps {
   user: {
-    id: string;
     email: string;
-    displayName: string;
-    lastLoginAt: string;
+    displayName?: string;
   };
   onSuccess: () => void;
-  onSwitchAccount: () => void;
+  onCancel?: () => void;
 }
 
 const QuickAuthScreen: React.FC<QuickAuthScreenProps> = ({
   user,
   onSuccess,
-  onSwitchAccount
+  onCancel
 }) => {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -82,35 +80,27 @@ const QuickAuthScreen: React.FC<QuickAuthScreenProps> = ({
   };
 
   return (
-    <div className="min-h-screen bg-white px-4 py-8">
-      <div className="max-w-sm mx-auto">
+    <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div className="bg-background rounded-xl shadow-lg border max-w-sm w-full p-6">
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <button 
-            onClick={onSwitchAccount}
-            className="p-2 -ml-2"
-          >
-            <ArrowLeft size={20} className="text-gray-600" />
-          </button>
-          <span className="text-sm text-gray-500">Quick Login</span>
+        <div className="text-center mb-6">
+          <h2 className="text-lg font-semibold mb-1">Session Timeout</h2>
+          <p className="text-sm text-muted-foreground">Please authenticate to continue</p>
         </div>
 
         {/* User Profile Section */}
-        <div className="text-center mb-8">
-          <Avatar className="w-20 h-20 mx-auto mb-4">
-            <AvatarFallback className="bg-blue-100 text-blue-600 text-xl font-semibold">
-              {getInitials(user.displayName)}
+        <div className="text-center mb-6">
+          <Avatar className="w-16 h-16 mx-auto mb-3">
+            <AvatarFallback className="bg-primary/10 text-primary text-lg font-semibold">
+              {user.displayName ? getInitials(user.displayName) : <User size={20} />}
             </AvatarFallback>
           </Avatar>
           
-          <h1 className="text-xl font-semibold text-black mb-1">
-            Welcome back, {user.displayName.split(' ')[0]}!
-          </h1>
-          <p className="text-sm text-gray-500 mb-1">
+          <h3 className="font-medium mb-1">
+            Welcome back{user.displayName ? `, ${user.displayName.split(' ')[0]}` : ''}!
+          </h3>
+          <p className="text-sm text-muted-foreground">
             {user.email}
-          </p>
-          <p className="text-xs text-gray-400">
-            Last active {formatLastLogin(user.lastLoginAt)}
           </p>
         </div>
 
@@ -119,31 +109,31 @@ const QuickAuthScreen: React.FC<QuickAuthScreenProps> = ({
           <div className="mb-6">
             <Button
               onClick={() => setShowBiometricPrompt(true)}
-              className="w-full h-14 bg-blue-50 hover:bg-blue-100 text-blue-600 border border-blue-200 rounded-xl"
+              className="w-full h-12"
               variant="outline"
             >
-              <div className="flex items-center space-x-3">
-                <Fingerprint size={24} />
-                <div className="text-left">
-                  <div className="font-medium">Use Biometric</div>
-                  <div className="text-xs opacity-70">Fingerprint or Face ID</div>
-                </div>
+              <div className="flex items-center space-x-2">
+                <Fingerprint size={20} />
+                <span>Use Biometric</span>
               </div>
             </Button>
           </div>
         )}
 
         {/* Divider */}
-        <div className="flex items-center my-6">
-          <div className="flex-1 border-t border-gray-200"></div>
-          <span className="px-3 text-xs text-gray-500">or</span>
-          <div className="flex-1 border-t border-gray-200"></div>
+        <div className="relative my-4">
+          <div className="absolute inset-0 flex items-center">
+            <span className="w-full border-t" />
+          </div>
+          <div className="relative flex justify-center text-xs uppercase">
+            <span className="bg-background px-2 text-muted-foreground">or</span>
+          </div>
         </div>
 
         {/* Password Form */}
         <form onSubmit={handlePasswordLogin} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="password" className="text-sm font-medium text-gray-700">
+            <Label htmlFor="password" className="text-sm font-medium">
               Enter your password
             </Label>
             <div className="relative">
@@ -153,14 +143,14 @@ const QuickAuthScreen: React.FC<QuickAuthScreenProps> = ({
                 type={showPassword ? "text" : "password"}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="h-12 bg-white border border-gray-300 rounded-lg px-4 pr-12 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="pr-10"
                 placeholder="••••••••"
                 required
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400"
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
               >
                 {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
@@ -175,30 +165,24 @@ const QuickAuthScreen: React.FC<QuickAuthScreenProps> = ({
 
           <Button
             type="submit"
-            className="w-full h-12 bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded-lg"
+            className="w-full"
             disabled={loading}
           >
-            {loading ? 'Signing in...' : 'Continue'}
+            {loading ? 'Authenticating...' : 'Unlock'}
           </Button>
         </form>
 
         {/* Switch Account */}
-        <div className="text-center mt-6">
-          <button
-            onClick={onSwitchAccount}
-            className="text-sm text-blue-500 font-medium"
-          >
-            Not you? Switch account
-          </button>
-        </div>
-
-        {/* Security Notice */}
-        <div className="text-center mt-8">
-          <div className="flex items-center justify-center space-x-1 text-xs text-gray-500">
-            <span>🔒</span>
-            <span>Secured with 256-bit encryption</span>
+        {onCancel && (
+          <div className="text-center mt-4">
+            <button
+              onClick={onCancel}
+              className="text-sm text-muted-foreground hover:text-foreground"
+            >
+              Sign out instead
+            </button>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Biometric Authentication Prompt */}
