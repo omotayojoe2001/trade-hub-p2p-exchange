@@ -7,7 +7,10 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import GlobalNotifications from "@/components/GlobalNotifications";
 import QuickAuthScreen from "@/components/QuickAuthScreen";
 import useInactivityDetector from "@/hooks/useInactivityDetector";
+import { useAuthStorage } from "@/hooks/useAuthStorage";
+import { QuickAuthProvider, useQuickAuth } from "@/hooks/useQuickAuth";
 import { AuthProvider, useAuth } from "./hooks/useAuth";
+import { useLocation } from "react-router-dom";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import ProfileSetup from "./pages/ProfileSetup";
@@ -61,32 +64,78 @@ import PremiumPayment from "./pages/PremiumPayment";
 import PremiumDashboard from "./pages/PremiumDashboard";
 import NotificationsDemo from "./pages/NotificationsDemo";
 
+import React from 'react';
+
 const queryClient = new QueryClient();
 
 const AppContent = () => {
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   const { isInactive, resetTimer } = useInactivityDetector();
+  const { storedUser, saveUser, clearStoredUser } = useAuthStorage();
+  const { setQuickAuthActive } = useQuickAuth();
+  const location = useLocation();
+
+  // Check if user is on auth-related pages
+  const isOnAuthPage = ['/auth', '/onboarding', '/splash', '/email-verification', '/forgot-password', '/reset-password'].includes(location.pathname);
+  
+  // Save user data when they're active and logged in
+  React.useEffect(() => {
+    if (user && !isInactive) {
+      saveUser({
+        id: user.id,
+        email: user.email || '',
+        displayName: user.user_metadata?.display_name || user.email || ''
+      });
+    }
+  }, [user, isInactive, saveUser]);
+
+  // Handle inactivity - log user out completely
+  React.useEffect(() => {
+    if (isInactive && user) {
+      setQuickAuthActive(true);
+      signOut();
+    }
+  }, [isInactive, user, signOut, setQuickAuthActive]);
+
+  // Set quick auth active when showing the screen
+  React.useEffect(() => {
+    if (!user && storedUser && !isOnAuthPage) {
+      setQuickAuthActive(true);
+    } else {
+      setQuickAuthActive(false);
+    }
+  }, [user, storedUser, isOnAuthPage, setQuickAuthActive]);
 
   const handleQuickAuthSuccess = () => {
     resetTimer();
   };
 
   const handleSignOut = async () => {
-    // Handle sign out logic here if needed
+    await signOut();
+    clearStoredUser();
     resetTimer();
   };
 
   return (
     <>
-      <GlobalNotifications />
-      {isInactive && user && (
+      {/* Only show notifications if not on auth pages */}
+      {!isOnAuthPage && <GlobalNotifications />}
+      
+      {/* Show quick auth if user was logged out due to inactivity */}
+      {!user && storedUser && !isOnAuthPage && (
         <QuickAuthScreen
           user={{
-            email: user.email || '',
-            displayName: user.user_metadata?.display_name || user.email
+            email: storedUser.email,
+            displayName: storedUser.displayName
           }}
-          onSuccess={handleQuickAuthSuccess}
-          onCancel={handleSignOut}
+          onSuccess={() => {
+            setQuickAuthActive(false);
+            handleQuickAuthSuccess();
+          }}
+          onCancel={() => {
+            setQuickAuthActive(false);
+            handleSignOut();
+          }}
         />
       )}
       <Routes>
@@ -156,7 +205,9 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
-          <AppContent />
+          <QuickAuthProvider>
+            <AppContent />
+          </QuickAuthProvider>
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>

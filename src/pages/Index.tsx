@@ -9,10 +9,12 @@ import UserTypeToggle from '@/components/UserTypeToggle';
 import TrackingNotification from '@/components/TrackingNotification';
 import TrendingCoins from '@/components/TrendingCoins';
 import { useAuth } from '@/hooks/useAuth';
+import { useQuickAuth } from '@/hooks/useQuickAuth';
 import { useCryptoData } from '@/hooks/useCryptoData';
 
 const Index = () => {
   const { user, profile, loading } = useAuth();
+  const { isQuickAuthActive } = useQuickAuth();
   const { cryptoData, loading: cryptoLoading, error: cryptoError } = useCryptoData(50);
   const [selectedTimeFilter, setSelectedTimeFilter] = useState('Today');
   const [selectedCoinFilter, setSelectedCoinFilter] = useState('All');
@@ -393,7 +395,7 @@ const Index = () => {
         </div>
       </div>
 
-      <BottomNavigation />
+      {!isQuickAuthActive && <BottomNavigation />}
     </div>
   );
 };

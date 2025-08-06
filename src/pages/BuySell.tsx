@@ -4,9 +4,11 @@ import { Bell, ArrowUpRight, ArrowDownLeft, HelpCircle, Clock, Shield } from 'lu
 import { Button } from "@/components/ui/button";
 import { useNavigate } from 'react-router-dom';
 import BottomNavigation from '@/components/BottomNavigation';
+import { useQuickAuth } from '@/hooks/useQuickAuth';
 
 const BuySell = () => {
   const [hoveredCard, setHoveredCard] = useState<string | null>(null);
+  const { isQuickAuthActive } = useQuickAuth();
   const navigate = useNavigate();
 
   const handleSellCrypto = () => {
@@ -192,7 +194,7 @@ const BuySell = () => {
         </div>
       </div>
 
-      <BottomNavigation />
+      {!isQuickAuthActive && <BottomNavigation />}
     </div>
   );
 };

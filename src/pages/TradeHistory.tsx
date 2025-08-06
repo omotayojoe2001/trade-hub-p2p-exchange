@@ -2,10 +2,12 @@ import React, { useState, useMemo } from 'react';
 import { Calendar, ChevronDown, Search, ArrowDown, Bell, Settings, RefreshCw, Filter, ArrowLeft, Clock } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import BottomNavigation from '@/components/BottomNavigation';
+import { useQuickAuth } from '@/hooks/useQuickAuth';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const TradeHistory = () => {
   const navigate = useNavigate();
+  const { isQuickAuthActive } = useQuickAuth();
   const [activeTab, setActiveTab] = useState('all');
   const [dateRange, setDateRange] = useState('all');
   const [tradeType, setTradeType] = useState('all');
@@ -369,7 +371,7 @@ const TradeHistory = () => {
         )}
       </div>
 
-      <BottomNavigation />
+      {!isQuickAuthActive && <BottomNavigation />}
     </div>
   );
 };

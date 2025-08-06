@@ -7,11 +7,13 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import PaymentConfirmationDialog from "@/components/PaymentConfirmationDialog";
 import BottomNavigation from '@/components/BottomNavigation';
+import { useQuickAuth } from '@/hooks/useQuickAuth';
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 
 const MyTrades = () => {
   const navigate = useNavigate();
+  const { isQuickAuthActive } = useQuickAuth();
   const [activeTab, setActiveTab] = useState('ongoing');
   const [searchQuery, setSearchQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState('all');
@@ -455,7 +457,7 @@ const MyTrades = () => {
         onConfirm={handleConfirmationResponse}
       />
 
-      <BottomNavigation />
+      {!isQuickAuthActive && <BottomNavigation />}
     </div>
   );
 };

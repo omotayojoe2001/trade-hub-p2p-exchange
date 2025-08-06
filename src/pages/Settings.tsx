@@ -4,9 +4,11 @@ import { ArrowLeft, Bell, ChevronRight, User, Shield, CreditCard, HelpCircle, Lo
 import { Link } from 'react-router-dom';
 import BottomNavigation from '@/components/BottomNavigation';
 import { useAuth } from '@/hooks/useAuth';
+import { useQuickAuth } from '@/hooks/useQuickAuth';
 
 const Settings = () => {
   const { signOut } = useAuth();
+  const { isQuickAuthActive } = useQuickAuth();
   
   const settingsOptions = [
     {
@@ -124,7 +126,7 @@ const Settings = () => {
         </div>
       </div>
 
-      <BottomNavigation />
+      {!isQuickAuthActive && <BottomNavigation />}
     </div>
   );
 };
