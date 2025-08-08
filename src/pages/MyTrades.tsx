@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Search, ArrowDown, ArrowUp, Clock, CheckCircle, XCircle, Calendar, ArrowUpDown, Bell } from 'lucide-react';
+import { Search, ArrowDown, ArrowUp, Clock, CheckCircle, XCircle, Calendar, ArrowUpDown, Bell, Star, User } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -406,12 +406,12 @@ const MyTrades = () => {
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center">
                   <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center mr-3">
-                    <span className="text-sm">{trade.avatar}</span>
+                    <User size={14} className="text-gray-500" />
                   </div>
                   <div>
                     <p className="font-medium text-gray-900 text-sm">{trade.merchant}</p>
                     <div className="flex items-center">
-                      <span className="text-yellow-500 mr-1 text-xs">⭐</span>
+                      <Star size={12} className="text-yellow-500 mr-1" />
                       <span className="text-xs text-gray-600">{trade.rating}</span>
                     </div>
                   </div>

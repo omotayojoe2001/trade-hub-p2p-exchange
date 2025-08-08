@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Calendar, ChevronDown, Search, ArrowDown, Bell, Settings, RefreshCw, Filter, ArrowLeft, Clock } from 'lucide-react';
+import { Calendar, ChevronDown, ChevronRight, Search, ArrowDown, Bell, Settings, RefreshCw, Filter, ArrowLeft, Clock, Star, User, Coins, Gem, CircleDollarSign } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import BottomNavigation from '@/components/BottomNavigation';
 import { useQuickAuth } from '@/hooks/useQuickAuth';
@@ -131,13 +131,13 @@ const TradeHistory = () => {
   const getCoinIcon = (coin: string) => {
     switch (coin) {
       case 'BTC':
-        return '₿';
+        return <Coins size={18} className={getCoinColor(coin)} />;
       case 'ETH':
-        return '⧫';
+        return <Gem size={18} className={getCoinColor(coin)} />;
       case 'USDT':
-        return '$';
+        return <CircleDollarSign size={18} className={getCoinColor(coin)} />;
       default:
-        return '●';
+        return <Coins size={18} className="text-gray-500" />;
     }
   };
 
@@ -313,9 +313,7 @@ const TradeHistory = () => {
               <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center">
                   <div className="w-12 h-12 bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl flex items-center justify-center mr-4">
-                    <span className={`text-xl font-bold ${getCoinColor(transaction.coin)}`}>
-                      {getCoinIcon(transaction.coin)}
-                    </span>
+                    {getCoinIcon(transaction.coin)}
                   </div>
                   <div>
                     <div className="flex items-center mb-1">
@@ -350,12 +348,12 @@ const TradeHistory = () => {
               <div className="flex items-center justify-between">
                 <div className="flex items-center">
                   <div className="w-8 h-8 bg-gradient-to-br from-gray-100 to-gray-200 rounded-full flex items-center justify-center mr-3">
-                    <span className="text-sm">{transaction.merchantAvatar}</span>
+                    <User size={14} className="text-gray-500" />
                   </div>
                   <div>
                     <p className="text-sm font-medium text-gray-900">{transaction.merchant}</p>
                     <div className="flex items-center">
-                      <span className="text-yellow-500 mr-1">⭐</span>
+                      <Star size={14} className="text-yellow-500 mr-1" />
                       <span className="text-xs font-medium text-gray-600">
                         {transaction.rating}
                       </span>
@@ -363,7 +361,7 @@ const TradeHistory = () => {
                   </div>
                 </div>
                 <div className="text-right">
-                  <ChevronDown size={16} className="text-gray-400 transform rotate-[-90deg]" />
+                  <ChevronRight size={16} className="text-gray-400" />
                 </div>
               </div>
             </div>
