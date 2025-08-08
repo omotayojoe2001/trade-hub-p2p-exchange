@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Search, ArrowDown, ArrowUp, Clock, CheckCircle, XCircle, Calendar, ArrowUpDown, Bell, Star, User } from 'lucide-react';
+import { Search, ArrowDown, ArrowUp, CheckCircle, XCircle, Calendar, ArrowUpDown, Bell, Star, User } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -104,29 +104,23 @@ const MyTrades = () => {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'waiting_payment':
-        return (
-          <div className="flex items-center bg-orange-100 text-orange-700 px-3 py-1 rounded-full text-sm font-medium">
-            <Clock size={14} className="mr-1" />
-            Waiting for Payment
-          </div>
-        );
       case 'waiting_confirmation':
         return (
-          <div className="flex items-center bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm font-medium">
-            <div className="w-3 h-3 bg-blue-500 rounded-full mr-2 animate-pulse"></div>
-            Waiting for Confirmation
+          <div className="flex items-center bg-brand/10 text-brand px-3 py-1 rounded-full text-sm font-medium">
+            <div className="w-2 h-2 bg-brand rounded-full mr-2"></div>
+            {status === 'waiting_payment' ? 'Waiting for Payment' : 'Waiting for Confirmation'}
           </div>
         );
       case 'completed':
         return (
-          <div className="flex items-center bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-medium">
+          <div className="flex items-center bg-success/10 text-success px-3 py-1 rounded-full text-sm font-medium">
             <CheckCircle size={14} className="mr-1" />
             Completed
           </div>
         );
       case 'cancelled':
         return (
-          <div className="flex items-center bg-red-100 text-red-700 px-3 py-1 rounded-full text-sm font-medium">
+          <div className="flex items-center bg-foreground/10 text-foreground px-3 py-1 rounded-full text-sm font-medium">
             <XCircle size={14} className="mr-1" />
             Cancelled
           </div>
@@ -139,15 +133,14 @@ const MyTrades = () => {
   const getProgressColor = (status: string) => {
     switch (status) {
       case 'waiting_payment':
-        return 'bg-orange-500';
       case 'waiting_confirmation':
-        return 'bg-blue-500';
+        return 'bg-brand';
       case 'completed':
-        return 'bg-green-500';
+        return 'bg-success';
       case 'cancelled':
-        return 'bg-red-500';
+        return 'bg-foreground';
       default:
-        return 'bg-gray-500';
+        return 'bg-foreground';
     }
   };
 
@@ -195,20 +188,20 @@ const MyTrades = () => {
   const incompleteTradesCount = trades.filter(trade => trade.awaitingUserAction).length;
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-20">
+    <div className="min-h-screen bg-background pb-24">
       {/* Header */}
-      <div className="bg-white shadow-sm">
+      <div className="bg-card shadow-sm border-b border-border">
         <div className="flex items-center justify-between p-4">
           <div className="flex items-center">
-            <h1 className="text-xl font-bold text-gray-900">My Trades</h1>
+            <h1 className="text-xl font-bold text-foreground">My Trades</h1>
           </div>
           <button 
             onClick={() => navigate('/notifications')}
-            className="relative w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center hover:bg-gray-200 transition-colors"
+            className="relative w-10 h-10 bg-secondary rounded-full flex items-center justify-center hover:bg-secondary/80 transition-colors"
           >
-            <Bell size={18} className="text-gray-600" />
+            <Bell size={18} className="text-foreground/70" />
             {incompleteTradesCount > 0 && (
-              <div className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center">
+              <div className="absolute -top-1 -right-1 w-5 h-5 bg-brand rounded-full flex items-center justify-center">
                 <span className="text-white text-xs font-bold">{incompleteTradesCount}</span>
               </div>
             )}
@@ -218,16 +211,14 @@ const MyTrades = () => {
 
       {/* Notification Banner */}
       {incompleteTradesCount > 0 && (
-        <div className="mx-4 mt-4 bg-gradient-to-r from-orange-50 to-orange-100 border border-orange-200 rounded-lg p-3 shadow-sm">
-          <div className="flex items-center">
-            <div className="w-2 h-2 bg-orange-500 rounded-full mr-2 animate-pulse"></div>
+        <div className="mx-4 mt-4 bg-secondary border border-brand/20 rounded-lg p-3 shadow-sm">
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 bg-brand rounded-full"></div>
             <div>
-              <p className="text-orange-900 font-medium text-sm">
+              <p className="text-foreground font-medium text-sm">
                 {incompleteTradesCount} trade{incompleteTradesCount > 1 ? 's' : ''} awaiting confirmation
               </p>
-              <p className="text-orange-700 text-xs">
-                Please confirm payment received
-              </p>
+              <p className="text-foreground/70 text-xs">Please confirm payment received</p>
             </div>
           </div>
         </div>
@@ -242,14 +233,14 @@ const MyTrades = () => {
             placeholder="Search merchant or amount"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm text-sm"
+            className="w-full pl-10 pr-4 py-2.5 bg-card border border-border rounded-lg text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent shadow-sm text-sm"
           />
         </div>
         
         {/* Filters Row */}
         <div className="flex gap-2 overflow-x-auto pb-1">
           <Select value={typeFilter} onValueChange={setTypeFilter}>
-            <SelectTrigger className="w-28 bg-white rounded-lg border-gray-200 shadow-sm text-sm h-9">
+            <SelectTrigger className="w-28 bg-card rounded-lg border-border shadow-sm text-sm h-9">
               <div className="flex items-center gap-1.5">
                 <ArrowUpDown size={14} />
                 <SelectValue placeholder="Type" />
@@ -267,7 +258,7 @@ const MyTrades = () => {
               <Button
                 variant="outline"
                 className={cn(
-                  "w-32 justify-start text-left font-normal bg-white rounded-lg border-gray-200 shadow-sm text-sm h-9",
+                  "w-32 justify-start text-left font-normal bg-card rounded-lg border-border shadow-sm text-sm h-9",
                   !dateFrom && "text-muted-foreground"
                 )}
               >
@@ -291,7 +282,7 @@ const MyTrades = () => {
               <Button
                 variant="outline"
                 className={cn(
-                  "w-32 justify-start text-left font-normal bg-white rounded-lg border-gray-200 shadow-sm text-sm h-9",
+                  "w-32 justify-start text-left font-normal bg-card rounded-lg border-border shadow-sm text-sm h-9",
                   !dateTo && "text-muted-foreground"
                 )}
               >
@@ -318,7 +309,7 @@ const MyTrades = () => {
                 setDateTo(undefined);
                 setTypeFilter('all');
               }}
-              className="px-2 text-gray-500 hover:text-gray-700 text-sm h-9"
+              className="px-2 text-foreground/60 hover:text-foreground text-sm h-9"
             >
               Clear
             </Button>
@@ -328,14 +319,14 @@ const MyTrades = () => {
 
       {/* Tabs */}
       <div className="px-4 mb-4">
-        <div className="bg-white rounded-lg p-1 shadow-sm border border-gray-200">
+        <div className="bg-card rounded-lg p-1 shadow-sm border border-border">
           <div className="flex">
             <button
               onClick={() => setActiveTab('ongoing')}
               className={`flex-1 py-2 text-sm font-medium rounded-md transition-all duration-200 ${
                 activeTab === 'ongoing'
-                  ? 'bg-orange-500 text-white shadow-sm'
-                  : 'text-gray-600 hover:text-orange-500'
+                  ? 'bg-brand text-white shadow-sm'
+                  : 'text-foreground/60 hover:text-foreground'
               }`}
             >
               Ongoing
@@ -344,8 +335,8 @@ const MyTrades = () => {
               onClick={() => setActiveTab('completed')}
               className={`flex-1 py-2 text-sm font-medium rounded-md transition-all duration-200 ${
                 activeTab === 'completed'
-                  ? 'bg-green-500 text-white shadow-sm'
-                  : 'text-gray-600 hover:text-green-500'
+                  ? 'bg-brand text-white shadow-sm'
+                  : 'text-foreground/60 hover:text-foreground'
               }`}
             >
               Completed
@@ -354,8 +345,8 @@ const MyTrades = () => {
               onClick={() => setActiveTab('cancelled')}
               className={`flex-1 py-2 text-sm font-medium rounded-md transition-all duration-200 ${
                 activeTab === 'cancelled'
-                  ? 'bg-red-500 text-white shadow-sm'
-                  : 'text-gray-600 hover:text-red-500'
+                  ? 'bg-brand text-white shadow-sm'
+                  : 'text-foreground/60 hover:text-foreground'
               }`}
             >
               Cancelled
@@ -365,39 +356,37 @@ const MyTrades = () => {
       </div>
 
       {/* Trades List */}
-      <div className="px-4 space-y-3">
+      <div className="px-4 space-y-4 pb-4">
         {filteredTrades.length === 0 ? (
           <div className="text-center py-8">
-            <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
-              <Search size={20} className="text-gray-400" />
+            <div className="w-12 h-12 bg-secondary rounded-full flex items-center justify-center mx-auto mb-3">
+              <Search size={20} className="text-foreground/50" />
             </div>
-            <p className="text-gray-500 font-medium">No trades found</p>
-            <p className="text-gray-400 text-sm">Try adjusting your filters</p>
+            <p className="text-foreground/70 font-medium">No trades found</p>
+            <p className="text-foreground/50 text-sm">Try adjusting your filters</p>
           </div>
         ) : (
           filteredTrades.map((trade) => (
             <div 
               key={trade.id} 
-              className="bg-white border border-gray-200 rounded-lg p-3 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+              className="bg-card border border-border rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
               onClick={() => handleTradeClick(trade.id)}
             >
               <div className="flex items-start justify-between mb-3">
                 <div className="flex items-center">
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center mr-3 ${
-                    trade.type === 'buy' ? 'bg-blue-100' : 'bg-green-100'
-                  }`}>
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center mr-3 bg-secondary`}>
                     {trade.type === 'buy' ? (
-                      <ArrowDown size={14} className="text-blue-600" />
+                      <ArrowDown size={14} className="text-brand" />
                     ) : (
-                      <ArrowUp size={14} className="text-green-600" />
+                      <ArrowUp size={14} className="text-success" />
                     )}
                   </div>
                   <div>
-                    <h3 className="font-medium text-gray-900 capitalize text-sm">
+                    <h3 className="font-medium text-foreground capitalize text-sm">
                       {trade.type}ing {trade.coin}
                     </h3>
-                    <p className="text-lg font-bold text-gray-900">{trade.amount}</p>
-                    <p className="text-xs text-gray-500">{trade.coinAmount}</p>
+                    <p className="text-lg font-bold text-foreground">{trade.amount}</p>
+                    <p className="text-xs text-muted-foreground">{trade.coinAmount}</p>
                   </div>
                 </div>
                 {getStatusBadge(trade.status)}
@@ -405,32 +394,32 @@ const MyTrades = () => {
               
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center">
-                  <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center mr-3">
-                    <User size={14} className="text-gray-500" />
+                  <div className="w-8 h-8 bg-secondary rounded-full flex items-center justify-center mr-3">
+                    <User size={14} className="text-foreground/60" />
                   </div>
                   <div>
-                    <p className="font-medium text-gray-900 text-sm">{trade.merchant}</p>
+                    <p className="font-medium text-foreground text-sm">{trade.merchant}</p>
                     <div className="flex items-center">
-                      <Star size={12} className="text-yellow-500 mr-1" />
-                      <span className="text-xs text-gray-600">{trade.rating}</span>
+                      <Star size={12} className="text-brand mr-1" />
+                      <span className="text-xs text-muted-foreground">{trade.rating}</span>
                     </div>
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="text-xs text-gray-500">{trade.startTime}</p>
+                  <p className="text-xs text-muted-foreground">{trade.startTime}</p>
                 </div>
               </div>
 
               <div className="flex items-center justify-between mb-3">
                 <div className="flex-1 mr-3">
-                  <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div className="w-full bg-muted rounded-full h-2">
                     <div
                       className={`h-2 rounded-full transition-all duration-300 ${getProgressColor(trade.status)}`}
                       style={{ width: `${trade.progress}%` }}
                     ></div>
                   </div>
                 </div>
-                <span className="text-xs font-medium text-gray-600">{trade.progress}%</span>
+                <span className="text-xs font-medium text-muted-foreground">{trade.progress}%</span>
               </div>
 
               {/* Action Button for Waiting Confirmation */}
@@ -440,7 +429,7 @@ const MyTrades = () => {
                     e.stopPropagation();
                     handleConfirmPayment(trade.id);
                   }}
-                  className="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg text-sm font-medium shadow-sm hover:shadow-md transition-all"
+                  className="w-full bg-success hover:bg-success/90 text-white py-2 rounded-lg text-sm font-medium shadow-sm hover:shadow-md transition-all"
                 >
                   Confirm Payment Received
                 </Button>

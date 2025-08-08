@@ -64,6 +64,7 @@ import PremiumPayment from "./pages/PremiumPayment";
 import PremiumDashboard from "./pages/PremiumDashboard";
 import NotificationsDemo from "./pages/NotificationsDemo";
 
+import CryptoNews from "./pages/CryptoNews";
 import React from 'react';
 
 const queryClient = new QueryClient();
@@ -173,6 +174,7 @@ const AppContent = () => {
             <Route path="/merchant-list" element={<MerchantList />} />
             <Route path="/select-coin" element={<SelectCoin />} />
             <Route path="/my-trades" element={<MyTrades />} />
+            <Route path="/news" element={<CryptoNews />} />
             <Route path="/trade-history" element={<TradeHistory />} />
             <Route path="/payment-status" element={<PaymentStatus />} />
             <Route path="/trade-details/:tradeId" element={<TradeDetails />} />
