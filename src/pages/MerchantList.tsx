@@ -87,8 +87,8 @@ const MerchantList = () => {
 
   const handleMerchantSelect = (merchantId: number) => {
     console.log('Selected merchant:', merchantId);
-    // Proceed to matching/payment step with selected merchant and amounts
-    navigate('/buy-crypto-match', { state: { amount, nairaAmount, merchantId } });
+    // Proceed to the unified payment status flow with selected merchant and amounts
+    navigate('/payment-status', { state: { amount, nairaAmount, merchantId, mode: 'buy', step: 1 } });
   };
 
   return (

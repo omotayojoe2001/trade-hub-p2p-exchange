@@ -38,7 +38,7 @@ const BuyCryptoMatch = () => {
   };
 
   const handleContinue = () => {
-    navigate("/buy-crypto-payment", { state: { amount, nairaAmount } });
+    navigate("/payment-status", { state: { amount, nairaAmount, mode: 'buy', step: 1 } });
   };
 
   const handleCancel = () => {

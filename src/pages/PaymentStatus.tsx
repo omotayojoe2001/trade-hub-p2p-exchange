@@ -1,16 +1,21 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { ArrowLeft, MoreVertical, Building2, Bell, MessageSquare, AlertTriangle, FileText, Shield } from 'lucide-react';
 import { Button } from "@/components/ui/button";
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import PaymentConfirmationDialog from '@/components/PaymentConfirmationDialog';
 
 const PaymentStatus = () => {
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [timeLeft, setTimeLeft] = useState(29 * 60 + 45); // 29:45 in seconds
   const navigate = useNavigate();
+  const location = useLocation();
+  const { amount, nairaAmount, mode } = (location.state as any) || {};
+  const [activeStep, setActiveStep] = useState<number>((location.state as any)?.step || 1);
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  // Simulate timer countdown
+  // Countdown timer
   useEffect(() => {
     const interval = setInterval(() => {
       setTimeLeft(prev => {
@@ -22,16 +27,20 @@ const PaymentStatus = () => {
       });
     }, 1000);
 
-    // Simulate payment notification after some time
-    const paymentNotificationTimer = setTimeout(() => {
-      setShowConfirmDialog(true);
-    }, 10000); // Show after 10 seconds for demo
-
     return () => {
       clearInterval(interval);
-      clearTimeout(paymentNotificationTimer);
     };
   }, []);
+
+  // Show payment confirmation dialog once we're in Waiting step
+  useEffect(() => {
+    if (activeStep === 3) {
+      const paymentNotificationTimer = setTimeout(() => {
+        setShowConfirmDialog(true);
+      }, 10000); // demo: 10s after entering waiting state
+      return () => clearTimeout(paymentNotificationTimer);
+    }
+  }, [activeStep]);
 
   const formatTime = (seconds: number) => {
     const minutes = Math.floor(seconds / 60);
@@ -39,9 +48,25 @@ const PaymentStatus = () => {
     return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
   };
 
+  const triggerFileUpload = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] || null;
+    setUploadedFile(file);
+  };
+
+  const handleMarkAsPaid = () => {
+    // Move to Waiting step
+    setActiveStep(3);
+  };
+
   const handlePaymentConfirmation = (received: boolean) => {
     setShowConfirmDialog(false);
     if (received) {
+      // Mark final step as confirmed
+      setActiveStep(4);
       navigate('/trade-completed');
     } else {
       // User can check payment later from My Trades section
@@ -66,126 +91,171 @@ const PaymentStatus = () => {
       {/* Progress Steps */}
       <div className="p-4 bg-gray-50">
         <div className="flex items-center justify-between mb-4">
+          {/* Step 1: Request Sent */}
           <div className="flex items-center">
-            <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center mr-2">
-              <span className="text-white text-xs">✓</span>
+            <div className={`w-6 h-6 rounded-full flex items-center justify-center mr-2 ${activeStep >= 1 ? 'bg-green-500' : 'bg-gray-300'}`}>
+              <span className={`text-xs ${activeStep >= 1 ? 'text-white' : 'text-gray-500'}`}>{activeStep >= 1 ? '✓' : '1'}</span>
             </div>
             <div className="text-center">
-              <p className="text-xs text-green-600 font-medium">Request</p>
-              <p className="text-xs text-green-600">Sent</p>
+              <p className={`text-xs font-medium ${activeStep >= 1 ? 'text-green-600' : 'text-gray-500'}`}>Request</p>
+              <p className={`text-xs ${activeStep >= 1 ? 'text-green-600' : 'text-gray-500'}`}>Sent</p>
             </div>
           </div>
-          
-          <div className="flex-1 h-px bg-green-500 mx-3"></div>
-          
+
+          <div className={`flex-1 h-px mx-3 ${activeStep >= 2 ? 'bg-green-500' : 'bg-gray-300'}`}></div>
+
+          {/* Step 2: Payment Sent */}
           <div className="flex items-center">
-            <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center mr-2">
-              <span className="text-white text-xs">✓</span>
+            <div className={`w-6 h-6 rounded-full flex items-center justify-center mr-2 ${activeStep >= 2 ? 'bg-green-500' : 'bg-gray-300'}`}>
+              <span className={`text-xs ${activeStep >= 2 ? 'text-white' : 'text-gray-500'}`}>{activeStep >= 2 ? '✓' : '2'}</span>
             </div>
             <div className="text-center">
-              <p className="text-xs text-green-600 font-medium">Crypto</p>
-              <p className="text-xs text-green-600">Sent</p>
+              <p className={`text-xs font-medium ${activeStep >= 2 ? 'text-green-600' : 'text-gray-500'}`}>Payment</p>
+              <p className={`text-xs ${activeStep >= 2 ? 'text-green-600' : 'text-gray-500'}`}>Sent</p>
             </div>
           </div>
-          
-          <div className="flex-1 h-px bg-blue-500 mx-3"></div>
-          
+
+          <div className={`flex-1 h-px mx-3 ${activeStep >= 3 ? 'bg-blue-500' : 'bg-gray-300'}`}></div>
+
+          {/* Step 3: Waiting */}
           <div className="flex items-center">
-            <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center mr-2">
-              <span className="text-white text-xs">3</span>
+            <div className={`w-6 h-6 rounded-full flex items-center justify-center mr-2 ${activeStep >= 3 ? 'bg-blue-500' : 'bg-gray-300'}`}>
+              <span className={`text-xs ${activeStep >= 3 ? 'text-white' : 'text-gray-500'}`}>{activeStep >= 3 ? '3' : '3'}</span>
             </div>
             <div className="text-center">
-              <p className="text-xs text-blue-600 font-medium">Waiting</p>
-              <p className="text-xs text-blue-600">Payment</p>
+              <p className={`text-xs font-medium ${activeStep >= 3 ? 'text-blue-600' : 'text-gray-500'}`}>Waiting</p>
+              <p className={`text-xs ${activeStep >= 3 ? 'text-blue-600' : 'text-gray-500'}`}>Payment</p>
             </div>
           </div>
-          
-          <div className="flex-1 h-px bg-gray-300 mx-3"></div>
-          
+
+          <div className={`flex-1 h-px mx-3 ${activeStep >= 4 ? 'bg-green-500' : 'bg-gray-300'}`}></div>
+
+          {/* Step 4: Confirmed */}
           <div className="flex items-center">
-            <div className="w-6 h-6 bg-gray-300 rounded-full flex items-center justify-center mr-2">
-              <span className="text-gray-500 text-xs">4</span>
+            <div className={`w-6 h-6 rounded-full flex items-center justify-center mr-2 ${activeStep >= 4 ? 'bg-green-500' : 'bg-gray-300'}`}>
+              <span className={`text-xs ${activeStep >= 4 ? 'text-white' : 'text-gray-500'}`}>{activeStep >= 4 ? '✓' : '4'}</span>
             </div>
             <div className="text-center">
-              <p className="text-xs text-gray-500 font-medium">Confirmed</p>
+              <p className={`text-xs font-medium ${activeStep >= 4 ? 'text-green-600' : 'text-gray-500'}`}>Confirmed</p>
             </div>
           </div>
         </div>
       </div>
 
       {/* Main Content */}
-      <div className="p-6 text-center">
-        <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
-          <Building2 size={40} className="text-blue-600" />
+      {activeStep === 1 && (
+        <div className="p-6">
+          <h2 className="text-lg font-semibold text-gray-900 mb-1">Payment Instructions</h2>
+          <p className="text-gray-600 text-sm mb-4">Transfer the exact amount and upload your receipt.</p>
+
+          <div className="bg-white border border-gray-200 rounded-lg p-4 space-y-3 mb-4">
+            <div className="flex justify-between items-center text-sm">
+              <span className="text-gray-600">Bank</span>
+              <span className="font-semibold">GTBank</span>
+            </div>
+            <div className="flex justify-between items-center text-sm">
+              <span className="text-gray-600">Account Number</span>
+              <span className="font-semibold">0123456789</span>
+            </div>
+            <div className="flex justify-between items-center text-sm">
+              <span className="text-gray-600">Account Name</span>
+              <span className="font-semibold">John Doe</span>
+            </div>
+            <div className="flex justify-between items-center text-sm">
+              <span className="text-gray-600">Reference</span>
+              <span className="font-semibold">BTC-{new Date().getTime().toString().slice(-6)}</span>
+            </div>
+            <div className="flex justify-between items-center pt-2 border-t text-sm">
+              <span className="text-gray-600">Amount</span>
+              <span className="font-bold">₦{nairaAmount ?? '—'}</span>
+            </div>
+          </div>
+
+          {/* Upload Payment Proof */}
+          <div className="border-2 border-dashed border-gray-200 rounded-lg p-6 text-center cursor-pointer mb-3" onClick={() => triggerFileUpload()}>
+            <p className="text-sm text-gray-600 mb-1">{uploadedFile ? uploadedFile.name : 'Tap to upload payment receipt'}</p>
+            <p className="text-xs text-gray-500">PNG, JPG or PDF (Max 5MB)</p>
+          </div>
+          <input ref={fileInputRef} type="file" accept="image/*,application/pdf" onChange={handleFileUpload} className="hidden" />
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-4">
+            <Button 
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white" 
+              onClick={handleMarkAsPaid}
+              disabled={!uploadedFile}
+            >
+              Mark as Paid
+            </Button>
+            <Button className="w-full bg-gray-100 text-gray-700 hover:bg-gray-200">Send Reminder</Button>
+            <Button variant="outline" className="w-full border-red-300 text-red-600 hover:bg-red-50">Cancel Trade</Button>
+          </div>
         </div>
-        
-        <h2 className="text-xl font-semibold text-gray-900 mb-3">Merchant is Paying You</h2>
-        <p className="text-gray-600 mb-8">You've sent your crypto to escrow. The merchant is now sending your payment.</p>
-        
-        <div className="bg-gray-50 rounded-lg p-4 mb-6">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-gray-700 font-medium">Payment in Progress</span>
-            <div className="flex items-center">
-              <div className="w-12 h-12 relative">
-                <svg className="w-12 h-12 transform -rotate-90" viewBox="0 0 36 36">
-                  <path
-                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                    fill="none"
-                    stroke="#e5e7eb"
-                    strokeWidth="2"
-                  />
-                  <path
-                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                    fill="none"
-                    stroke="#3b82f6"
-                    strokeWidth="2"
-                    strokeDasharray="75, 100"
-                  />
-                </svg>
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <span className="text-sm font-semibold text-blue-600">75%</span>
+      )}
+
+      {activeStep === 3 && (
+        <div className="p-6 text-center">
+          <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
+            <Building2 size={40} className="text-blue-600" />
+          </div>
+          <h2 className="text-xl font-semibold text-gray-900 mb-3">Waiting for Confirmation</h2>
+          <p className="text-gray-600 mb-8">You've submitted your payment. The merchant is confirming now.</p>
+
+          <div className="bg-gray-50 rounded-lg p-4 mb-6">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-gray-700 font-medium">Payment in Progress</span>
+              <div className="flex items-center">
+                <div className="w-12 h-12 relative">
+                  <svg className="w-12 h-12 transform -rotate-90" viewBox="0 0 36 36">
+                    <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#e5e7eb" strokeWidth="2" />
+                    <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#3b82f6" strokeWidth="2" strokeDasharray="75, 100" />
+                  </svg>
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <span className="text-sm font-semibold text-blue-600">75%</span>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
           <p className="text-sm text-gray-500">Estimated Time: 30 mins</p>
-        </div>
-        
-        <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-6">
-          <div className="flex items-center">
-            <div className="w-6 h-6 bg-orange-500 rounded-full flex items-center justify-center mr-3">
-              <span className="text-white text-xs">⚠</span>
-            </div>
-            <div className="text-left">
-              <p className="text-orange-800 font-medium">Auto-refund in {formatTime(timeLeft)}</p>
-              <p className="text-orange-600 text-sm">If merchant doesn't respond</p>
+          </div>
+
+          <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-6">
+            <div className="flex items-center">
+              <div className="w-6 h-6 bg-orange-500 rounded-full flex items-center justify-center mr-3">
+                <span className="text-white text-xs">⚠</span>
+              </div>
+              <div className="text-left">
+                <p className="text-orange-800 font-medium">Auto-refund in {formatTime(timeLeft)}</p>
+                <p className="text-orange-600 text-sm">If merchant doesn't respond</p>
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* Action Buttons */}
-      <div className="px-4 sm:px-6 space-y-3">
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <Button className="w-full bg-gray-100 text-gray-700 py-3 rounded-lg hover:bg-gray-200 flex items-center justify-center">
-            <Bell size={16} className="mr-2" />
-            <span className="hidden sm:inline">Remind Merchant</span>
-            <span className="sm:hidden">Remind</span>
-          </Button>
-          
-          <Button className="w-full bg-blue-50 text-blue-600 py-3 rounded-lg hover:bg-blue-100 flex items-center justify-center">
-            <MessageSquare size={16} className="mr-2" />
-            <span className="hidden sm:inline">Message Merchant</span>
-            <span className="sm:hidden">Message</span>
-          </Button>
-          
-          <Button variant="outline" className="w-full border-red-300 text-red-600 py-3 rounded-lg hover:bg-red-50 flex items-center justify-center">
-            <AlertTriangle size={16} className="mr-2" />
-            <span className="hidden sm:inline">Report/Dispute</span>
-            <span className="sm:hidden">Report</span>
-          </Button>
+      {activeStep === 3 && (
+        <div className="px-4 sm:px-6 space-y-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <Button className="w-full bg-gray-100 text-gray-700 py-3 rounded-lg hover:bg-gray-200 flex items-center justify-center">
+              <Bell size={16} className="mr-2" />
+              <span className="hidden sm:inline">Remind Merchant</span>
+              <span className="sm:hidden">Remind</span>
+            </Button>
+            
+            <Button className="w-full bg-blue-50 text-blue-600 py-3 rounded-lg hover:bg-blue-100 flex items-center justify-center">
+              <MessageSquare size={16} className="mr-2" />
+              <span className="hidden sm:inline">Message Merchant</span>
+              <span className="sm:hidden">Message</span>
+            </Button>
+            
+            <Button variant="outline" className="w-full border-red-300 text-red-600 py-3 rounded-lg hover:bg-red-50 flex items-center justify-center">
+              <AlertTriangle size={16} className="mr-2" />
+              <span className="hidden sm:inline">Report/Dispute</span>
+              <span className="sm:hidden">Report</span>
+            </Button>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Trade Summary */}
       <div className="p-4 sm:p-6 mt-6">
