@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Link, useNavigate, useParams } from 'react-router-dom';
 
 const TradeDetails = () => {
-  const { txId: urlTxId } = useParams();
+  const { tradeId } = useParams();
   const [txId, setTxId] = useState('');
   const [proofUploaded, setProofUploaded] = useState(false);
   const [isButtonEnabled, setIsButtonEnabled] = useState(false);
@@ -52,7 +52,7 @@ const TradeDetails = () => {
   ];
 
   // Find the transaction data based on URL txId
-  const foundTransaction = mockTransactions.find(t => t.txId === urlTxId || String(t.id) === urlTxId);
+  const foundTransaction = mockTransactions.find(t => t.txId === tradeId || String(t.id) === tradeId);
   
   // Mock transaction data - use found transaction or default
   const transactionDetails = foundTransaction ? {
@@ -75,7 +75,7 @@ const TradeDetails = () => {
       trades: Math.floor(Math.random() * 500) + 50
     }
   } : {
-    id: urlTxId || 'TXN123456789',
+    id: tradeId || 'TXN123456789',
     amount: '0.05 BTC',
     nairaAmount: '₦45,200,000',
     total: '₦2,260,000',

@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Home, ArrowUpDown, Briefcase, History, Settings, Newspaper } from 'lucide-react';
+import { Home, ArrowUpDown, Briefcase, Settings, Newspaper } from 'lucide-react';
 
 const BottomNavigation = () => {
   const location = useLocation();
@@ -9,9 +9,8 @@ const BottomNavigation = () => {
   const navItems = [
     { path: '/home', icon: Home, label: 'Home' },
     { path: '/buy-sell', icon: ArrowUpDown, label: 'Buy/Sell' },
-    { path: '/my-trades', icon: Briefcase, label: 'My Trades' },
     { path: '/news', icon: Newspaper, label: 'Updates' },
-    { path: '/trade-history', icon: History, label: 'Transactions' },
+    { path: '/my-trades', icon: Briefcase, label: 'My Trades' },
     { path: '/settings', icon: Settings, label: 'Settings' }
   ];
 

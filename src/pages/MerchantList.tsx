@@ -3,12 +3,14 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowLeft, Bell, Filter, MapPin, Clock, Star } from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import BottomNavigation from '@/components/BottomNavigation';
 
 const MerchantList = () => {
   const [sortBy, setSortBy] = useState('best-rate');
   const navigate = useNavigate();
+  const location = useLocation();
+  const { amount, nairaAmount } = (location.state as any) || {};
 
   const merchants = [
     {
@@ -85,8 +87,8 @@ const MerchantList = () => {
 
   const handleMerchantSelect = (merchantId: number) => {
     console.log('Selected merchant:', merchantId);
-    // Navigate to trade details with merchant selected
-    navigate('/trade-details', { state: { merchantId } });
+    // Proceed to matching/payment step with selected merchant and amounts
+    navigate('/buy-crypto-match', { state: { amount, nairaAmount, merchantId } });
   };
 
   return (

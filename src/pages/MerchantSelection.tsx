@@ -2,19 +2,21 @@
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 
 const MerchantSelection = () => {
   const [selectedOption, setSelectedOption] = useState('');
   const navigate = useNavigate();
+  const location = useLocation();
+  const { nairaAmount, btcAmount } = (location.state as any) || {};
 
   const handleContinue = () => {
     if (selectedOption === 'auto') {
-      // Auto-match goes directly to trade details with auto-matched merchant
-      navigate('/trade-details', { state: { isAutoMatch: true } });
+      // Auto-match goes directly to merchant match
+      navigate('/buy-crypto-match', { state: { amount: btcAmount, nairaAmount } });
     } else if (selectedOption === 'manual') {
-      // Manual selection goes to merchant list
-      navigate('/merchant-list');
+      // Manual selection goes to merchant list with context
+      navigate('/merchant-list', { state: { amount: btcAmount, nairaAmount } });
     }
   };
 
