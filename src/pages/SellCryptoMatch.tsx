@@ -11,7 +11,8 @@ const SellCryptoMatch = () => {
   const [isMatched, setIsMatched] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
-  const { amount, nairaAmount } = location.state || {};
+  const { amount, nairaAmount, nairaValue } = location.state || {};
+  const totalNaira = nairaAmount ?? nairaValue;
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -38,7 +39,7 @@ const SellCryptoMatch = () => {
   };
 
   const handleContinue = () => {
-    navigate("/sell-crypto-waiting", { state: { amount, nairaAmount } });
+    navigate("/payment-status", { state: { amount, nairaAmount: totalNaira, mode: 'sell', step: 1 } });
   };
 
   const handleCancel = () => {
@@ -146,7 +147,7 @@ const SellCryptoMatch = () => {
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">You Get</span>
-                <span className="font-semibold">₦{nairaAmount}</span>
+                <span className="font-semibold">₦{totalNaira}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Rate</span>

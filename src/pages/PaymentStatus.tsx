@@ -1,9 +1,11 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { ArrowLeft, MoreVertical, Building2, Bell, MessageSquare, AlertTriangle, FileText, Shield } from 'lucide-react';
+import { ArrowLeft, MoreVertical, Building2, Bell, MessageSquare, AlertTriangle, FileText, Shield, Copy } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import PaymentConfirmationDialog from '@/components/PaymentConfirmationDialog';
+import AmountInput from '@/components/sell-crypto/AmountInput';
+import QRCodeLib from 'qrcode';
 
 const PaymentStatus = () => {
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
@@ -14,7 +16,15 @@ const PaymentStatus = () => {
   const [activeStep, setActiveStep] = useState<number>((location.state as any)?.step || 1);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-
+  const [amountInput, setAmountInput] = useState<string>(amount || '');
+  const [currentRate, setCurrentRate] = useState<number>(1755000);
+  const [qrDataUrl, setQrDataUrl] = useState<string>('');
+  const walletAddress = 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh';
+  const calculateNairaValue = () => {
+    const a = parseFloat(amountInput || '0');
+    if (isNaN(a)) return 0;
+    return a * currentRate;
+  };
   // Countdown timer
   useEffect(() => {
     const interval = setInterval(() => {
@@ -30,6 +40,22 @@ const PaymentStatus = () => {
     return () => {
       clearInterval(interval);
     };
+  }, []);
+
+  // Live rate simulation for BTC→NGN
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const variation = (Math.random() - 0.5) * 10000; // ±5k variation
+      setCurrentRate(prev => Math.max(1745000, Math.min(1765000, prev + variation)));
+    }, 3000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Generate QR code for wallet address
+  useEffect(() => {
+    QRCodeLib.toDataURL(walletAddress)
+      .then((url) => setQrDataUrl(url))
+      .catch((err) => console.error('QR generation failed', err));
   }, []);
 
   // Show payment confirmation dialog once we're in Waiting step
@@ -57,9 +83,18 @@ const PaymentStatus = () => {
     setUploadedFile(file);
   };
 
+  const handleCopyAddress = async () => {
+    try {
+      await navigator.clipboard.writeText(walletAddress);
+    } catch (e) {
+      console.error('Copy failed', e);
+    }
+  };
+
   const handleMarkAsPaid = () => {
-    // Move to Waiting step
-    setActiveStep(3);
+    // Move to Payment Sent then Waiting
+    setActiveStep(2);
+    setTimeout(() => setActiveStep(3), 800);
   };
 
   const handlePaymentConfirmation = (received: boolean) => {
@@ -267,11 +302,11 @@ const PaymentStatus = () => {
         <div className="space-y-3">
           <div className="flex justify-between">
             <span className="text-gray-600">Amount Sold</span>
-            <span className="font-medium text-gray-900">0.0032 BTC</span>
+            <span className="font-medium text-gray-900">{amountInput || amount || '0'} BTC</span>
           </div>
           <div className="flex justify-between">
             <span className="text-gray-600">Total Receiving</span>
-            <span className="font-medium text-gray-900">₦561,600</span>
+            <span className="font-medium text-gray-900">₦{(nairaAmount ?? calculateNairaValue()).toLocaleString()}</span>
           </div>
           <div className="flex justify-between">
             <span className="text-gray-600">Merchant</span>
@@ -281,8 +316,8 @@ const PaymentStatus = () => {
             </div>
           </div>
           <div className="flex justify-between">
-            <span className="text-gray-600">Bank Account</span>
-            <span className="font-medium text-gray-900">GTBank • • • • 4875</span>
+            <span className="text-gray-600">Wallet Network</span>
+            <span className="font-medium text-gray-900">Bitcoin (BTC)</span>
           </div>
         </div>
       </div>
