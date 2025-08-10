@@ -36,19 +36,14 @@ const SellCrypto = () => {
   };
 
   const handleSendTradeRequest = () => {
-    // Navigate to sell crypto match screen
-    navigate('/sell-crypto-match', { 
-      state: { 
-        amount, 
-        nairaValue: calculateNairaValue(),
-        paymentMethod: selectedPayment,
-        bankDetails: selectedPayment === 'bank' ? {
-          accountName,
-          selectedBank,
-          accountNumber
-        } : null,
-        notes
-      } 
+    // Go directly to unified payment status flow (step 1)
+    navigate('/payment-status', {
+      state: {
+        amount,
+        nairaAmount: calculateNairaValue(),
+        mode: 'sell',
+        step: 1,
+      }
     });
   };
 

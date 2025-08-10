@@ -180,33 +180,59 @@ const PaymentStatus = () => {
       {/* Main Content */}
       {activeStep === 1 && (
         <div className="p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-1">Payment Instructions</h2>
-          <p className="text-gray-600 text-sm mb-4">Transfer the exact amount and upload your receipt.</p>
+          <h2 className="text-lg font-semibold text-gray-900 mb-1">Enter Amount to Sell</h2>
+          <p className="text-gray-600 text-sm mb-4">Type the BTC amount. Rate updates live.</p>
 
-          <div className="bg-white border border-gray-200 rounded-lg p-4 space-y-3 mb-4">
+          <AmountInput
+            amount={amountInput}
+            onAmountChange={setAmountInput}
+            currentRate={currentRate}
+            calculateNairaValue={calculateNairaValue}
+          />
+
+          <div className="mt-6">
+            <Button
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+              onClick={() => setActiveStep(2)}
+              disabled={!(parseFloat(amountInput || '0') > 0)}
+            >
+              Continue
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {activeStep === 2 && (
+        <div className="p-6">
+          <h2 className="text-lg font-semibold text-gray-900 mb-1">Send Crypto</h2>
+          <p className="text-gray-600 text-sm mb-4">Send the exact amount to the wallet below and upload your proof.</p>
+
+          <div className="bg-white border border-gray-200 rounded-lg p-4 space-y-4 mb-4">
             <div className="flex justify-between items-center text-sm">
-              <span className="text-gray-600">Bank</span>
-              <span className="font-semibold">GTBank</span>
+              <span className="text-gray-600">Amount to Send</span>
+              <span className="font-semibold">{(amountInput || amount || '0')} BTC</span>
             </div>
             <div className="flex justify-between items-center text-sm">
-              <span className="text-gray-600">Account Number</span>
-              <span className="font-semibold">0123456789</span>
+              <span className="text-gray-600">Equivalent (NGN)</span>
+              <span className="font-semibold">₦{(nairaAmount ?? calculateNairaValue()).toLocaleString()}</span>
             </div>
-            <div className="flex justify-between items-center text-sm">
-              <span className="text-gray-600">Account Name</span>
-              <span className="font-semibold">John Doe</span>
+            <div className="pt-2 border-t text-sm">
+              <div className="flex items-center justify-between">
+                <span className="text-gray-600">Wallet Address</span>
+                <button onClick={handleCopyAddress} className="text-blue-600 hover:underline flex items-center text-xs">
+                  <Copy size={14} className="mr-1" /> Copy
+                </button>
+              </div>
+              <p className="font-mono break-all text-gray-900 mt-1">{walletAddress}</p>
             </div>
-            <div className="flex justify-between items-center text-sm">
-              <span className="text-gray-600">Reference</span>
-              <span className="font-semibold">BTC-{new Date().getTime().toString().slice(-6)}</span>
-            </div>
-            <div className="flex justify-between items-center pt-2 border-t text-sm">
-              <span className="text-gray-600">Amount</span>
-              <span className="font-bold">₦{nairaAmount ?? '—'}</span>
-            </div>
+            {qrDataUrl && (
+              <div className="flex flex-col items-center pt-2">
+                <img src={qrDataUrl} alt="BTC wallet QR" className="w-40 h-40" loading="lazy" />
+                <p className="text-xs text-gray-500 mt-2">Scan to pay</p>
+              </div>
+            )}
           </div>
 
-          {/* Upload Payment Proof */}
           <div className="border-2 border-dashed border-gray-200 rounded-lg p-6 text-center cursor-pointer mb-3" onClick={() => triggerFileUpload()}>
             <p className="text-sm text-gray-600 mb-1">{uploadedFile ? uploadedFile.name : 'Tap to upload payment receipt'}</p>
             <p className="text-xs text-gray-500">PNG, JPG or PDF (Max 5MB)</p>
@@ -221,7 +247,7 @@ const PaymentStatus = () => {
             >
               Mark as Paid
             </Button>
-            <Button className="w-full bg-gray-100 text-gray-700 hover:bg-gray-200">Send Reminder</Button>
+            <Button className="w-full bg-gray-100 text-gray-700 hover:bg-gray-200" onClick={() => setActiveStep(1)}>Back</Button>
             <Button variant="outline" className="w-full border-red-300 text-red-600 hover:bg-red-50">Cancel Trade</Button>
           </div>
         </div>
