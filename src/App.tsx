@@ -63,6 +63,9 @@ import MerchantDashboard from "./pages/MerchantDashboard";
 import PremiumPayment from "./pages/PremiumPayment";
 import PremiumDashboard from "./pages/PremiumDashboard";
 import NotificationsDemo from "./pages/NotificationsDemo";
+import PremiumSell from "./pages/PremiumSell";
+import CashDeliveryDetails from "./pages/CashDeliveryDetails";
+import CashPickupDetails from "./pages/CashPickupDetails";
 
 import CryptoNews from "./pages/CryptoNews";
 import React from 'react';
@@ -192,6 +195,9 @@ const AppContent = () => {
             <Route path="/merchant-dashboard" element={<MerchantDashboard />} />
             <Route path="/premium-payment" element={<PremiumPayment />} />
             <Route path="/premium-dashboard" element={<PremiumDashboard />} />
+            <Route path="/premium/sell" element={<PremiumSell />} />
+            <Route path="/premium/cash-delivery" element={<CashDeliveryDetails />} />
+            <Route path="/premium/cash-pickup" element={<CashPickupDetails />} />
             <Route path="/notifications-demo" element={<NotificationsDemo />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />

@@ -3,6 +3,7 @@ import { ArrowLeft, Crown, Zap, Shield, DollarSign, TrendingUp, Users, Clock } f
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useNavigate } from 'react-router-dom';
+import PremiumBottomNavigation from '@/components/premium/PremiumBottomNavigation';
 
 const PremiumDashboard = () => {
   const navigate = useNavigate();
@@ -147,13 +148,13 @@ const PremiumDashboard = () => {
         <div className="mb-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Premium Actions</h3>
           <div className="grid grid-cols-2 gap-3">
-            <Button className="h-12 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white">
+            <Button className="h-12 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white" onClick={() => navigate('/premium/sell')}>
               <Zap size={16} className="mr-2" />
               Priority Trade
             </Button>
-            <Button className="h-12 bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700 text-white">
+            <Button className="h-12 bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700 text-white" onClick={() => navigate('/premium/sell')}>
               <DollarSign size={16} className="mr-2" />
-              Instant Withdraw
+              Sell for Cash
             </Button>
           </div>
         </div>
@@ -183,6 +184,7 @@ const PremiumDashboard = () => {
           </Button>
         </Card>
       </div>
+      <PremiumBottomNavigation />
     </div>
   );
 };
