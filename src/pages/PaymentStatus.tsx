@@ -296,7 +296,15 @@ const PaymentStatus = () => {
       {/* Action Buttons */}
       {activeStep === 3 && (
         <div className="px-4 sm:px-6 space-y-3">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+            <Button
+              className="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg flex items-center justify-center"
+              onClick={() => handlePaymentConfirmation(true)}
+            >
+              <span className="hidden sm:inline">I have received payment</span>
+              <span className="sm:hidden">Received</span>
+            </Button>
+
             <Button className="w-full bg-gray-100 text-gray-700 py-3 rounded-lg hover:bg-gray-200 flex items-center justify-center">
               <Bell size={16} className="mr-2" />
               <span className="hidden sm:inline">Remind Merchant</span>

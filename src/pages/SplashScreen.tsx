@@ -22,13 +22,13 @@ const SplashScreen = () => {
   }, [navigate, user, loading]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary to-primary-variant flex items-center justify-center">
+    <div className="min-h-screen bg-primary flex items-center justify-center">
       <div className="text-center">
         <div className="w-24 h-24 bg-white rounded-full flex items-center justify-center mx-auto mb-6">
           <span className="text-primary text-2xl font-bold">₦</span>
         </div>
-        <h1 className="text-white text-3xl font-bold mb-2">CryptoTrade</h1>
-        <p className="text-white/80">Your trusted crypto marketplace</p>
+        <h1 className="text-primary-foreground text-3xl font-bold mb-2">CryptoTrade</h1>
+        <p className="text-primary-foreground/80">Your trusted crypto marketplace</p>
       </div>
     </div>
   );

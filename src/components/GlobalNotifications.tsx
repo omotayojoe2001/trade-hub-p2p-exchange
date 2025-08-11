@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 
 interface Notification {
   id: string;
-  type: 'trade' | 'payment' | 'security' | 'premium';
+  type: 'trade' | 'payment' | 'security' | 'premium' | 'update';
   title: string;
   message: string;
   timestamp: Date;
@@ -21,34 +21,10 @@ const GlobalNotifications = () => {
 
   // Demo notifications with actual trade IDs
   const demoNotifications: Notification[] = [
-    {
-      id: '1',
-      type: 'trade',
-      title: 'Trade Match Found!',
-      message: 'MercyPay wants to sell you 0.0045 BTC for ₦125,000. Tap to proceed.',
-      timestamp: new Date(Date.now() - 2 * 60 * 1000),
-      isRead: false,
-      actionRequired: true,
-      tradeId: '1'
-    },
-    {
-      id: '2',
-      type: 'payment',
-      title: 'Payment Received',
-      message: 'You received ₦558,792 from CryptoKing for 0.021 BTC trade.',
-      timestamp: new Date(Date.now() - 15 * 60 * 1000),
-      isRead: false,
-      tradeId: '2'
-    },
-    {
-      id: '3',
-      type: 'security',
-      title: 'Security Alert',
-      message: 'New device login detected from Lagos, Nigeria. Was this you?',
-      timestamp: new Date(Date.now() - 60 * 60 * 1000),
-      isRead: true,
-      actionRequired: true
-    }
+    { id: '1', type: 'trade', title: 'Trade Match Found!', message: 'MercyPay wants to sell you 0.0045 BTC for ₦125,000. Tap to proceed.', timestamp: new Date(Date.now() - 2 * 60 * 1000), isRead: false, actionRequired: true, tradeId: '1' },
+    { id: '2', type: 'payment', title: 'Payment Received', message: 'You received ₦558,792 from CryptoKing for 0.021 BTC trade.', timestamp: new Date(Date.now() - 15 * 60 * 1000), isRead: false, tradeId: '2' },
+    { id: '3', type: 'security', title: 'Security Alert', message: 'New device login detected from Lagos, Nigeria. Was this you?', timestamp: new Date(Date.now() - 60 * 60 * 1000), isRead: true, actionRequired: true },
+    { id: '4', type: 'update', title: 'Platform Update', message: 'Scheduled maintenance tonight at 02:00 WAT. Trading remains available.', timestamp: new Date(Date.now() - 90 * 60 * 1000), isRead: false }
   ];
 
   useEffect(() => {
@@ -79,13 +55,15 @@ const GlobalNotifications = () => {
   const getNotificationIcon = (type: string) => {
     switch (type) {
       case 'trade':
-        return <DollarSign size={18} className="text-emerald-600" />;
+        return <DollarSign size={18} className="text-gray-600" />;
       case 'payment':
-        return <Check size={18} className="text-blue-600" />;
+        return <Check size={18} className="text-gray-600" />;
       case 'security':
-        return <AlertCircle size={18} className="text-red-600" />;
+        return <AlertCircle size={18} className="text-gray-600" />;
       case 'premium':
-        return <Shield size={18} className="text-purple-600" />;
+        return <Shield size={18} className="text-gray-600" />;
+      case 'update':
+        return <Bell size={18} className="text-gray-600" />;
       default:
         return <Bell size={18} className="text-gray-600" />;
     }
@@ -107,7 +85,7 @@ const GlobalNotifications = () => {
         <div className="fixed top-4 left-4 right-4 z-50 bg-white rounded-xl shadow-lg border border-gray-100 p-4 animate-in slide-in-from-top-2">
           <div className="flex items-start justify-between">
             <div className="flex items-start space-x-3 flex-1">
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-50 to-blue-100 flex items-center justify-center">
+              <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
                 {getNotificationIcon(latestNotification.type)}
               </div>
               <div className="flex-1 min-w-0">

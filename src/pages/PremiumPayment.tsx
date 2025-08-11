@@ -89,7 +89,7 @@ const PremiumPayment: React.FC = () => {
 
       {step === 1 && (
         <div className="p-4 space-y-6">
-          <Card className="p-6 bg-gradient-to-r from-purple-600 to-blue-600 text-white">
+          <Card className="p-6 bg-brand text-brand-foreground">
             <div className="flex items-center justify-between mb-2">
               <div>
                 <h2 className="text-xl font-bold">Premium Annual</h2>

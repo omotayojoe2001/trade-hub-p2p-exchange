@@ -212,16 +212,16 @@ const Index = () => {
       </div>
 
       {/* Withdraw USD Banner */}
-      <Card className="bg-gradient-to-r from-green-500 to-green-600 p-4 rounded-xl mb-6 text-white">
+      <Card className="bg-brand p-4 rounded-xl mb-6 text-brand-foreground">
         <div className="flex justify-between items-center">
           <div>
             <h3 className="font-semibold text-lg mb-1">Withdraw USD in Cash</h3>
-            <p className="text-sm text-green-100">Now available for Premium users</p>
+            <p className="text-sm text-brand-foreground/80">Now available for Premium users</p>
           </div>
           <div className="text-2xl">💵</div>
         </div>
         <Link to="/premium">
-          <Button className="bg-white text-green-600 hover:bg-gray-100 mt-3 w-full font-medium">
+          <Button className="bg-white text-brand hover:bg-gray-100 mt-3 w/full font-medium">
             Upgrade to Premium
           </Button>
         </Link>
@@ -306,12 +306,12 @@ const Index = () => {
       {/* Refer & Earn and My Rewards - Stacked */}
       <div className="space-y-4 mb-6">
         <Link to="/referrals" className="block">
-          <Card className="bg-gradient-to-r from-orange-500 to-pink-500 p-4 rounded-xl text-white hover:shadow-lg transition-shadow">
+          <Card className="bg-brand p-4 rounded-xl text-brand-foreground hover:shadow-lg transition-shadow">
             <div className="flex items-center justify-between mb-2">
               <h3 className="font-semibold">Refer & Earn</h3>
               <span className="text-2xl">🎁</span>
             </div>
-            <p className="text-sm text-orange-100">Earn points when you invite friends</p>
+            <p className="text-sm text-brand-foreground/80">Earn points when you invite friends</p>
           </Card>
         </Link>
         

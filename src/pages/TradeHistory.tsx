@@ -312,7 +312,7 @@ const TradeHistory = () => {
             >
               <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center">
-                  <div className="w-12 h-12 bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl flex items-center justify-center mr-4">
+                  <div className="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center mr-4">
                     {getCoinIcon(transaction.coin)}
                   </div>
                   <div>
@@ -347,7 +347,7 @@ const TradeHistory = () => {
 
               <div className="flex items-center justify-between">
                 <div className="flex items-center">
-                  <div className="w-8 h-8 bg-gradient-to-br from-gray-100 to-gray-200 rounded-full flex items-center justify-center mr-3">
+                  <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center mr-3">
                     <User size={14} className="text-gray-500" />
                   </div>
                   <div>

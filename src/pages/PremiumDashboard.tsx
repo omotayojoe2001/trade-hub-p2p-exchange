@@ -43,7 +43,7 @@ const PremiumDashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50">
+    <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <div className="flex items-center justify-between p-4 bg-white border-b border-gray-200">
         <div className="flex items-center">
@@ -55,7 +55,7 @@ const PremiumDashboard = () => {
             <h1 className="text-lg font-semibold text-gray-900">Premium Dashboard</h1>
           </div>
         </div>
-        <div className="flex items-center space-x-2 bg-gradient-to-r from-purple-500 to-blue-500 text-white px-3 py-1 rounded-full">
+        <div className="flex items-center space-x-2 bg-brand text-brand-foreground px-3 py-1 rounded-full">
           <Crown size={14} />
           <span className="text-sm font-medium">Premium Active</span>
         </div>
@@ -63,7 +63,7 @@ const PremiumDashboard = () => {
 
       <div className="p-4">
         {/* Welcome Banner */}
-        <Card className="p-6 mb-6 bg-gradient-to-r from-purple-600 to-blue-600 text-white">
+        <Card className="p-6 mb-6 bg-brand text-brand-foreground">
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-2xl font-bold mb-2">Welcome to Premium! 🎉</h2>
@@ -148,11 +148,11 @@ const PremiumDashboard = () => {
         <div className="mb-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Premium Actions</h3>
           <div className="grid grid-cols-2 gap-3">
-            <Button className="h-12 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white" onClick={() => navigate('/premium/sell')}>
+            <Button className="h-12 bg-brand hover:bg-brand/90 text-brand-foreground" onClick={() => navigate('/premium/sell')}>
               <Zap size={16} className="mr-2" />
               Priority Trade
             </Button>
-            <Button className="h-12 bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700 text-white" onClick={() => navigate('/premium/sell')}>
+            <Button className="h-12 bg-success hover:bg-success/90 text-success-foreground" onClick={() => navigate('/premium/sell')}>
               <DollarSign size={16} className="mr-2" />
               Sell for Cash
             </Button>
