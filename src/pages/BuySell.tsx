@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Bell, ArrowUpRight, ArrowDownLeft, HelpCircle, Clock, Shield } from 'lucide-react';
+import { Bell, ArrowUpRight, ArrowDownLeft, HelpCircle, Clock, Shield, List } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { useNavigate } from 'react-router-dom';
 import BottomNavigation from '@/components/BottomNavigation';
@@ -29,9 +29,18 @@ const BuySell = () => {
           </div>
           <span className="text-xl font-semibold text-gray-900">CryptoTrade</span>
         </div>
-        <div className="relative">
-          <Bell size={24} className="text-gray-600" />
-          <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full"></div>
+        <div className="flex items-center space-x-3">
+          <button
+            onClick={() => navigate('/trade-requests')}
+            className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors relative"
+          >
+            <List size={24} />
+            <div className="absolute -top-1 -right-1 w-3 h-3 bg-orange-500 rounded-full"></div>
+          </button>
+          <div className="relative">
+            <Bell size={24} className="text-gray-600" />
+            <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full"></div>
+          </div>
         </div>
       </div>
 
