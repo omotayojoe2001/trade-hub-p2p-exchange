@@ -67,6 +67,7 @@ import PremiumSell from "./pages/PremiumSell";
 import CashDeliveryDetails from "./pages/CashDeliveryDetails";
 import CashPickupDetails from "./pages/CashPickupDetails";
 import TradeRequests from "./pages/TradeRequests";
+import EscrowFlow from "./pages/EscrowFlow";
 
 import CryptoNews from "./pages/CryptoNews";
 import React from 'react';
@@ -199,7 +200,8 @@ const AppContent = () => {
             <Route path="/premium/sell" element={<PremiumSell />} />
             <Route path="/premium/cash-delivery" element={<CashDeliveryDetails />} />
             <Route path="/premium/cash-pickup" element={<CashPickupDetails />} />
-            <Route path="/trade-requests" element={<TradeRequests />} />
+        <Route path="/trade-requests" element={<TradeRequests />} />
+        <Route path="/escrow-flow" element={<EscrowFlow />} />
             <Route path="/notifications-demo" element={<NotificationsDemo />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />

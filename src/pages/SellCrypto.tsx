@@ -36,13 +36,12 @@ const SellCrypto = () => {
   };
 
   const handleSendTradeRequest = () => {
-    // Go directly to unified payment status flow (step 1)
-    navigate('/payment-status', {
+    // Navigate to new escrow flow
+    navigate('/escrow-flow', {
       state: {
         amount,
         nairaAmount: calculateNairaValue(),
         mode: 'sell',
-        step: 1,
       }
     });
   };
