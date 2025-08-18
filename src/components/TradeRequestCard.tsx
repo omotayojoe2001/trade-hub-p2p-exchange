@@ -27,7 +27,7 @@ const TradeRequestCard = ({ request, onAccept, onDecline }: TradeRequestCardProp
   const navigate = useNavigate();
 
   const handleViewDetails = () => {
-    navigate('/trade-details', { state: { tradeId: request.id } });
+    navigate('/trade-request-details', { state: { request } });
   };
 
   const getStatusColor = () => {
@@ -55,8 +55,11 @@ const TradeRequestCard = ({ request, onAccept, onDecline }: TradeRequestCardProp
           </div>
           <div>
             <h3 className={`font-semibold ${getTypeColor()}`}>
-              {request.type === 'buy' ? 'Buy Request' : 'Sell Request'}
+              {request.type === 'buy' ? 'Crypto to Cash' : 'Cash to Crypto'}
             </h3>
+            <p className="text-xs text-muted-foreground">
+              {request.type === 'buy' ? 'User wants cash, will send crypto' : 'User wants crypto, will send cash'}
+            </p>
             <div className="flex items-center text-xs text-gray-500">
               <Clock size={12} className="mr-1" />
               <span>{request.timeAgo}</span>
@@ -106,35 +109,21 @@ const TradeRequestCard = ({ request, onAccept, onDecline }: TradeRequestCardProp
             </div>
           </div>
         </div>
-        <button 
+        <Button
           onClick={handleViewDetails}
-          className="text-blue-600 hover:text-blue-700 text-sm font-medium flex items-center"
+          variant="outline"
+          size="sm"
+          className="text-brand hover:text-brand-foreground hover:bg-brand"
         >
-          View Profile
+          View Details
           <ChevronRight size={14} className="ml-1" />
-        </button>
+        </Button>
       </div>
 
-      {/* Action Buttons */}
+      {/* Action Buttons - Only show view details for pending */}
       {request.status === 'pending' && (
-        <div className="flex space-x-3">
-          <Button
-            onClick={() => onDecline(request.id)}
-            variant="outline"
-            className="flex-1 border-gray-300 text-gray-700 hover:bg-gray-50"
-          >
-            Decline
-          </Button>
-          <Button
-            onClick={() => onAccept(request.id)}
-            className={`flex-1 text-white ${
-              request.type === 'buy' 
-                ? 'bg-blue-600 hover:bg-blue-700' 
-                : 'bg-green-600 hover:bg-green-700'
-            }`}
-          >
-            Accept Trade
-          </Button>
+        <div className="text-center pt-2">
+          <p className="text-sm text-muted-foreground mb-2">View trade details to accept or decline</p>
         </div>
       )}
 
