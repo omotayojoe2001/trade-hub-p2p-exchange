@@ -69,6 +69,7 @@ import CashPickupDetails from "./pages/CashPickupDetails";
 import TradeRequests from "./pages/TradeRequests";
 import TradeRequestDetails from "./pages/TradeRequestDetails";
 import MerchantTradeFlow from "./pages/MerchantTradeFlow";
+import Messages from "./pages/Messages";
 import EscrowFlow from "./pages/EscrowFlow";
 
 import CryptoNews from "./pages/CryptoNews";
@@ -205,6 +206,7 @@ const AppContent = () => {
         <Route path="/trade-requests" element={<TradeRequests />} />
         <Route path="/trade-request-details" element={<TradeRequestDetails />} />
         <Route path="/merchant-trade-flow" element={<MerchantTradeFlow />} />
+        <Route path="/messages" element={<Messages />} />
         <Route path="/escrow-flow" element={<EscrowFlow />} />
             <Route path="/notifications-demo" element={<NotificationsDemo />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

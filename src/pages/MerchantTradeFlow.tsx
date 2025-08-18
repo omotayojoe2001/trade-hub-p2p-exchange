@@ -61,9 +61,13 @@ const MerchantTradeFlow = () => {
   const handleSendMessage = () => {
     if (!message.trim()) return;
     
-    toast({
-      title: "Message Sent",
-      description: "Your message has been sent to the user",
+    // Navigate to messages template
+    navigate('/messages', {
+      state: {
+        tradeId: request?.id,
+        recipientName: request?.merchantName,
+        message: message.trim()
+      }
     });
     setMessage('');
   };
@@ -76,11 +80,10 @@ const MerchantTradeFlow = () => {
   };
 
   const handleReportTransaction = () => {
-    navigate('/dispute', { 
-      state: { 
-        tradeId: request?.id,
-        type: 'merchant_report'
-      }
+    toast({
+      title: "Report Submitted",
+      description: "Your report has been submitted to our support team. They will review and contact you within 24 hours.",
+      variant: "destructive"
     });
   };
 
@@ -170,9 +173,25 @@ const MerchantTradeFlow = () => {
                   <span className="text-muted-foreground">Bank Name</span>
                   <span className="font-semibold text-foreground">{userBankDetails.bankName}</span>
                 </div>
-                <div className="flex justify-between">
+                <div className="flex justify-between items-center">
                   <span className="text-muted-foreground">Account Number</span>
-                  <span className="font-mono font-semibold text-foreground">{userBankDetails.accountNumber}</span>
+                  <div className="flex items-center space-x-2">
+                    <span className="font-mono font-semibold text-foreground">{userBankDetails.accountNumber}</span>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 w-8 p-0"
+                      onClick={() => {
+                        navigator.clipboard.writeText(userBankDetails.accountNumber);
+                        toast({
+                          title: "Copied!",
+                          description: "Account number copied to clipboard",
+                        });
+                      }}
+                    >
+                      📋
+                    </Button>
+                  </div>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Account Name</span>
@@ -214,13 +233,15 @@ const MerchantTradeFlow = () => {
                 </p>
               </div>
 
-              <Button
-                onClick={handleMarkAsPaid}
-                className="w-full mt-4"
-                disabled={!proofUploaded}
-              >
-                Mark as Paid
-              </Button>
+              <div className="flex space-x-3 mt-4">
+                <Button
+                  onClick={handleMarkAsPaid}
+                  className="flex-1"
+                  disabled={!proofUploaded}
+                >
+                  I have sent the payment
+                </Button>
+              </div>
             </div>
           </>
         )}

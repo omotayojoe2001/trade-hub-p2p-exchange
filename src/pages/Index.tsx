@@ -320,7 +320,7 @@ const Index = () => {
             <h3 className="font-semibold text-gray-900">My Rewards</h3>
             <span className="text-2xl">🏆</span>
           </div>
-          <p className="text-2xl font-bold text-blue-600">2,450 Points</p>
+          <p className="text-2xl font-bold text-success">$2,450 USD</p>
         </Card>
       </div>
 

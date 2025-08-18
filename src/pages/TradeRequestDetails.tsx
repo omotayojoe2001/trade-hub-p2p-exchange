@@ -115,7 +115,7 @@ const TradeRequestDetails = () => {
             <p className="text-sm text-muted-foreground">
               {request.type === 'buy' 
                 ? 'User wants to sell crypto and receive cash in their bank account' 
-                : 'User wants to buy crypto and will send cash to your account'
+                : 'User wants to buy crypto and will send crypto to your account'
               }
             </p>
           </div>
@@ -128,7 +128,7 @@ const TradeRequestDetails = () => {
               </div>
               <p className="text-xs text-muted-foreground">User</p>
               <p className="text-sm font-medium text-foreground">
-                {request.type === 'buy' ? 'Sends Crypto' : 'Sends Cash'}
+                {request.type === 'buy' ? 'Sends Crypto' : 'Sends Crypto'}
               </p>
             </div>
             
@@ -142,7 +142,7 @@ const TradeRequestDetails = () => {
               </div>
               <p className="text-xs text-muted-foreground">You</p>
               <p className="text-sm font-medium text-foreground">
-                {request.type === 'buy' ? 'Send Cash' : 'Send Crypto'}
+                {request.type === 'buy' ? 'Send Cash' : 'Send Cash'}
               </p>
             </div>
           </div>
@@ -245,8 +245,8 @@ const TradeRequestDetails = () => {
         <div className="mt-6 bg-muted/30 rounded-lg p-4">
           <h4 className="font-medium text-foreground mb-2">Important Notes:</h4>
           <ul className="space-y-1 text-sm text-muted-foreground">
-            <li>• {request.type === 'buy' ? 'User has already sent crypto to escrow' : 'You will need to send crypto to escrow'}</li>
-            <li>• {request.type === 'buy' ? 'You will send cash to their bank account' : 'User will send cash to your account'}</li>
+            <li>• {request.type === 'buy' ? 'User has already sent crypto to escrow' : 'User will send crypto to escrow'}</li>
+            <li>• {request.type === 'buy' ? 'You will send cash to their bank account' : 'You will send cash to their account'}</li>
             <li>• All transactions are secured by our escrow system</li>
             <li>• You have 60 seconds to accept this request</li>
           </ul>
