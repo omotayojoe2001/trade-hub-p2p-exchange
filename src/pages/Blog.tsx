@@ -7,6 +7,14 @@ import { Input } from '@/components/ui/input';
 import { Calendar, Clock, Search, TrendingUp, User } from 'lucide-react';
 import BottomNavigation from '@/components/BottomNavigation';
 
+// Import blog images
+import blogCryptoTrading from '@/assets/blog-crypto-trading.jpg';
+import blogSecurity from '@/assets/blog-security.jpg';
+import blogP2PTrading from '@/assets/blog-p2p-trading.jpg';
+import blogBitcoinAnalysis from '@/assets/blog-bitcoin-analysis.jpg';
+import blogRegulation from '@/assets/blog-regulation.jpg';
+import blogChartPatterns from '@/assets/blog-chart-patterns.jpg';
+
 interface BlogPost {
   id: string;
   title: string;
@@ -36,7 +44,7 @@ export const Blog: React.FC = () => {
         id: '1',
         title: 'The Future of Cryptocurrency Trading in Nigeria',
         excerpt: 'Exploring the rapid growth of cryptocurrency adoption in Nigeria and what it means for the future of digital finance.',
-        featured_image_url: '/api/placeholder/600/300',
+        featured_image_url: blogChartPatterns,
         author_name: 'CryptoPay Research Team',
         created_at: '2024-01-15T10:00:00Z',
         tags: ['cryptocurrency', 'nigeria', 'trading'],
@@ -47,7 +55,7 @@ export const Blog: React.FC = () => {
         id: '2',
         title: 'How to Secure Your Crypto Wallet: Best Practices',
         excerpt: 'Learn essential security measures to protect your cryptocurrency investments from theft and fraud.',
-        featured_image_url: '/api/placeholder/600/300',
+        featured_image_url: blogCryptoTrading,
         author_name: 'Security Team',
         created_at: '2024-01-12T14:30:00Z',
         tags: ['security', 'wallet', 'safety'],
@@ -58,7 +66,7 @@ export const Blog: React.FC = () => {
         id: '3',
         title: 'Understanding P2P Trading: A Beginner\'s Guide',
         excerpt: 'Everything you need to know about peer-to-peer cryptocurrency trading and how to get started safely.',
-        featured_image_url: '/api/placeholder/600/300',
+        featured_image_url: blogSecurity,
         author_name: 'Education Team',
         created_at: '2024-01-10T09:15:00Z',
         tags: ['p2p', 'trading', 'beginner'],
@@ -69,7 +77,7 @@ export const Blog: React.FC = () => {
         id: '4',
         title: 'Bitcoin Price Analysis: Q1 2024 Outlook',
         excerpt: 'Technical analysis and market predictions for Bitcoin\'s performance in the first quarter of 2024.',
-        featured_image_url: '/api/placeholder/600/300',
+        featured_image_url: blogP2PTrading,
         author_name: 'Market Analyst',
         created_at: '2024-01-08T16:45:00Z',
         tags: ['bitcoin', 'analysis', 'prediction'],
@@ -80,7 +88,7 @@ export const Blog: React.FC = () => {
         id: '5',
         title: 'New CBN Guidelines for Cryptocurrency Exchanges',
         excerpt: 'Latest regulatory updates from the Central Bank of Nigeria affecting cryptocurrency trading platforms.',
-        featured_image_url: '/api/placeholder/600/300',
+        featured_image_url: blogBitcoinAnalysis,
         author_name: 'Regulatory Team',
         created_at: '2024-01-05T11:20:00Z',
         tags: ['regulation', 'cbn', 'compliance'],
@@ -91,7 +99,7 @@ export const Blog: React.FC = () => {
         id: '6',
         title: 'Mastering Chart Patterns for Crypto Trading',
         excerpt: 'Learn to identify and trade profitable chart patterns in the cryptocurrency market.',
-        featured_image_url: '/api/placeholder/600/300',
+        featured_image_url: blogRegulation,
         author_name: 'Trading Expert',
         created_at: '2024-01-03T13:10:00Z',
         tags: ['trading', 'technical-analysis', 'patterns'],

@@ -422,6 +422,53 @@ const MyTrades = () => {
                 <span className="text-xs font-medium text-muted-foreground">{trade.progress}%</span>
               </div>
 
+              {/* Action Buttons for Completed Trades */}
+              {trade.status === 'completed' && (
+                <div className="flex gap-2 mt-3">
+                  <Button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      // Mock receipt data
+                      const receiptData = {
+                        transactionId: `TXN-${trade.id}`,
+                        amount: parseFloat(trade.coinAmount.replace(/[^\d.]/g, '')),
+                        coin: trade.coin,
+                        escrowAddress: '1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa',
+                        receiverBankDetails: {
+                          accountNumber: '1234567890',
+                          bankName: 'First Bank of Nigeria',
+                          accountName: 'John Doe'
+                        },
+                        completedAt: new Date(),
+                        txHash: '0x1234567890abcdef'
+                      };
+                      
+                      navigate('/receipt', { 
+                        state: { receiptData } 
+                      });
+                    }}
+                    variant="outline"
+                    size="sm"
+                    className="flex-1"
+                  >
+                    Download Receipt
+                  </Button>
+                  <Button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      const shareText = `Trade completed! ${trade.amount} ${trade.coin} with ${trade.merchant}. Transaction ID: TXN-${trade.id}`;
+                      const shareUrl = `https://wa.me/?text=${encodeURIComponent(shareText)}`;
+                      window.open(shareUrl, '_blank');
+                    }}
+                    variant="outline"
+                    size="sm"
+                    className="flex-1"
+                  >
+                    Share
+                  </Button>
+                </div>
+              )}
+
               {/* Action Button for Waiting Confirmation */}
               {trade.status === 'waiting_confirmation' && trade.awaitingUserAction && (
                 <Button

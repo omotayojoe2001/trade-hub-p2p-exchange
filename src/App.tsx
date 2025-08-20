@@ -206,7 +206,12 @@ const AppContent = () => {
         <Route path="/trade-requests" element={<TradeRequests />} />
         <Route path="/trade-request-details" element={<TradeRequestDetails />} />
         <Route path="/merchant-trade-flow" element={<MerchantTradeFlow />} />
+        <Route path="/receipt" element={<ReceiptPage />} />
+        <Route path="/trade-requests" element={<TradeRequests />} />
         <Route path="/messages" element={<Messages />} />
+        <Route path="/blog" element={<Blog />} />
+        <Route path="/blog/:postId" element={<BlogDetail />} />
+        <Route path="/thank-you" element={<ThankYouPage />} />
         <Route path="/escrow-flow" element={<EscrowFlow />} />
             <Route path="/notifications-demo" element={<NotificationsDemo />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

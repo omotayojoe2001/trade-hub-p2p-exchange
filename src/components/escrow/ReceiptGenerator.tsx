@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { Download, Share2, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -28,43 +28,53 @@ export const ReceiptGenerator: React.FC<ReceiptGeneratorProps> = ({
   onDownload,
   onShare
 }) => {
-  const generatePDF = () => {
-    const receiptContent = `
-CRYPTO ESCROW RECEIPT
-=====================
+  const receiptRef = useRef<HTMLDivElement>(null);
 
-Transaction ID: ${receiptData.transactionId}
-Date: ${receiptData.completedAt.toLocaleDateString()}
-Time: ${receiptData.completedAt.toLocaleTimeString()}
+  const downloadAsJPG = async () => {
+    if (!receiptRef.current) return;
 
-TRANSACTION DETAILS
-------------------
-Amount: ${receiptData.amount} ${receiptData.coin.toUpperCase()}
-Escrow Address: ${receiptData.escrowAddress}
-Transaction Hash: ${receiptData.txHash || 'N/A'}
+    try {
+      const html2canvas = (await import('html2canvas')).default;
+      const canvas = await html2canvas(receiptRef.current, {
+        scale: 2,
+        backgroundColor: '#ffffff',
+      });
+      
+      const link = document.createElement('a');
+      link.download = `receipt-${receiptData.transactionId}.jpg`;
+      link.href = canvas.toDataURL('image/jpeg', 0.9);
+      link.click();
+      
+      onDownload?.();
+    } catch (error) {
+      console.error('Error generating JPG:', error);
+    }
+  };
 
-RECEIVER DETAILS
----------------
-Bank: ${receiptData.receiverBankDetails.bankName}
-Account: ${receiptData.receiverBankDetails.accountNumber}
-Name: ${receiptData.receiverBankDetails.accountName}
+  const downloadAsPDF = async () => {
+    if (!receiptRef.current) return;
 
-STATUS: COMPLETED ✓
-
-This receipt confirms successful completion of your crypto-to-cash transaction through our secure escrow service.
-    `;
-
-    const blob = new Blob([receiptContent], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `receipt-${receiptData.transactionId}.txt`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    
-    onDownload?.();
+    try {
+      const html2canvas = (await import('html2canvas')).default;
+      const jsPDF = (await import('jspdf')).default;
+      
+      const canvas = await html2canvas(receiptRef.current, {
+        scale: 2,
+        backgroundColor: '#ffffff',
+      });
+      
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF();
+      const imgWidth = 190;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      
+      pdf.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight);
+      pdf.save(`receipt-${receiptData.transactionId}.pdf`);
+      
+      onDownload?.();
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+    }
   };
 
   const shareToSocial = (platform: string) => {
@@ -84,92 +94,132 @@ This receipt confirms successful completion of your crypto-to-cash transaction t
   };
 
   return (
-    <Card className="p-6">
-      <div className="text-center mb-6">
-        <FileText className="w-12 h-12 text-green-500 mx-auto mb-3" />
-        <h3 className="text-lg font-semibold text-gray-900">Transaction Receipt</h3>
-        <p className="text-sm text-gray-600">Your transaction has been completed successfully</p>
-      </div>
+    <div className="space-y-6">
+      <Card ref={receiptRef} className="bg-white shadow-lg">
+        <div className="text-center p-6 space-y-4">
+          <div className="flex justify-center">
+            <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center">
+              <span className="text-white font-bold text-lg">CP</span>
+            </div>
+          </div>
+          <h3 className="text-xl font-bold text-gray-900">CryptoPay Receipt</h3>
+          <div className="inline-block px-4 py-2 rounded-full text-sm font-semibold bg-green-50 text-green-600">
+            TRANSACTION COMPLETED ✓
+          </div>
+        </div>
 
-      <div className="space-y-4 mb-6">
-        <div className="bg-gray-50 p-4 rounded-lg">
+        <div className="p-6 space-y-6">
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
-              <span className="text-gray-600">Transaction ID</span>
-              <p className="font-medium">{receiptData.transactionId}</p>
+              <span className="text-gray-600">Transaction ID:</span>
+              <p className="font-mono text-xs break-all">{receiptData.transactionId}</p>
             </div>
             <div>
-              <span className="text-gray-600">Amount</span>
-              <p className="font-medium">{receiptData.amount} {receiptData.coin.toUpperCase()}</p>
-            </div>
-            <div>
-              <span className="text-gray-600">Completed</span>
-              <p className="font-medium">{receiptData.completedAt.toLocaleDateString()}</p>
-            </div>
-            <div>
-              <span className="text-gray-600">Status</span>
-              <p className="font-medium text-green-600">Completed ✓</p>
+              <span className="text-gray-600">Date:</span>
+              <p className="font-medium">{receiptData.completedAt.toLocaleString()}</p>
             </div>
           </div>
+
+          <div className="border-t pt-4 space-y-4">
+            <h4 className="font-semibold text-gray-900">Transaction Details</h4>
+            <div className="grid grid-cols-2 gap-4 text-sm">
+              <div>
+                <span className="text-gray-600">Crypto Amount:</span>
+                <p className="font-semibold">{receiptData.amount} {receiptData.coin.toUpperCase()}</p>
+              </div>
+              <div>
+                <span className="text-gray-600">Escrow Address:</span>
+                <p className="font-mono text-xs break-all">{receiptData.escrowAddress}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="border-t pt-4 space-y-4">
+            <h4 className="font-medium text-gray-900">Receiver Details</h4>
+            <div className="text-sm space-y-2">
+              <div>
+                <span className="text-gray-600">Bank Name:</span>
+                <p className="font-medium">{receiptData.receiverBankDetails.bankName}</p>
+              </div>
+              <div>
+                <span className="text-gray-600">Account Number:</span>
+                <p className="font-mono">{receiptData.receiverBankDetails.accountNumber}</p>
+              </div>
+              <div>
+                <span className="text-gray-600">Account Name:</span>
+                <p className="font-medium">{receiptData.receiverBankDetails.accountName}</p>
+              </div>
+            </div>
+          </div>
+
+          {receiptData.txHash && (
+            <div className="border-t pt-4 space-y-2">
+              <span className="text-gray-600 text-sm">Transaction Hash:</span>
+              <p className="font-mono text-xs break-all bg-gray-50 p-2 rounded">
+                {receiptData.txHash}
+              </p>
+            </div>
+          )}
+
+          <div className="text-center text-xs text-gray-500 space-y-1 border-t pt-4">
+            <p>Generated on {new Date().toLocaleString()}</p>
+            <p>CryptoPay - Secure Cryptocurrency Trading Platform</p>
+          </div>
+        </div>
+      </Card>
+
+      <div className="flex flex-col gap-4">
+        <div className="flex gap-2">
+          <Button onClick={downloadAsJPG} className="flex-1" variant="outline">
+            <Download className="w-4 h-4 mr-2" />
+            Download JPG
+          </Button>
+          <Button onClick={downloadAsPDF} className="flex-1" variant="outline">
+            <Download className="w-4 h-4 mr-2" />
+            Download PDF
+          </Button>
         </div>
 
-        <div className="border-t pt-4">
-          <h4 className="font-medium text-gray-900 mb-2">Receiver Details</h4>
-          <div className="text-sm space-y-1">
-            <p><span className="text-gray-600">Bank:</span> {receiptData.receiverBankDetails.bankName}</p>
-            <p><span className="text-gray-600">Account:</span> {receiptData.receiverBankDetails.accountNumber}</p>
-            <p><span className="text-gray-600">Name:</span> {receiptData.receiverBankDetails.accountName}</p>
+        <div className="space-y-2">
+          <p className="text-sm text-gray-600 text-center">Share Receipt</p>
+          <div className="grid grid-cols-2 gap-2">
+            <Button 
+              onClick={() => shareToSocial('whatsapp')}
+              variant="outline"
+              className="text-green-600 border-green-300 hover:bg-green-50"
+            >
+              <Share2 className="w-4 h-4 mr-1" />
+              WhatsApp
+            </Button>
+            <Button 
+              onClick={() => shareToSocial('telegram')}
+              variant="outline"
+              className="text-blue-600 border-blue-300 hover:bg-blue-50"
+            >
+              <Share2 className="w-4 h-4 mr-1" />
+              Telegram
+            </Button>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <Button 
+              onClick={() => shareToSocial('sms')}
+              variant="outline"
+              className="text-gray-600 border-gray-300 hover:bg-gray-50"
+            >
+              <Share2 className="w-4 h-4 mr-1" />
+              SMS
+            </Button>
+            <Button 
+              onClick={() => shareToSocial('facebook')}
+              variant="outline"
+              className="text-blue-600 border-blue-300 hover:bg-blue-50"
+            >
+              <Share2 className="w-4 h-4 mr-1" />
+              Facebook
+            </Button>
           </div>
         </div>
       </div>
-
-      <div className="space-y-4">
-        <Button 
-          onClick={generatePDF}
-          className="w-full bg-blue-600 hover:bg-blue-700 text-white"
-        >
-          <Download className="w-4 h-4 mr-2" />
-          Download Receipt
-        </Button>
-
-        <div className="grid grid-cols-2 gap-2">
-          <Button 
-            onClick={() => shareToSocial('whatsapp')}
-            variant="outline"
-            className="text-green-600 border-green-300 hover:bg-green-50"
-          >
-            <Share2 className="w-4 h-4 mr-1" />
-            WhatsApp
-          </Button>
-          <Button 
-            onClick={() => shareToSocial('telegram')}
-            variant="outline"
-            className="text-blue-600 border-blue-300 hover:bg-blue-50"
-          >
-            <Share2 className="w-4 h-4 mr-1" />
-            Telegram
-          </Button>
-        </div>
-
-        <div className="grid grid-cols-2 gap-2">
-          <Button 
-            onClick={() => shareToSocial('sms')}
-            variant="outline"
-            className="text-gray-600 border-gray-300 hover:bg-gray-50"
-          >
-            <Share2 className="w-4 h-4 mr-1" />
-            SMS
-          </Button>
-          <Button 
-            onClick={() => shareToSocial('facebook')}
-            variant="outline"
-            className="text-blue-600 border-blue-300 hover:bg-blue-50"
-          >
-            <Share2 className="w-4 h-4 mr-1" />
-            Facebook
-          </Button>
-        </div>
-      </div>
-    </Card>
+    </div>
   );
 };

@@ -159,6 +159,116 @@ const BuySell = () => {
         </div>
       </div>
 
+      {/* Trade Requests */}
+      <div className="mx-4 mb-4">
+        <div className="bg-white border border-gray-200 rounded-xl p-4">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h4 className="font-semibold text-gray-900">Trade Requests</h4>
+              <p className="text-gray-600 text-sm">Available offers from merchants</p>
+            </div>
+            <Button 
+              variant="ghost" 
+              size="sm"
+              onClick={() => navigate('/trade-requests')}
+              className="text-blue-600 hover:text-blue-700"
+            >
+              See All →
+            </Button>
+          </div>
+          
+          <div className="space-y-3">
+            <div className="bg-white border border-gray-200 rounded-lg p-3">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center">
+                  <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-2">
+                    <span className="text-blue-600 text-sm">👤</span>
+                  </div>
+                  <div>
+                    <p className="font-medium text-gray-900 text-sm">CryptoMaster</p>
+                    <div className="flex items-center">
+                      <span className="text-yellow-500 text-xs">★ 4.9</span>
+                    </div>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="text-xs text-gray-500">5 min left</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-2 text-xs mb-2">
+                <div>
+                  <span className="text-gray-500">Buying:</span>
+                  <p className="font-medium">0.005 BTC</p>
+                </div>
+                <div>
+                  <span className="text-gray-500">Rate:</span>
+                  <p className="font-medium">₦1,180/USD</p>
+                </div>
+              </div>
+              <Button size="sm" className="w-full bg-blue-500 hover:bg-blue-600 text-white text-xs py-1">
+                Accept Trade
+              </Button>
+            </div>
+
+            <div className="bg-white border border-gray-200 rounded-lg p-3">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center">
+                  <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center mr-2">
+                    <span className="text-green-600 text-sm">👩</span>
+                  </div>
+                  <div>
+                    <p className="font-medium text-gray-900 text-sm">FastTrader</p>
+                    <div className="flex items-center">
+                      <span className="text-yellow-500 text-xs">★ 4.7</span>
+                    </div>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="text-xs text-gray-500">12 min left</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-2 text-xs mb-2">
+                <div>
+                  <span className="text-gray-500">Buying:</span>
+                  <p className="font-medium">300 USDT</p>
+                </div>
+                <div>
+                  <span className="text-gray-500">Rate:</span>
+                  <p className="font-medium">₦1,175/USD</p>
+                </div>
+              </div>
+              <Button size="sm" className="w-full bg-green-500 hover:bg-green-600 text-white text-xs py-1">
+                Accept Trade
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Messages Shortcut */}
+      <div className="mx-4 mb-4">
+        <div className="bg-purple-50 border border-purple-200 rounded-xl p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center">
+              <div className="w-10 h-10 bg-purple-500 rounded-full flex items-center justify-center mr-3">
+                <span className="text-white text-sm">💬</span>
+              </div>
+              <div>
+                <h4 className="font-semibold text-gray-900">Messages</h4>
+                <p className="text-gray-600 text-sm">3 unread messages</p>
+              </div>
+            </div>
+            <Button
+              onClick={() => navigate('/messages')}
+              variant="outline"
+              size="sm"
+              className="border-purple-300 text-purple-700 hover:bg-purple-50"
+            >
+              View All
+            </Button>
+          </div>
+        </div>
+      </div>
       {/* Trade in Progress */}
       <div className="mx-4 mb-4">
         <div className="bg-orange-50 border border-orange-200 rounded-xl p-4">
