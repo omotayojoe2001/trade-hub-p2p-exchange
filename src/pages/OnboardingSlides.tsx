@@ -8,17 +8,17 @@ const slides = [
   {
     title: "Trade Crypto Safely",
     description: "Buy and sell cryptocurrency with verified merchants in a secure escrow system",
-    image: "🛡️"
+    image: "shield"
   },
   {
     title: "Best Exchange Rates",
     description: "Get competitive rates and track real-time market prices across multiple exchanges",
-    image: "📈"
+            image: "chart-line"
   },
   {
     title: "Instant Settlements",
     description: "Complete transactions quickly with our automated matching system",
-    image: "⚡"
+    image: "zap"
   }
 ];
 

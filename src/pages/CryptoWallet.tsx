@@ -4,6 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ArrowLeft, Wallet, ArrowUpRight, ArrowDownLeft, QrCode, Copy, Eye, EyeOff } from 'lucide-react';
+import CryptoIcon from '@/components/CryptoIcon';
 import { Link } from 'react-router-dom';
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -28,9 +29,9 @@ const CryptoWallet = () => {
   const { toast } = useToast();
 
   const supportedCoins = [
-    { symbol: 'BTC', name: 'Bitcoin', icon: '₿' },
-    { symbol: 'USDT', name: 'Tether', icon: '₮' },
-    { symbol: 'ETH', name: 'Ethereum', icon: 'Ξ' }
+    { symbol: 'BTC', name: 'Bitcoin', icon: 'btc' },
+    { symbol: 'USDT', name: 'Tether', icon: 'usdt' },
+    { symbol: 'ETH', name: 'Ethereum', icon: 'eth' }
   ];
 
   useEffect(() => {
@@ -163,7 +164,9 @@ const CryptoWallet = () => {
                 }`}
               >
                 <div className="text-center">
-                  <div className="text-2xl mb-1">{coin.icon}</div>
+                  <div className="mb-1">
+                  <CryptoIcon symbol={coin.symbol} size={32} />
+                </div>
                   <div className="font-semibold">{coin.symbol}</div>
                   <div className="text-xs text-gray-600">{coin.name}</div>
                 </div>
@@ -306,7 +309,7 @@ const CryptoWallet = () => {
         {/* Warning */}
         <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
           <div className="flex items-start">
-            <span className="text-yellow-600 mr-3 mt-1">⚠️</span>
+            <AlertTriangle size={16} className="text-yellow-600 mr-3 mt-1" />
             <div>
               <p className="text-sm text-gray-700 font-medium mb-1">Security Notice</p>
               <p className="text-xs text-gray-600">

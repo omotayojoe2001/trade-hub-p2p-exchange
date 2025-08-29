@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Bell, ArrowUpRight, ArrowDownLeft, HelpCircle, Clock, Shield, List } from 'lucide-react';
+import { Bell, ArrowUpRight, ArrowDownLeft, HelpCircle, Clock, Shield, List, User, UserCheck, MessageCircle, Zap, Search } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { useNavigate } from 'react-router-dom';
 import BottomNavigation from '@/components/BottomNavigation';
@@ -145,7 +145,7 @@ const BuySell = () => {
         <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
           <div className="flex items-start">
             <div className="w-6 h-6 bg-yellow-400 rounded-full flex items-center justify-center mr-3 mt-0.5">
-              <span className="text-white text-xs">💡</span>
+              <HelpCircle size={16} className="text-white" />
             </div>
             <div className="flex-1">
               <p className="text-gray-800 text-sm mb-2">
@@ -182,7 +182,7 @@ const BuySell = () => {
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center">
                   <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-2">
-                    <span className="text-blue-600 text-sm">👤</span>
+                    <User size={16} className="text-blue-600" />
                   </div>
                   <div>
                     <p className="font-medium text-gray-900 text-sm">CryptoMaster</p>
@@ -214,7 +214,7 @@ const BuySell = () => {
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center">
                   <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center mr-2">
-                    <span className="text-green-600 text-sm">👩</span>
+                    <UserCheck size={16} className="text-green-600" />
                   </div>
                   <div>
                     <p className="font-medium text-gray-900 text-sm">FastTrader</p>
@@ -251,7 +251,7 @@ const BuySell = () => {
           <div className="flex items-center justify-between">
             <div className="flex items-center">
               <div className="w-10 h-10 bg-purple-500 rounded-full flex items-center justify-center mr-3">
-                <span className="text-white text-sm">💬</span>
+                <MessageCircle size={20} className="text-white" />
               </div>
               <div>
                 <h4 className="font-semibold text-gray-900">Messages</h4>
@@ -275,7 +275,7 @@ const BuySell = () => {
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center">
               <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center mr-3">
-                <span className="text-white text-sm">⚡</span>
+                <Zap size={16} className="text-white" />
               </div>
               <div>
                 <h4 className="font-semibold text-gray-900">Trade in Progress</h4>
@@ -308,7 +308,8 @@ const BuySell = () => {
           </div>
           
           <Button className="w-full bg-orange-500 hover:bg-orange-600 text-white py-3 rounded-lg font-medium">
-            🔍 Resume Trade
+            <Search size={16} className="mr-2" />
+            Resume Trade
           </Button>
         </div>
       </div>

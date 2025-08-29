@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowLeft, DollarSign, TrendingUp, Users, Shield, Clock, CheckCircle, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, DollarSign, TrendingUp, Users, Shield, Clock, CheckCircle, AlertTriangle, Star } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useNavigate } from 'react-router-dom';
@@ -87,7 +87,7 @@ const MerchantDashboard = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600">Rating</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.rating} ⭐</p>
+                <p className="text-2xl font-bold text-gray-900">{stats.rating} <Star className="w-6 h-6 inline" /></p>
               </div>
               <Users size={24} className="text-purple-500" />
             </div>

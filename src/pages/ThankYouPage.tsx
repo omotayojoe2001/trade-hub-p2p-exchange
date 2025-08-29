@@ -138,7 +138,7 @@ export const ThankYouPage: React.FC<ThankYouPageProps> = ({ type = 'trade_comple
           </div>
 
           <div className="pt-4 text-xs text-muted-foreground">
-            Thank you for using CryptoPay! 🚀
+            Thank you for using CryptoPay!
           </div>
         </CardContent>
       </Card>

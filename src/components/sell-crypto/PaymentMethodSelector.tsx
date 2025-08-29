@@ -1,4 +1,5 @@
 import React from 'react';
+import { Building2, Truck, MapPin } from 'lucide-react';
 
 interface PaymentMethodSelectorProps {
   selectedPayment: string;
@@ -26,7 +27,7 @@ const PaymentMethodSelector = ({ selectedPayment, onPaymentChange }: PaymentMeth
               )}
             </div>
             <div className="flex items-center">
-              <span className="text-blue-600 mr-2">🏛️</span>
+              <Building2 size={20} className="text-blue-600 mr-2" />
               <div>
                 <p className="font-medium text-gray-900">Bank Transfer</p>
                 <p className="text-sm text-gray-500">Default option for all users</p>
@@ -51,7 +52,7 @@ const PaymentMethodSelector = ({ selectedPayment, onPaymentChange }: PaymentMeth
                 )}
               </div>
               <div className="flex items-center">
-                <span className="text-gray-400 mr-2">🚚</span>
+                <Truck size={20} className="text-gray-400 mr-2" />
                 <div>
                   <p className="font-medium text-gray-400">Cash Delivery</p>
                 </div>
@@ -79,7 +80,7 @@ const PaymentMethodSelector = ({ selectedPayment, onPaymentChange }: PaymentMeth
                 )}
               </div>
               <div className="flex items-center">
-                <span className="text-gray-400 mr-2">📍</span>
+                <MapPin size={20} className="text-gray-400 mr-2" />
                 <div>
                   <p className="font-medium text-gray-400">Cash Pickup</p>
                 </div>

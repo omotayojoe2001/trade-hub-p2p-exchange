@@ -282,7 +282,7 @@ const PaymentStatus = () => {
           <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-6">
             <div className="flex items-center">
               <div className="w-6 h-6 bg-orange-500 rounded-full flex items-center justify-center mr-3">
-                <span className="text-white text-xs">⚠</span>
+                <AlertTriangle size={12} className="text-white" />
               </div>
               <div className="text-left">
                 <p className="text-orange-800 font-medium">Auto-refund in {formatTime(timeLeft)}</p>

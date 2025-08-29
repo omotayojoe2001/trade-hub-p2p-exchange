@@ -35,7 +35,7 @@ const MyTrades = () => {
       progress: 50,
       startTime: 'June 28, 10:34 AM',
       date: new Date('2024-06-28'),
-      avatar: '👤',
+      avatar: 'U',
       category: 'ongoing'
     },
     {
@@ -50,7 +50,7 @@ const MyTrades = () => {
       progress: 75,
       startTime: 'June 28, 09:15 AM',
       date: new Date('2024-06-28'),
-      avatar: '👩',
+      avatar: 'CQ',
       awaitingUserAction: true,
       category: 'ongoing'
     },
@@ -66,7 +66,7 @@ const MyTrades = () => {
       progress: 100,
       startTime: 'June 27, 15:22 PM',
       date: new Date('2024-06-27'),
-      avatar: '🧑',
+      avatar: 'BT',
       category: 'completed'
     },
     {
@@ -81,7 +81,7 @@ const MyTrades = () => {
       progress: 0,
       startTime: 'June 26, 14:30 PM',
       date: new Date('2024-06-26'),
-      avatar: '👨',
+      avatar: 'FC',
       category: 'cancelled'
     },
     {
@@ -96,7 +96,7 @@ const MyTrades = () => {
       progress: 100,
       startTime: 'June 25, 11:45 AM',
       date: new Date('2024-06-25'),
-      avatar: '👩‍💼',
+      avatar: 'CM',
       category: 'completed'
     }
   ];

@@ -1,13 +1,15 @@
 
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowUp, ArrowDown, Clock, Building2, Bell, Settings, TrendingUp, ChevronRight, Star, DollarSign, Zap, CreditCard } from 'lucide-react';
+import { ArrowUp, ArrowDown, Clock, Building2, Bell, TrendingUp, ChevronRight, Star, DollarSign, Zap, CreditCard, User, Video, Store, Bell as BellIcon, Gift, Trophy, Lock, Megaphone, CheckCircle, Sparkles, Crown } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import BottomNavigation from '@/components/BottomNavigation';
 import UserTypeToggle from '@/components/UserTypeToggle';
 import TrackingNotification from '@/components/TrackingNotification';
 import TrendingCoins from '@/components/TrendingCoins';
+import CryptoIcon from '@/components/CryptoIcon';
+import ThemeToggle from '@/components/ThemeToggle';
 import { useAuth } from '@/hooks/useAuth';
 import { useQuickAuth } from '@/hooks/useQuickAuth';
 import { useCryptoData } from '@/hooks/useCryptoData';
@@ -80,25 +82,23 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-white px-4 py-6 pb-20">
+    <div className="min-h-screen bg-white dark:bg-gray-900 px-4 py-6 pb-20">
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <div className="flex items-center space-x-3">
           <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-            <span className="text-blue-600 text-lg">👤</span>
+            <User size={20} className="text-blue-600" />
           </div>
           <div>
-            <p className="text-gray-500 text-sm">Good Morning</p>
-            <h1 className="text-gray-900 text-lg font-medium">{displayName}</h1>
+            <p className="text-gray-500 dark:text-gray-400 text-sm">Good Morning</p>
+            <h1 className="text-gray-900 dark:text-white text-lg font-medium">{displayName}</h1>
           </div>
         </div>
         <div className="flex items-center space-x-3">
           <Link to="/notifications">
-            <Bell size={24} className="text-gray-600" />
+            <Bell size={24} className="text-gray-600 dark:text-gray-400" />
           </Link>
-          <Link to="/settings">
-            <Settings size={24} className="text-gray-600" />
-          </Link>
+          <ThemeToggle />
         </div>
       </div>
 
@@ -184,7 +184,7 @@ const Index = () => {
             <div className="bg-white p-4 rounded-xl border border-gray-200 flex items-center justify-between hover:shadow-sm transition-shadow">
               <div className="flex items-center">
                 <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center mr-3">
-                  <span className="text-green-500 text-lg">✓</span>
+                  <CheckCircle size={16} className="text-green-500" />
                 </div>
                 <div>
                   <p className="font-semibold text-gray-900">Trade #124 Completed</p>
@@ -218,7 +218,9 @@ const Index = () => {
             <h3 className="font-semibold text-lg mb-1">Withdraw USD in Cash</h3>
             <p className="text-sm text-brand-foreground/80">Now available for Premium users</p>
           </div>
-          <div className="text-2xl">💵</div>
+          <div className="text-2xl">
+            <DollarSign size={24} className="text-brand-foreground" />
+          </div>
         </div>
         <Link to="/premium">
           <Button className="bg-white text-brand hover:bg-gray-100 mt-3 w/full font-medium">
@@ -233,7 +235,7 @@ const Index = () => {
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center">
               <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-3">
-                <span className="text-blue-500 text-lg">📢</span>
+                <Megaphone size={16} className="text-blue-500" />
               </div>
               <span className="font-semibold text-gray-900">Platform Updates</span>
             </div>
@@ -281,9 +283,9 @@ const Index = () => {
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center">
-                    <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center mr-3">
-                      <span className="text-lg">{coin.symbol === 'BTC' ? '₿' : coin.symbol === 'ETH' ? '⧫' : '●'}</span>
-                    </div>
+                                         <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center mr-3">
+                       <CryptoIcon symbol={coin.symbol} size={24} />
+                     </div>
                     <div>
                       <h3 className="font-semibold text-gray-900">{coin.name}</h3>
                       <p className="text-sm text-gray-500">{coin.symbol.toUpperCase()}</p>
@@ -309,7 +311,7 @@ const Index = () => {
           <Card className="bg-brand p-4 rounded-xl text-brand-foreground hover:shadow-lg transition-shadow">
             <div className="flex items-center justify-between mb-2">
               <h3 className="font-semibold">Refer & Earn</h3>
-              <span className="text-2xl">🎁</span>
+              <Gift size={24} className="text-brand-foreground" />
             </div>
             <p className="text-sm text-brand-foreground/80">Earn points when you invite friends</p>
           </Card>
@@ -318,7 +320,7 @@ const Index = () => {
         <Card className="bg-white p-4 rounded-xl border border-gray-200">
           <div className="flex items-center justify-between mb-2">
             <h3 className="font-semibold text-gray-900">My Rewards</h3>
-            <span className="text-2xl">🏆</span>
+            <Trophy size={24} className="text-yellow-500" />
           </div>
           <p className="text-2xl font-bold text-success">$2,450 USD</p>
         </Card>
@@ -343,7 +345,7 @@ const Index = () => {
               </div>
             </div>
             <div className="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center">
-              <span className="text-gray-400 text-lg">🔒</span>
+              <Lock size={16} className="text-gray-400" />
             </div>
           </div>
           
@@ -358,7 +360,7 @@ const Index = () => {
               </div>
             </div>
             <div className="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center">
-              <span className="text-gray-400 text-lg">🔒</span>
+              <Lock size={16} className="text-gray-400" />
             </div>
           </div>
         </div>
@@ -366,29 +368,32 @@ const Index = () => {
 
       {/* Demo Features */}
       <div className="mb-6">
-        <h2 className="text-gray-900 text-lg font-semibold mb-4">🎬 Demo Features</h2>
+        <h2 className="text-gray-900 text-lg font-semibold mb-4 flex items-center">
+          <Video size={20} className="mr-2" />
+          Demo Features
+        </h2>
         <div className="grid grid-cols-2 gap-3">
           <Link to="/merchant-dashboard" className="bg-orange-100 p-3 rounded-lg">
             <div className="text-center">
-              <span className="text-orange-600 text-lg">🏪</span>
+              <Store size={20} className="text-orange-600 mx-auto mb-1" />
               <p className="text-sm font-medium text-orange-700 mt-1">Merchant View</p>
             </div>
           </Link>
           <Link to="/notifications-demo" className="bg-blue-100 p-3 rounded-lg">
             <div className="text-center">
-              <span className="text-blue-600 text-lg">🔔</span>
+              <BellIcon size={20} className="text-blue-600 mx-auto mb-1" />
               <p className="text-sm font-medium text-blue-700 mt-1">Push Notifications</p>
             </div>
           </Link>
           <Link to="/premium-dashboard" className="bg-purple-100 p-3 rounded-lg">
             <div className="text-center">
-              <span className="text-purple-600 text-lg">👑</span>
+              <Crown size={20} className="text-purple-600 mx-auto mb-1" />
               <p className="text-sm font-medium text-purple-700 mt-1">Premium View</p>
             </div>
           </Link>
           <Link to="/buy-crypto-flow" className="bg-green-100 p-3 rounded-lg">
             <div className="text-center">
-              <span className="text-green-600 text-lg">💱</span>
+              <Sparkles size={20} className="text-green-600 mx-auto mb-1" />
               <p className="text-sm font-medium text-green-700 mt-1">Buy Crypto</p>
             </div>
           </Link>

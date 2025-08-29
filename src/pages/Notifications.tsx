@@ -1,9 +1,24 @@
 
 import React from 'react';
-import { ArrowLeft, ChevronRight } from 'lucide-react';
+import { ArrowLeft, ChevronRight, CreditCard, RefreshCw, Star, AlertTriangle } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const Notifications = () => {
+  const renderIcon = (iconName: string) => {
+    switch (iconName) {
+      case 'credit-card':
+        return <CreditCard className="w-5 h-5" />;
+      case 'refresh-cw':
+        return <RefreshCw className="w-5 h-5" />;
+      case 'star':
+        return <Star className="w-5 h-5" />;
+      case 'alert-triangle':
+        return <AlertTriangle className="w-5 h-5" />;
+      default:
+        return <span className="text-lg">{iconName}</span>;
+    }
+  };
+
   const notifications = [
     {
       id: 1,
@@ -13,7 +28,7 @@ const Notifications = () => {
       time: '2 mins ago',
       status: 'Completed',
       statusColor: 'text-green-600',
-      icon: '💳',
+      icon: 'credit-card',
       iconBg: 'bg-green-100'
     },
     {
@@ -24,7 +39,7 @@ const Notifications = () => {
       time: '1 hour ago',
       status: 'Pending',
       statusColor: 'text-orange-600',
-      icon: '🔄',
+      icon: 'refresh-cw',
       iconBg: 'bg-blue-100'
     },
     {
@@ -35,7 +50,7 @@ const Notifications = () => {
       time: '3 hours ago',
       status: 'New',
       statusColor: 'text-blue-600',
-      icon: '⭐',
+      icon: 'star',
       iconBg: 'bg-yellow-100',
       hasNewBadge: true
     },
@@ -47,7 +62,7 @@ const Notifications = () => {
       time: 'Yesterday',
       status: 'In Progress',
       statusColor: 'text-orange-600',
-      icon: '⚠️',
+      icon: 'alert-triangle',
       iconBg: 'bg-orange-100'
     },
     {
@@ -58,18 +73,18 @@ const Notifications = () => {
       time: '2 days ago',
       status: 'Completed',
       statusColor: 'text-green-600',
-      icon: '💳',
+      icon: 'credit-card',
       iconBg: 'bg-green-100'
     },
     {
       id: 6,
       type: 'trade',
       title: 'Crypto Trade Request Completed',
-      description: 'Your request for 0.1 ETH with Bob Williams was completed.',
+      description: 'Your request for  0.1 ETH with Bob Williams was completed.',
       time: '3 days ago',
       status: 'Completed',
       statusColor: 'text-green-600',
-      icon: '🔄',
+      icon: 'refresh-cw',
       iconBg: 'bg-blue-100'
     },
     {
@@ -80,7 +95,7 @@ const Notifications = () => {
       time: '4 days ago',
       status: 'Viewed',
       statusColor: 'text-gray-600',
-      icon: '⭐',
+      icon: 'star',
       iconBg: 'bg-yellow-100'
     },
     {
@@ -91,7 +106,7 @@ const Notifications = () => {
       time: '1 week ago',
       status: 'Resolved',
       statusColor: 'text-green-600',
-      icon: '⚠️',
+      icon: 'alert-triangle',
       iconBg: 'bg-orange-100'
     }
   ];
@@ -119,7 +134,7 @@ const Notifications = () => {
           >
             <div className="flex items-center flex-1">
               <div className={`w-10 h-10 ${notification.iconBg} rounded-full flex items-center justify-center mr-3 flex-shrink-0`}>
-                <span className="text-lg">{notification.icon}</span>
+                {renderIcon(notification.icon)}
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between mb-1">

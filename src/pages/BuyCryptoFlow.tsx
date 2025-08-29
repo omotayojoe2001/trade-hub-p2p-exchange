@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { useNavigate } from 'react-router-dom';
+import CryptoIcon from '@/components/CryptoIcon';
 
 const BuyCryptoFlow = () => {
   const [nairaAmount, setNairaAmount] = useState("");
@@ -100,7 +101,9 @@ const BuyCryptoFlow = () => {
                 You receive (Bitcoin)
               </label>
               <div className="relative">
-                <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">₿</span>
+                <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">
+                  <CryptoIcon symbol="BTC" size={16} />
+                </div>
                 <Input
                   type="number"
                   placeholder="0.00000000"

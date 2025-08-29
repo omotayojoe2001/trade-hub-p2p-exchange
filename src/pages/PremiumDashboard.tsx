@@ -66,7 +66,7 @@ const PremiumDashboard = () => {
         <Card className="p-6 mb-6 bg-brand text-brand-foreground">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-2xl font-bold mb-2">Welcome to Premium! 🎉</h2>
+              <h2 className="text-2xl font-bold mb-2">Welcome to Premium!</h2>
               <p className="text-purple-100">
                 You're now enjoying exclusive features and priority service.
               </p>

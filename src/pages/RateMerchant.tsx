@@ -238,11 +238,11 @@ const RateMerchant = () => {
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
           <h4 className="font-semibold text-blue-900 mb-2">Rating Guidelines</h4>
           <div className="space-y-1 text-sm text-blue-700">
-            <p>⭐ 1 star: Poor experience, would not recommend</p>
-            <p>⭐⭐ 2 stars: Below average, some issues</p>
-            <p>⭐⭐⭐ 3 stars: Average experience</p>
-            <p>⭐⭐⭐⭐ 4 stars: Good experience, minor issues</p>
-            <p>⭐⭐⭐⭐⭐ 5 stars: Excellent experience, highly recommend</p>
+                      <p><Star className="w-4 h-4 inline mr-1" /> 1 star: Poor experience, would not recommend</p>
+          <p><Star className="w-4 h-4 inline mr-1" /><Star className="w-4 h-4 inline mr-1" /> 2 stars: Below average, some issues</p>
+          <p><Star className="w-4 h-4 inline mr-1" /><Star className="w-4 h-4 inline mr-1" /><Star className="w-4 h-4 inline mr-1" /> 3 stars: Average experience</p>
+          <p><Star className="w-4 h-4 inline mr-1" /><Star className="w-4 h-4 inline mr-1" /><Star className="w-4 h-4 inline mr-1" /><Star className="w-4 h-4 inline mr-1" /> 4 stars: Good experience, minor issues</p>
+          <p><Star className="w-4 h-4 inline mr-1" /><Star className="w-4 h-4 inline mr-1" /><Star className="w-4 h-4 inline mr-1" /><Star className="w-4 h-4 inline mr-1" /><Star className="w-4 h-4 inline mr-1" /> 5 stars: Excellent experience, highly recommend</p>
           </div>
         </div>
 

@@ -68,7 +68,8 @@ export const PaymentForm = ({ className }: PaymentFormProps) => {
     <Card className={className}>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          💳 Make Payment
+          <CreditCard size={20} />
+          Make Payment
         </CardTitle>
         <CardDescription>
           Process secure payments via Stripe

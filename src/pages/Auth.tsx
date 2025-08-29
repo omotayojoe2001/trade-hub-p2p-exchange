@@ -8,7 +8,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Eye, EyeOff, User, AtSign, Mail, Phone, Fingerprint, Database, ArrowLeft, Gift, Check } from 'lucide-react';
+import { ArrowLeft, Eye, EyeOff, Fingerprint, User, Gift, Lock, Gift as GiftIcon, Pin, Database, AtSign, Mail, Phone, Check } from 'lucide-react';
 import { useBiometricAuth } from "@/hooks/useBiometricAuth";
 import { useAuthStorage } from "@/hooks/useAuthStorage";
 import BiometricPrompt from "@/components/BiometricPrompt";
@@ -332,7 +332,8 @@ const Auth = () => {
                 >
                   <Fingerprint size={20} className="text-blue-500" />
                   <span className="text-sm font-medium text-gray-700">
-                    🔒 Tap to login with biometric
+                    <Lock size={16} className="mr-1" />
+                    Tap to login with biometric
                   </span>
                 </button>
               </div>
@@ -390,7 +391,7 @@ const Auth = () => {
             {/* Security Note */}
             <div className="text-center pt-6">
               <div className="flex items-center justify-center space-x-1 text-xs text-gray-500">
-                <span>🔒</span>
+                <Lock size={12} />
                 <span>Your credentials are encrypted. Login is protected by 256-bit security</span>
               </div>
             </div>
@@ -607,9 +608,10 @@ const Auth = () => {
           {/* Referral Banner */}
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
             <div className="flex items-start">
-              <span className="text-sm mr-2">📌</span>
+              <Pin size={16} className="text-blue-600 mr-2" />
               <p className="text-xs text-blue-700">
-                🎁 Earn with Referrals! You'll get a % commission on every trade made by users you refer.
+                <GiftIcon size={14} className="inline mr-1" />
+                Earn with Referrals! You'll get a % commission on every trade made by users you refer.
               </p>
             </div>
           </div>

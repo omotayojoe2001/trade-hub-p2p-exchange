@@ -10,6 +10,7 @@ import useInactivityDetector from "@/hooks/useInactivityDetector";
 import { useAuthStorage } from "@/hooks/useAuthStorage";
 import { QuickAuthProvider, useQuickAuth } from "@/hooks/useQuickAuth";
 import { AuthProvider, useAuth } from "./hooks/useAuth";
+import { ThemeProvider } from "@/components/ThemeProvider";
 import { useLocation } from "react-router-dom";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
@@ -71,6 +72,10 @@ import TradeRequestDetails from "./pages/TradeRequestDetails";
 import MerchantTradeFlow from "./pages/MerchantTradeFlow";
 import Messages from "./pages/Messages";
 import EscrowFlow from "./pages/EscrowFlow";
+import ReceiptPage from "./pages/ReceiptPage";
+import { Blog } from "./pages/Blog";
+import { BlogDetail } from "./pages/BlogDetail";
+import { ThankYouPage } from "./pages/ThankYouPage";
 
 import CryptoNews from "./pages/CryptoNews";
 import React from 'react';
@@ -223,17 +228,19 @@ const AppContent = () => {
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
+    <BrowserRouter>
+      <ThemeProvider>
         <AuthProvider>
           <QuickAuthProvider>
-            <AppContent />
+            <TooltipProvider>
+              <AppContent />
+              <Toaster />
+              <Sonner />
+            </TooltipProvider>
           </QuickAuthProvider>
         </AuthProvider>
-      </BrowserRouter>
-    </TooltipProvider>
+      </ThemeProvider>
+    </BrowserRouter>
   </QueryClientProvider>
 );
 

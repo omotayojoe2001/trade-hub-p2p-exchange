@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { TrendingUp, TrendingDown } from 'lucide-react';
+import { TrendingUp, TrendingDown, Flame } from 'lucide-react';
+import CryptoIcon from '@/components/CryptoIcon';
 import { useCryptoData } from '@/hooks/useCryptoData';
 
 const TrendingCoins = () => {
@@ -18,19 +19,7 @@ const TrendingCoins = () => {
   };
 
   const getCoinIcon = (symbol: string) => {
-    const iconMap: { [key: string]: string } = {
-      BTC: '₿',
-      ETH: 'Ξ',
-      USDT: '₮',
-      BNB: 'B',
-      DOGE: 'D',
-      ADA: '₳',
-      SOL: 'S',
-      XRP: 'X',
-      DOT: '●',
-      AVAX: 'A',
-    };
-    return iconMap[symbol] || symbol.charAt(0);
+    return <CryptoIcon symbol={symbol} size={24} />;
   };
 
   const getCoinColor = (symbol: string) => {
@@ -54,7 +43,7 @@ const TrendingCoins = () => {
       <div className="mb-6">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center">
-            <span className="text-orange-400 text-lg mr-2">🔥</span>
+            <Flame className="text-orange-400 text-lg mr-2" />
             <h2 className="text-gray-900 text-lg font-semibold">Trending Coins</h2>
           </div>
           <Link to="/coins" className="text-blue-500 text-sm font-medium">See All</Link>
@@ -88,7 +77,7 @@ const TrendingCoins = () => {
       <div className="mb-6">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center">
-            <span className="text-orange-400 text-lg mr-2">🔥</span>
+            <Flame className="text-orange-400 text-lg mr-2" />
             <h2 className="text-gray-900 text-lg font-semibold">Trending Coins</h2>
           </div>
           <Link to="/coins" className="text-blue-500 text-sm font-medium">See All</Link>
@@ -104,7 +93,7 @@ const TrendingCoins = () => {
     <div className="mb-6">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center">
-          <span className="text-orange-400 text-lg mr-2">🔥</span>
+          <Flame className="text-orange-400 text-lg mr-2" />
           <h2 className="text-gray-900 text-lg font-semibold">Trending Coins</h2>
           <div className="ml-2 w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
         </div>

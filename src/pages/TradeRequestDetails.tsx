@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Clock, User, Shield, ChevronRight, Timer, AlertTriangle } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { useNavigate, useLocation } from 'react-router-dom';
+import CryptoIcon from '@/components/CryptoIcon';
 import { useToast } from '@/hooks/use-toast';
 
 const TradeRequestDetails = () => {
@@ -106,7 +107,11 @@ const TradeRequestDetails = () => {
           <div className="text-center mb-4">
             <div className={`w-16 h-16 ${request.type === 'buy' ? 'bg-brand/10' : 'bg-success/10'} rounded-full flex items-center justify-center mx-auto mb-3`}>
               <span className={`text-2xl font-bold ${request.type === 'buy' ? 'text-brand' : 'text-success'}`}>
-                {request.type === 'buy' ? '💰' : '₿'}
+                {request.type === 'buy' ? (
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                  </svg>
+                ) : <CryptoIcon symbol="BTC" size={16} />}
               </span>
             </div>
             <h2 className="text-xl font-bold text-foreground mb-2">

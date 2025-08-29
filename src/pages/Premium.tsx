@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Banknote, Gem, ChevronDown, ChevronRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import CryptoIcon from '@/components/CryptoIcon';
 
 const Premium = () => {
   const navigate = useNavigate();
@@ -102,22 +103,22 @@ const Premium = () => {
           </h3>
           <div className="grid grid-cols-3 gap-4">
             <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center">
-              <span className="text-2xl">₿</span>
+              <CryptoIcon symbol="BTC" size={32} />
             </div>
             <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center">
-              <span className="text-2xl font-bold text-green-600">₮</span>
+              <CryptoIcon symbol="USDT" size={32} />
             </div>
             <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center">
-              <span className="text-2xl text-blue-500">$</span>
+              <CryptoIcon symbol="ETH" size={32} />
             </div>
             <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center">
-              <div className="w-6 h-6 bg-gray-800 rounded"></div>
+              <CryptoIcon symbol="XRP" size={32} />
             </div>
             <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center">
-              <div className="w-6 h-6 bg-yellow-500 rounded transform rotate-45"></div>
+              <CryptoIcon symbol="BNB" size={32} />
             </div>
             <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center">
-              <div className="w-6 h-6 bg-gray-700 rounded-t-full"></div>
+              <CryptoIcon symbol="DOGE" size={32} />
             </div>
           </div>
         </div>

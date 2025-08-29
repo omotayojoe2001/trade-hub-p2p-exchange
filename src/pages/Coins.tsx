@@ -3,6 +3,7 @@ import { Search, TrendingUp, ChevronDown, Star } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import CryptoIcon from '@/components/CryptoIcon';
 import { useCryptoData } from '@/hooks/useCryptoData';
 
 const Coins = () => {
@@ -22,11 +23,7 @@ const Coins = () => {
   };
 
   const getCoinIcon = (symbol: string) => {
-    const iconMap: { [key: string]: string } = {
-      btc: '₿', eth: 'Ξ', usdt: '₮', bnb: 'B', doge: 'D',
-      ada: '₳', sol: 'S', xrp: 'X', dot: '●', avax: 'A',
-    };
-    return iconMap[symbol.toLowerCase()] || symbol.charAt(0).toUpperCase();
+    return <CryptoIcon symbol={symbol} size={24} />;
   };
 
   const getCoinColor = (symbol: string) => {

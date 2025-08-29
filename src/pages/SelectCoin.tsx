@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { ArrowLeft, Search, Users } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
+import CryptoIcon from '@/components/CryptoIcon';
 
 const SelectCoin = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -15,7 +16,7 @@ const SelectCoin = () => {
       id: 'bitcoin',
       name: 'Bitcoin',
       symbol: 'BTC',
-      icon: '₿',
+      icon: 'btc',
       iconBg: 'bg-orange-100',
       iconColor: 'text-orange-600',
       network: 'Native',
@@ -29,7 +30,7 @@ const SelectCoin = () => {
       id: 'tether',
       name: 'Tether',
       symbol: 'USDT',
-      icon: '₮',
+      icon: 'usdt',
       iconBg: 'bg-green-100',
       iconColor: 'text-green-600',
       networks: ['TRC20', 'ERC20', 'BEP20'],
@@ -43,7 +44,7 @@ const SelectCoin = () => {
       id: 'ethereum',
       name: 'Ethereum',
       symbol: 'ETH',
-      icon: '♦',
+      icon: 'eth',
       iconBg: 'bg-blue-100',
       iconColor: 'text-blue-600',
       network: 'ERC20',
@@ -57,7 +58,7 @@ const SelectCoin = () => {
       id: 'bnb',
       name: 'Binance Coin',
       symbol: 'BNB',
-      icon: 'BNB',
+      icon: 'bnb',
       iconBg: 'bg-yellow-100',
       iconColor: 'text-yellow-600',
       network: 'BEP20',
@@ -125,7 +126,7 @@ const SelectCoin = () => {
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center">
                   <div className={`w-12 h-12 ${coin.iconBg} rounded-full flex items-center justify-center mr-3`}>
-                    <span className={`${coin.iconColor} font-bold text-lg`}>{coin.icon}</span>
+                    <CryptoIcon symbol={coin.symbol} size={24} />
                   </div>
                   <div>
                     <h3 className="text-lg font-semibold text-gray-900">{coin.name}</h3>
@@ -210,7 +211,9 @@ const SelectCoin = () => {
             onClick={handleAutoMatch}
             className="flex-1 h-12 bg-gray-800 text-white hover:bg-gray-900"
           >
-            <span className="mr-2">🤖</span>
+                            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
             Auto Match
           </Button>
           <Button 
