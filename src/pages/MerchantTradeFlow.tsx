@@ -1,18 +1,25 @@
-import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Clock, User, Upload, Camera, MessageCircle, AlertTriangle, CheckCircle, FileText, Flag } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { ArrowLeft, Clock, User, Upload, Camera, MessageCircle, AlertTriangle, CheckCircle, FileText, Flag, Banknote, Coins, X, Image, File, ArrowUpDown } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Card, CardContent } from "@/components/ui/card";
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
+import { storageService } from '@/services/supabaseService';
+import CryptoIcon from '@/components/CryptoIcon';
 
 const MerchantTradeFlow = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
   const { request } = location.state || {};
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   const [timeLeft, setTimeLeft] = useState(1800); // 30 minutes
   const [proofUploaded, setProofUploaded] = useState(false);
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const [filePreview, setFilePreview] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
   const [message, setMessage] = useState('');
   const [step, setStep] = useState('payment'); // payment, waiting, completed
 
@@ -33,12 +40,97 @@ const MerchantTradeFlow = () => {
     }
   }, [timeLeft, step]);
 
-  const handleUploadProof = () => {
-    setProofUploaded(true);
-    toast({
-      title: "Proof Uploaded",
-      description: "Payment proof has been uploaded successfully",
-    });
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      // Validate file type
+      const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'application/pdf'];
+      if (!allowedTypes.includes(file.type)) {
+        toast({
+          title: "Invalid File Type",
+          description: "Please upload a JPEG, PNG, or PDF file",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // Validate file size (5MB limit)
+      if (file.size > 5 * 1024 * 1024) {
+        toast({
+          title: "File Too Large",
+          description: "Please upload a file smaller than 5MB",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      setUploadedFile(file);
+      
+      // Create preview for images
+      if (file.type.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          setFilePreview(e.target?.result as string);
+        };
+        reader.readAsDataURL(file);
+      } else {
+        setFilePreview(null);
+      }
+    }
+  };
+
+  const handleUploadProof = async () => {
+    if (!uploadedFile) {
+      toast({
+        title: "No File Selected",
+        description: "Please select a file to upload",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsUploading(true);
+    
+    try {
+      // Generate unique filename
+      const timestamp = Date.now();
+      const fileName = `payment_proof_${timestamp}_${uploadedFile.name}`;
+      const filePath = `receipts/${fileName}`;
+      
+      // Upload to Supabase Storage
+      await storageService.uploadFile('receipts', filePath, uploadedFile);
+      
+      // Get public URL
+      const publicUrl = storageService.getPublicUrl('receipts', filePath);
+      
+      setProofUploaded(true);
+      toast({
+        title: "Proof Uploaded Successfully",
+        description: "Payment proof has been uploaded and verified",
+      });
+      
+      // In a real app, you'd save the file URL to the trade record
+      console.log('File uploaded:', publicUrl);
+      
+    } catch (error) {
+      console.error('Upload error:', error);
+      toast({
+        title: "Upload Failed",
+        description: "Failed to upload proof. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleRemoveFile = () => {
+    setUploadedFile(null);
+    setFilePreview(null);
+    setProofUploaded(false);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
   };
 
   const handleMarkAsPaid = () => {
@@ -59,269 +151,311 @@ const MerchantTradeFlow = () => {
   };
 
   const handleSendMessage = () => {
-    if (!message.trim()) return;
-    
-    // Navigate to messages template
-    navigate('/messages', {
-      state: {
-        tradeId: request?.id,
-        recipientName: request?.merchantName,
-        message: message.trim()
-      }
-    });
-    setMessage('');
-  };
-
-  const handleSendReminder = () => {
-    toast({
-      title: "Reminder Sent",
-      description: "Payment reminder has been sent to the user",
-    });
-  };
-
-  const handleReportTransaction = () => {
-    toast({
-      title: "Report Submitted",
-      description: "Your report has been submitted to our support team. They will review and contact you within 24 hours.",
-      variant: "destructive"
-    });
+    if (message.trim()) {
+      toast({
+        title: "Message Sent",
+        description: "Your message has been sent to the user",
+      });
+      setMessage('');
+    }
   };
 
   if (!request) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <p className="text-muted-foreground">Trade request not found</p>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <p className="text-gray-600">Trade request not found</p>
       </div>
     );
   }
 
+  // Determine trade direction and what merchant needs to send
+  const isUserBuyingCrypto = request.type === 'buy'; // User wants crypto, merchant sends crypto
+  const merchantNeedsToSend = isUserBuyingCrypto ? `${request.amount} ${request.coin}` : `₦${request.nairaAmount}`;
+  const merchantWillReceive = isUserBuyingCrypto ? `₦${request.nairaAmount}` : `${request.amount} ${request.coin}`;
+
   const formatTime = (seconds: number) => {
-    const hours = Math.floor(seconds / 3600);
-    const minutes = Math.floor((seconds % 3600) / 60);
-    const secs = seconds % 60;
-    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-border">
+      <div className="bg-white border-b border-gray-200 px-4 py-4">
         <div className="flex items-center">
-          <button onClick={() => navigate('/trade-requests')}>
-            <ArrowLeft size={24} className="text-foreground mr-4" />
+          <button onClick={() => navigate('/trade-requests')} className="mr-4">
+            <ArrowLeft size={24} className="text-gray-700" />
           </button>
           <div>
-            <h1 className="text-lg font-semibold text-foreground">Active Trade</h1>
-            <p className="text-sm text-muted-foreground">#{request.id}</p>
-          </div>
-        </div>
-        <div className="text-right">
-          <p className="text-sm text-muted-foreground">Time remaining</p>
-          <p className="font-mono font-semibold text-foreground">{formatTime(timeLeft)}</p>
-        </div>
-      </div>
-
-      {/* Progress Steps */}
-      <div className="p-4 bg-muted/30 border-b">
-        <div className="flex items-center justify-between max-w-md mx-auto">
-          <div className="flex items-center">
-            <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-              step === 'payment' ? 'bg-brand text-brand-foreground' : 'bg-success text-success-foreground'
-            }`}>
-              <span className="text-sm font-semibold">1</span>
-            </div>
-            <span className="ml-2 text-sm font-medium">Send Payment</span>
-          </div>
-          
-          <div className={`flex-1 h-1 mx-4 ${step !== 'payment' ? 'bg-success' : 'bg-border'}`}></div>
-          
-          <div className="flex items-center">
-            <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-              step === 'waiting' ? 'bg-brand text-brand-foreground' : 
-              step === 'completed' ? 'bg-success text-success-foreground' : 'bg-muted text-muted-foreground'
-            }`}>
-              <span className="text-sm font-semibold">2</span>
-            </div>
-            <span className="ml-2 text-sm font-medium">Confirmation</span>
+            <h1 className="text-lg font-semibold text-gray-900">Complete Trade</h1>
+            <p className="text-sm text-gray-500">#{request.id}</p>
           </div>
         </div>
       </div>
 
-      <div className="p-6">
+      {/* Timer */}
+      <div className="bg-orange-50 border-b border-orange-200 px-4 py-3">
+        <div className="flex items-center justify-center">
+          <Clock size={20} className="text-orange-600 mr-2" />
+          <span className="font-semibold text-orange-800">
+            Time remaining: {formatTime(timeLeft)}
+          </span>
+        </div>
+      </div>
+
+      <div className="p-4 space-y-4">
         {/* Trade Summary */}
-        <div className="bg-card rounded-xl border border-border p-6 mb-6">
-          <h3 className="text-lg font-semibold text-foreground mb-4">Trade Summary</h3>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <p className="text-sm text-muted-foreground">You Send</p>
-              <p className="font-bold text-lg text-foreground">₦{request.nairaAmount.toLocaleString()}</p>
+        <Card className="bg-white">
+          <CardContent className="p-6">
+            <div className="text-center mb-6">
+              <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                <ArrowUpDown size={24} className="text-blue-600" />
+              </div>
+              <h2 className="text-xl font-bold text-gray-900 mb-2">
+                {isUserBuyingCrypto ? 'Send Crypto to User' : 'Send Cash to User'}
+              </h2>
+              <p className="text-gray-600">
+                {isUserBuyingCrypto 
+                  ? 'User has sent cash to your bank account' 
+                  : 'User has sent crypto to your wallet'
+                }
+              </p>
             </div>
-            <div>
-              <p className="text-sm text-muted-foreground">You Receive</p>
-              <p className="font-bold text-lg text-success">{request.amount} {request.coin}</p>
-            </div>
-          </div>
-        </div>
 
-        {step === 'payment' && (
-          <>
-            {/* Bank Details */}
-            <div className="bg-card rounded-xl border border-border p-6 mb-6">
-              <h3 className="text-lg font-semibold text-foreground mb-4">Send Payment To</h3>
-              <div className="space-y-3">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Bank Name</span>
-                  <span className="font-semibold text-foreground">{userBankDetails.bankName}</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-muted-foreground">Account Number</span>
-                  <div className="flex items-center space-x-2">
-                    <span className="font-mono font-semibold text-foreground">{userBankDetails.accountNumber}</span>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-8 w-8 p-0"
-                      onClick={() => {
-                        navigator.clipboard.writeText(userBankDetails.accountNumber);
-                        toast({
-                          title: "Copied!",
-                          description: "Account number copied to clipboard",
-                        });
-                      }}
-                    >
-                      📋
-                    </Button>
+            {/* What You Need to Send */}
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+              <div className="flex items-center mb-2">
+                <AlertTriangle size={20} className="text-red-600 mr-2" />
+                <h3 className="font-semibold text-red-800">You Need to Send</h3>
+              </div>
+              <div className="flex items-center">
+                {isUserBuyingCrypto ? (
+                  <CryptoIcon symbol={request.coin} size={24} className="mr-2" />
+                ) : (
+                  <Banknote size={24} className="text-red-600 mr-2" />
+                )}
+                <span className="text-lg font-bold text-red-800">{merchantNeedsToSend}</span>
+              </div>
+              <p className="text-sm text-red-700 mt-1">
+                {isUserBuyingCrypto 
+                  ? 'Send crypto to user\'s wallet address below' 
+                  : 'Send cash to user\'s bank account below'
+                }
+              </p>
+            </div>
+
+            {/* What You Will Receive */}
+            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+              <div className="flex items-center mb-2">
+                <CheckCircle size={20} className="text-green-600 mr-2" />
+                <h3 className="font-semibold text-green-800">You Will Receive</h3>
+              </div>
+              <div className="flex items-center">
+                {isUserBuyingCrypto ? (
+                  <Banknote size={24} className="text-green-600 mr-2" />
+                ) : (
+                  <CryptoIcon symbol={request.coin} size={24} className="mr-2" />
+                )}
+                <span className="text-lg font-bold text-green-800">{merchantWillReceive}</span>
+              </div>
+              <p className="text-sm text-green-700 mt-1">
+                {isUserBuyingCrypto 
+                  ? 'Cash has been sent to your bank account' 
+                  : 'Crypto has been sent to your wallet'
+                }
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* User Details */}
+        <Card className="bg-white">
+          <CardContent className="p-4">
+            <h3 className="font-semibold text-gray-900 mb-3">User Details</h3>
+            <div className="space-y-3">
+              <div className="flex justify-between">
+                <span className="text-gray-600">Name</span>
+                <span className="font-semibold text-gray-900">{request.userName || 'Anonymous'}</span>
+              </div>
+              {isUserBuyingCrypto ? (
+                <div>
+                  <span className="text-gray-600 block mb-1">Crypto Wallet Address</span>
+                  <div className="bg-gray-50 p-3 rounded-lg">
+                    <code className="text-sm break-all">{request.walletAddress || 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh'}</code>
                   </div>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Account Name</span>
-                  <span className="font-semibold text-foreground">{userBankDetails.accountName}</span>
+              ) : (
+                <div>
+                  <span className="text-gray-600 block mb-1">Bank Account</span>
+                  <div className="bg-gray-50 p-3 rounded-lg">
+                    <div className="text-sm">
+                      <div className="font-semibold">{userBankDetails.bankName}</div>
+                      <div>{userBankDetails.accountNumber}</div>
+                      <div>{userBankDetails.accountName}</div>
+                    </div>
+                  </div>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Amount</span>
-                  <span className="font-bold text-lg text-foreground">₦{request.nairaAmount.toLocaleString()}</span>
-                </div>
-              </div>
+              )}
             </div>
+          </CardContent>
+        </Card>
 
-            {/* Upload Proof */}
-            <div className="bg-card rounded-xl border border-border p-6 mb-6">
-              <h3 className="text-lg font-semibold text-foreground mb-4">Upload Proof of Payment</h3>
-              
+        {/* Payment Instructions */}
+        <Card className="bg-blue-50 border-blue-200">
+          <CardContent className="p-4">
+            <h3 className="font-semibold text-blue-800 mb-3">Payment Instructions</h3>
+            <div className="space-y-2 text-sm text-blue-700">
+              {isUserBuyingCrypto ? (
+                <>
+                  <p>1. Send exactly {request.amount} {request.coin} to the wallet address above</p>
+                  <p>2. Upload proof of transaction (screenshot or transaction ID)</p>
+                  <p>3. Wait for user to confirm receipt</p>
+                </>
+              ) : (
+                <>
+                  <p>1. Send exactly ₦{request.nairaAmount} to the bank account above</p>
+                  <p>2. Upload proof of payment (bank receipt or screenshot)</p>
+                  <p>3. Wait for user to confirm receipt</p>
+                </>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Upload Proof */}
+        <Card className="bg-white">
+          <CardContent className="p-4">
+            <h3 className="font-semibold text-gray-900 mb-3">Upload Payment Proof</h3>
+            
+            {!uploadedFile ? (
               <div 
-                className={`border-2 border-dashed rounded-lg p-6 cursor-pointer transition-all ${
-                  proofUploaded 
-                    ? 'border-success bg-success/10' 
-                    : 'border-border hover:border-brand hover:bg-brand/5'
-                }`}
-                onClick={handleUploadProof}
+                className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer hover:border-gray-400 transition-colors"
+                onClick={() => fileInputRef.current?.click()}
               >
-                <div className={`w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4 ${
-                  proofUploaded ? 'bg-success/20' : 'bg-muted'
-                }`}>
-                  {proofUploaded ? (
-                    <CheckCircle size={24} className="text-success" />
-                  ) : (
-                    <Upload size={24} className="text-muted-foreground" />
+                <Upload size={24} className="text-gray-400 mx-auto mb-2" />
+                <p className="text-gray-600 mb-1">Tap to upload payment proof</p>
+                <p className="text-sm text-gray-500">
+                  PNG, JPG or PDF (Max 5MB)
+                </p>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*,.pdf"
+                  onChange={handleFileSelect}
+                  className="hidden"
+                />
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {/* File Preview */}
+                <div className="border border-gray-200 rounded-lg p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center">
+                      {uploadedFile.type.startsWith('image/') ? (
+                        <Image size={20} className="text-blue-600 mr-2" />
+                      ) : (
+                        <File size={20} className="text-blue-600 mr-2" />
+                      )}
+                      <span className="font-medium text-gray-900">{uploadedFile.name}</span>
+                    </div>
+                    <button
+                      onClick={handleRemoveFile}
+                      className="p-1 hover:bg-gray-100 rounded"
+                    >
+                      <X size={16} className="text-gray-500" />
+                    </button>
+                  </div>
+                  
+                  {filePreview && (
+                    <div className="mb-3">
+                      <img 
+                        src={filePreview} 
+                        alt="Preview" 
+                        className="max-w-full h-32 object-contain border border-gray-200 rounded"
+                      />
+                    </div>
                   )}
+                  
+                  <div className="text-sm text-gray-500">
+                    Size: {(uploadedFile.size / 1024 / 1024).toFixed(2)} MB
+                  </div>
                 </div>
-                <h4 className={`font-medium text-center mb-2 ${proofUploaded ? 'text-success' : 'text-foreground'}`}>
-                  {proofUploaded ? 'Proof Uploaded!' : 'Upload Payment Receipt'}
-                </h4>
-                <p className={`text-sm text-center ${proofUploaded ? 'text-success/80' : 'text-muted-foreground'}`}>
-                  {proofUploaded ? 'Receipt uploaded successfully' : 'Screenshot or photo from gallery/camera'}
-                </p>
-              </div>
 
-              <div className="flex space-x-3 mt-4">
+                {/* Upload Button */}
                 <Button
-                  onClick={handleMarkAsPaid}
-                  className="flex-1"
-                  disabled={!proofUploaded}
+                  onClick={handleUploadProof}
+                  disabled={isUploading}
+                  className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white"
                 >
-                  I have sent the payment
+                  {isUploading ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                      Uploading...
+                    </>
+                  ) : (
+                    <>
+                      <Upload size={20} className="mr-2" />
+                      Upload Proof
+                    </>
+                  )}
                 </Button>
               </div>
-            </div>
-          </>
-        )}
+            )}
 
-        {step === 'waiting' && (
-          <>
-            {/* Waiting for Confirmation */}
-            <div className="bg-orange-50 border border-orange-200 rounded-xl p-6 mb-6">
-              <div className="text-center">
-                <Clock size={32} className="text-orange-600 mx-auto mb-3" />
-                <h3 className="text-lg font-semibold text-orange-900 mb-2">Waiting for Confirmation</h3>
-                <p className="text-sm text-orange-800">
-                  The user will confirm receipt of your payment. Once confirmed, crypto will be released to you.
-                </p>
+            {/* Upload Status */}
+            {proofUploaded && (
+              <div className="mt-4 bg-green-50 border border-green-200 rounded-lg p-3">
+                <div className="flex items-center">
+                  <CheckCircle size={20} className="text-green-600 mr-2" />
+                  <span className="text-green-800 font-medium">Proof uploaded successfully</span>
+                </div>
               </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Action Buttons */}
+        <div className="space-y-3">
+          <Button
+            onClick={handleMarkAsPaid}
+            className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white"
+            disabled={!proofUploaded}
+          >
+            {proofUploaded ? 'Mark as Paid' : 'Upload Proof First'}
+          </Button>
+          
+          <Button
+            variant="outline"
+            className="w-full h-12"
+            onClick={() => navigate('/trade-requests')}
+          >
+            Cancel Trade
+          </Button>
+        </div>
+
+        {/* Message Section */}
+        <Card className="bg-white">
+          <CardContent className="p-4">
+            <h3 className="font-semibold text-gray-900 mb-3">Message User</h3>
+            <div className="space-y-3">
+              <Textarea
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                placeholder="Send a message to the user..."
+                className="min-h-[80px]"
+              />
+              <Button
+                onClick={handleSendMessage}
+                className="w-full"
+                disabled={!message.trim()}
+              >
+                <MessageCircle size={16} className="mr-2" />
+                Send Message
+              </Button>
             </div>
-
-            {/* Send Reminder */}
-            <div className="bg-card rounded-xl border border-border p-6 mb-6">
-              <h3 className="text-lg font-semibold text-foreground mb-4">Actions</h3>
-              <div className="space-y-3">
-                <Button
-                  onClick={handleSendReminder}
-                  variant="outline"
-                  className="w-full"
-                >
-                  <Clock size={16} className="mr-2" />
-                  Send Payment Reminder
-                </Button>
-              </div>
-            </div>
-          </>
-        )}
-
-        {/* Message User */}
-        <div className="bg-card rounded-xl border border-border p-6 mb-6">
-          <h3 className="text-lg font-semibold text-foreground mb-4">Message User</h3>
-          <div className="space-y-3">
-            <Textarea
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              placeholder="Type your message to the user..."
-              className="min-h-[80px]"
-            />
-            <Button
-              onClick={handleSendMessage}
-              disabled={!message.trim()}
-              className="w-full"
-            >
-              <MessageCircle size={16} className="mr-2" />
-              Send Message
-            </Button>
-          </div>
-        </div>
-
-        {/* Report Transaction */}
-        <div className="bg-card rounded-xl border border-border p-6">
-          <h3 className="text-lg font-semibold text-foreground mb-4">Need Help?</h3>
-          <div className="space-y-3">
-            <Button
-              onClick={handleReportTransaction}
-              variant="outline"
-              className="w-full border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
-            >
-              <Flag size={16} className="mr-2" />
-              Report Transaction
-            </Button>
-          </div>
-        </div>
-
-        {/* Important Notes */}
-        <div className="mt-6 bg-muted/30 rounded-lg p-4">
-          <h4 className="font-medium text-foreground mb-2">Important:</h4>
-          <ul className="space-y-1 text-sm text-muted-foreground">
-            <li>• Send the exact amount: ₦{request.nairaAmount.toLocaleString()}</li>
-            <li>• Upload payment proof immediately after sending</li>
-            <li>• Crypto will be released once user confirms payment</li>
-            <li>• Contact support if there are any issues</li>
-          </ul>
-        </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

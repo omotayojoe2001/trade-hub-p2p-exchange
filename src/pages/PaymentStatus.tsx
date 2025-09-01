@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { ArrowLeft, MoreVertical, Building2, Bell, MessageSquare, AlertTriangle, FileText, Shield, Copy } from 'lucide-react';
+import { ArrowLeft, MoreVertical, Building2, Bell, MessageSquare, AlertTriangle, FileText, Shield, Copy, CheckCircle } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import PaymentConfirmationDialog from '@/components/PaymentConfirmationDialog';
@@ -125,52 +125,52 @@ const PaymentStatus = () => {
 
       {/* Progress Steps */}
       <div className="p-4 bg-gray-50">
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between mb-4 overflow-x-auto">
           {/* Step 1: Request Sent */}
-          <div className="flex items-center">
+          <div className="flex items-center flex-shrink-0">
             <div className={`w-6 h-6 rounded-full flex items-center justify-center mr-2 ${activeStep >= 1 ? 'bg-green-500' : 'bg-gray-300'}`}>
               <span className={`text-xs ${activeStep >= 1 ? 'text-white' : 'text-gray-500'}`}>{activeStep >= 1 ? '✓' : '1'}</span>
             </div>
-            <div className="text-center">
+            <div className="text-center min-w-0">
               <p className={`text-xs font-medium ${activeStep >= 1 ? 'text-green-600' : 'text-gray-500'}`}>Request</p>
               <p className={`text-xs ${activeStep >= 1 ? 'text-green-600' : 'text-gray-500'}`}>Sent</p>
             </div>
           </div>
 
-          <div className={`flex-1 h-px mx-3 ${activeStep >= 2 ? 'bg-green-500' : 'bg-gray-300'}`}></div>
+          <div className={`flex-1 h-px mx-2 sm:mx-3 ${activeStep >= 2 ? 'bg-green-500' : 'bg-gray-300'}`}></div>
 
           {/* Step 2: Payment Sent */}
-          <div className="flex items-center">
+          <div className="flex items-center flex-shrink-0">
             <div className={`w-6 h-6 rounded-full flex items-center justify-center mr-2 ${activeStep >= 2 ? 'bg-green-500' : 'bg-gray-300'}`}>
               <span className={`text-xs ${activeStep >= 2 ? 'text-white' : 'text-gray-500'}`}>{activeStep >= 2 ? '✓' : '2'}</span>
             </div>
-            <div className="text-center">
+            <div className="text-center min-w-0">
               <p className={`text-xs font-medium ${activeStep >= 2 ? 'text-green-600' : 'text-gray-500'}`}>Payment</p>
               <p className={`text-xs ${activeStep >= 2 ? 'text-green-600' : 'text-gray-500'}`}>Sent</p>
             </div>
           </div>
 
-          <div className={`flex-1 h-px mx-3 ${activeStep >= 3 ? 'bg-blue-500' : 'bg-gray-300'}`}></div>
+          <div className={`flex-1 h-px mx-2 sm:mx-3 ${activeStep >= 3 ? 'bg-blue-500' : 'bg-gray-300'}`}></div>
 
           {/* Step 3: Waiting */}
-          <div className="flex items-center">
+          <div className="flex items-center flex-shrink-0">
             <div className={`w-6 h-6 rounded-full flex items-center justify-center mr-2 ${activeStep >= 3 ? 'bg-blue-500' : 'bg-gray-300'}`}>
               <span className={`text-xs ${activeStep >= 3 ? 'text-white' : 'text-gray-500'}`}>{activeStep >= 3 ? '3' : '3'}</span>
             </div>
-            <div className="text-center">
+            <div className="text-center min-w-0">
               <p className={`text-xs font-medium ${activeStep >= 3 ? 'text-blue-600' : 'text-gray-500'}`}>Waiting</p>
               <p className={`text-xs ${activeStep >= 3 ? 'text-blue-600' : 'text-gray-500'}`}>Payment</p>
             </div>
           </div>
 
-          <div className={`flex-1 h-px mx-3 ${activeStep >= 4 ? 'bg-green-500' : 'bg-gray-300'}`}></div>
+          <div className={`flex-1 h-px mx-2 sm:mx-3 ${activeStep >= 4 ? 'bg-green-500' : 'bg-gray-300'}`}></div>
 
           {/* Step 4: Confirmed */}
-          <div className="flex items-center">
+          <div className="flex items-center flex-shrink-0">
             <div className={`w-6 h-6 rounded-full flex items-center justify-center mr-2 ${activeStep >= 4 ? 'bg-green-500' : 'bg-gray-300'}`}>
               <span className={`text-xs ${activeStep >= 4 ? 'text-white' : 'text-gray-500'}`}>{activeStep >= 4 ? '✓' : '4'}</span>
             </div>
-            <div className="text-center">
+            <div className="text-center min-w-0">
               <p className={`text-xs font-medium ${activeStep >= 4 ? 'text-green-600' : 'text-gray-500'}`}>Confirmed</p>
             </div>
           </div>
@@ -239,7 +239,7 @@ const PaymentStatus = () => {
           </div>
           <input ref={fileInputRef} type="file" accept="image/*,application/pdf" onChange={handleFileUpload} className="hidden" />
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-4">
+          <div className="space-y-3 mt-4">
             <Button 
               className="w-full bg-blue-600 hover:bg-blue-700 text-white" 
               onClick={handleMarkAsPaid}
@@ -247,8 +247,10 @@ const PaymentStatus = () => {
             >
               Mark as Paid
             </Button>
-            <Button className="w-full bg-gray-100 text-gray-700 hover:bg-gray-200" onClick={() => setActiveStep(1)}>Back</Button>
-            <Button variant="outline" className="w-full border-red-300 text-red-600 hover:bg-red-50">Cancel Trade</Button>
+            <div className="grid grid-cols-2 gap-3">
+              <Button className="w-full bg-gray-100 text-gray-700 hover:bg-gray-200" onClick={() => setActiveStep(1)}>Back</Button>
+              <Button variant="outline" className="w-full border-red-300 text-red-600 hover:bg-red-50">Cancel Trade</Button>
+            </div>
           </div>
         </div>
       )}
@@ -295,16 +297,16 @@ const PaymentStatus = () => {
 
       {/* Action Buttons */}
       {activeStep === 3 && (
-        <div className="px-4 sm:px-6 space-y-3">
-          <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
-            <Button
-              className="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg flex items-center justify-center"
-              onClick={() => handlePaymentConfirmation(true)}
-            >
-              <span className="hidden sm:inline">I have received payment</span>
-              <span className="sm:hidden">Received</span>
-            </Button>
+        <div className="px-4 space-y-3">
+          <Button
+            className="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg flex items-center justify-center"
+            onClick={() => handlePaymentConfirmation(true)}
+          >
+            <span className="hidden sm:inline">I have received payment</span>
+            <span className="sm:hidden">Received Payment</span>
+          </Button>
 
+          <div className="grid grid-cols-2 gap-3">
             <Button className="w-full bg-gray-100 text-gray-700 py-3 rounded-lg hover:bg-gray-200 flex items-center justify-center">
               <Bell size={16} className="mr-2" />
               <span className="hidden sm:inline">Remind Merchant</span>
@@ -316,11 +318,38 @@ const PaymentStatus = () => {
               <span className="hidden sm:inline">Message Merchant</span>
               <span className="sm:hidden">Message</span>
             </Button>
-            
-            <Button variant="outline" className="w-full border-red-300 text-red-600 py-3 rounded-lg hover:bg-red-50 flex items-center justify-center">
-              <AlertTriangle size={16} className="mr-2" />
-              <span className="hidden sm:inline">Report/Dispute</span>
-              <span className="sm:hidden">Report</span>
+          </div>
+          
+          <Button variant="outline" className="w-full border-red-300 text-red-600 py-3 rounded-lg hover:bg-red-50 flex items-center justify-center">
+            <AlertTriangle size={16} className="mr-2" />
+            <span className="hidden sm:inline">Report/Dispute</span>
+            <span className="sm:hidden">Report Issue</span>
+          </Button>
+        </div>
+      )}
+
+      {/* Confirmation Step */}
+      {activeStep === 4 && (
+        <div className="p-6 text-center">
+          <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+            <CheckCircle size={40} className="text-green-600" />
+          </div>
+          <h2 className="text-xl font-semibold text-gray-900 mb-3">Payment Confirmed!</h2>
+          <p className="text-gray-600 mb-8">Your payment has been confirmed and the trade is now complete.</p>
+          
+          <div className="space-y-3">
+            <Button
+              onClick={() => navigate('/trade-completed')}
+              className="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg"
+            >
+              View Trade Details
+            </Button>
+            <Button
+              onClick={() => navigate('/my-trades')}
+              variant="outline"
+              className="w-full py-3 rounded-lg"
+            >
+              Go to My Trades
             </Button>
           </div>
         </div>

@@ -2,6 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { Bell, X, DollarSign, Check, AlertCircle, Shield } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/hooks/useAuth';
+import { notificationService, realtimeService } from '@/services/supabaseService';
+import { useToast } from '@/hooks/use-toast';
 
 interface Notification {
   id: string;
@@ -16,34 +19,77 @@ interface Notification {
 
 const GlobalNotifications = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const { toast } = useToast();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isVisible, setIsVisible] = useState(false);
 
-  // Demo notifications with actual trade IDs
-  const demoNotifications: Notification[] = [
-    { id: '1', type: 'trade', title: 'Trade Match Found!', message: 'MercyPay wants to sell you 0.0045 BTC for ₦125,000. Tap to proceed.', timestamp: new Date(Date.now() - 2 * 60 * 1000), isRead: false, actionRequired: true, tradeId: '1' },
-    { id: '2', type: 'payment', title: 'Payment Received', message: 'You received ₦558,792 from CryptoKing for 0.021 BTC trade.', timestamp: new Date(Date.now() - 15 * 60 * 1000), isRead: false, tradeId: '2' },
-    { id: '3', type: 'security', title: 'Security Alert', message: 'New device login detected from Lagos, Nigeria. Was this you?', timestamp: new Date(Date.now() - 60 * 60 * 1000), isRead: true, actionRequired: true },
-    { id: '4', type: 'update', title: 'Platform Update', message: 'Scheduled maintenance tonight at 02:00 WAT. Trading remains available.', timestamp: new Date(Date.now() - 90 * 60 * 1000), isRead: false }
-  ];
-
+  // Load notifications from Supabase
   useEffect(() => {
-    // Initial load
-    const initialTimer = setTimeout(() => {
-      setNotifications(demoNotifications);
-      showNewNotification();
-    }, 3000);
+    const loadNotifications = async () => {
+      if (!user) return;
+      
+      try {
+        const dbNotifications = await notificationService.getNotifications(user.id);
+        
+        // Transform Supabase data to our format
+        const transformedNotifications = dbNotifications.map((notif: any) => ({
+          id: notif.id,
+          type: notif.type as any,
+          title: notif.title,
+          message: notif.message,
+          timestamp: new Date(notif.created_at),
+          isRead: notif.read,
+          actionRequired: notif.type === 'trade_request' || notif.type === 'security',
+          tradeId: notif.trade_id
+        }));
+        
+        setNotifications(transformedNotifications);
+        
+        // Show notification if there are unread ones
+        const unreadCount = transformedNotifications.filter(n => !n.isRead).length;
+        if (unreadCount > 0) {
+          showNewNotification();
+        }
+      } catch (error) {
+        console.error('Error loading notifications:', error);
+      }
+    };
 
-    // Show notifications every 40 seconds consistently
-    const interval = setInterval(() => {
-      showNewNotification();
-    }, 40000); // 40 seconds
+    loadNotifications();
+  }, [user]);
+
+  // Set up real-time subscription
+  useEffect(() => {
+    if (!user) return;
+
+    const subscription = realtimeService.subscribeToNotifications(user.id, (payload) => {
+      if (payload.eventType === 'INSERT') {
+        const newNotification = {
+          id: payload.new.id,
+          type: payload.new.type as any,
+          title: payload.new.title,
+          message: payload.new.message,
+          timestamp: new Date(payload.new.created_at),
+          isRead: payload.new.read,
+          actionRequired: payload.new.type === 'trade_request' || payload.new.type === 'security',
+          tradeId: payload.new.trade_id
+        };
+        
+        setNotifications(prev => [newNotification, ...prev]);
+        showNewNotification();
+        
+        toast({
+          title: newNotification.title,
+          description: newNotification.message,
+        });
+      }
+    });
 
     return () => {
-      clearTimeout(initialTimer);
-      clearInterval(interval);
+      subscription.unsubscribe();
     };
-  }, []);
+  }, [user, toast]);
 
   const showNewNotification = () => {
     setIsVisible(true);
@@ -69,11 +115,25 @@ const GlobalNotifications = () => {
     }
   };
 
-  const handleViewTrade = (tradeId?: string) => {
-    if (tradeId) {
-      navigate(`/trade-details/${tradeId}`);
+  const handleViewTrade = async (tradeId?: string) => {
+    try {
+      if (latestNotification) {
+        // Mark as read in Supabase
+        await notificationService.markAsRead(latestNotification.id);
+        
+        // Update local state
+        setNotifications(prev => 
+          prev.map(n => n.id === latestNotification.id ? { ...n, isRead: true } : n)
+        );
+      }
+      
+      if (tradeId) {
+        navigate(`/trade-details/${tradeId}`);
+      }
+      setIsVisible(false);
+    } catch (error) {
+      console.error('Error marking notification as read:', error);
     }
-    setIsVisible(false);
   };
 
   const latestNotification = notifications.find(n => !n.isRead);

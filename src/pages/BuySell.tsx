@@ -16,45 +16,45 @@ const BuySell = () => {
   };
 
   const handleBuyCrypto = () => {
-    navigate('/buy-crypto-flow');
+    navigate('/select-coin');
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-20">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-20">
       {/* Header */}
-      <div className="flex items-center justify-between p-4 bg-white">
+      <div className="flex items-center justify-between p-4 bg-white dark:bg-gray-800">
         <div className="flex items-center">
           <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center mr-3">
             <span className="text-white font-bold text-sm">B</span>
           </div>
-          <span className="text-xl font-semibold text-gray-900">CryptoTrade</span>
+          <span className="text-xl font-semibold text-gray-900 dark:text-white">Central Exchange</span>
         </div>
         <div className="flex items-center space-x-3">
           <button
             onClick={() => navigate('/trade-requests')}
-            className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors relative"
+            className="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors relative"
           >
             <List size={24} />
             <div className="absolute -top-1 -right-1 w-3 h-3 bg-orange-500 rounded-full"></div>
           </button>
           <div className="relative">
-            <Bell size={24} className="text-gray-600" />
+            <Bell size={24} className="text-gray-600 dark:text-gray-400" />
             <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full"></div>
           </div>
         </div>
       </div>
 
       {/* Title Section */}
-      <div className="p-4 bg-white border-b border-gray-100">
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">Buy or Sell Crypto</h1>
-        <p className="text-gray-600">Start a new trade by choosing what you want to do.</p>
+      <div className="p-4 bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700">
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Buy or Sell Crypto</h1>
+        <p className="text-gray-600 dark:text-gray-400">Start a new trade by choosing what you want to do.</p>
       </div>
 
       {/* Trade Options */}
       <div className="p-4 space-y-4">
         {/* Buy Crypto Card */}
         <div 
-          className={`bg-white rounded-xl p-4 border border-gray-200 cursor-pointer transition-all duration-200 ${
+          className={`bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700 cursor-pointer transition-all duration-200 ${
             hoveredCard === 'buy' ? 'shadow-lg border-blue-300 transform scale-105' : 'hover:shadow-md'
           }`}
           onMouseEnter={() => setHoveredCard('buy')}
@@ -72,8 +72,8 @@ const BuySell = () => {
                 <h3 className={`text-lg font-semibold text-blue-600 mb-1 transition-colors ${
                   hoveredCard === 'buy' ? 'text-blue-700' : ''
                 }`}>Buy Crypto</h3>
-                <p className="text-gray-600 text-sm mb-1">Send ₦, Receive BTC/USDT</p>
-                <p className="text-gray-500 text-xs">You have Naira, want to get crypto</p>
+                <p className="text-gray-600 dark:text-gray-400 text-sm mb-1">Send ₦, Receive BTC/USDT</p>
+                <p className="text-gray-500 dark:text-gray-500 text-xs">You have Naira, want to get crypto</p>
               </div>
             </div>
             <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
@@ -82,7 +82,7 @@ const BuySell = () => {
           </div>
           
           <div className="flex items-center justify-between">
-            <div className="flex items-center text-gray-500 text-sm">
+            <div className="flex items-center text-gray-500 dark:text-gray-400 text-sm">
               <Clock size={14} className="mr-1" />
               <span>Fast processing</span>
             </div>
@@ -96,7 +96,7 @@ const BuySell = () => {
 
         {/* Sell Crypto Card */}
         <div 
-          className={`bg-white rounded-xl p-4 border border-gray-200 cursor-pointer transition-all duration-200 ${
+          className={`bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700 cursor-pointer transition-all duration-200 ${
             hoveredCard === 'sell' ? 'shadow-lg border-green-300 transform scale-105' : 'hover:shadow-md'
           }`}
           onMouseEnter={() => setHoveredCard('sell')}
@@ -114,8 +114,8 @@ const BuySell = () => {
                 <h3 className={`text-lg font-semibold text-gray-900 mb-1 transition-colors ${
                   hoveredCard === 'sell' ? 'text-green-700' : ''
                 }`}>Sell Crypto</h3>
-                <p className="text-gray-600 text-sm mb-1">Send BTC/USDT, Receive ₦</p>
-                <p className="text-gray-500 text-xs">You have crypto, want to get cash</p>
+                <p className="text-gray-600 dark:text-gray-400 text-sm mb-1">Send BTC/USDT, Receive ₦</p>
+                <p className="text-gray-500 dark:text-gray-500 text-xs">You have crypto, want to get cash</p>
               </div>
             </div>
             <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
@@ -124,7 +124,7 @@ const BuySell = () => {
           </div>
           
           <div className="flex items-center justify-between">
-            <div className="flex items-center text-gray-500 text-sm">
+            <div className="flex items-center text-gray-500 dark:text-gray-400 text-sm">
               <Shield size={14} className="mr-1" />
               <span>Secure escrow</span>
             </div>
@@ -142,16 +142,16 @@ const BuySell = () => {
 
       {/* Info Banner */}
       <div className="mx-4 mb-4">
-        <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-4">
           <div className="flex items-start">
             <div className="w-6 h-6 bg-yellow-400 rounded-full flex items-center justify-center mr-3 mt-0.5">
               <HelpCircle size={16} className="text-white" />
             </div>
             <div className="flex-1">
-              <p className="text-gray-800 text-sm mb-2">
+              <p className="text-gray-800 dark:text-gray-200 text-sm mb-2">
                 <span className="font-medium">Not sure? Tap Buy if you're funding with Naira.</span>
               </p>
-              <button className="text-blue-600 text-sm font-medium">
+              <button className="text-blue-600 dark:text-blue-400 text-sm font-medium">
                 How Escrow Works? →
               </button>
             </div>
@@ -161,11 +161,11 @@ const BuySell = () => {
 
       {/* Trade Requests */}
       <div className="mx-4 mb-4">
-        <div className="bg-white border border-gray-200 rounded-xl p-4">
+        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h4 className="font-semibold text-gray-900">Trade Requests</h4>
-              <p className="text-gray-600 text-sm">Available offers from merchants</p>
+              <h4 className="font-semibold text-gray-900 dark:text-white">Trade Requests</h4>
+              <p className="text-gray-600 dark:text-gray-400 text-sm">Available offers from merchants</p>
             </div>
             <Button 
               variant="ghost" 

@@ -4,8 +4,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Calendar, Clock, Search, TrendingUp, User } from 'lucide-react';
+import { Calendar, Clock, Search, TrendingUp, User, Loader2 } from 'lucide-react';
 import BottomNavigation from '@/components/BottomNavigation';
+import { blogService } from '@/services/supabaseService';
+import { useToast } from '@/hooks/use-toast';
 
 // Import blog images
 import blogCryptoTrading from '@/assets/blog-crypto-trading.jpg';
@@ -29,6 +31,7 @@ interface BlogPost {
 
 export const Blog: React.FC = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const isQuickAuthActive = false;
   const [posts, setPosts] = useState<BlogPost[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -37,80 +40,41 @@ export const Blog: React.FC = () => {
 
   const categories = ['All', 'Trading', 'Security', 'News', 'Education', 'Market Analysis'];
 
+  // Load blog posts from Supabase
   useEffect(() => {
-    // Mock blog posts data - replace with actual Supabase query
-    const mockPosts: BlogPost[] = [
-      {
-        id: '1',
-        title: 'The Future of Cryptocurrency Trading in Nigeria',
-        excerpt: 'Exploring the rapid growth of cryptocurrency adoption in Nigeria and what it means for the future of digital finance.',
-        featured_image_url: blogChartPatterns,
-        author_name: 'CryptoPay Research Team',
-        created_at: '2024-01-15T10:00:00Z',
-        tags: ['cryptocurrency', 'nigeria', 'trading'],
-        read_time: '8 min read',
-        category: 'Market Analysis',
-      },
-      {
-        id: '2',
-        title: 'How to Secure Your Crypto Wallet: Best Practices',
-        excerpt: 'Learn essential security measures to protect your cryptocurrency investments from theft and fraud.',
-        featured_image_url: blogCryptoTrading,
-        author_name: 'Security Team',
-        created_at: '2024-01-12T14:30:00Z',
-        tags: ['security', 'wallet', 'safety'],
-        read_time: '6 min read',
-        category: 'Security',
-      },
-      {
-        id: '3',
-        title: 'Understanding P2P Trading: A Beginner\'s Guide',
-        excerpt: 'Everything you need to know about peer-to-peer cryptocurrency trading and how to get started safely.',
-        featured_image_url: blogSecurity,
-        author_name: 'Education Team',
-        created_at: '2024-01-10T09:15:00Z',
-        tags: ['p2p', 'trading', 'beginner'],
-        read_time: '10 min read',
-        category: 'Education',
-      },
-      {
-        id: '4',
-        title: 'Bitcoin Price Analysis: Q1 2024 Outlook',
-        excerpt: 'Technical analysis and market predictions for Bitcoin\'s performance in the first quarter of 2024.',
-        featured_image_url: blogP2PTrading,
-        author_name: 'Market Analyst',
-        created_at: '2024-01-08T16:45:00Z',
-        tags: ['bitcoin', 'analysis', 'prediction'],
-        read_time: '12 min read',
-        category: 'Market Analysis',
-      },
-      {
-        id: '5',
-        title: 'New CBN Guidelines for Cryptocurrency Exchanges',
-        excerpt: 'Latest regulatory updates from the Central Bank of Nigeria affecting cryptocurrency trading platforms.',
-        featured_image_url: blogBitcoinAnalysis,
-        author_name: 'Regulatory Team',
-        created_at: '2024-01-05T11:20:00Z',
-        tags: ['regulation', 'cbn', 'compliance'],
-        read_time: '7 min read',
-        category: 'News',
-      },
-      {
-        id: '6',
-        title: 'Mastering Chart Patterns for Crypto Trading',
-        excerpt: 'Learn to identify and trade profitable chart patterns in the cryptocurrency market.',
-        featured_image_url: blogRegulation,
-        author_name: 'Trading Expert',
-        created_at: '2024-01-03T13:10:00Z',
-        tags: ['trading', 'technical-analysis', 'patterns'],
-        read_time: '15 min read',
-        category: 'Trading',
-      },
-    ];
+    const loadBlogPosts = async () => {
+      try {
+        setLoading(true);
+        const dbPosts = await blogService.getPublishedPosts();
+        
+        // Transform Supabase data to our format
+        const transformedPosts = dbPosts.map((post: any) => ({
+          id: post.id,
+          title: post.title,
+          excerpt: post.excerpt || post.content.substring(0, 150) + '...',
+          featured_image_url: post.featured_image_url || blogChartPatterns, // Fallback image
+          author_name: post.author_id || 'Central Exchange Team',
+          created_at: post.created_at,
+          tags: post.tags || [],
+          read_time: '5 min read', // Calculate based on content length
+          category: post.tags?.[0] || 'News'
+        }));
+        
+        setPosts(transformedPosts);
+      } catch (error) {
+        console.error('Error loading blog posts:', error);
+        toast({
+          title: "Error",
+          description: "Failed to load blog posts",
+          variant: "destructive",
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
 
-    setPosts(mockPosts);
-    setLoading(false);
-  }, []);
+    loadBlogPosts();
+  }, [toast]);
 
   const filteredPosts = posts.filter(post => {
     const matchesSearch = post.title.toLowerCase().includes(searchTerm.toLowerCase()) ||

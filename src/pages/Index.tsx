@@ -1,7 +1,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowUp, ArrowDown, Clock, Building2, Bell, TrendingUp, ChevronRight, Star, DollarSign, Zap, CreditCard, User, Video, Store, Bell as BellIcon, Gift, Trophy, Lock, Megaphone, CheckCircle, Sparkles, Crown } from 'lucide-react';
+import { ArrowUp, ArrowDown, Clock, Building2, Bell, TrendingUp, ChevronRight, Star, DollarSign, Zap, CreditCard, User, Gift, Trophy, Lock, Megaphone, CheckCircle } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import BottomNavigation from '@/components/BottomNavigation';
@@ -95,6 +95,9 @@ const Index = () => {
           </div>
         </div>
         <div className="flex items-center space-x-3">
+          <Link to="/supabase-test" className="text-xs text-blue-600 hover:text-blue-800">
+            Test DB
+          </Link>
           <Link to="/notifications">
             <Bell size={24} className="text-gray-600 dark:text-gray-400" />
           </Link>
@@ -366,39 +369,7 @@ const Index = () => {
         </div>
       </div>
 
-      {/* Demo Features */}
-      <div className="mb-6">
-        <h2 className="text-gray-900 text-lg font-semibold mb-4 flex items-center">
-          <Video size={20} className="mr-2" />
-          Demo Features
-        </h2>
-        <div className="grid grid-cols-2 gap-3">
-          <Link to="/merchant-dashboard" className="bg-orange-100 p-3 rounded-lg">
-            <div className="text-center">
-              <Store size={20} className="text-orange-600 mx-auto mb-1" />
-              <p className="text-sm font-medium text-orange-700 mt-1">Merchant View</p>
-            </div>
-          </Link>
-          <Link to="/notifications-demo" className="bg-blue-100 p-3 rounded-lg">
-            <div className="text-center">
-              <BellIcon size={20} className="text-blue-600 mx-auto mb-1" />
-              <p className="text-sm font-medium text-blue-700 mt-1">Push Notifications</p>
-            </div>
-          </Link>
-          <Link to="/premium-dashboard" className="bg-purple-100 p-3 rounded-lg">
-            <div className="text-center">
-              <Crown size={20} className="text-purple-600 mx-auto mb-1" />
-              <p className="text-sm font-medium text-purple-700 mt-1">Premium View</p>
-            </div>
-          </Link>
-          <Link to="/buy-crypto-flow" className="bg-green-100 p-3 rounded-lg">
-            <div className="text-center">
-              <Sparkles size={20} className="text-green-600 mx-auto mb-1" />
-              <p className="text-sm font-medium text-green-700 mt-1">Buy Crypto</p>
-            </div>
-          </Link>
-        </div>
-      </div>
+
 
       {!isQuickAuthActive && <BottomNavigation />}
     </div>

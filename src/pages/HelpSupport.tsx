@@ -167,7 +167,7 @@ const HelpSupport = () => {
                     <p className="text-sm text-gray-500">Get help via email</p>
                   </div>
                 </div>
-                <p className="text-blue-600 font-medium">support@cryptohub.com</p>
+                <p className="text-blue-600 font-medium">support@centralexchange.com</p>
                 <p className="text-sm text-gray-500 mt-1">Response time: 2-4 hours</p>
               </Card>
 

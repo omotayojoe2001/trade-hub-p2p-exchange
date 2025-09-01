@@ -69,7 +69,7 @@ export const useBiometricAuth = () => {
       const registrationOptions = {
         optionsJSON: {
           rp: {
-            name: "CryptoHub P2P",
+            name: "Central Exchange",
             id: window.location.hostname,
           },
           user: {

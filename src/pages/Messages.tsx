@@ -4,84 +4,116 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/useAuth';
+import { messageService, realtimeService } from '@/services/supabaseService';
 
 const Messages = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
+  const { user } = useAuth();
   const { tradeId, recipientName, message: initialMessage } = location.state || {};
   
-  const [messages, setMessages] = useState([
-    {
-      id: 1,
-      text: "Hi! I'm ready to proceed with the trade",
-      sender: 'user',
-      timestamp: new Date(Date.now() - 300000), // 5 minutes ago
-      status: 'delivered'
-    },
-    {
-      id: 2,
-      text: "Great! I'll send the payment to your account now",
-      sender: 'me',
-      timestamp: new Date(Date.now() - 240000), // 4 minutes ago
-      status: 'delivered'
-    }
-  ]);
-  
+  const [messages, setMessages] = useState<any[]>([]);
   const [newMessage, setNewMessage] = useState(initialMessage || '');
   const [isTyping, setIsTyping] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  // Load messages from Supabase
+  useEffect(() => {
+    const loadMessages = async () => {
+      if (!tradeId || !user) return;
+      
+      try {
+        setLoading(true);
+        const dbMessages = await messageService.getMessagesByTrade(tradeId);
+        
+        // Transform Supabase data to our format
+        const transformedMessages = dbMessages.map((msg: any) => ({
+          id: msg.id,
+          text: msg.content,
+          sender: msg.sender_id === user.id ? 'me' : 'user',
+          timestamp: new Date(msg.created_at),
+          status: msg.read ? 'delivered' : 'sent'
+        }));
+        
+        setMessages(transformedMessages);
+      } catch (error) {
+        console.error('Error loading messages:', error);
+        toast({
+          title: "Error",
+          description: "Failed to load messages",
+          variant: "destructive",
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadMessages();
+  }, [tradeId, user, toast]);
+
+  // Set up real-time subscription for new messages
+  useEffect(() => {
+    if (!tradeId || !user) return;
+
+    const subscription = realtimeService.subscribeToMessages(tradeId, (payload) => {
+      if (payload.eventType === 'INSERT') {
+        const newMessage = {
+          id: payload.new.id,
+          text: payload.new.content,
+          sender: payload.new.sender_id === user.id ? 'me' : 'user',
+          timestamp: new Date(payload.new.created_at),
+          status: 'sent'
+        };
+        
+        setMessages(prev => [...prev, newMessage]);
+        
+        // Mark as read if it's from the other user
+        if (payload.new.sender_id !== user.id) {
+          messageService.markMessagesAsRead(tradeId, user.id);
+        }
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [tradeId, user]);
 
   useEffect(() => {
-    if (initialMessage) {
-      const message = {
-        id: messages.length + 1,
-        text: initialMessage,
-        sender: 'me',
-        timestamp: new Date(),
-        status: 'sent'
-      };
-      setMessages(prev => [...prev, message]);
-      
+    if (initialMessage && user) {
+      handleSendMessage(initialMessage);
+    }
+  }, [initialMessage, user]);
+
+  const handleSendMessage = async (messageText?: string) => {
+    const text = messageText || newMessage.trim();
+    if (!text || !tradeId || !user) return;
+
+    try {
+      // Send message to Supabase
+      await messageService.sendMessage({
+        trade_id: tradeId,
+        sender_id: user.id,
+        receiver_id: 'other-user-id', // In real app, get from trade data
+        content: text,
+        message_type: 'text'
+      });
+
+      setNewMessage('');
       toast({
         title: "Message Sent",
         description: "Your message has been delivered",
       });
+    } catch (error) {
+      console.error('Error sending message:', error);
+      toast({
+        title: "Error",
+        description: "Failed to send message",
+        variant: "destructive",
+      });
     }
-  }, [initialMessage]);
-
-  const handleSendMessage = () => {
-    if (!newMessage.trim()) return;
-
-    const message = {
-      id: messages.length + 1,
-      text: newMessage.trim(),
-      sender: 'me',
-      timestamp: new Date(),
-      status: 'sent'
-    };
-
-    setMessages(prev => [...prev, message]);
-    setNewMessage('');
-
-    // Simulate typing indicator
-    setIsTyping(true);
-    setTimeout(() => {
-      setIsTyping(false);
-      // Simulate auto-reply
-      const autoReply = {
-        id: messages.length + 2,
-        text: "Thanks for the update! I'll check my account.",
-        sender: 'user',
-        timestamp: new Date(),
-        status: 'delivered'
-      };
-      setMessages(prev => [...prev, autoReply]);
-    }, 2000);
-
-    toast({
-      title: "Message Sent",
-      description: "Your message has been delivered",
-    });
   };
 
   const formatTime = (date: Date) => {

@@ -86,7 +86,7 @@ const ProfileSetup = () => {
 
       toast({
         title: "Profile setup complete!",
-        description: `Welcome to CryptoHub as a ${userType}.`,
+                  description: `Welcome to Central Exchange as a ${userType}.`,
       });
 
       // Navigate without full page reload
@@ -105,7 +105,7 @@ const ProfileSetup = () => {
           <div className="mx-auto mb-4 w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
             <CheckCircle className="h-8 w-8 text-green-600" />
           </div>
-          <CardTitle className="text-2xl font-bold">Welcome to CryptoHub!</CardTitle>
+          <CardTitle className="text-2xl font-bold">Welcome to Central Exchange!</CardTitle>
           <CardDescription>
             Let's set up your profile to get started
           </CardDescription>

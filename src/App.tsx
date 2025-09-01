@@ -76,6 +76,7 @@ import ReceiptPage from "./pages/ReceiptPage";
 import { Blog } from "./pages/Blog";
 import { BlogDetail } from "./pages/BlogDetail";
 import { ThankYouPage } from "./pages/ThankYouPage";
+import SupabaseTest from "./pages/SupabaseTest";
 
 import CryptoNews from "./pages/CryptoNews";
 import React from 'react';
@@ -218,6 +219,7 @@ const AppContent = () => {
         <Route path="/blog/:postId" element={<BlogDetail />} />
         <Route path="/thank-you" element={<ThankYouPage />} />
         <Route path="/escrow-flow" element={<EscrowFlow />} />
+        <Route path="/supabase-test" element={<SupabaseTest />} />
             <Route path="/notifications-demo" element={<NotificationsDemo />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Clock, User, Shield, ChevronRight, Timer, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, Clock, User, Shield, ChevronRight, Timer, AlertTriangle, CheckCircle, ArrowUpDown, Banknote, Coins } from 'lucide-react';
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { useNavigate, useLocation } from 'react-router-dom';
 import CryptoIcon from '@/components/CryptoIcon';
 import { useToast } from '@/hooks/use-toast';
@@ -40,7 +41,7 @@ const TradeRequestDetails = () => {
       return;
     }
 
-    // Navigate to merchant trade flow
+    // Navigate directly to payment step (no auto/manual selection needed)
     navigate('/merchant-trade-flow', { 
       state: { 
         request,
@@ -66,196 +67,191 @@ const TradeRequestDetails = () => {
 
   if (!request) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <p className="text-muted-foreground">Trade request not found</p>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <p className="text-gray-600">Trade request not found</p>
       </div>
     );
   }
 
-  // Calculate current rate with slight fluctuation
-  const currentRate = request.rate + (Math.random() - 0.5) * 100;
-  const currentNairaAmount = parseFloat(request.amount) * currentRate;
+  // Determine trade direction and what each party gets/sends
+  const isUserBuyingCrypto = request.type === 'buy'; // User wants crypto, merchant sends crypto
+  const userGets = isUserBuyingCrypto ? `${request.amount} ${request.coin}` : `₦${request.nairaAmount}`;
+  const userSends = isUserBuyingCrypto ? `₦${request.nairaAmount}` : `${request.amount} ${request.coin}`;
+  const merchantGets = isUserBuyingCrypto ? `₦${request.nairaAmount}` : `${request.amount} ${request.coin}`;
+  const merchantSends = isUserBuyingCrypto ? `${request.amount} ${request.coin}` : `₦${request.nairaAmount}`;
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-border">
+      <div className="bg-white border-b border-gray-200 px-4 py-4">
         <div className="flex items-center">
-          <button onClick={() => navigate('/trade-requests')}>
-            <ArrowLeft size={24} className="text-foreground mr-4" />
+          <button onClick={() => navigate('/trade-requests')} className="mr-4">
+            <ArrowLeft size={24} className="text-gray-700" />
           </button>
           <div>
-            <h1 className="text-lg font-semibold text-foreground">Trade Request Details</h1>
-            <p className="text-sm text-muted-foreground">#{request.id}</p>
+            <h1 className="text-lg font-semibold text-gray-900">Trade Request</h1>
+            <p className="text-sm text-gray-500">#{request.id}</p>
           </div>
         </div>
       </div>
 
       {/* Urgency Timer */}
-      <div className={`p-4 ${isExpired ? 'bg-destructive/10' : 'bg-orange-50'} border-b`}>
+      <div className={`p-4 ${isExpired ? 'bg-red-50 border-red-200' : 'bg-orange-50 border-orange-200'} border-b`}>
         <div className="flex items-center justify-center">
-          <Timer size={20} className={`mr-2 ${isExpired ? 'text-destructive' : 'text-orange-600'}`} />
-          <span className={`font-semibold ${isExpired ? 'text-destructive' : 'text-orange-800'}`}>
+          <Timer size={20} className={`mr-2 ${isExpired ? 'text-red-600' : 'text-orange-600'}`} />
+          <span className={`font-semibold ${isExpired ? 'text-red-800' : 'text-orange-800'}`}>
             {isExpired ? 'Request Expired' : `Expires in: ${Math.floor(timeLeft / 60)}:${(timeLeft % 60).toString().padStart(2, '0')}`}
           </span>
         </div>
       </div>
 
-      <div className="p-6">
-        {/* Trade Direction */}
-        <div className="bg-card rounded-xl border border-border p-6 mb-6">
-          <div className="text-center mb-4">
-            <div className={`w-16 h-16 ${request.type === 'buy' ? 'bg-brand/10' : 'bg-success/10'} rounded-full flex items-center justify-center mx-auto mb-3`}>
-              <span className={`text-2xl font-bold ${request.type === 'buy' ? 'text-brand' : 'text-success'}`}>
-                {request.type === 'buy' ? (
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
-                  </svg>
-                ) : <CryptoIcon symbol="BTC" size={16} />}
-              </span>
-            </div>
-            <h2 className="text-xl font-bold text-foreground mb-2">
-              {request.type === 'buy' ? 'Crypto to Cash Request' : 'Cash to Crypto Request'}
-            </h2>
-            <p className="text-sm text-muted-foreground">
-              {request.type === 'buy' 
-                ? 'User wants to sell crypto and receive cash in their bank account' 
-                : 'User wants to buy crypto and will send crypto to your account'
-              }
-            </p>
-          </div>
-
-          {/* Trade Flow Visualization */}
-          <div className="flex items-center justify-between mb-4">
-            <div className="text-center flex-1">
-              <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-2">
-                <User size={20} className="text-primary" />
+      <div className="p-4 space-y-4">
+        {/* Trade Overview */}
+        <Card className="bg-white">
+          <CardContent className="p-6">
+            <div className="text-center mb-6">
+              <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                <ArrowUpDown size={24} className="text-blue-600" />
               </div>
-              <p className="text-xs text-muted-foreground">User</p>
-              <p className="text-sm font-medium text-foreground">
-                {request.type === 'buy' ? 'Sends Crypto' : 'Sends Crypto'}
+              <h2 className="text-xl font-bold text-gray-900 mb-2">
+                {isUserBuyingCrypto ? 'User Wants to Buy Crypto' : 'User Wants to Sell Crypto'}
+              </h2>
+              <p className="text-gray-600">
+                {isUserBuyingCrypto 
+                  ? 'User wants to buy crypto from you' 
+                  : 'User wants to sell crypto to you'
+                }
               </p>
             </div>
-            
-            <div className="flex-1 text-center">
-              <ChevronRight size={20} className="text-muted-foreground mx-auto" />
-            </div>
-            
-            <div className="text-center flex-1">
-              <div className="w-12 h-12 bg-secondary/10 rounded-full flex items-center justify-center mx-auto mb-2">
-                <User size={20} className="text-secondary-foreground" />
-              </div>
-              <p className="text-xs text-muted-foreground">You</p>
-              <p className="text-sm font-medium text-foreground">
-                {request.type === 'buy' ? 'Send Cash' : 'Send Cash'}
-              </p>
-            </div>
-          </div>
-        </div>
 
-        {/* Transaction Details */}
-        <div className="bg-card rounded-xl border border-border p-6 mb-6">
-          <h3 className="text-lg font-semibold text-foreground mb-4">Transaction Details</h3>
-          
-          <div className="space-y-4">
-            <div className="flex justify-between items-center">
-              <span className="text-muted-foreground">Crypto Amount</span>
-              <span className="font-semibold text-foreground">{request.amount} {request.coin}</span>
+            {/* Trade Flow */}
+            <div className="space-y-4">
+              {/* What User Gets */}
+              <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                <div className="flex items-center mb-2">
+                  <CheckCircle size={20} className="text-green-600 mr-2" />
+                  <h3 className="font-semibold text-green-800">User Will Receive</h3>
+                </div>
+                <div className="flex items-center">
+                  {isUserBuyingCrypto ? (
+                    <CryptoIcon symbol={request.coin} size={24} className="mr-2" />
+                  ) : (
+                    <Banknote size={24} className="text-green-600 mr-2" />
+                  )}
+                  <span className="text-lg font-bold text-green-800">{userGets}</span>
+                </div>
+                <p className="text-sm text-green-700 mt-1">
+                  {isUserBuyingCrypto 
+                    ? 'Crypto will be sent to user\'s wallet' 
+                    : 'Cash will be sent to user\'s bank account'
+                  }
+                </p>
+              </div>
+
+              {/* What User Sends */}
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <div className="flex items-center mb-2">
+                  <ArrowUpDown size={20} className="text-blue-600 mr-2" />
+                  <h3 className="font-semibold text-blue-800">User Will Send</h3>
+                </div>
+                <div className="flex items-center">
+                  {isUserBuyingCrypto ? (
+                    <Banknote size={24} className="text-blue-600 mr-2" />
+                  ) : (
+                    <CryptoIcon symbol={request.coin} size={24} className="mr-2" />
+                  )}
+                  <span className="text-lg font-bold text-blue-800">{userSends}</span>
+                </div>
+                <p className="text-sm text-blue-700 mt-1">
+                  {isUserBuyingCrypto 
+                    ? 'Cash will be sent to your bank account' 
+                    : 'Crypto will be sent to your wallet'
+                  }
+                </p>
+              </div>
             </div>
-            
-            <div className="flex justify-between items-center">
-              <span className="text-muted-foreground">Your Rate</span>
-              <span className="font-semibold text-foreground">₦{request.rate.toLocaleString()}/{request.coin}</span>
-            </div>
-            
-            <div className="flex justify-between items-center">
-              <span className="text-muted-foreground">Current Market Rate</span>
-              <span className={`font-semibold ${currentRate > request.rate ? 'text-success' : 'text-destructive'}`}>
-                ₦{currentRate.toLocaleString()}/{request.coin}
-              </span>
-            </div>
-            
-            <div className="border-t border-border pt-4">
-              <div className="flex justify-between items-center">
-                <span className="text-muted-foreground">Cash Amount</span>
-                <div className="text-right">
-                  <span className="font-bold text-lg text-foreground">₦{request.nairaAmount.toLocaleString()}</span>
-                  <p className="text-xs text-muted-foreground">
-                    Current: ₦{currentNairaAmount.toLocaleString()}
-                  </p>
+          </CardContent>
+        </Card>
+
+        {/* Escrow Information */}
+        <Card className="bg-blue-50 border-blue-200">
+          <CardContent className="p-4">
+            <div className="flex items-start">
+              <Shield size={20} className="text-blue-600 mr-3 mt-0.5" />
+              <div>
+                <h4 className="font-semibold text-blue-800 mb-2">Escrow Protection</h4>
+                <div className="space-y-2 text-sm text-blue-700">
+                  <p>• {isUserBuyingCrypto ? 'User will send cash to your bank account' : 'User will send crypto to your wallet'}</p>
+                  <p>• {isUserBuyingCrypto ? 'You will send crypto to user\'s wallet' : 'You will send cash to user\'s bank account'}</p>
+                  <p>• All transactions are secured by our escrow system</p>
+                  <p>• Funds are released only after both parties confirm</p>
                 </div>
               </div>
             </div>
-            
-            <div className="flex justify-between items-center">
-              <span className="text-muted-foreground">Payment Method</span>
-              <span className="font-semibold text-foreground">{request.paymentMethod}</span>
-            </div>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
 
-        {/* Price Fluctuation Warning */}
-        <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-6">
-          <div className="flex items-start">
-            <AlertTriangle size={16} className="text-orange-600 mr-2 mt-0.5" />
-            <div>
-              <h4 className="font-medium text-orange-800 mb-1">Price Fluctuation Notice</h4>
-              <p className="text-sm text-orange-700">
-                The cash amount may fluctuate due to real-time crypto price changes. The rate shown is what the user agreed to.
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Merchant Info */}
-        <div className="bg-card rounded-xl border border-border p-6 mb-6">
-          <h3 className="text-lg font-semibold text-foreground mb-4">User Information</h3>
-          <div className="flex items-center">
-            <div className="w-12 h-12 bg-muted rounded-full flex items-center justify-center mr-4">
-              <User size={20} className="text-muted-foreground" />
-            </div>
-            <div className="flex-1">
-              <p className="font-semibold text-foreground">{request.merchantName}</p>
-              <div className="flex items-center text-sm text-muted-foreground">
-                <Shield size={12} className="mr-1" />
-                <span>{request.merchantRating}/5 rating</span>
-                <span className="mx-2">•</span>
-                <Clock size={12} className="mr-1" />
-                <span>Posted {request.timeAgo}</span>
+        {/* Trade Details */}
+        <Card className="bg-white">
+          <CardContent className="p-4">
+            <h3 className="font-semibold text-gray-900 mb-3">Trade Details</h3>
+            <div className="space-y-3">
+              <div className="flex justify-between">
+                <span className="text-gray-600">Amount</span>
+                <span className="font-semibold text-gray-900">{request.amount} {request.coin}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">Rate</span>
+                <span className="font-semibold text-gray-900">{request.rate}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">Total Value</span>
+                <span className="font-semibold text-gray-900">₦{request.nairaAmount}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">User</span>
+                <span className="font-semibold text-gray-900">{request.userName || 'Anonymous'}</span>
               </div>
             </div>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
 
         {/* Action Buttons */}
         <div className="flex space-x-4">
           <Button
             onClick={handleDecline}
             variant="outline"
-            className="flex-1"
+            className="flex-1 h-12"
             disabled={isExpired}
           >
             Decline
           </Button>
           <Button
             onClick={handleAccept}
-            className={`flex-1 ${isExpired ? 'opacity-50 cursor-not-allowed' : ''}`}
+            className={`flex-1 h-12 ${isExpired ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'}`}
             disabled={isExpired}
           >
             {isExpired ? 'Expired' : 'Accept Trade'}
           </Button>
         </div>
 
-        {/* Important Notes */}
-        <div className="mt-6 bg-muted/30 rounded-lg p-4">
-          <h4 className="font-medium text-foreground mb-2">Important Notes:</h4>
-          <ul className="space-y-1 text-sm text-muted-foreground">
-            <li>• {request.type === 'buy' ? 'User has already sent crypto to escrow' : 'User will send crypto to escrow'}</li>
-            <li>• {request.type === 'buy' ? 'You will send cash to their bank account' : 'You will send cash to their account'}</li>
-            <li>• All transactions are secured by our escrow system</li>
-            <li>• You have 60 seconds to accept this request</li>
-          </ul>
-        </div>
+        {/* Important Notice */}
+        <Card className="bg-yellow-50 border-yellow-200">
+          <CardContent className="p-4">
+            <div className="flex items-start">
+              <AlertTriangle size={20} className="text-yellow-600 mr-3 mt-0.5" />
+              <div>
+                <h4 className="font-semibold text-yellow-800 mb-2">Important</h4>
+                <div className="space-y-1 text-sm text-yellow-700">
+                  <p>• You have 60 seconds to accept this request</p>
+                  <p>• Once accepted, you'll need to complete the payment within 30 minutes</p>
+                  <p>• Make sure you have the required funds available</p>
+                  <p>• Upload payment proof after completing the transaction</p>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

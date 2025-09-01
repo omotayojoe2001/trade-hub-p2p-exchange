@@ -70,16 +70,16 @@ const Settings = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-20">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-20">
       {/* Header */}
-      <div className="bg-white border-b border-gray-100 px-4 py-6">
+      <div className="bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700 px-4 py-6">
         <div className="flex items-center justify-between mb-4">
-          <h1 className="text-2xl font-bold text-gray-900">Settings</h1>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Settings</h1>
           <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center">
             <User size={20} className="text-white" />
           </div>
         </div>
-        <p className="text-gray-600">Manage your account and preferences</p>
+        <p className="text-gray-600 dark:text-gray-400">Manage your account and preferences</p>
       </div>
 
       {/* Settings Options */}
@@ -88,16 +88,16 @@ const Settings = () => {
           <Link
             key={index}
             to={option.link}
-            className="block bg-white rounded-lg p-4 border border-gray-200 cursor-pointer hover:shadow-sm transition-shadow"
+            className="block bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700 cursor-pointer hover:shadow-sm transition-shadow"
           >
             <div className="flex items-center justify-between">
               <div className="flex items-center">
-                <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center mr-3">
+                <div className="w-10 h-10 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mr-3">
                   {option.icon}
                 </div>
                 <div>
-                  <h3 className="font-semibold text-gray-900">{option.title}</h3>
-                  <p className="text-sm text-gray-500">{option.description}</p>
+                  <h3 className="font-semibold text-gray-900 dark:text-white">{option.title}</h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">{option.description}</p>
                 </div>
               </div>
               {option.hasChevron && (

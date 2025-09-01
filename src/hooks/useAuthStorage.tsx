@@ -7,7 +7,7 @@ interface StoredUser {
   lastLoginAt: string;
 }
 
-const AUTH_STORAGE_KEY = 'cryptohub_last_user';
+const AUTH_STORAGE_KEY = 'central_exchange_last_user';
 
 export const useAuthStorage = () => {
   const [storedUser, setStoredUser] = useState<StoredUser | null>(() => {

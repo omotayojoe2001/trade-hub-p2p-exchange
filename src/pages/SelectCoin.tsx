@@ -3,13 +3,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { ArrowLeft, Search, Users } from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import CryptoIcon from '@/components/CryptoIcon';
 
 const SelectCoin = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCoin, setSelectedCoin] = useState<string | null>(null);
   const navigate = useNavigate();
+  const location = useLocation();
+  const { mode = 'sell' } = location.state || {}; // Default to sell mode
 
   const coins = [
     {
@@ -21,6 +23,7 @@ const SelectCoin = () => {
       iconColor: 'text-orange-600',
       network: 'Native',
       sellers: 32,
+      buyers: 45,
       avgRate: '₦1,755,000/BTC',
       speed: '~3 mins',
       demand: 'High',
@@ -35,6 +38,7 @@ const SelectCoin = () => {
       iconColor: 'text-green-600',
       networks: ['TRC20', 'ERC20', 'BEP20'],
       sellers: 21,
+      buyers: 38,
       avgRate: '₦1,350/USD',
       speed: '~1 min',
       demand: 'High',
@@ -49,6 +53,7 @@ const SelectCoin = () => {
       iconColor: 'text-blue-600',
       network: 'ERC20',
       sellers: 15,
+      buyers: 22,
       avgRate: '₦5,850,000/ETH',
       speed: '~5 mins',
       demand: 'Medium',
@@ -63,6 +68,7 @@ const SelectCoin = () => {
       iconColor: 'text-yellow-600',
       network: 'BEP20',
       sellers: 7,
+      buyers: 12,
       avgRate: '₦850,000/BNB',
       speed: '~2 mins',
       demand: 'Low',
@@ -77,15 +83,52 @@ const SelectCoin = () => {
 
   const handleCoinSelect = (coinId: string) => {
     setSelectedCoin(coinId);
-    navigate('/merchant-selection');
+    if (mode === 'buy') {
+      // For buy flow, go to buy crypto flow with selected coin
+      navigate('/buy-crypto-flow', { 
+        state: { 
+          selectedCoin: coinId,
+          coinData: coins.find(c => c.id === coinId)
+        } 
+      });
+    } else {
+      // For sell flow, go to merchant selection
+      navigate('/merchant-selection', { 
+        state: { 
+          selectedCoin: coinId,
+          coinData: coins.find(c => c.id === coinId)
+        } 
+      });
+    }
   };
 
   const handleAutoMatch = () => {
-    navigate('/sell-crypto');
+    if (mode === 'buy') {
+      navigate('/buy-crypto-flow');
+    } else {
+      navigate('/sell-crypto');
+    }
   };
 
   const handleBrowseSellers = () => {
-    navigate('/merchant-list');
+    if (mode === 'buy') {
+      navigate('/merchant-list', { state: { type: 'buy' } });
+    } else {
+      navigate('/merchant-list', { state: { type: 'sell' } });
+    }
+  };
+
+  const getAvailableCount = (coin: any) => {
+    return mode === 'buy' ? coin.buyers : coin.sellers;
+  };
+
+  const getActionText = (coin: any) => {
+    const count = getAvailableCount(coin);
+    if (mode === 'buy') {
+      return count > 0 ? `Buy ${coin.name}` : 'No Sellers Available';
+    } else {
+      return count > 0 ? `Sell ${coin.name}` : 'No Buyers Available';
+    }
   };
 
   return (
@@ -98,7 +141,12 @@ const SelectCoin = () => {
           </Link>
           <div>
             <h1 className="text-xl font-semibold text-gray-900">Select Coin</h1>
-            <p className="text-sm text-gray-500">Select the coin & network to sell to thousands of users.</p>
+            <p className="text-sm text-gray-500">
+              {mode === 'buy' 
+                ? 'Select the coin you want to buy from verified sellers.' 
+                : 'Select the coin & network to sell to thousands of users.'
+              }
+            </p>
           </div>
         </div>
         <button className="text-gray-400">
@@ -121,73 +169,78 @@ const SelectCoin = () => {
 
         {/* Coins List */}
         <div className="space-y-4 mb-6">
-          {filteredCoins.map((coin) => (
-            <Card key={coin.id} className="p-4 bg-white border border-gray-200 rounded-lg hover:shadow-md transition-shadow cursor-pointer">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center">
-                  <div className={`w-12 h-12 ${coin.iconBg} rounded-full flex items-center justify-center mr-3`}>
-                    <CryptoIcon symbol={coin.symbol} size={24} />
+          {filteredCoins.map((coin) => {
+            const availableCount = getAvailableCount(coin);
+            return (
+              <Card key={coin.id} className="p-4 bg-white border border-gray-200 rounded-lg hover:shadow-md transition-shadow cursor-pointer">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center">
+                    <div className={`w-12 h-12 ${coin.iconBg} rounded-full flex items-center justify-center mr-3`}>
+                      <CryptoIcon symbol={coin.symbol} size={24} />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900">{coin.name}</h3>
+                      <p className="text-sm text-gray-500">{coin.symbol}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center">
+                    <span className={`inline-block w-2 h-2 rounded-full mr-2 ${
+                      coin.demand === 'High' ? 'bg-green-500' : 
+                      coin.demand === 'Medium' ? 'bg-yellow-500' : 'bg-red-500'
+                    }`}></span>
+                    <span className={`text-sm font-medium ${coin.demandColor}`}>{coin.demand}</span>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4 mb-4 text-sm">
+                  <div>
+                    <p className="text-gray-500 mb-1">Network:</p>
+                    <p className="font-medium text-gray-900">
+                      {coin.networks ? (
+                        <div className="flex flex-wrap gap-1">
+                          {coin.networks.map((network, index) => (
+                            <span key={index} className={`px-2 py-1 rounded text-xs ${
+                              network === 'TRC20' ? 'bg-blue-100 text-blue-600' :
+                              network === 'ERC20' ? 'bg-red-100 text-red-600' :
+                              'bg-yellow-100 text-yellow-600'
+                            }`}>
+                              {network}
+                            </span>
+                          ))}
+                        </div>
+                      ) : coin.network}
+                    </p>
                   </div>
                   <div>
-                    <h3 className="text-lg font-semibold text-gray-900">{coin.name}</h3>
-                    <p className="text-sm text-gray-500">{coin.symbol}</p>
+                    <p className="text-gray-500 mb-1">{mode === 'buy' ? 'Sellers:' : 'Buyers:'}</p>
+                    <p className="font-medium text-gray-900">{availableCount} Available</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-500 mb-1">{coin.networks ? 'From:' : 'Avg Rate:'}</p>
+                    <p className="font-medium text-gray-900">{coin.avgRate}</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-500 mb-1">Speed:</p>
+                    <p className="font-medium text-gray-900">{coin.speed}</p>
                   </div>
                 </div>
-                <div className="flex items-center">
-                  <span className={`inline-block w-2 h-2 rounded-full mr-2 ${
-                    coin.demand === 'High' ? 'bg-green-500' : 
-                    coin.demand === 'Medium' ? 'bg-yellow-500' : 'bg-red-500'
-                  }`}></span>
-                  <span className={`text-sm font-medium ${coin.demandColor}`}>{coin.demand}</span>
-                </div>
-              </div>
 
-              <div className="grid grid-cols-2 gap-4 mb-4 text-sm">
-                <div>
-                  <p className="text-gray-500 mb-1">Network:</p>
-                  <p className="font-medium text-gray-900">
-                    {coin.networks ? (
-                      <div className="flex flex-wrap gap-1">
-                        {coin.networks.map((network, index) => (
-                          <span key={index} className={`px-2 py-1 rounded text-xs ${
-                            network === 'TRC20' ? 'bg-blue-100 text-blue-600' :
-                            network === 'ERC20' ? 'bg-red-100 text-red-600' :
-                            'bg-yellow-100 text-yellow-600'
-                          }`}>
-                            {network}
-                          </span>
-                        ))}
-                      </div>
-                    ) : coin.network}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-gray-500 mb-1">Sellers:</p>
-                  <p className="font-medium text-gray-900">{coin.sellers} Available</p>
-                </div>
-                <div>
-                  <p className="text-gray-500 mb-1">{coin.networks ? 'From:' : 'Avg Rate:'}</p>
-                  <p className="font-medium text-gray-900">{coin.avgRate}</p>
-                </div>
-                <div>
-                  <p className="text-gray-500 mb-1">Speed:</p>
-                  <p className="font-medium text-gray-900">{coin.speed}</p>
-                </div>
-              </div>
-
-              <Button 
-                onClick={() => handleCoinSelect(coin.id)}
-                className={`w-full h-10 rounded-lg font-semibold ${
-                  coin.sellers > 0 
-                    ? 'bg-blue-600 hover:bg-blue-700 text-white' 
-                    : 'bg-gray-200 text-gray-500 cursor-not-allowed'
-                }`}
-                disabled={coin.sellers === 0}
-              >
-                {coin.sellers > 0 ? `Select ${coin.name}` : 'Limited Availability'}
-              </Button>
-            </Card>
-          ))}
+                <Button 
+                  onClick={() => handleCoinSelect(coin.id)}
+                  className={`w-full h-10 rounded-lg font-semibold ${
+                    availableCount > 0 
+                      ? mode === 'buy' 
+                        ? 'bg-blue-600 hover:bg-blue-700 text-white' 
+                        : 'bg-green-600 hover:bg-green-700 text-white'
+                      : 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                  }`}
+                  disabled={availableCount === 0}
+                >
+                  {getActionText(coin)}
+                </Button>
+              </Card>
+            );
+          })}
         </div>
 
         {/* P2P Trading Info */}
@@ -211,9 +264,9 @@ const SelectCoin = () => {
             onClick={handleAutoMatch}
             className="flex-1 h-12 bg-gray-800 text-white hover:bg-gray-900"
           >
-                            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                </svg>
+            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+            </svg>
             Auto Match
           </Button>
           <Button 
@@ -221,7 +274,7 @@ const SelectCoin = () => {
             className="flex-1 h-12 bg-blue-600 hover:bg-blue-700 text-white"
           >
             <Users size={16} className="mr-2" />
-            Browse Sellers
+            {mode === 'buy' ? 'Browse Sellers' : 'Browse Buyers'}
           </Button>
         </div>
       </div>
