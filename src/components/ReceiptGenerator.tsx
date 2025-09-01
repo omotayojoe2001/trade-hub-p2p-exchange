@@ -2,7 +2,7 @@ import React, { useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { Download, Share2, MessageCircle } from 'lucide-react';
+import { Download, Share2, MessageCircle, X } from 'lucide-react';
 import { toast } from 'sonner';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
@@ -139,122 +139,92 @@ export const ReceiptGenerator: React.FC<ReceiptGeneratorProps> = ({
 
   return (
     <div className="space-y-6">
-      <Card ref={receiptRef} className="bg-white shadow-lg">
-        <CardHeader className="text-center space-y-4">
-          <div className="flex justify-center">
-            <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center">
-              <span className="text-white font-bold text-lg">CP</span>
+      <Card ref={receiptRef} className="bg-gray-900 text-white shadow-lg max-w-md mx-auto">
+        <CardHeader className="text-center space-y-4 pb-6">
+          <div className="flex items-center justify-between">
+            <div className="text-2xl font-bold">
+              {receiptData.receipt_type === 'completed' ? 'Bought' : 'Buying'} {receiptData.crypto_type.toUpperCase()}
             </div>
-          </div>
-          <CardTitle className="text-xl font-bold text-gray-900">CryptoPay</CardTitle>
-          <div className={`inline-block px-4 py-2 rounded-full text-sm font-semibold ${getStatusColor(receiptData.receipt_type)}`}>
-            {getStatusText(receiptData.receipt_type)}
+            <X className="w-6 h-6 text-gray-400" />
           </div>
         </CardHeader>
 
-        <CardContent className="space-y-6">
-          <div className="grid grid-cols-2 gap-4 text-sm">
-            <div>
-              <span className="text-gray-600">Transaction ID:</span>
-              <p className="font-mono text-xs break-all">{receiptData.id}</p>
+        <CardContent className="space-y-6 px-6 pb-8">
+          {/* Amount Display */}
+          <div className="text-center space-y-2">
+            <div className="text-4xl font-bold text-white">
+              {receiptData.amount} {receiptData.crypto_type.toUpperCase()}
             </div>
-            <div>
-              <span className="text-gray-600">Date:</span>
-              <p className="font-medium">{new Date(receiptData.created_at).toLocaleString()}</p>
-            </div>
-          </div>
-
-          <Separator />
-
-          <div className="space-y-4">
-            <h3 className="font-semibold text-gray-900">Transaction Details</h3>
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              <div>
-                <span className="text-gray-600">Crypto Amount:</span>
-                <p className="font-semibold">{receiptData.amount} {receiptData.crypto_type.toUpperCase()}</p>
-              </div>
-              <div>
-                <span className="text-gray-600">Cash Amount:</span>
-                <p className="font-semibold">₦{receiptData.cash_amount.toLocaleString()}</p>
-              </div>
-              <div>
-                <span className="text-gray-600">Exchange Rate:</span>
-                <p className="font-medium">₦{receiptData.rate}/USD</p>
-              </div>
-              {receiptData.platform_fee && (
-                <div>
-                  <span className="text-gray-600">Platform Fee:</span>
-                  <p className="font-medium">₦{receiptData.platform_fee.toLocaleString()}</p>
-                </div>
-              )}
+            <div className="text-3xl font-bold text-white">
+              ${receiptData.cash_amount.toLocaleString()}
             </div>
           </div>
 
-          <Separator />
+          <div className="border-t border-gray-700 pt-6 space-y-4">
+            {/* Reference Code */}
+            <div className="flex justify-between items-center">
+              <span className="text-gray-300">Reference code</span>
+              <span className="text-white font-mono text-sm">{receiptData.id.slice(-8).toUpperCase()}</span>
+            </div>
 
-          <div className="space-y-4">
-            <h3 className="font-semibold text-gray-900">Parties</h3>
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              <div>
-                <span className="text-gray-600">Buyer:</span>
-                <p className="font-medium">{receiptData.buyer_name}</p>
-              </div>
-              <div>
-                <span className="text-gray-600">Seller:</span>
-                <p className="font-medium">{receiptData.seller_name}</p>
+            {/* Price */}
+            <div className="flex justify-between items-center">
+              <span className="text-gray-300">Price</span>
+              <span className="text-gray-300">${receiptData.rate.toLocaleString()}</span>
+            </div>
+
+            {/* Payment Method */}
+            <div className="flex justify-between items-center">
+              <span className="text-gray-300">Payment method</span>
+              <span className="text-gray-300">
+                {receiptData.bank_details ?
+                  `${receiptData.bank_details.bank_name} (${receiptData.bank_details.account_number.slice(-4).padStart(receiptData.bank_details.account_number.length, '*')})` :
+                  'Bank Transfer'
+                }
+              </span>
+            </div>
+
+            {/* Platform Fee */}
+            <div className="flex justify-between items-center">
+              <span className="text-gray-300">Coinbase fee</span>
+              <span className="text-gray-300">${(receiptData.platform_fee || receiptData.cash_amount * 0.015).toFixed(2)}</span>
+            </div>
+
+            {/* Subtotal */}
+            <div className="flex justify-between items-center">
+              <span className="text-gray-300">Subtotal</span>
+              <span className="text-gray-300">${(receiptData.cash_amount - (receiptData.platform_fee || receiptData.cash_amount * 0.015)).toFixed(2)}</span>
+            </div>
+
+            {/* Total */}
+            <div className="flex justify-between items-center pt-2 border-t border-gray-700">
+              <span className="text-gray-300 text-lg">Total</span>
+              <span className="text-white text-lg font-bold">${receiptData.cash_amount.toLocaleString()}</span>
+            </div>
+
+            {/* Date */}
+            <div className="flex justify-between items-center">
+              <span className="text-gray-300">Date</span>
+              <span className="text-gray-300">{new Date(receiptData.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} – {new Date(receiptData.created_at).toLocaleDateString('en-US', {month: 'short', day: 'numeric', year: 'numeric'})}</span>
+            </div>
+
+            {/* Status */}
+            <div className="flex justify-between items-center">
+              <span className="text-gray-300">Status</span>
+              <div className="flex items-center">
+                <div className={`w-2 h-2 rounded-full mr-2 ${receiptData.receipt_type === 'completed' ? 'bg-green-500' : 'bg-yellow-500'}`}></div>
+                <span className="text-gray-300 capitalize">{receiptData.receipt_type}</span>
               </div>
             </div>
-          </div>
-
-          {receiptData.bank_details && (
-            <>
-              <Separator />
-              <div className="space-y-4">
-                <h3 className="font-semibold text-gray-900">Bank Details</h3>
-                <div className="space-y-2 text-sm">
-                  <div>
-                    <span className="text-gray-600">Bank Name:</span>
-                    <p className="font-medium">{receiptData.bank_details.bank_name}</p>
-                  </div>
-                  <div>
-                    <span className="text-gray-600">Account Number:</span>
-                    <p className="font-mono">{receiptData.bank_details.account_number}</p>
-                  </div>
-                  <div>
-                    <span className="text-gray-600">Account Name:</span>
-                    <p className="font-medium">{receiptData.bank_details.account_name}</p>
-                  </div>
-                </div>
-              </div>
-            </>
-          )}
-
-          {receiptData.transaction_hash && (
-            <>
-              <Separator />
-              <div className="space-y-2">
-                <span className="text-gray-600 text-sm">Transaction Hash:</span>
-                <p className="font-mono text-xs break-all bg-gray-50 p-2 rounded">
-                  {receiptData.transaction_hash}
-                </p>
-              </div>
-            </>
-          )}
-
-          <Separator />
-
-          <div className="text-center text-xs text-gray-500 space-y-1">
-            <p>Generated on {new Date().toLocaleString()}</p>
-            <p>CryptoPay - Secure Cryptocurrency Trading Platform</p>
           </div>
         </CardContent>
       </Card>
 
       <div className="flex flex-col gap-4">
         <div className="flex gap-2">
-          <Button onClick={downloadAsJPG} className="flex-1" variant="outline">
+          <Button onClick={downloadAsJPG} className="flex-1 bg-blue-600 hover:bg-blue-700 text-white">
             <Download className="w-4 h-4 mr-2" />
-            Download JPG
+            Download Image
           </Button>
           <Button onClick={downloadAsPDF} className="flex-1" variant="outline">
             <Download className="w-4 h-4 mr-2" />

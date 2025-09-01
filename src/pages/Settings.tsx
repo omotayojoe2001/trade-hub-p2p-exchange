@@ -34,10 +34,10 @@ const Settings = () => {
     },
     {
       icon: <FileCheck size={20} className="text-blue-600" />,
-      title: 'BVN Verification',
-      description: 'Verify your Bank Verification Number',
+      title: 'Identity Verification',
+      description: 'Verify your identity with BVN and face verification',
       hasChevron: true,
-      link: '/bvn-verification'
+      link: '/identity-verification'
     },
     {
       icon: <TrendingUp size={20} className="text-emerald-600" />,

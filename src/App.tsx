@@ -24,7 +24,7 @@ import MerchantSelection from "./pages/MerchantSelection";
 import MerchantList from "./pages/MerchantList";
 import SelectCoin from "./pages/SelectCoin";
 import MyTrades from "./pages/MyTrades";
-import TradeHistory from "./pages/TradeHistory";
+
 import PaymentStatus from "./pages/PaymentStatus";
 import TradeDetails from "./pages/TradeDetails";
 import SellCrypto from "./pages/SellCrypto";
@@ -41,7 +41,9 @@ import EmailVerification from "./pages/EmailVerification";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import Enable2FA from "./pages/Enable2FA";
-import BVNVerification from "./pages/BVNVerification";
+import IdentityVerification from "./pages/IdentityVerification";
+import FaceVerification from "./pages/FaceVerification";
+import VerificationSuccess from "./pages/VerificationSuccess";
 import CoinDetail from "./pages/CoinDetail";
 import BuyCrypto from "./pages/BuyCrypto";
 import BuyCryptoMatch from "./pages/BuyCryptoMatch";
@@ -174,7 +176,9 @@ const AppContent = () => {
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/enable-2fa" element={<Enable2FA />} />
-          <Route path="/bvn-verification" element={<BVNVerification />} />
+          <Route path="/identity-verification" element={<IdentityVerification />} />
+          <Route path="/face-verification" element={<FaceVerification />} />
+          <Route path="/verification-success" element={<VerificationSuccess />} />
             <Route path="/coin/:coinId" element={<CoinDetail />} />
             <Route path="/buy-crypto" element={<BuyCrypto />} />
           <Route path="/buy-crypto-merchant-selection" element={<BuyCryptoMerchantSelection />} />
@@ -189,7 +193,7 @@ const AppContent = () => {
             <Route path="/select-coin" element={<SelectCoin />} />
             <Route path="/my-trades" element={<MyTrades />} />
             <Route path="/news" element={<CryptoNews />} />
-            <Route path="/trade-history" element={<TradeHistory />} />
+
             <Route path="/payment-status" element={<PaymentStatus />} />
             <Route path="/trade-details/:tradeId" element={<TradeDetails />} />
             <Route path="/sell-crypto" element={<SellCrypto />} />
