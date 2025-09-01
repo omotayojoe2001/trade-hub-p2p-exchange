@@ -181,8 +181,8 @@ const VerificationSuccess = () => {
             {/* Additional Info */}
             <div className="text-center">
               <p className="text-xs text-muted-foreground">
-                Your verification status is now active. You can view your verification details 
-                in Settings > Identity Verification at any time.
+                Your verification status is now active. You can view your verification details
+                in Settings → Identity Verification at any time.
               </p>
             </div>
           </CardContent>
