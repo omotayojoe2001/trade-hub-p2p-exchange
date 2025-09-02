@@ -14,6 +14,51 @@ export type Database = {
   }
   public: {
     Tables: {
+      blog_posts: {
+        Row: {
+          author_id: string | null
+          content: string
+          created_at: string | null
+          excerpt: string | null
+          featured_image: string | null
+          id: string
+          published: boolean | null
+          slug: string | null
+          tags: string[] | null
+          title: string
+          updated_at: string | null
+          views: number | null
+        }
+        Insert: {
+          author_id?: string | null
+          content: string
+          created_at?: string | null
+          excerpt?: string | null
+          featured_image?: string | null
+          id?: string
+          published?: boolean | null
+          slug?: string | null
+          tags?: string[] | null
+          title: string
+          updated_at?: string | null
+          views?: number | null
+        }
+        Update: {
+          author_id?: string | null
+          content?: string
+          created_at?: string | null
+          excerpt?: string | null
+          featured_image?: string | null
+          id?: string
+          published?: boolean | null
+          slug?: string | null
+          tags?: string[] | null
+          title?: string
+          updated_at?: string | null
+          views?: number | null
+        }
+        Relationships: []
+      }
       crypto_wallets: {
         Row: {
           available_balance: number | null
@@ -213,6 +258,75 @@ export type Database = {
         }
         Relationships: []
       }
+      messages: {
+        Row: {
+          content: string
+          created_at: string | null
+          id: string
+          media_url: string | null
+          message_type: string | null
+          read: boolean | null
+          receiver_id: string
+          sender_id: string
+          trade_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          id?: string
+          media_url?: string | null
+          message_type?: string | null
+          read?: boolean | null
+          receiver_id: string
+          sender_id: string
+          trade_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          id?: string
+          media_url?: string | null
+          message_type?: string | null
+          read?: boolean | null
+          receiver_id?: string
+          sender_id?: string
+          trade_id?: string
+        }
+        Relationships: []
+      }
+      notifications: {
+        Row: {
+          created_at: string | null
+          data: Json | null
+          id: string
+          message: string
+          read: boolean | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          data?: Json | null
+          id?: string
+          message: string
+          read?: boolean | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          data?: Json | null
+          id?: string
+          message?: string
+          read?: boolean | null
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string | null
@@ -249,6 +363,36 @@ export type Database = {
         }
         Relationships: []
       }
+      receipts: {
+        Row: {
+          created_at: string | null
+          id: string
+          receipt_data: Json
+          receipt_type: string | null
+          receipt_url: string | null
+          trade_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          receipt_data: Json
+          receipt_type?: string | null
+          receipt_url?: string | null
+          trade_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          receipt_data?: Json
+          receipt_type?: string | null
+          receipt_url?: string | null
+          trade_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       referrals: {
         Row: {
           created_at: string | null
@@ -273,6 +417,93 @@ export type Database = {
           referrer_id?: string
           reward_amount?: number | null
           status?: string | null
+        }
+        Relationships: []
+      }
+      tracking_codes: {
+        Row: {
+          created_at: string | null
+          expires_at: string | null
+          id: string
+          metadata: Json | null
+          status: string
+          tracking_code: string
+          trade_id: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          metadata?: Json | null
+          status?: string
+          tracking_code: string
+          trade_id?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          metadata?: Json | null
+          status?: string
+          tracking_code?: string
+          trade_id?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      trade_requests: {
+        Row: {
+          amount: number
+          bank_account_details: Json | null
+          coin_type: string
+          created_at: string | null
+          expires_at: string | null
+          id: string
+          matched_user_id: string | null
+          naira_amount: number
+          notes: string | null
+          payment_method: string | null
+          rate: number
+          status: string
+          trade_type: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          bank_account_details?: Json | null
+          coin_type: string
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          matched_user_id?: string | null
+          naira_amount: number
+          notes?: string | null
+          payment_method?: string | null
+          rate: number
+          status?: string
+          trade_type: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          bank_account_details?: Json | null
+          coin_type?: string
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          matched_user_id?: string | null
+          naira_amount?: number
+          notes?: string | null
+          payment_method?: string | null
+          rate?: number
+          status?: string
+          trade_type?: string
+          updated_at?: string | null
+          user_id?: string
         }
         Relationships: []
       }
@@ -374,6 +605,42 @@ export type Database = {
           trade_type?: string
           transaction_id?: string | null
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      user_sessions: {
+        Row: {
+          completed_steps: string[] | null
+          created_at: string | null
+          current_step: string | null
+          expires_at: string | null
+          id: string
+          session_data: Json
+          session_type: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          completed_steps?: string[] | null
+          created_at?: string | null
+          current_step?: string | null
+          expires_at?: string | null
+          id?: string
+          session_data: Json
+          session_type: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          completed_steps?: string[] | null
+          created_at?: string | null
+          current_step?: string | null
+          expires_at?: string | null
+          id?: string
+          session_data?: Json
+          session_type?: string
+          updated_at?: string | null
+          user_id?: string
         }
         Relationships: []
       }

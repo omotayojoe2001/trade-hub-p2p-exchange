@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Bell, X, DollarSign, Check, AlertCircle, Shield, ArrowRight, Clock, UserCheck, CreditCard } from 'lucide-react';
+import { Bell, X, DollarSign, Check, AlertCircle, Shield, ArrowRight, Clock, UserCheck, CreditCard, Crown } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useNavigate } from 'react-router-dom';

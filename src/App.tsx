@@ -147,7 +147,7 @@ const AppContent = () => {
   React.useEffect(() => {
     if (isInactive && user) {
       setQuickAuthActive(true);
-      signOut('timeout');
+      signOut();
     }
   }, [isInactive, user, signOut, setQuickAuthActive]);
 
@@ -179,7 +179,7 @@ const AppContent = () => {
   };
 
   const handleSignOut = async () => {
-    await signOut('manual');
+    await signOut();
     clearStoredUser();
     resetTimer();
   };
