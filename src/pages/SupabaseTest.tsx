@@ -100,7 +100,7 @@ const SupabaseTest = () => {
                       <span className="font-medium capitalize">{service}</span>
                     </div>
                     <Badge className={getStatusColor(status as string)}>
-                      {status}
+                      {String(status)}
                     </Badge>
                   </div>
                 ))}

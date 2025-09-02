@@ -1,5 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowDownLeft, ArrowUpRight, Copy, QrCode, RefreshCw, AlertTriangle, ArrowLeft, Wallet, Eye, EyeOff } from 'lucide-react';
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import CryptoIcon from '@/components/CryptoIcon';
 import { Link } from 'react-router-dom';
 import { supabase } from "@/integrations/supabase/client";

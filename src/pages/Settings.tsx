@@ -288,7 +288,7 @@ const Settings = () => {
       <div className="p-4">
         <div
           className="bg-white rounded-lg p-4 border border-red-200 cursor-pointer hover:bg-red-50 transition-colors"
-          onClick={() => signOut('manual')}
+          onClick={() => signOut()}
         >
           <div className="flex items-center">
             <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center mr-3">

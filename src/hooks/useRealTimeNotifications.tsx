@@ -119,7 +119,9 @@ export const useRealTimeNotifications = () => {
         setIsConnected(status === 'SUBSCRIBED');
       });
 
-    return () => supabase.removeChannel(channel);
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [user, toast, sendBrowserNotification]);
 
   // Mark notification as read

@@ -9,6 +9,9 @@ import { TradeTemplate } from '@/components/TradeTemplate';
 const TradeDetails = () => {
   const { tradeId } = useParams();
   const navigate = useNavigate();
+  const [txId, setTxId] = useState('');
+  const [isButtonEnabled, setIsButtonEnabled] = useState(false);
+  const [proofUploaded, setProofUploaded] = useState(false);
 
   // Mock transactions data for demo
   const mockTransactions = [
@@ -65,10 +68,11 @@ const TradeDetails = () => {
     total: foundTransaction.total,
     date: foundTransaction.date,
     time: foundTransaction.time,
-    status: foundTransaction.status,
+    status: foundTransaction.status as 'completed' | 'cancelled' | 'pending' | 'failed',
     coin: foundTransaction.coin,
-    type: foundTransaction.type,
+    type: foundTransaction.type as 'buy' | 'sell',
     walletAddress: foundTransaction.walletAddress,
+    paymentStage: foundTransaction.paymentStage,
     merchant: {
       name: foundTransaction.merchant,
       avatar: foundTransaction.merchantAvatar,
@@ -84,10 +88,11 @@ const TradeDetails = () => {
     total: '₦2,260,000',
     date: '2023-10-26',
     time: '14:30',
-    status: 'completed',
+    status: 'completed' as 'completed' | 'cancelled' | 'pending' | 'failed',
     coin: 'BTC',
-    type: 'sell',
+    type: 'sell' as 'buy' | 'sell',
     walletAddress: 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh',
+    paymentStage: 4,
     merchant: {
       name: 'John Merchant',
       avatar: 'JM',

@@ -28,7 +28,14 @@ const SellCryptoCashDelivery = () => {
       whatsappNumber: '',
       preferredDate: '',
       preferredTime: '',
-      additionalNotes: ''
+      additionalNotes: '',
+      deliveryAddress: {
+        street: '',
+        city: '',
+        state: '',
+        country: '',
+        postalCode: ''
+      }
     };
   });
 

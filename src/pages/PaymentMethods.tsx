@@ -475,7 +475,7 @@ const PaymentMethods = () => {
                       id="predefined-bank"
                       name="bankType"
                       checked={!bankData.useCustomBank}
-                      onChange={() => handleBankInputChange('useCustomBank', false)}
+                      onChange={() => handleBankInputChange('useCustomBank', 'false')}
                       className="w-4 h-4 text-blue-600"
                     />
                     <label htmlFor="predefined-bank" className="text-sm text-gray-700">
@@ -510,7 +510,7 @@ const PaymentMethods = () => {
                       id="custom-bank"
                       name="bankType"
                       checked={bankData.useCustomBank}
-                      onChange={() => handleBankInputChange('useCustomBank', true)}
+                      onChange={() => handleBankInputChange('useCustomBank', 'true')}
                       className="w-4 h-4 text-blue-600"
                     />
                     <label htmlFor="custom-bank" className="text-sm text-gray-700">

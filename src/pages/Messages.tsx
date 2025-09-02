@@ -107,7 +107,9 @@ const Messages = () => {
         sender_id: user.id,
         receiver_id: 'other-user-id', // In real app, get from trade data
         content: text,
-        message_type: 'text'
+        message_type: 'text',
+        media_url: null,
+        read: false
       });
 
       setNewMessage('');
@@ -251,7 +253,7 @@ const Messages = () => {
             }}
           />
           <Button 
-            onClick={handleSendMessage}
+            onClick={() => handleSendMessage()}
             disabled={!newMessage.trim()}
             size="sm"
           >
