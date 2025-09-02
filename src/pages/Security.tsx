@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Shield, Key, Smartphone, Eye, EyeOff, Lock, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, Shield, Key, Eye, EyeOff, Lock, AlertTriangle } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,7 +9,6 @@ import { Switch } from '@/components/ui/switch';
 const Security = () => {
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
-  const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
   const [passwordData, setPasswordData] = useState({
     currentPassword: '',
     newPassword: '',
@@ -106,60 +105,7 @@ const Security = () => {
           </div>
         </Card>
 
-        {/* Two-Factor Authentication */}
-        <Card className="bg-white p-6">
-          <div className="flex items-center mb-4">
-            <Smartphone size={20} className="text-green-600 mr-2" />
-            <h3 className="text-lg font-semibold text-gray-900">Two-Factor Authentication</h3>
-          </div>
-          
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <p className="text-sm text-gray-900 font-medium">Enable 2FA</p>
-              <p className="text-sm text-gray-500">Add an extra layer of security to your account</p>
-            </div>
-            <Switch
-              checked={twoFactorEnabled}
-              onCheckedChange={setTwoFactorEnabled}
-            />
-          </div>
 
-          {twoFactorEnabled && (
-            <div className="space-y-4">
-              <div className="bg-blue-50 p-4 rounded-lg">
-                <div className="flex items-start">
-                  <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 mr-3 flex-shrink-0"></div>
-                  <div>
-                    <p className="text-sm text-blue-900 font-medium">Setup Instructions</p>
-                    <p className="text-sm text-blue-700 mt-1">
-                      Download an authenticator app like Google Authenticator or Authy, then scan the QR code below.
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex justify-center">
-                <div className="w-32 h-32 bg-gray-200 rounded-lg flex items-center justify-center">
-                  <span className="text-gray-500">QR Code</span>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Verification Code</label>
-                <Input
-                  placeholder="Enter 6-digit code from your authenticator app"
-                  maxLength={6}
-                />
-              </div>
-
-              <Link to="/enable-2fa">
-                <Button className="w-full">
-                  Verify and Enable 2FA
-                </Button>
-              </Link>
-            </div>
-          )}
-        </Card>
 
         {/* Login Activity */}
         <Card className="bg-white p-6">

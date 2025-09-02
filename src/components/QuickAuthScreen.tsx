@@ -85,7 +85,7 @@ const QuickAuthScreen: React.FC<QuickAuthScreenProps> = ({
         {/* Header */}
         <div className="text-center mb-6">
           <h2 className="text-lg font-semibold mb-1">Session Timeout</h2>
-          <p className="text-sm text-muted-foreground">Please authenticate to continue</p>
+          <p className="text-sm text-muted-foreground">Session expired after 60 seconds of inactivity. Please authenticate to continue.</p>
         </div>
 
         {/* User Profile Section */}
@@ -104,19 +104,37 @@ const QuickAuthScreen: React.FC<QuickAuthScreenProps> = ({
           </p>
         </div>
 
-        {/* Biometric Authentication Option */}
+        {/* Biometric Authentication Option - Prominent */}
         {biometricSupported && biometricEnrolled && (
           <div className="mb-6">
+            <div className="text-center mb-4">
+              <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                <Fingerprint size={32} className="text-blue-600" />
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Quick access with your fingerprint
+              </p>
+            </div>
             <Button
               onClick={() => setShowBiometricPrompt(true)}
-              className="w-full h-12"
-              variant="outline"
+              className="w-full h-12 bg-blue-600 hover:bg-blue-700"
             >
               <div className="flex items-center space-x-2">
                 <Fingerprint size={20} />
-                <span>Use Biometric</span>
+                <span>Use Fingerprint</span>
               </div>
             </Button>
+
+            <div className="relative my-6">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t border-border" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-background px-2 text-muted-foreground">
+                  Or use password
+                </span>
+              </div>
+            </div>
           </div>
         )}
 

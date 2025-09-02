@@ -8,12 +8,23 @@ import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import PaymentConfirmationDialog from "@/components/PaymentConfirmationDialog";
 import BottomNavigation from '@/components/BottomNavigation';
 import { useQuickAuth } from '@/hooks/useQuickAuth';
+import { usePremium } from '@/hooks/usePremium';
+import { useAuth } from '@/hooks/useAuth';
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 
 const MyTrades = () => {
   const navigate = useNavigate();
   const { isQuickAuthActive } = useQuickAuth();
+  const { isPremium } = usePremium();
+  const { user } = useAuth();
+
+  // Redirect premium users to premium trades page
+  React.useEffect(() => {
+    if (user && isPremium) {
+      navigate('/premium-trades');
+    }
+  }, [user, isPremium, navigate]);
   const [activeTab, setActiveTab] = useState('ongoing');
   const [searchQuery, setSearchQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState('all');

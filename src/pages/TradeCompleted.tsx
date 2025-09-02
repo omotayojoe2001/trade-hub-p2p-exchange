@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Download, Star, MessageSquare, Shield, CheckCircle, Share2, Twitter, Facebook, Copy, Receipt } from 'lucide-react';
+import { ArrowLeft, Download, Star, MessageSquare, Shield, CheckCircle, Share2, Twitter, Facebook, Copy, Receipt, Send } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useToast } from "@/hooks/use-toast";
 import CryptoIcon from '@/components/CryptoIcon';
+import { shareTradeToSocial, trackReferralShare, ShareableTradeData } from '@/services/referralService';
 
 const TradeCompleted = () => {
   const navigate = useNavigate();
@@ -117,32 +118,33 @@ Thank you for using Central Exchange!
   };
 
   const handleShare = (platform: string) => {
-    const shareText = `Just completed a successful ${tradeData.amountSold} ${tradeData.coin} trade on Central Exchange! Transaction ID: ${tradeData.tradeId}`;
-    const shareUrl = window.location.origin;
-    
-    let shareLink = '';
-    
-    switch (platform) {
-      case 'twitter':
-        shareLink = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(shareUrl)}`;
-        break;
-      case 'facebook':
-        shareLink = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}&quote=${encodeURIComponent(shareText)}`;
-        break;
-      case 'whatsapp':
-        shareLink = `https://wa.me/?text=${encodeURIComponent(shareText + ' ' + shareUrl)}`;
-        break;
-      default:
-        // Copy to clipboard
-        navigator.clipboard.writeText(shareText + ' ' + shareUrl);
-        toast({
-          title: "Copied to Clipboard",
-          description: "Trade details copied to clipboard!",
-        });
-        return;
+    const shareableData: ShareableTradeData = {
+      tradeId: tradeData.tradeId,
+      amount: tradeData.amountSold,
+      coin: tradeData.coin,
+      status: tradeData.status,
+      date: tradeData.date,
+      merchant: tradeData.merchant,
+      totalValue: tradeData.netAmount
+    };
+
+    if (platform === 'copy') {
+      shareTradeToSocial('copy', shareableData, true);
+      toast({
+        title: "Copied to Clipboard",
+        description: "Trade details with referral link copied to clipboard!",
+      });
+    } else {
+      shareTradeToSocial(platform, shareableData, true);
     }
-    
-    window.open(shareLink, '_blank');
+
+    // Track the share for analytics
+    trackReferralShare(platform, tradeData.tradeId);
+
+    toast({
+      title: "Shared Successfully",
+      description: `Trade shared to ${platform} with your referral link!`,
+    });
   };
 
   const handleCopyTradeId = () => {
@@ -281,7 +283,8 @@ Thank you for using Central Exchange!
         {/* Share Section */}
         <Card className="bg-white">
           <CardContent className="p-4">
-            <h4 className="font-semibold text-gray-900 mb-3">Share Your Success</h4>
+            <h4 className="font-semibold text-gray-900 mb-2">Share Your Success & Earn Rewards</h4>
+            <p className="text-sm text-gray-600 mb-4">Share your successful trade and invite friends with your referral link to earn rewards!</p>
             <div className="grid grid-cols-4 gap-3">
               <button
                 onClick={() => handleShare('twitter')}
@@ -307,13 +310,22 @@ Thank you for using Central Exchange!
                 <span className="text-xs text-green-600">WhatsApp</span>
               </button>
               <button
-                onClick={() => handleShare('copy')}
-                className="flex flex-col items-center p-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors"
+                onClick={() => handleShare('telegram')}
+                className="flex flex-col items-center p-3 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"
               >
-                <Share2 size={20} className="text-gray-600 mb-1" />
-                <span className="text-xs text-gray-600">Copy</span>
+                <Send size={20} className="text-blue-600 mb-1" />
+                <span className="text-xs text-blue-600">Telegram</span>
               </button>
             </div>
+
+            <Button
+              onClick={() => handleShare('copy')}
+              variant="outline"
+              className="w-full mt-3"
+            >
+              <Copy size={16} className="mr-2" />
+              Copy Message with Referral Link
+            </Button>
           </CardContent>
         </Card>
 

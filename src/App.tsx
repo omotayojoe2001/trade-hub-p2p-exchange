@@ -10,6 +10,7 @@ import useInactivityDetector from "@/hooks/useInactivityDetector";
 import { useAuthStorage } from "@/hooks/useAuthStorage";
 import { QuickAuthProvider, useQuickAuth } from "@/hooks/useQuickAuth";
 import { AuthProvider, useAuth } from "./hooks/useAuth";
+import { PremiumProvider } from "./hooks/usePremium";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { useLocation } from "react-router-dom";
 import Index from "./pages/Index";
@@ -69,6 +70,42 @@ import NotificationsDemo from "./pages/NotificationsDemo";
 import PremiumSell from "./pages/PremiumSell";
 import CashDeliveryDetails from "./pages/CashDeliveryDetails";
 import CashPickupDetails from "./pages/CashPickupDetails";
+import PriorityTrade from "./pages/PriorityTrade";
+import SellForCash from "./pages/SellForCash";
+
+import CurrencyConversion from "./pages/CurrencyConversion";
+import PremiumTrades from "./pages/PremiumTrades";
+import PremiumNotifications from "./pages/PremiumNotifications";
+import PremiumSettings from "./pages/PremiumSettings";
+import PremiumTrade from "./pages/PremiumTrade";
+import PremiumMessages from "./pages/PremiumMessages";
+import PremiumNews from "./pages/PremiumNews";
+import TrendingCoins from "./pages/TrendingCoins";
+import PremiumReferral from "./pages/PremiumReferral";
+import PremiumChatDetail from "./pages/PremiumChatDetail";
+import PremiumPaymentMethods from "./pages/PremiumPaymentMethods";
+import PremiumSupport from "./pages/PremiumSupport";
+import DeliveryTracking from "./pages/DeliveryTracking";
+import PremiumTradeRequestDetails from "./pages/PremiumTradeRequestDetails";
+import NewsDetail from "./pages/NewsDetail";
+import PremiumNewsDetail from "./pages/PremiumNewsDetail";
+import ChatDetail from "./pages/ChatDetail";
+import CoinDetailPage from "./pages/CoinDetailPage";
+import PremiumTradeRequests from "./pages/PremiumTradeRequests";
+import PremiumPaymentStatus from "./pages/PremiumPaymentStatus";
+import Premium2FA from "./pages/Premium2FA";
+import PremiumProfile from "./pages/PremiumProfile";
+import EnhancedBuyCrypto from "./pages/EnhancedBuyCrypto";
+import SellCryptoBankTransfer from "./pages/SellCryptoBankTransfer";
+import SellCryptoCashPickup from "./pages/SellCryptoCashPickup";
+import SellCryptoCashDelivery from "./pages/SellCryptoCashDelivery";
+import CashPickupConfirmation from "./pages/CashPickupConfirmation";
+import CashDeliveryConfirmation from "./pages/CashDeliveryConfirmation";
+import SendNairaGetUSD from "./pages/SendNairaGetUSD";
+import PremiumTradeCompleted from "./pages/PremiumTradeCompleted";
+import CashOrderThankYou from "./pages/CashOrderThankYou";
+import GlobalCodeTracker from "./components/GlobalCodeTracker";
+import DeliveryStatus from "./pages/DeliveryStatus";
 import TradeRequests from "./pages/TradeRequests";
 import TradeRequestDetails from "./pages/TradeRequestDetails";
 import MerchantTradeFlow from "./pages/MerchantTradeFlow";
@@ -106,29 +143,43 @@ const AppContent = () => {
     }
   }, [user, isInactive, saveUser]);
 
-  // Handle inactivity - log user out completely
+  // Handle inactivity - log user out for timeout
   React.useEffect(() => {
     if (isInactive && user) {
       setQuickAuthActive(true);
-      signOut();
+      signOut('timeout');
     }
   }, [isInactive, user, signOut, setQuickAuthActive]);
 
   // Set quick auth active when showing the screen
   React.useEffect(() => {
+    const logoutReason = localStorage.getItem('logout-reason');
+
     if (!user && storedUser && !isOnAuthPage) {
-      setQuickAuthActive(true);
+      // Only show quick auth for timeout, not manual logout
+      if (logoutReason === 'timeout' || logoutReason === null) {
+        setQuickAuthActive(true);
+      } else {
+        // Manual logout - clear stored user and don't show quick auth
+        clearStoredUser();
+        setQuickAuthActive(false);
+      }
     } else {
       setQuickAuthActive(false);
     }
-  }, [user, storedUser, isOnAuthPage, setQuickAuthActive]);
+
+    // Clear logout reason after handling
+    if (logoutReason) {
+      localStorage.removeItem('logout-reason');
+    }
+  }, [user, storedUser, isOnAuthPage, setQuickAuthActive, clearStoredUser]);
 
   const handleQuickAuthSuccess = () => {
     resetTimer();
   };
 
   const handleSignOut = async () => {
-    await signOut();
+    await signOut('manual');
     clearStoredUser();
     resetTimer();
   };
@@ -155,6 +206,7 @@ const AppContent = () => {
           }}
         />
       )}
+      <GlobalCodeTracker />
       <Routes>
             <Route path="/" element={<SplashScreen />} />
             <Route path="/home" element={<Index />} />
@@ -213,10 +265,46 @@ const AppContent = () => {
             <Route path="/premium/sell" element={<PremiumSell />} />
             <Route path="/premium/cash-delivery" element={<CashDeliveryDetails />} />
             <Route path="/premium/cash-pickup" element={<CashPickupDetails />} />
+            <Route path="/priority-trade" element={<PriorityTrade />} />
+            <Route path="/sell-for-cash" element={<SellForCash />} />
+
+            <Route path="/currency-conversion" element={<CurrencyConversion />} />
+            <Route path="/premium-trades" element={<PremiumTrades />} />
+            <Route path="/premium-notifications" element={<PremiumNotifications />} />
+            <Route path="/premium-settings" element={<PremiumSettings />} />
+            <Route path="/premium-trade" element={<PremiumTrade />} />
+            <Route path="/premium-messages" element={<PremiumMessages />} />
+            <Route path="/premium-news" element={<PremiumNews />} />
+            <Route path="/trending-coins" element={<TrendingCoins />} />
+            <Route path="/premium-referral" element={<PremiumReferral />} />
+            <Route path="/premium-chat/:id" element={<PremiumChatDetail />} />
+            <Route path="/premium-payment-methods" element={<PremiumPaymentMethods />} />
+            <Route path="/premium-support" element={<PremiumSupport />} />
+            <Route path="/delivery-tracking" element={<DeliveryTracking />} />
+            <Route path="/premium-trade-request-details" element={<PremiumTradeRequestDetails />} />
+            <Route path="/news/:id" element={<NewsDetail />} />
+            <Route path="/premium-news/:id" element={<PremiumNewsDetail />} />
+            <Route path="/chat/:chatId" element={<ChatDetail />} />
+            <Route path="/coin-detail/:coinId" element={<CoinDetailPage />} />
+            <Route path="/premium-trade-requests" element={<PremiumTradeRequests />} />
+            <Route path="/premium-payment-status" element={<PremiumPaymentStatus />} />
+            <Route path="/premium-2fa" element={<Premium2FA />} />
+            <Route path="/premium-profile" element={<PremiumProfile />} />
+            <Route path="/enhanced-buy-crypto" element={<EnhancedBuyCrypto />} />
+            <Route path="/sell-crypto-bank-transfer" element={<SellCryptoBankTransfer />} />
+            <Route path="/sell-crypto-cash-pickup" element={<SellCryptoCashPickup />} />
+            <Route path="/sell-crypto-cash-delivery" element={<SellCryptoCashDelivery />} />
+            <Route path="/cash-pickup-confirmation" element={<CashPickupConfirmation />} />
+            <Route path="/cash-delivery-confirmation" element={<CashDeliveryConfirmation />} />
+            <Route path="/send-naira-get-usd" element={<SendNairaGetUSD />} />
+            <Route path="/premium-trade-completed" element={<PremiumTradeCompleted />} />
+            <Route path="/cash-order-thank-you" element={<CashOrderThankYou />} />
+            <Route path="/delivery-status" element={<DeliveryStatus />} />
         <Route path="/trade-requests" element={<TradeRequests />} />
         <Route path="/trade-request-details" element={<TradeRequestDetails />} />
         <Route path="/merchant-trade-flow" element={<MerchantTradeFlow />} />
         <Route path="/receipt" element={<ReceiptPage />} />
+        <Route path="/receipt-page" element={<ReceiptPage />} />
         <Route path="/trade-requests" element={<TradeRequests />} />
         <Route path="/messages" element={<Messages />} />
         <Route path="/blog" element={<Blog />} />
@@ -237,13 +325,15 @@ const App = () => (
     <BrowserRouter>
       <ThemeProvider>
         <AuthProvider>
-          <QuickAuthProvider>
-            <TooltipProvider>
-              <AppContent />
-              <Toaster />
-              <Sonner />
-            </TooltipProvider>
-          </QuickAuthProvider>
+          <PremiumProvider>
+            <QuickAuthProvider>
+              <TooltipProvider>
+                <AppContent />
+                <Toaster />
+                <Sonner />
+              </TooltipProvider>
+            </QuickAuthProvider>
+          </PremiumProvider>
         </AuthProvider>
       </ThemeProvider>
     </BrowserRouter>

@@ -1,14 +1,23 @@
-import React, { useState } from 'react';
-import { ArrowLeft, Edit2, Camera, Mail, Phone, MapPin, Calendar, User, Shield } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { ArrowLeft, Edit2, Camera, Mail, Phone, MapPin, Calendar, User, Shield, Upload } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useAuth } from '@/hooks/useAuth';
+import { useToast } from '@/hooks/use-toast';
 
 const ProfileSettings = () => {
   const { user, profile } = useAuth();
+  const { toast } = useToast();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const [isEditing, setIsEditing] = useState(false);
+  const [showProfilePictureDialog, setShowProfilePictureDialog] = useState(false);
+  const [profilePicture, setProfilePicture] = useState<string | null>(null);
+  const [isUploadingPicture, setIsUploadingPicture] = useState(false);
+
   const [formData, setFormData] = useState({
     displayName: profile?.display_name || '',
     phoneNumber: profile?.phone_number || '',
@@ -18,6 +27,14 @@ const ProfileSettings = () => {
     occupation: 'Software Engineer',
     bio: 'Crypto enthusiast and trader'
   });
+
+  useEffect(() => {
+    // Load saved profile picture
+    const savedPicture = localStorage.getItem('profile-picture');
+    if (savedPicture) {
+      setProfilePicture(savedPicture);
+    }
+  }, []);
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({
@@ -29,6 +46,64 @@ const ProfileSettings = () => {
   const handleSave = () => {
     // Handle save logic here
     setIsEditing(false);
+    toast({
+      title: "Profile Updated",
+      description: "Your profile has been updated successfully",
+    });
+  };
+
+  const handleProfilePictureSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Validate file size (2MB max)
+      if (file.size > 2 * 1024 * 1024) {
+        toast({
+          title: "File too large",
+          description: "Please select an image smaller than 2MB",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        toast({
+          title: "Invalid file type",
+          description: "Please select an image file",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      setIsUploadingPicture(true);
+
+      // Convert to base64 and save
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const result = e.target?.result as string;
+        setProfilePicture(result);
+        localStorage.setItem('profile-picture', result);
+        setShowProfilePictureDialog(false);
+        setIsUploadingPicture(false);
+
+        toast({
+          title: "Profile Picture Updated",
+          description: "Your profile picture has been updated successfully",
+        });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleRemoveProfilePicture = () => {
+    setProfilePicture(null);
+    localStorage.removeItem('profile-picture');
+    setShowProfilePictureDialog(false);
+
+    toast({
+      title: "Profile Picture Removed",
+      description: "Your profile picture has been removed",
+    });
   };
 
   return (
@@ -58,14 +133,23 @@ const ProfileSettings = () => {
         <Card className="bg-white p-6">
           <div className="flex items-center justify-center mb-4">
             <div className="relative">
-              <div className="w-24 h-24 bg-blue-500 rounded-full flex items-center justify-center">
-                <User size={40} className="text-white" />
+              <div className="w-24 h-24 bg-blue-500 rounded-full flex items-center justify-center overflow-hidden">
+                {profilePicture ? (
+                  <img
+                    src={profilePicture}
+                    alt="Profile"
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <User size={40} className="text-white" />
+                )}
               </div>
-              {isEditing && (
-                <button className="absolute bottom-0 right-0 w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
-                  <Camera size={16} className="text-white" />
-                </button>
-              )}
+              <button
+                onClick={() => setShowProfilePictureDialog(true)}
+                className="absolute bottom-0 right-0 w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center hover:bg-blue-700 transition-colors"
+              >
+                <Camera size={16} className="text-white" />
+              </button>
             </div>
           </div>
           <div className="text-center">
@@ -244,6 +328,85 @@ const ProfileSettings = () => {
           </div>
         </Card>
       </div>
+
+      {/* Profile Picture Dialog */}
+      <Dialog open={showProfilePictureDialog} onOpenChange={setShowProfilePictureDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center space-x-2">
+              <Camera className="w-5 h-5" />
+              <span>Profile Picture</span>
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            {/* Current Picture Preview */}
+            <div className="flex justify-center">
+              <div className="w-32 h-32 bg-gray-100 rounded-full flex items-center justify-center overflow-hidden">
+                {profilePicture ? (
+                  <img
+                    src={profilePicture}
+                    alt="Profile"
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <User size={48} className="text-gray-400" />
+                )}
+              </div>
+            </div>
+
+            {/* Upload Options */}
+            <div className="space-y-3">
+              <Button
+                onClick={() => fileInputRef.current?.click()}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                disabled={isUploadingPicture}
+              >
+                <Upload size={16} className="mr-2" />
+                {profilePicture ? 'Change Picture' : 'Upload Picture'}
+              </Button>
+
+              {profilePicture && (
+                <Button
+                  onClick={handleRemoveProfilePicture}
+                  variant="outline"
+                  className="w-full text-red-600 border-red-200 hover:bg-red-50"
+                >
+                  Remove Picture
+                </Button>
+              )}
+
+              <Button
+                onClick={() => setShowProfilePictureDialog(false)}
+                variant="outline"
+                className="w-full"
+              >
+                Cancel
+              </Button>
+            </div>
+
+            {/* File Input */}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleProfilePictureSelect}
+              className="hidden"
+            />
+
+            {/* Guidelines */}
+            <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
+              <h4 className="font-medium text-gray-800 mb-2">Guidelines:</h4>
+              <ul className="text-sm text-gray-600 space-y-1">
+                <li>• Use a clear photo of yourself</li>
+                <li>• Maximum file size: 2MB</li>
+                <li>• Supported formats: JPG, PNG, GIF</li>
+                <li>• Square images work best</li>
+              </ul>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

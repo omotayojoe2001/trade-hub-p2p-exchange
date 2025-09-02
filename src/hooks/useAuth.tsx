@@ -78,31 +78,44 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => subscription.unsubscribe();
   }, []);
 
-  const signOut = async () => {
+  const signOut = async (reason: 'manual' | 'timeout' = 'manual') => {
     try {
+      // Store logout reason
+      localStorage.setItem('logout-reason', reason);
+
       // Clean up auth state first
       Object.keys(localStorage).forEach((key) => {
         if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
           localStorage.removeItem(key);
         }
       });
-      
+
       // Sign out globally
       await supabase.auth.signOut({ scope: 'global' });
-      
+
       // Clear state
       setUser(null);
       setSession(null);
       setProfile(null);
-      
-      // Force reload to splash screen
-      window.location.href = '/';
+
+      // Navigate based on reason
+      if (reason === 'manual') {
+        window.location.href = '/';
+      } else {
+        // For timeout, stay on current page to show quick auth
+        window.location.reload();
+      }
     } catch (error) {
       // Force cleanup even if signOut fails
       setUser(null);
       setSession(null);
       setProfile(null);
-      window.location.href = '/';
+
+      if (reason === 'manual') {
+        window.location.href = '/';
+      } else {
+        window.location.reload();
+      }
     }
   };
 

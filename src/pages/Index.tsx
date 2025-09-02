@@ -1,7 +1,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowUp, ArrowDown, Clock, Building2, Bell, TrendingUp, ChevronRight, Star, DollarSign, Zap, CreditCard, User, Gift, Trophy, Lock, Megaphone, CheckCircle } from 'lucide-react';
+import { ArrowUp, ArrowDown, Clock, Building2, Bell, TrendingUp, ChevronRight, Star, DollarSign, Zap, CreditCard, User, Gift, Trophy, Lock, Megaphone, CheckCircle, Truck, RefreshCw } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import BottomNavigation from '@/components/BottomNavigation';
@@ -13,14 +13,16 @@ import ThemeToggle from '@/components/ThemeToggle';
 import { useAuth } from '@/hooks/useAuth';
 import { useQuickAuth } from '@/hooks/useQuickAuth';
 import { useCryptoData } from '@/hooks/useCryptoData';
+import { usePremium } from '@/hooks/usePremium';
 
 const Index = () => {
   const { user, profile, loading } = useAuth();
   const { isQuickAuthActive } = useQuickAuth();
+  const { isPremium } = usePremium();
   const { cryptoData, loading: cryptoLoading, error: cryptoError } = useCryptoData(50);
   const [selectedTimeFilter, setSelectedTimeFilter] = useState('Today');
   const [selectedCoinFilter, setSelectedCoinFilter] = useState('All');
-  
+
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -28,8 +30,11 @@ const Index = () => {
       navigate('/auth');
     } else if (user && profile && !profile.profile_completed) {
       navigate('/profile-setup');
+    } else if (user && profile && profile.profile_completed && isPremium) {
+      // Redirect premium users to premium dashboard
+      navigate('/premium-dashboard');
     }
-  }, [user, profile, loading, navigate]);
+  }, [user, profile, loading, isPremium, navigate]);
 
   if (loading) {
     return (
@@ -95,9 +100,6 @@ const Index = () => {
           </div>
         </div>
         <div className="flex items-center space-x-3">
-          <Link to="/supabase-test" className="text-xs text-blue-600 hover:text-blue-800">
-            Test DB
-          </Link>
           <Link to="/notifications">
             <Bell size={24} className="text-gray-600 dark:text-gray-400" />
           </Link>
@@ -164,13 +166,13 @@ const Index = () => {
             </div>
             <span className="text-gray-700 text-sm font-medium">Sell</span>
           </Link>
-          <Link to="/trade-history" className="flex flex-col items-center">
+          <Link to="/my-trades" className="flex flex-col items-center">
             <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mb-2">
               <Clock size={24} className="text-blue-500" />
             </div>
             <span className="text-gray-700 text-sm font-medium">History</span>
           </Link>
-          <Link to="/merchant-list" className="flex flex-col items-center">
+          <Link to="/payment-methods" className="flex flex-col items-center">
             <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mb-2">
               <Building2 size={24} className="text-purple-500" />
             </div>
@@ -337,35 +339,73 @@ const Index = () => {
         </div>
         
         <div className="space-y-3">
-          <div className="bg-white p-4 rounded-xl border border-gray-200 flex items-center justify-between">
-            <div className="flex items-center">
-              <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center mr-3">
-                <DollarSign size={20} className="text-green-500" />
+          <Link to="/premium" className="block">
+            <div className="bg-white p-4 rounded-xl border border-gray-200 flex items-center justify-between hover:shadow-sm transition-shadow">
+              <div className="flex items-center">
+                <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center mr-3">
+                  <DollarSign size={20} className="text-green-500" />
+                </div>
+                <div>
+                  <p className="font-semibold text-gray-900">Withdraw USD</p>
+                  <p className="text-sm text-gray-500">Cash pickup available</p>
+                </div>
               </div>
-              <div>
-                <p className="font-semibold text-gray-900">Withdraw USD</p>
-                <p className="text-sm text-gray-500">Cash pickup available</p>
-              </div>
-            </div>
-            <div className="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center">
-              <Lock size={16} className="text-gray-400" />
-            </div>
-          </div>
-          
-          <div className="bg-white p-4 rounded-xl border border-gray-200 flex items-center justify-between">
-            <div className="flex items-center">
-              <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mr-3">
-                <Zap size={20} className="text-blue-500" />
-              </div>
-              <div>
-                <p className="font-semibold text-gray-900">Priority Trading</p>
-                <p className="text-sm text-gray-500">Faster processing</p>
+              <div className="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center">
+                <Lock size={16} className="text-gray-400" />
               </div>
             </div>
-            <div className="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center">
-              <Lock size={16} className="text-gray-400" />
+          </Link>
+
+          <Link to="/premium" className="block">
+            <div className="bg-white p-4 rounded-xl border border-gray-200 flex items-center justify-between hover:shadow-sm transition-shadow">
+              <div className="flex items-center">
+                <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center mr-3">
+                  <Truck size={20} className="text-purple-500" />
+                </div>
+                <div>
+                  <p className="font-semibold text-gray-900">Get Cash delivered to your doorstep</p>
+                  <p className="text-sm text-gray-500">Home delivery service</p>
+                </div>
+              </div>
+              <div className="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center">
+                <Lock size={16} className="text-gray-400" />
+              </div>
             </div>
-          </div>
+          </Link>
+
+          <Link to="/premium" className="block">
+            <div className="bg-white p-4 rounded-xl border border-gray-200 flex items-center justify-between hover:shadow-sm transition-shadow">
+              <div className="flex items-center">
+                <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center mr-3">
+                  <RefreshCw size={20} className="text-orange-500" />
+                </div>
+                <div>
+                  <p className="font-semibold text-gray-900">Convert your local currency to cash</p>
+                  <p className="text-sm text-gray-500">Instant currency conversion</p>
+                </div>
+              </div>
+              <div className="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center">
+                <Lock size={16} className="text-gray-400" />
+              </div>
+            </div>
+          </Link>
+
+          <Link to="/premium" className="block">
+            <div className="bg-white p-4 rounded-xl border border-gray-200 flex items-center justify-between hover:shadow-sm transition-shadow">
+              <div className="flex items-center">
+                <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mr-3">
+                  <Zap size={20} className="text-blue-500" />
+                </div>
+                <div>
+                  <p className="font-semibold text-gray-900">Priority Trading</p>
+                  <p className="text-sm text-gray-500">Faster processing</p>
+                </div>
+              </div>
+              <div className="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center">
+                <Lock size={16} className="text-gray-400" />
+              </div>
+            </div>
+          </Link>
         </div>
       </div>
 

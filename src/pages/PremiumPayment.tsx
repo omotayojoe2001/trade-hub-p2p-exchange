@@ -1,10 +1,12 @@
-import React, { useMemo, useState } from 'react';
-import { ArrowLeft, Crown, Wallet, QrCode, Copy, CheckCircle, Bitcoin, Gem, Coins } from 'lucide-react';
+import React, { useMemo, useState, useRef } from 'react';
+import { ArrowLeft, Crown, Wallet, QrCode, Copy, CheckCircle, Bitcoin, Gem, Coins, Upload, FileText, Image } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { useNavigate } from 'react-router-dom';
 import PremiumBottomNavigation from '@/components/premium/PremiumBottomNavigation';
 import QRCodeLib from 'qrcode';
+import { useToast } from '@/hooks/use-toast';
+import { usePremium } from '@/hooks/usePremium';
 
 const COINS = [
   { id: 'bitcoin', symbol: 'BTC', name: 'Bitcoin', icon: Bitcoin },
@@ -33,11 +35,18 @@ const PREMIUM_PRICE_USD = 99.99;
 
 const PremiumPayment: React.FC = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
+  const { setPremium } = usePremium();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [selectedCoin, setSelectedCoin] = useState<CoinId>('bitcoin');
   const [selectedNetwork, setSelectedNetwork] = useState<string>(WALLET_MAP.bitcoin.network[0]);
   const [qrDataUrl, setQrDataUrl] = useState<string>('');
   const [copied, setCopied] = useState(false);
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [proofUploaded, setProofUploaded] = useState(false);
 
   const usdPrices: Record<CoinId, number> = {
     bitcoin: 65000,
@@ -69,8 +78,62 @@ const PremiumPayment: React.FC = () => {
     } catch {}
   };
 
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Validate file size (5MB max)
+      if (file.size > 5 * 1024 * 1024) {
+        toast({
+          title: "File too large",
+          description: "Please select a file smaller than 5MB",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // Validate file type
+      const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'application/pdf'];
+      if (!allowedTypes.includes(file.type)) {
+        toast({
+          title: "Invalid file type",
+          description: "Please select a PNG, JPG, or PDF file",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      setUploadedFile(file);
+    }
+  };
+
+  const handleUploadProof = async () => {
+    if (!uploadedFile) return;
+
+    setIsUploading(true);
+    try {
+      // Simulate upload delay
+      await new Promise(resolve => setTimeout(resolve, 2000));
+
+      setProofUploaded(true);
+      toast({
+        title: "Proof Uploaded",
+        description: "Payment proof has been uploaded successfully",
+      });
+    } catch (error) {
+      toast({
+        title: "Upload Failed",
+        description: "Failed to upload payment proof. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
   const goSuccess = () => {
     setStep(3);
+    // Set premium status
+    setPremium(true);
     setTimeout(() => navigate('/premium-dashboard'), 2200);
   };
 
@@ -189,10 +252,107 @@ const PremiumPayment: React.FC = () => {
                 </ul>
               </div>
             </div>
-            <Button className="w-full mt-4 bg-green-600 hover:bg-green-700 text-white" onClick={goSuccess}>
-              I have paid
-            </Button>
-            <Button variant="outline" className="w-full mt-2" onClick={() => setStep(1)}>Back</Button>
+          </Card>
+
+          {/* Upload Payment Proof */}
+          <Card className="p-4">
+            <div className="flex items-start space-x-3 mb-4">
+              <Upload size={20} className="text-purple-500 mt-0.5" />
+              <div>
+                <h4 className="font-medium text-gray-900">Upload Payment Proof</h4>
+                <p className="text-sm text-gray-600">Upload a screenshot or receipt of your payment</p>
+              </div>
+            </div>
+
+            {!uploadedFile ? (
+              <div
+                className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer hover:border-gray-400 transition-colors"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                <Upload size={24} className="text-gray-400 mx-auto mb-2" />
+                <p className="text-gray-600 mb-1">Tap to upload payment proof</p>
+                <p className="text-sm text-gray-500">PNG, JPG or PDF (Max 5MB)</p>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*,.pdf"
+                  onChange={handleFileSelect}
+                  className="hidden"
+                />
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {/* File Preview */}
+                <div className="border border-gray-200 rounded-lg p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center">
+                      {uploadedFile.type.startsWith('image/') ? (
+                        <Image size={20} className="text-blue-500 mr-2" />
+                      ) : (
+                        <FileText size={20} className="text-red-500 mr-2" />
+                      )}
+                      <div>
+                        <p className="font-medium text-gray-900">{uploadedFile.name}</p>
+                        <p className="text-sm text-gray-500">
+                          {(uploadedFile.size / 1024 / 1024).toFixed(2)} MB
+                        </p>
+                      </div>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setUploadedFile(null)}
+                    >
+                      Remove
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Upload Button */}
+                {!proofUploaded && (
+                  <Button
+                    onClick={handleUploadProof}
+                    disabled={isUploading}
+                    className="w-full bg-purple-600 hover:bg-purple-700 text-white"
+                  >
+                    {isUploading ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                        Uploading...
+                      </>
+                    ) : (
+                      <>
+                        <Upload size={20} className="mr-2" />
+                        Upload Proof
+                      </>
+                    )}
+                  </Button>
+                )}
+
+                {/* Upload Status */}
+                {proofUploaded && (
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                    <div className="flex items-center">
+                      <CheckCircle size={20} className="text-green-600 mr-2" />
+                      <span className="text-green-800 font-medium">Proof uploaded successfully</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            <div className="mt-4 space-y-2">
+              <Button
+                className="w-full bg-green-600 hover:bg-green-700 text-white"
+                onClick={goSuccess}
+                disabled={!proofUploaded}
+              >
+                {proofUploaded ? "Complete Payment" : "Upload proof to continue"}
+              </Button>
+              <Button variant="outline" className="w-full" onClick={() => setStep(1)}>
+                Back
+              </Button>
+            </div>
           </Card>
         </div>
       )}

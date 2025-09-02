@@ -5,11 +5,22 @@ import { Button } from "@/components/ui/button";
 import { useNavigate } from 'react-router-dom';
 import BottomNavigation from '@/components/BottomNavigation';
 import { useQuickAuth } from '@/hooks/useQuickAuth';
+import { usePremium } from '@/hooks/usePremium';
+import { useAuth } from '@/hooks/useAuth';
 
 const BuySell = () => {
   const [hoveredCard, setHoveredCard] = useState<string | null>(null);
   const { isQuickAuthActive } = useQuickAuth();
+  const { isPremium } = usePremium();
+  const { user } = useAuth();
   const navigate = useNavigate();
+
+  // Redirect premium users to premium trade page
+  React.useEffect(() => {
+    if (user && isPremium) {
+      navigate('/premium-trade');
+    }
+  }, [user, isPremium, navigate]);
 
   const handleSellCrypto = () => {
     navigate('/select-coin');
