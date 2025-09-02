@@ -59,7 +59,6 @@ const PremiumTrades = () => {
         });
         break;
 
-      case 'priority_matched':
       case 'matched':
         // Show trade progress
         navigate('/trade-progress', {
@@ -171,7 +170,7 @@ const PremiumTrades = () => {
                          trade.id.toLowerCase().includes(searchTerm.toLowerCase());
 
     const matchesFilter = filter === 'all' ||
-                         (filter === 'priority' && trade.isPriority) ||
+                         (filter === 'premium' && trade.isPriority) ||
                          (filter === 'completed' && trade.status === 'completed') ||
                          (filter === 'active' && trade.status !== 'completed');
 
@@ -234,7 +233,7 @@ const PremiumTrades = () => {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Trades</SelectItem>
-              <SelectItem value="priority">Priority Only</SelectItem>
+              <SelectItem value="premium">Premium Only</SelectItem>
               <SelectItem value="completed">Completed</SelectItem>
               <SelectItem value="active">Active</SelectItem>
             </SelectContent>
@@ -314,7 +313,7 @@ const PremiumTrades = () => {
                 <div className="mt-3 bg-gray-50 border border-gray-200 rounded-lg p-2">
                   <div className="text-xs text-gray-700 flex items-center">
                     <Crown size={12} className="mr-1 text-yellow-600" />
-                    Premium Priority Trade - Enhanced matching and support
+                    Premium Trade - Enhanced matching and support
                   </div>
                 </div>
               )}
@@ -329,7 +328,7 @@ const PremiumTrades = () => {
             className="h-12 bg-gray-900 hover:bg-gray-800 text-white"
           >
             <Zap size={16} className="mr-2" />
-            New Priority Trade
+            New Premium Trade
           </Button>
           <Button variant="outline" className="h-12">
             <Filter size={16} className="mr-2" />

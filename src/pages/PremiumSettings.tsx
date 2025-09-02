@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Crown, User, Shield, Bell, CreditCard, HelpCircle, LogOut, Camera, Upload, Settings, Star, Gift } from 'lucide-react';
+import { Crown, User, Shield, Bell, CreditCard, HelpCircle, LogOut, Camera, Upload, Settings, Star, Gift, Trash2, AlertTriangle, X, ArrowLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
@@ -19,6 +19,9 @@ const PremiumSettings = () => {
   
   const [showProfilePictureDialog, setShowProfilePictureDialog] = useState(false);
   const [profilePicture, setProfilePicture] = useState<string | null>(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
+  const [deleteConfirmation, setDeleteConfirmation] = useState('');
   const [premiumSettings, setPremiumSettings] = useState({
     priorityTrading: true,
     instantNotifications: true,
@@ -100,6 +103,34 @@ const PremiumSettings = () => {
     navigate('/login');
   };
 
+  const handleDeleteAccount = () => {
+    if (deleteConfirmation === 'DELETE') {
+      toast({
+        title: "Account Deletion Initiated",
+        description: "Your account deletion request has been submitted. You will receive a confirmation email.",
+        variant: "destructive"
+      });
+      setShowDeleteModal(false);
+      setDeleteConfirmation('');
+      // In real app, this would call the delete API
+    } else {
+      toast({
+        title: "Confirmation Required",
+        description: "Please type 'DELETE' to confirm account deletion",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleCancelSubscription = () => {
+    toast({
+      title: "Subscription Cancelled",
+      description: "Your premium subscription has been cancelled. You'll retain access until the end of your billing period.",
+      variant: "destructive"
+    });
+    setShowSubscriptionModal(false);
+  };
+
   const settingsItems = [
     {
       icon: <User size={20} className="text-blue-600" />,
@@ -135,6 +166,21 @@ const PremiumSettings = () => {
       description: 'Premium notification preferences',
       action: () => navigate('/premium-notification-settings'),
       premium: true
+    },
+    {
+      icon: <Crown size={20} className="text-purple-600" />,
+      title: 'Manage Subscription',
+      description: 'View and manage your premium subscription',
+      action: () => setShowSubscriptionModal(true),
+      premium: true
+    },
+    {
+      icon: <Trash2 size={20} className="text-red-600" />,
+      title: 'Delete Account',
+      description: 'Permanently delete your account and data',
+      action: () => setShowDeleteModal(true),
+      premium: false,
+      dangerous: true
     },
     {
       icon: <HelpCircle size={20} className="text-indigo-600" />,

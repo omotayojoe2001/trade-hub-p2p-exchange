@@ -9,7 +9,7 @@ import PremiumBottomNavigation from '@/components/premium/PremiumBottomNavigatio
 
 interface PremiumNotification {
   id: string;
-  type: 'priority_trade' | 'cash_delivery' | 'premium_support' | 'exclusive_offer';
+  type: 'premium_trade' | 'cash_delivery' | 'premium_support' | 'exclusive_offer';
   title: string;
   description: string;
   time: string;
@@ -36,8 +36,8 @@ const PremiumNotifications = () => {
     const premiumNotifications: PremiumNotification[] = [
       {
         id: '1',
-        type: 'priority_trade',
-        title: 'Priority Trade Matched!',
+        type: 'premium_trade',
+        title: 'Premium Trade Matched!',
         description: 'Your premium trade for 0.05 BTC was matched in 8 seconds. Payment required.',
         time: '2 mins ago',
         status: 'Action Required',
@@ -45,7 +45,7 @@ const PremiumNotifications = () => {
         icon: 'zap',
         iconBg: 'bg-yellow-100',
         isRead: false,
-        actionUrl: '/priority-trade',
+        actionUrl: '/premium-payment-status',
         priority: 'high',
         isPremium: true
       },

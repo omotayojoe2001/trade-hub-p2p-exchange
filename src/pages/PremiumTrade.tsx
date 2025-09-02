@@ -139,12 +139,12 @@ const PremiumTrade = () => {
           <h3 className="font-semibold text-gray-900 mb-3">Quick Access</h3>
           <div className="grid grid-cols-2 gap-3">
             <Button
-              onClick={() => navigate('/priority-trade')}
+              onClick={() => navigate('/premium-trades')}
               variant="outline"
               className="h-12"
             >
               <Crown size={16} className="mr-2 text-yellow-600" />
-              Ultra Priority
+              My Premium Trades
             </Button>
             <Button
               onClick={() => navigate('/trending-coins')}

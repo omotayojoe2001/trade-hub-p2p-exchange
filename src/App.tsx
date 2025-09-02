@@ -70,7 +70,7 @@ import NotificationsDemo from "./pages/NotificationsDemo";
 import PremiumSell from "./pages/PremiumSell";
 import CashDeliveryDetails from "./pages/CashDeliveryDetails";
 import CashPickupDetails from "./pages/CashPickupDetails";
-import PriorityTrade from "./pages/PriorityTrade";
+
 import SellForCash from "./pages/SellForCash";
 
 import CurrencyConversion from "./pages/CurrencyConversion";
@@ -265,7 +265,7 @@ const AppContent = () => {
             <Route path="/premium/sell" element={<PremiumSell />} />
             <Route path="/premium/cash-delivery" element={<CashDeliveryDetails />} />
             <Route path="/premium/cash-pickup" element={<CashPickupDetails />} />
-            <Route path="/priority-trade" element={<PriorityTrade />} />
+
             <Route path="/sell-for-cash" element={<SellForCash />} />
 
             <Route path="/currency-conversion" element={<CurrencyConversion />} />
