@@ -3,10 +3,12 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { User, Star, Clock, ArrowRight, ArrowUpDown, Banknote, Coins } from 'lucide-react';
 import CryptoIcon from '@/components/CryptoIcon';
+import ClickableUser from '@/components/ClickableUser';
 
 interface TradeRequest {
   id: string;
   merchant: string;
+  merchantId?: string;
   rating: number;
   coin: string;
   amount: string;
@@ -16,6 +18,8 @@ interface TradeRequest {
   paymentMethods: string[];
   type: 'buy' | 'sell';
   direction: string;
+  merchantUserType?: string;
+  merchantIsMerchant?: boolean;
 }
 
 interface TradeRequestCardProps {
@@ -34,18 +38,17 @@ export const TradeRequestCard: React.FC<TradeRequestCardProps> = ({
   return (
     <Card className="p-4 border border-gray-200 hover:shadow-md transition-shadow cursor-pointer" onClick={() => onAccept(request.id)}>
       <div className="flex items-start justify-between mb-3">
-        <div className="flex items-center">
-          <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mr-3">
-            <ArrowUpDown size={16} className="text-blue-600" />
-          </div>
-          <div>
-            <h4 className="font-medium text-gray-900 text-sm">{request.merchant}</h4>
-            <div className="flex items-center">
-              <Star size={12} className="text-yellow-400 mr-1" />
-              <span className="text-xs text-gray-500">{request.rating}</span>
-            </div>
-          </div>
-        </div>
+        <ClickableUser
+          userId={request.merchantId || ''}
+          displayName={request.merchant}
+          userType={request.merchantUserType}
+          isMerchant={request.merchantIsMerchant}
+          rating={request.rating}
+          size="md"
+          showRating={true}
+          showBadges={true}
+          clickable={!!request.merchantId}
+        />
         <div className="text-right">
           <div className="flex items-center text-orange-600 text-xs">
             <Clock size={12} className="mr-1" />

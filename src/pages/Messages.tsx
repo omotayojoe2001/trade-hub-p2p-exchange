@@ -7,6 +7,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { usePremium } from '@/hooks/usePremium';
 import { messageService, realtimeService } from '@/services/supabaseService';
+import ClickableUser from '@/components/ClickableUser';
 
 const Messages = () => {
   const navigate = useNavigate();
@@ -157,21 +158,17 @@ const Messages = () => {
           <button onClick={() => navigate(-1)}>
             <ArrowLeft size={24} className="text-foreground mr-4" />
           </button>
-          <div className="flex items-center">
-            <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center mr-3">
-              <span className="text-primary font-semibold">
-                {recipientName?.charAt(0) || 'U'}
-              </span>
-            </div>
-            <div>
-              <h1 className="text-lg font-semibold text-foreground">
-                {recipientName || 'Trade Partner'}
-              </h1>
-              <p className="text-sm text-muted-foreground">
-                {tradeId ? `Trade #${tradeId}` : 'Active now'}
-              </p>
-            </div>
-          </div>
+          <ClickableUser
+            userId={location.state?.recipientId || ''}
+            displayName={recipientName || 'Trade Partner'}
+            userType={location.state?.recipientUserType}
+            isMerchant={location.state?.recipientIsMerchant}
+            rating={location.state?.recipientRating}
+            size="md"
+            showRating={false}
+            showBadges={true}
+            clickable={!!location.state?.recipientId}
+          />
         </div>
         <div className="flex items-center space-x-2">
           <Button variant="ghost" size="sm">

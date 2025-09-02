@@ -95,6 +95,7 @@ import PremiumTradeRequests from "./pages/PremiumTradeRequests";
 import PremiumPaymentStatus from "./pages/PremiumPaymentStatus";
 import Premium2FA from "./pages/Premium2FA";
 import PremiumProfile from "./pages/PremiumProfile";
+import UserProfile from "./components/UserProfile";
 import EnhancedBuyCrypto from "./pages/EnhancedBuyCrypto";
 import SellCryptoBankTransfer from "./pages/SellCryptoBankTransfer";
 import SellCryptoCashPickup from "./pages/SellCryptoCashPickup";
@@ -290,6 +291,7 @@ const AppContent = () => {
             <Route path="/premium-payment-status" element={<PremiumPaymentStatus />} />
             <Route path="/premium-2fa" element={<Premium2FA />} />
             <Route path="/premium-profile" element={<PremiumProfile />} />
+            <Route path="/user-profile/:userId" element={<UserProfile />} />
             <Route path="/enhanced-buy-crypto" element={<EnhancedBuyCrypto />} />
             <Route path="/sell-crypto-bank-transfer" element={<SellCryptoBankTransfer />} />
             <Route path="/sell-crypto-cash-pickup" element={<SellCryptoCashPickup />} />
