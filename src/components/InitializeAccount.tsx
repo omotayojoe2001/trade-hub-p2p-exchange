@@ -29,7 +29,7 @@ const InitializeAccount = () => {
     try {
       // Check if user profile exists
       const { data: profile } = await supabase
-        .from('user_profiles')
+        .from('profiles')
         .select('*')
         .eq('user_id', user.id)
         .single();

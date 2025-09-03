@@ -34,17 +34,15 @@ export const PremiumProvider: React.FC<{ children: React.ReactNode }> = ({ child
         if (!user) return;
 
         const { data: profile } = await supabase
-          .from('user_profiles')
-          .select('is_premium, premium_expires_at')
+          .from('profiles')
+          .select('*')
           .eq('user_id', user.id)
           .single();
 
         if (profile) {
-          const isCurrentlyPremium = profile.is_premium &&
-            (!profile.premium_expires_at || new Date(profile.premium_expires_at) > new Date());
-
+          const isCurrentlyPremium = profile.user_type === 'premium';
           setIsPremium(isCurrentlyPremium);
-          setPremiumExpiry(profile.premium_expires_at ? new Date(profile.premium_expires_at) : null);
+          setPremiumExpiry(null); // Using user_type instead of expiry dates
         }
       } catch (error) {
         console.error('Error checking premium status:', error);
@@ -70,11 +68,9 @@ export const PremiumProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
       // Update database
       const { error } = await supabase
-        .from('user_profiles')
+        .from('profiles')
         .update({
-          is_premium: status,
-          premium_expires_at: expiry?.toISOString() || null,
-          verification_level: status ? 'premium' : 'basic'
+          user_type: status ? 'premium' : 'customer'
         })
         .eq('user_id', user.id);
 

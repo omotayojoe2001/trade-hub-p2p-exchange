@@ -18,7 +18,7 @@ export const useUserSetup = () => {
 
         // Check if user profile already exists
         const { data: existingProfile } = await supabase
-          .from('user_profiles')
+          .from('profiles')
           .select('id')
           .eq('user_id', user.id)
           .single();
@@ -31,23 +31,13 @@ export const useUserSetup = () => {
 
         // Create user profile automatically (FREE by default)
         const { error: profileError } = await supabase
-          .from('user_profiles')
+          .from('profiles')
           .insert({
             user_id: user.id,
-            full_name: user.email?.split('@')[0] || 'User',
-            is_premium: false, // Users start as FREE
-            verification_level: 'basic', // Basic verification level
-            trade_count: 0,
-            rating: 5.0,
-            total_volume: 0,
-            preferred_payment_methods: ['bank_transfer'], // Free users get basic payment methods
-            bank_accounts: [],
-            crypto_addresses: {},
-            settings: {
-              notifications: true,
-              email_alerts: true,
-              sms_alerts: false
-            }
+            display_name: user.email?.split('@')[0] || 'User',
+            user_type: 'customer',
+            is_merchant: false,
+            profile_completed: true
           });
 
         if (profileError) {

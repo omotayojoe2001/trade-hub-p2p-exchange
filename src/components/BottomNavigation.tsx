@@ -47,7 +47,7 @@ const BottomNavigation = () => {
 
   const navItems = [
     { path: '/home', icon: Home, label: 'Home' },
-    { path: '/buy-sell', icon: ArrowUpDown, label: 'Buy/Sell', hasAlert: hasNewTradeRequest },
+    { path: '/live-trading', icon: ArrowUpDown, label: 'Live Trade', hasAlert: hasNewTradeRequest },
     { path: '/news', icon: Newspaper, label: 'Updates' },
     { path: '/my-trades', icon: Briefcase, label: 'My Trades' },
     { path: '/settings', icon: Settings, label: 'Settings' }
@@ -64,7 +64,7 @@ const BottomNavigation = () => {
               location.pathname === item.path ? 'text-brand' : 'text-foreground/40 hover:text-foreground'
             }`}
             onClick={() => {
-              if (item.path === '/buy-sell' && hasNewTradeRequest) {
+              if (item.path === '/live-trading' && hasNewTradeRequest) {
                 setHasNewTradeRequest(false);
               }
             }}
