@@ -35,19 +35,19 @@ interface TradeRequest {
     trade_count: number;
     verification_level: string;
   };
-  // Display properties added by transformation
-  userName?: string;
-  rating?: number;
-  coin?: string;
-  amount?: string;
-  rate?: string;
-  nairaAmount?: string;
-  timeLeft?: string;
-  paymentMethods?: string[];
-  type?: string;
-  direction?: string;
-  isPremium?: boolean;
-  tradeCount?: number;
+  // Display properties (non-conflicting names)
+  display_name?: string;
+  display_rating?: number;
+  display_coin?: string;
+  display_amount?: string;
+  display_rate?: string;
+  display_naira_amount?: string;
+  display_time_left?: string;
+  display_payment_methods?: string[];
+  display_type?: string;
+  display_direction?: string;
+  display_is_premium?: boolean;
+  display_trade_count?: number;
   verificationLevel?: string;
   originalRequest?: any;
 }

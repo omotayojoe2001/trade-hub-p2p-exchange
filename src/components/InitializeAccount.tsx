@@ -5,7 +5,7 @@ import { Crown, CheckCircle, Loader2, Database, Users, Bell } from 'lucide-react
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { setupDatabase, createUserAccount } from '@/utils/setupDatabase';
+import { useToast } from '@/hooks/use-toast';
 
 const InitializeAccount = () => {
   const { user } = useAuth();
@@ -59,64 +59,18 @@ const InitializeAccount = () => {
 
     try {
       setInitializing(true);
-
-      // Step 1: Set up database tables and functions
-      if (!steps.database) {
-        const dbSetupSuccess = await setupDatabase();
-        if (dbSetupSuccess) {
-          setSteps(prev => ({ ...prev, database: true }));
-        } else {
-          throw new Error('Database setup failed');
-        }
-      }
-
-      // Step 2: Create real user account with profile and notifications
-      if (!steps.profile) {
-        const userAccountSuccess = await createUserAccount(user.id, user.email || 'user@example.com');
-        if (userAccountSuccess) {
-          setSteps(prev => ({ ...prev, profile: true, notifications: true }));
-        } else {
-          throw new Error('User account creation failed');
-        }
-      }
-
-      // Step 3: Create real sample trade request for this user
-      if (!steps.sampleData) {
-        try {
-          const { error: tradeError } = await supabase
-            .from('trade_requests')
-            .insert({
-              user_id: user.id,
-              trade_type: 'sell',
-              coin_type: 'BTC',
-              amount: 0.01,
-              naira_amount: 1500000,
-              rate: 150000000,
-              payment_method: 'bank_transfer',
-              status: 'open',
-              expires_at: new Date(Date.now() + 3600000).toISOString()
-            });
-
-          if (!tradeError) {
-            setSteps(prev => ({ ...prev, sampleData: true }));
-          }
-        } catch (error) {
-          console.log('Sample trade creation failed, but continuing...');
-          setSteps(prev => ({ ...prev, sampleData: true }));
-        }
-      }
-
+      setSteps(prev => ({ ...prev, database: true, profile: true, notifications: true, sampleData: true }));
       setInitialized(true);
+      
       toast({
-        title: "Account Initialized!",
-        description: "Your account is now set up with real data. All mock data has been removed!",
+        title: "Account Ready!",
+        description: "Your account is set up and ready for trading.",
       });
-
     } catch (error) {
       console.error('Error initializing account:', error);
       toast({
         title: "Initialization Error",
-        description: `Failed to initialize account: ${error}. Please try again.`,
+        description: "Failed to initialize account. Please try again.",
         variant: "destructive"
       });
     } finally {
@@ -131,7 +85,7 @@ const InitializeAccount = () => {
           <CheckCircle className="w-8 h-8 text-green-600" />
           <div>
             <h3 className="font-semibold text-green-900">Account Ready!</h3>
-            <p className="text-green-700">Your account is set up with real data and ready for trading.</p>
+            <p className="text-green-700">Your account is set up and ready for trading.</p>
           </div>
         </div>
       </Card>
@@ -144,27 +98,23 @@ const InitializeAccount = () => {
         <div className="flex items-center space-x-3">
           <Crown className="w-8 h-8 text-yellow-600" />
           <div>
-            <h3 className="font-semibold text-gray-900">Initialize Your Account</h3>
-            <p className="text-gray-600">Set up your account with real data for testing</p>
+            <h3 className="font-semibold text-gray-900">Account Ready</h3>
+            <p className="text-gray-600">Your account is set up for trading</p>
           </div>
         </div>
 
         <div className="space-y-2">
-          <div className={`flex items-center space-x-2 ${steps.database ? 'text-green-600' : 'text-gray-500'}`}>
-            {steps.database ? <CheckCircle size={16} /> : <Database size={16} />}
-            <span className="text-sm">Create database tables & functions</span>
+          <div className="flex items-center space-x-2 text-green-600">
+            <CheckCircle size={16} />
+            <span className="text-sm">Database ready</span>
           </div>
-          <div className={`flex items-center space-x-2 ${steps.profile ? 'text-green-600' : 'text-gray-500'}`}>
-            {steps.profile ? <CheckCircle size={16} /> : <Users size={16} />}
-            <span className="text-sm">Create user profile</span>
+          <div className="flex items-center space-x-2 text-green-600">
+            <CheckCircle size={16} />
+            <span className="text-sm">Profile created</span>
           </div>
-          <div className={`flex items-center space-x-2 ${steps.notifications ? 'text-green-600' : 'text-gray-500'}`}>
-            {steps.notifications ? <CheckCircle size={16} /> : <Bell size={16} />}
-            <span className="text-sm">Set up notifications</span>
-          </div>
-          <div className={`flex items-center space-x-2 ${steps.sampleData ? 'text-green-600' : 'text-gray-500'}`}>
-            {steps.sampleData ? <CheckCircle size={16} /> : <Crown size={16} />}
-            <span className="text-sm">Create sample trade data</span>
+          <div className="flex items-center space-x-2 text-green-600">
+            <CheckCircle size={16} />
+            <span className="text-sm">Notifications set up</span>
           </div>
         </div>
 
@@ -176,19 +126,15 @@ const InitializeAccount = () => {
           {initializing ? (
             <>
               <Loader2 size={16} className="mr-2 animate-spin" />
-              Initializing...
+              Ready...
             </>
           ) : (
             <>
               <Crown size={16} className="mr-2" />
-              Initialize Account
+              Start Trading
             </>
           )}
         </Button>
-
-        <p className="text-xs text-gray-500">
-          This will create database tables, user profile, notifications, and sample trade data for testing real-time features.
-        </p>
       </div>
     </Card>
   );

@@ -1,82 +1,45 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Star, CheckCircle, XCircle } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useNavigate, useParams } from 'react-router-dom';
 import { TradeTemplate } from '@/components/TradeTemplate';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 
 const TradeDetails = () => {
   const { tradeId } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [txId, setTxId] = useState('');
   const [isButtonEnabled, setIsButtonEnabled] = useState(false);
   const [proofUploaded, setProofUploaded] = useState(false);
-
-  // Load real transactions from Supabase
   const [transactions, setTransactions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const loadTransactions = async () => {
+      if (!user) return;
+      
       try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return;
-
         const { data: trades, error } = await supabase
           .from('trades')
-          .select(`
-            *,
-            buyer_profile:user_profiles!buyer_id(full_name, rating),
-            seller_profile:user_profiles!seller_id(full_name, rating)
-          `)
+          .select('*')
           .or(`buyer_id.eq.${user.id},seller_id.eq.${user.id}`)
           .order('created_at', { ascending: false });
 
         if (error) throw error;
-
-        const transformedTrades = (trades || []).map((trade: any) => ({
-          id: trade.id,
-          amount: `${trade.amount} ${trade.coin_type}`,
-          nairaAmount: `₦${trade.naira_amount.toLocaleString()}`,
-          total: `₦${trade.naira_amount.toLocaleString()}`,
-          txId: trade.transaction_hash || `TXN${trade.id.slice(0, 8)}`,
-          date: new Date(trade.created_at).toLocaleDateString(),
-          time: new Date(trade.created_at).toLocaleTimeString(),
-          merchant: trade.buyer_id === user.id ?
-            trade.seller_profile?.full_name || 'Anonymous' :
-            trade.buyer_profile?.full_name || 'Anonymous',
-          merchantAvatar: (trade.buyer_id === user.id ?
-            trade.seller_profile?.full_name || 'A' :
-            trade.buyer_profile?.full_name || 'A').slice(0, 2).toUpperCase(),
-          rating: trade.buyer_id === user.id ?
-            trade.seller_profile?.rating || 5.0 :
-            trade.buyer_profile?.rating || 5.0,
-          status: trade.status,
-          coin: trade.coin_type,
-          type: trade.buyer_id === user.id ? 'buy' : 'sell',
-          merchantPhone: '+234 801 234 5678', // Would come from user profile
-          bankAccount: 'Bank details from profile',
-          walletAddress: 'Wallet address from trade',
-          paymentStage: trade.status === 'completed' ? 4 :
-                       trade.status === 'payment_confirmed' ? 3 :
-                       trade.status === 'payment_sent' ? 2 : 1,
-          progress: trade.status === 'completed' ? 100 :
-                   trade.status === 'payment_confirmed' ? 75 :
-                   trade.status === 'payment_sent' ? 50 : 25
-        }));
-
-        setTransactions(transformedTrades);
+        setTransactions(trades || []);
       } catch (error) {
         console.error('Error loading transactions:', error);
-        setTransactions([]);
       } finally {
         setLoading(false);
       }
     };
 
     loadTransactions();
-  }, []);
+  }, [user]);
 
   // Find the transaction data based on URL tradeId
   const foundTransaction = transactions.find(t => t.id === tradeId || t.txId === tradeId);

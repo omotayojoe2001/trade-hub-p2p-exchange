@@ -73,7 +73,7 @@ const DeliveryTracking = () => {
         status: result.status,
         agentName: result.agent_name || 'Agent Pending',
         agentPhone: result.agent_phone || 'N/A',
-        estimatedArrival: result.estimated_arrival ? new Date(result.estimated_arrival).toLocaleTimeString() : 'TBD',
+        estimatedArrival: 'TBD',
         currentLocation: result.current_location || 'Processing',
         timeline: result.timeline || []
       };
