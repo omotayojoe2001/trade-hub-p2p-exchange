@@ -2,35 +2,43 @@ import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Crown, Home, Briefcase, Settings, Bell, MessageCircle, TrendingUp } from 'lucide-react';
 import { usePremium } from '@/hooks/usePremium';
+import { supabase } from '@/integrations/supabase/client';
 
 const PremiumBottomNavigation = () => {
   const location = useLocation();
   const { isPremium } = usePremium();
   const [hasActiveAlerts, setHasActiveAlerts] = useState(false);
 
-  // Check for active codes or trade requests
+  // Check for real active codes or trade requests
   useEffect(() => {
-    const checkForAlerts = () => {
-      // Check for active trade codes
-      const activeCode = localStorage.getItem('activeTradeCode');
-      if (activeCode) {
-        try {
-          const codeData = JSON.parse(activeCode);
-          if (codeData.status !== 'completed') {
-            setHasActiveAlerts(true);
-            return;
-          }
-        } catch (error) {
-          console.error('Error parsing active code:', error);
-        }
-      }
+    const checkForAlerts = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
 
-      // Check for new trade requests (mock for now)
-      const lastChecked = localStorage.getItem('lastTradeRequestCheck');
-      const now = Date.now();
-      if (!lastChecked || now - parseInt(lastChecked) > 300000) { // 5 minutes
-        setHasActiveAlerts(true);
-      } else {
+        // Check for real active tracking codes
+        const { data: trackingCodes } = await supabase
+          .from('tracking_codes')
+          .select('id')
+          .eq('user_id', user.id)
+          .eq('status', 'active')
+          .limit(1);
+
+        // Check for unread notifications
+        const { data: notifications } = await supabase
+          .from('notifications')
+          .select('id')
+          .eq('user_id', user.id)
+          .eq('read', false)
+          .in('type', ['trade_request', 'trade_update'])
+          .limit(1);
+
+        const hasTracking = trackingCodes && trackingCodes.length > 0;
+        const hasNotifications = notifications && notifications.length > 0;
+
+        setHasActiveAlerts(hasTracking || hasNotifications);
+      } catch (error) {
+        console.error('Error checking for alerts:', error);
         setHasActiveAlerts(false);
       }
     };

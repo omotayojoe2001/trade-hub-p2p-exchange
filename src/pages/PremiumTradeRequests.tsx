@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Crown, Search, Filter, Clock, TrendingUp, ArrowUpDown, Banknote, Coins, Loader2, Star, Zap } from 'lucide-react';
+import { Crown, Search, Filter, Clock, TrendingUp, ArrowUpDown, Banknote, Coins, Loader2, Star, Zap, Plus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,48 +7,50 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent } from '@/components/ui/card';
 import PremiumBottomNavigation from '@/components/premium/PremiumBottomNavigation';
 import { useAuth } from '@/hooks/useAuth';
-import { tradeRequestService } from '@/services/supabaseService';
+import { realTimeTradeRequestService, deliveryTrackingService } from '@/services/supabaseService';
+import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import CryptoIcon from '@/components/CryptoIcon';
 
-// Mock data function
-const getMockTradeRequests = () => {
-  return [
-    {
-      id: '1',
-      user_id: 'user1',
-      crypto_type: 'BTC',
-      amount: 0.05,
-      rate: 150000000,
-      cash_amount: 7500000,
-      direction: 'crypto_to_cash',
-      created_at: new Date().toISOString(),
-      status: 'active'
-    },
-    {
-      id: '2',
-      user_id: 'user2',
-      crypto_type: 'ETH',
-      amount: 2.5,
-      rate: 5350000,
-      cash_amount: 13375000,
-      direction: 'cash_to_crypto',
-      created_at: new Date(Date.now() - 300000).toISOString(),
-      status: 'active'
-    },
-    {
-      id: '3',
-      user_id: 'user3',
-      crypto_type: 'USDT',
-      amount: 1000,
-      rate: 1550,
-      cash_amount: 1550000,
-      direction: 'crypto_to_cash',
-      created_at: new Date(Date.now() - 600000).toISOString(),
-      status: 'active'
-    }
-  ];
-};
+// Real-time trade request interface
+interface TradeRequest {
+  id: string;
+  user_id: string;
+  trade_type: 'buy' | 'sell';
+  coin_type: string;
+  amount: number;
+  naira_amount: number;
+  rate: number;
+  payment_method?: string;
+  bank_account_details?: any;
+  notes?: string;
+  status: string;
+  expires_at: string;
+  matched_user_id?: string;
+  created_at: string;
+  updated_at: string;
+  user_profiles?: {
+    full_name: string;
+    rating: number;
+    trade_count: number;
+    verification_level: string;
+  };
+  // Display properties added by transformation
+  userName?: string;
+  rating?: number;
+  coin?: string;
+  amount?: string;
+  rate?: string;
+  nairaAmount?: string;
+  timeLeft?: string;
+  paymentMethods?: string[];
+  type?: string;
+  direction?: string;
+  isPremium?: boolean;
+  tradeCount?: number;
+  verificationLevel?: string;
+  originalRequest?: any;
+}
 
 const PremiumTradeRequests = () => {
   const navigate = useNavigate();
@@ -56,10 +58,11 @@ const PremiumTradeRequests = () => {
   const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState('');
   const [coinFilter, setCoinFilter] = useState('all');
-  const [tradeRequests, setTradeRequests] = useState<any[]>([]);
+  const [tradeRequests, setTradeRequests] = useState<TradeRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeCode, setActiveCode] = useState<any>(null);
+  const [acceptingRequest, setAcceptingRequest] = useState<string | null>(null);
 
   // Check for active codes
   useEffect(() => {
@@ -95,30 +98,33 @@ const PremiumTradeRequests = () => {
         setLoading(true);
         setError(null);
 
-        // Use mock data instead of Supabase for now
-        const requests = getMockTradeRequests();
+        // Get real trade requests from Supabase
+        const requests = await realTimeTradeRequestService.getOpenTradeRequests();
         
         // Transform requests for display
-        const transformedRequests = requests.map((request: any) => {
-          const timeLeft = calculateTimeLeft(request.created_at);
-          
+        const transformedRequests = requests.map((request: TradeRequest) => {
+          const timeLeft = calculateTimeLeft(request.expires_at);
+
           return {
             id: request.id,
-            userName: getUserDisplayName(request.user_id),
-            rating: 4.5 + Math.random() * 0.5, // Random rating between 4.5-5.0
-            coin: request.crypto_type,
+            userName: request.user_profiles?.full_name || 'Anonymous User',
+            rating: request.user_profiles?.rating || 5.0,
+            coin: request.coin_type,
             amount: request.amount.toString(),
-            rate: `₦${request.rate.toLocaleString()}/${request.crypto_type}`,
-            nairaAmount: `₦${(request.cash_amount || request.amount * request.rate).toLocaleString()}`,
+            rate: `₦${request.rate.toLocaleString()}/${request.coin_type}`,
+            nairaAmount: `₦${request.naira_amount.toLocaleString()}`,
             timeLeft,
             paymentMethods: ['Bank Transfer', 'Cash Delivery', 'Cash Pickup'],
-            type: request.direction === 'crypto_to_cash' ? 'sell' : 'buy',
-            direction: request.direction === 'crypto_to_cash'
+            type: request.trade_type,
+            direction: request.trade_type === 'sell'
               ? 'User wants to sell crypto to you'
               : 'User wants to buy crypto from you',
             status: request.status,
             created_at: request.created_at,
-            isPremium: Math.random() > 0.3 // 70% chance of premium user
+            isPremium: request.user_profiles?.verification_level === 'premium',
+            tradeCount: request.user_profiles?.trade_count || 0,
+            verificationLevel: request.user_profiles?.verification_level || 'basic',
+            originalRequest: request
           };
         });
 
@@ -128,15 +134,34 @@ const PremiumTradeRequests = () => {
         setError('Failed to load trade requests');
         toast({
           title: "Error",
-          description: "Failed to load trade requests. Please try again.",
+          description: "Failed to load trade requests. Using demo mode.",
           variant: "destructive"
         });
+        // Set empty array on error - user can create new requests
+        setTradeRequests([]);
       } finally {
         setLoading(false);
       }
     };
 
     loadTradeRequests();
+
+    // Set up real-time subscription for new trade requests
+    const channel = supabase
+      .channel('trade_requests_changes')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'trade_requests'
+      }, (payload) => {
+        console.log('Trade request change:', payload);
+        loadTradeRequests(); // Reload data on changes
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [user, toast]);
 
   const calculateTimeLeft = (createdAt: string): string => {
@@ -160,9 +185,66 @@ const PremiumTradeRequests = () => {
     return names[index];
   };
 
-  const handleAcceptTrade = (requestId: string) => {
+  const handleAcceptTrade = async (requestId: string) => {
+    if (acceptingRequest) return; // Prevent double-clicking
+
+    try {
+      setAcceptingRequest(requestId);
+
+      // Accept the trade request in Supabase
+      const { trade, request } = await realTimeTradeRequestService.acceptTradeRequest(requestId);
+
+      toast({
+        title: "Trade Request Accepted!",
+        description: `You've accepted the ${request.trade_type} request for ${request.amount} ${request.coin_type}`,
+      });
+
+      // Create delivery tracking if it's a cash delivery/pickup trade
+      if (request.payment_method === 'cash_delivery' || request.payment_method === 'cash_pickup') {
+        const trackingData = await deliveryTrackingService.createDeliveryTracking({
+          trade_id: trade.id,
+          delivery_type: request.payment_method,
+          amount: request.naira_amount,
+          currency: 'NGN',
+          crypto_type: request.coin_type,
+          crypto_amount: request.amount,
+          pickup_location: request.payment_method === 'cash_pickup' ? 'Ikeja City Mall' : undefined,
+          delivery_address: request.payment_method === 'cash_delivery' ? 'User Address' : undefined
+        });
+
+        // Navigate to tracking page
+        navigate('/delivery-tracking', {
+          state: {
+            trackingCode: trackingData.tracking_code,
+            trade: trade,
+            request: request
+          }
+        });
+      } else {
+        // Navigate to premium payment status for bank transfers
+        navigate('/premium-payment-status', {
+          state: {
+            trade: trade,
+            request: request
+          }
+        });
+      }
+
+    } catch (error) {
+      console.error('Error accepting trade:', error);
+      toast({
+        title: "Error",
+        description: "Failed to accept trade request. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setAcceptingRequest(null);
+    }
+  };
+
+  const handleViewDetails = (requestId: string) => {
     const request = tradeRequests.find(r => r.id === requestId);
-    navigate('/premium-trade-request-details', { 
+    navigate('/premium-trade-request-details', {
       state: { request }
     });
   };
@@ -222,6 +304,23 @@ const PremiumTradeRequests = () => {
               <div className="text-2xl font-bold text-gray-900">95%</div>
               <div className="text-xs text-gray-600">Success Rate</div>
             </div>
+          </div>
+        </Card>
+
+        {/* Create New Request Button */}
+        <Card className="p-4 bg-gradient-to-r from-yellow-50 to-orange-50 border-yellow-200">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="font-semibold text-gray-900">Create Your Own Request</h3>
+              <p className="text-sm text-gray-600">Set your own rates and terms</p>
+            </div>
+            <Button
+              onClick={() => navigate('/create-trade-request')}
+              className="bg-yellow-600 hover:bg-yellow-700 text-white"
+            >
+              <Plus size={16} className="mr-2" />
+              Create Request
+            </Button>
           </div>
         </Card>
       </div>
@@ -374,20 +473,37 @@ const PremiumTradeRequests = () => {
                     </p>
                   </div>
 
-                  <Button 
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleAcceptTrade(request.id);
-                    }}
-                    className={`w-full py-2 text-sm ${
-                      request.isPremium 
-                        ? 'bg-yellow-600 hover:bg-yellow-700' 
-                        : 'bg-gray-900 hover:bg-gray-800'
-                    } text-white`}
-                  >
-                    {request.isPremium && <Crown size={14} className="mr-2" />}
-                    Accept Trade Request
-                  </Button>
+                  <div className="grid grid-cols-2 gap-2">
+                    <Button
+                      variant="outline"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleViewDetails(request.id);
+                      }}
+                      className="py-2 text-sm"
+                    >
+                      View Details
+                    </Button>
+                    <Button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleAcceptTrade(request.id);
+                      }}
+                      disabled={acceptingRequest === request.id}
+                      className={`py-2 text-sm ${
+                        request.isPremium
+                          ? 'bg-yellow-600 hover:bg-yellow-700'
+                          : 'bg-gray-900 hover:bg-gray-800'
+                      } text-white`}
+                    >
+                      {acceptingRequest === request.id ? (
+                        <Loader2 size={14} className="mr-2 animate-spin" />
+                      ) : (
+                        request.isPremium && <Crown size={14} className="mr-2" />
+                      )}
+                      {acceptingRequest === request.id ? 'Accepting...' : 'Accept Trade'}
+                    </Button>
+                  </div>
                 </CardContent>
               </Card>
             );

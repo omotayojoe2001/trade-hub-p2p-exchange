@@ -4,39 +4,62 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { useNavigate } from 'react-router-dom';
 import PremiumBottomNavigation from '@/components/premium/PremiumBottomNavigation';
+import { realTimeTradeRequestService } from '@/services/supabaseService';
+import { useAuth } from '@/hooks/useAuth';
 
 const PremiumTrade = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [tradeRequests, setTradeRequests] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Mock trade requests data
+  // Load real trade requests data
   useEffect(() => {
-    const mockRequests = [
-      {
-        id: '1',
-        userName: 'Sarah Wilson',
-        rating: 4.9,
-        coin: 'BTC',
-        amount: '0.05',
-        rate: '₦150,234,500/BTC',
-        timeLeft: '15m left',
-        type: 'buy',
-        isPremium: true
-      },
-      {
-        id: '2',
-        userName: 'Mike Chen',
-        rating: 4.7,
-        coin: 'ETH',
-        amount: '2.5',
-        rate: '₦5,358,309/ETH',
-        timeLeft: '8m left',
-        type: 'sell',
-        isPremium: true
+    const loadTradeRequests = async () => {
+      if (!user) return;
+
+      try {
+        setLoading(true);
+        const requests = await realTimeTradeRequestService.getOpenTradeRequests();
+
+        // Transform for display
+        const transformedRequests = requests.slice(0, 2).map((request: any) => ({
+          id: request.id,
+          userName: request.user_profiles?.full_name || 'Anonymous User',
+          rating: request.user_profiles?.rating || 5.0,
+          coin: request.coin_type,
+          amount: request.amount.toString(),
+          rate: `₦${request.rate.toLocaleString()}/${request.coin_type}`,
+          timeLeft: calculateTimeLeft(request.expires_at),
+          type: request.trade_type,
+          isPremium: request.user_profiles?.verification_level === 'premium',
+          originalRequest: request
+        }));
+
+        setTradeRequests(transformedRequests);
+      } catch (error) {
+        console.error('Error loading trade requests:', error);
+        // Fallback to empty array
+        setTradeRequests([]);
+      } finally {
+        setLoading(false);
       }
-    ];
-    setTradeRequests(mockRequests);
-  }, []);
+    };
+
+    loadTradeRequests();
+  }, [user]);
+
+  const calculateTimeLeft = (expiresAt: string) => {
+    const now = new Date();
+    const expiry = new Date(expiresAt);
+    const diffMs = expiry.getTime() - now.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+
+    if (diffMins <= 0) return 'Expired';
+    if (diffMins < 60) return `${diffMins}m left`;
+    const diffHours = Math.floor(diffMins / 60);
+    return `${diffHours}h ${diffMins % 60}m left`;
+  };
 
   const tradeOptions = [
     {

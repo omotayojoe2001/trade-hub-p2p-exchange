@@ -4,9 +4,11 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useNavigate } from 'react-router-dom';
 import PremiumBottomNavigation from '@/components/premium/PremiumBottomNavigation';
+import { useUserSetup } from '@/hooks/useUserSetup';
 
 const PremiumDashboard = () => {
   const navigate = useNavigate();
+  const { isSetupComplete, isSettingUp } = useUserSetup();
 
   const premiumFeatures = [
     {

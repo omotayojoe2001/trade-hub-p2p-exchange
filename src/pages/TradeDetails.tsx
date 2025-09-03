@@ -13,54 +13,75 @@ const TradeDetails = () => {
   const [isButtonEnabled, setIsButtonEnabled] = useState(false);
   const [proofUploaded, setProofUploaded] = useState(false);
 
-  // Mock transactions data for demo
-  const mockTransactions = [
-    {
-      id: 1,
-      amount: '0.05 BTC',
-      nairaAmount: '₦45,200,000',
-      total: '₦2,260,000',
-      txId: 'TXN123456789',
-      date: '2023-10-26',
-      time: '14:30',
-      merchant: 'Michael Adebayo',
-      merchantAvatar: 'MA',
-      rating: 4.8,
-      status: 'completed',
-      coin: 'BTC',
-      type: 'sell',
-      merchantPhone: '+234 801 234 5678',
-      bankAccount: 'GT Bank - 0123456789',
-      walletAddress: 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh',
-      paymentStage: 4,
-      progress: 100
-    },
-    {
-      id: 2,
-      amount: '1.2 ETH',
-      nairaAmount: '₦3,450,000',
-      total: '₦4,140,000',
-      txId: 'TXN789012345',
-      date: '2023-10-25',
-      time: '09:15',
-      merchant: 'Sarah Johnson',
-      merchantAvatar: 'SJ',
-      rating: 4.5,
-      status: 'pending',
-      coin: 'ETH',
-      type: 'buy',
-      merchantPhone: '+234 802 345 6789',
-      bankAccount: 'Access Bank - 0987654321',
-      walletAddress: '0x742d35Cc6634C0532925a3b8D563C9A7c3c6b0E2',
-      paymentStage: 2,
-      progress: 50
-    }
-  ];
+  // Load real transactions from Supabase
+  const [transactions, setTransactions] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Find the transaction data based on URL txId
-  const foundTransaction = mockTransactions.find(t => t.txId === tradeId || String(t.id) === tradeId);
-  
-  // Mock transaction data - use found transaction or default
+  useEffect(() => {
+    const loadTransactions = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        const { data: trades, error } = await supabase
+          .from('trades')
+          .select(`
+            *,
+            buyer_profile:user_profiles!buyer_id(full_name, rating),
+            seller_profile:user_profiles!seller_id(full_name, rating)
+          `)
+          .or(`buyer_id.eq.${user.id},seller_id.eq.${user.id}`)
+          .order('created_at', { ascending: false });
+
+        if (error) throw error;
+
+        const transformedTrades = (trades || []).map((trade: any) => ({
+          id: trade.id,
+          amount: `${trade.amount} ${trade.coin_type}`,
+          nairaAmount: `₦${trade.naira_amount.toLocaleString()}`,
+          total: `₦${trade.naira_amount.toLocaleString()}`,
+          txId: trade.transaction_hash || `TXN${trade.id.slice(0, 8)}`,
+          date: new Date(trade.created_at).toLocaleDateString(),
+          time: new Date(trade.created_at).toLocaleTimeString(),
+          merchant: trade.buyer_id === user.id ?
+            trade.seller_profile?.full_name || 'Anonymous' :
+            trade.buyer_profile?.full_name || 'Anonymous',
+          merchantAvatar: (trade.buyer_id === user.id ?
+            trade.seller_profile?.full_name || 'A' :
+            trade.buyer_profile?.full_name || 'A').slice(0, 2).toUpperCase(),
+          rating: trade.buyer_id === user.id ?
+            trade.seller_profile?.rating || 5.0 :
+            trade.buyer_profile?.rating || 5.0,
+          status: trade.status,
+          coin: trade.coin_type,
+          type: trade.buyer_id === user.id ? 'buy' : 'sell',
+          merchantPhone: '+234 801 234 5678', // Would come from user profile
+          bankAccount: 'Bank details from profile',
+          walletAddress: 'Wallet address from trade',
+          paymentStage: trade.status === 'completed' ? 4 :
+                       trade.status === 'payment_confirmed' ? 3 :
+                       trade.status === 'payment_sent' ? 2 : 1,
+          progress: trade.status === 'completed' ? 100 :
+                   trade.status === 'payment_confirmed' ? 75 :
+                   trade.status === 'payment_sent' ? 50 : 25
+        }));
+
+        setTransactions(transformedTrades);
+      } catch (error) {
+        console.error('Error loading transactions:', error);
+        setTransactions([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadTransactions();
+  }, []);
+
+  // Find the transaction data based on URL tradeId
+  const foundTransaction = transactions.find(t => t.id === tradeId || t.txId === tradeId);
+
+  // Use real transaction data or show not found
   const transactionDetails = foundTransaction ? {
     id: foundTransaction.txId,
     amount: foundTransaction.amount,
@@ -81,27 +102,38 @@ const TradeDetails = () => {
       bankAccount: foundTransaction.bankAccount,
       trades: Math.floor(Math.random() * 500) + 50
     }
-  } : {
-    id: tradeId || 'TXN123456789',
-    amount: '0.05 BTC',
-    nairaAmount: '₦45,200,000',
-    total: '₦2,260,000',
-    date: '2023-10-26',
-    time: '14:30',
-    status: 'completed' as 'completed' | 'cancelled' | 'pending' | 'failed',
-    coin: 'BTC',
-    type: 'sell' as 'buy' | 'sell',
-    walletAddress: 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh',
-    paymentStage: 4,
-    merchant: {
-      name: 'John Merchant',
-      avatar: 'JM',
-      rating: 4.8,
-      phone: '+234 901 234 5678',
-      bankAccount: 'First Bank - 0123456789',
-      trades: 234
-    }
-  };
+  } : null;
+
+  // If no transaction found and not loading, show not found
+  if (!loading && !transactionDetails) {
+    return (
+      <div className="min-h-screen bg-gray-50 p-4">
+        <div className="max-w-md mx-auto">
+          <div className="text-center py-8">
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">Trade Not Found</h2>
+            <p className="text-gray-600 mb-4">The trade you're looking for doesn't exist or you don't have access to it.</p>
+            <Button onClick={() => navigate('/my-trades')} className="bg-blue-600 hover:bg-blue-700">
+              View My Trades
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // If still loading, show loading state
+  if (loading || !transactionDetails) {
+    return (
+      <div className="min-h-screen bg-gray-50 p-4">
+        <div className="max-w-md mx-auto">
+          <div className="text-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+            <p className="text-gray-600 mt-4">Loading trade details...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const handleTxIdChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;

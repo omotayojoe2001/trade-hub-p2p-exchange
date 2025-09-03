@@ -5,6 +5,7 @@ import { ArrowUp, ArrowDown, Clock, Building2, Bell, TrendingUp, ChevronRight, S
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import BottomNavigation from '@/components/BottomNavigation';
+import { useUserSetup } from '@/hooks/useUserSetup';
 import UserTypeToggle from '@/components/UserTypeToggle';
 import TrackingNotification from '@/components/TrackingNotification';
 import TrendingCoins from '@/components/TrendingCoins';
@@ -20,6 +21,7 @@ const Index = () => {
   const { isQuickAuthActive } = useQuickAuth();
   const { isPremium } = usePremium();
   const { cryptoData, loading: cryptoLoading, error: cryptoError } = useCryptoData(50);
+  const { isSetupComplete, isSettingUp } = useUserSetup();
   const [selectedTimeFilter, setSelectedTimeFilter] = useState('Today');
   const [selectedCoinFilter, setSelectedCoinFilter] = useState('All');
 

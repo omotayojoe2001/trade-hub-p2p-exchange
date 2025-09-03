@@ -32,51 +32,15 @@ const TradeRequests = () => {
         setLoading(true);
         setError(null);
 
-        // Try to get trade requests from service
+        // Get real trade requests from Supabase
         let requests = [];
         try {
           requests = await tradeRequestService.getTradeRequests();
         } catch (serviceError) {
-          console.warn('Service failed, using mock data:', serviceError);
-          // Use mock data if service fails
-          requests = [
-            {
-              id: 'mock-1',
-              user_id: 'mock-user-1',
-              crypto_type: 'BTC',
-              amount: 0.001,
-              rate: 1650000,
-              cash_amount: 1650,
-              direction: 'crypto_to_cash',
-              status: 'pending',
-              created_at: new Date().toISOString(),
-              expires_at: new Date(Date.now() + 3600000).toISOString()
-            },
-            {
-              id: 'mock-2',
-              user_id: 'mock-user-2',
-              crypto_type: 'USDT',
-              amount: 100,
-              rate: 1650,
-              cash_amount: 165000,
-              direction: 'cash_to_crypto',
-              status: 'pending',
-              created_at: new Date().toISOString(),
-              expires_at: new Date(Date.now() + 3600000).toISOString()
-            },
-            {
-              id: 'mock-3',
-              user_id: 'mock-user-3',
-              crypto_type: 'ETH',
-              amount: 0.05,
-              rate: 520000,
-              cash_amount: 26000,
-              direction: 'crypto_to_cash',
-              status: 'pending',
-              created_at: new Date().toISOString(),
-              expires_at: new Date(Date.now() + 3600000).toISOString()
-            }
-          ];
+          console.error('Failed to load trade requests:', serviceError);
+          setError('Failed to load trade requests. Please try again.');
+          setLoading(false);
+          return;
         }
 
         // Transform the data to match our UI format

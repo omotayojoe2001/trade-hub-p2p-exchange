@@ -429,6 +429,255 @@ export const realtimeService = {
   }
 };
 
+// Real-time Trade Request Service
+export const realTimeTradeRequestService = {
+  // Create real trade request
+  async createTradeRequest(request: {
+    trade_type: 'buy' | 'sell';
+    coin_type: string;
+    amount: number;
+    naira_amount: number;
+    rate: number;
+    payment_method?: string;
+    bank_account_details?: any;
+    notes?: string;
+  }) {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('User not authenticated');
+
+    const { data, error } = await supabase
+      .from('trade_requests')
+      .insert({
+        user_id: user.id,
+        ...request,
+        expires_at: new Date(Date.now() + 3600000).toISOString(), // 1 hour
+        status: 'open'
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    // Create notification for other users
+    await notificationService.createNotification({
+      user_id: user.id,
+      type: 'trade_request',
+      title: `New ${request.trade_type} request`,
+      message: `${request.amount} ${request.coin_type} for ₦${request.naira_amount.toLocaleString()}`,
+      read: false,
+      data: { trade_request_id: data.id }
+    });
+
+    return data;
+  },
+
+  // Accept trade request
+  async acceptTradeRequest(requestId: string) {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('User not authenticated');
+
+    // Update trade request
+    const { data: request, error: requestError } = await supabase
+      .from('trade_requests')
+      .update({
+        status: 'matched',
+        matched_user_id: user.id
+      })
+      .eq('id', requestId)
+      .select()
+      .single();
+
+    if (requestError) throw requestError;
+
+    // Create actual trade
+    const { data: trade, error: tradeError } = await supabase
+      .from('trades')
+      .insert({
+        trade_request_id: requestId,
+        buyer_id: request.trade_type === 'sell' ? user.id : request.user_id,
+        seller_id: request.trade_type === 'sell' ? request.user_id : user.id,
+        coin_type: request.coin_type,
+        amount: request.amount,
+        rate: request.rate,
+        naira_amount: request.naira_amount,
+        trade_type: request.trade_type,
+        payment_method: request.payment_method || 'bank_transfer',
+        bank_account_details: request.bank_account_details,
+        status: 'pending'
+      })
+      .select()
+      .single();
+
+    if (tradeError) throw tradeError;
+
+    // Notify original requester
+    await notificationService.createNotification({
+      user_id: request.user_id,
+      type: 'trade_update',
+      title: 'Trade Request Accepted!',
+      message: `Your ${request.trade_type} request has been accepted`,
+      read: false,
+      data: { trade_id: trade.id, trade_request_id: requestId }
+    });
+
+    return { trade, request };
+  },
+
+  // Get all open trade requests (excluding user's own)
+  async getOpenTradeRequests() {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('User not authenticated');
+
+    const { data, error } = await supabase
+      .from('trade_requests')
+      .select(`
+        *,
+        user_profiles!trade_requests_user_id_fkey (
+          full_name,
+          rating,
+          trade_count,
+          verification_level
+        )
+      `)
+      .eq('status', 'open')
+      .neq('user_id', user.id)
+      .gt('expires_at', new Date().toISOString())
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    return data;
+  },
+
+  // Get user's own trade requests
+  async getUserTradeRequests() {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('User not authenticated');
+
+    const { data, error } = await supabase
+      .from('trade_requests')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    return data;
+  }
+};
+
+// Simplified Delivery Tracking Service (using existing tables)
+export const deliveryTrackingService = {
+  // Create delivery tracking using tracking_codes table
+  async createDeliveryTracking(data: {
+    trade_id: string;
+    delivery_type: 'cash_delivery' | 'cash_pickup';
+    amount: number;
+    currency: string;
+    crypto_type: string;
+    crypto_amount: number;
+    pickup_location?: string;
+    delivery_address?: string;
+  }) {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('User not authenticated');
+
+    // Generate tracking code
+    const trackingCode = `${data.delivery_type === 'cash_delivery' ? 'TD' : 'TP'}-${new Date().getFullYear()}-${Math.floor(Math.random() * 9999).toString().padStart(4, '0')}`;
+
+    // Create tracking record using existing tracking_codes table
+    const { data: tracking, error } = await supabase
+      .from('tracking_codes')
+      .insert({
+        user_id: user.id,
+        tracking_code: trackingCode,
+        trade_id: data.trade_id,
+        status: 'active',
+        metadata: {
+          delivery_type: data.delivery_type,
+          amount: data.amount,
+          currency: data.currency,
+          crypto_type: data.crypto_type,
+          crypto_amount: data.crypto_amount,
+          pickup_location: data.pickup_location,
+          delivery_address: data.delivery_address,
+          agent_name: 'Michael Johnson',
+          agent_phone: '+234 801 234 5678',
+          current_location: 'Processing',
+          timeline: [
+            { step: 'Order Received', time: new Date().toISOString(), completed: true },
+            { step: 'Agent Assigned', time: new Date().toISOString(), completed: true },
+            { step: data.delivery_type === 'cash_delivery' ? 'Cash Prepared' : 'Pickup Ready', time: null, completed: false },
+            { step: data.delivery_type === 'cash_delivery' ? 'Out for Delivery' : 'Ready for Collection', time: null, completed: false },
+            { step: data.delivery_type === 'cash_delivery' ? 'Delivered' : 'Collected', time: null, completed: false }
+          ]
+        }
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    // Create notification
+    await notificationService.createNotification({
+      user_id: user.id,
+      type: 'trade_update',
+      title: 'Delivery Tracking Created',
+      message: `Your ${data.delivery_type.replace('_', ' ')} is being processed. Tracking code: ${trackingCode}`,
+      read: false,
+      data: { tracking_code: trackingCode, delivery_tracking_id: tracking.id }
+    });
+
+    return {
+      tracking_code: trackingCode,
+      ...tracking
+    };
+  },
+
+  // Get tracking by code
+  async getTrackingByCode(trackingCode: string) {
+    const { data, error } = await supabase
+      .from('tracking_codes')
+      .select('*')
+      .eq('tracking_code', trackingCode)
+      .single();
+
+    if (error) {
+      throw error;
+    }
+
+    // Transform data for display
+    const metadata = data.metadata as any;
+    return {
+      tracking_code: data.tracking_code,
+      delivery_type: metadata?.delivery_type || 'cash_delivery',
+      status: data.status,
+      agent_name: metadata?.agent_name || 'Agent Pending',
+      agent_phone: metadata?.agent_phone || 'N/A',
+      current_location: metadata?.current_location || 'Processing',
+      amount: metadata?.amount || 0,
+      currency: metadata?.currency || 'NGN',
+      crypto_type: metadata?.crypto_type || 'BTC',
+      crypto_amount: metadata?.crypto_amount || 0,
+      timeline: metadata?.timeline || []
+    };
+  },
+
+  // Get user's active tracking codes
+  async getUserActiveTracking() {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('User not authenticated');
+
+    const { data, error } = await supabase
+      .from('tracking_codes')
+      .select('*')
+      .eq('user_id', user.id)
+      .eq('status', 'active')
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    return data || [];
+  }
+};
+
 // Export all services
 export default {
   userService,
@@ -439,5 +688,7 @@ export default {
   receiptService,
   blogService,
   storageService,
-  realtimeService
+  realtimeService,
+  realTimeTradeRequestService,
+  deliveryTrackingService
 };

@@ -92,6 +92,7 @@ import PremiumNewsDetail from "./pages/PremiumNewsDetail";
 import ChatDetail from "./pages/ChatDetail";
 import CoinDetailPage from "./pages/CoinDetailPage";
 import PremiumTradeRequests from "./pages/PremiumTradeRequests";
+import CreateTradeRequest from "./pages/CreateTradeRequest";
 import PremiumPaymentStatus from "./pages/PremiumPaymentStatus";
 import Premium2FA from "./pages/Premium2FA";
 import PremiumProfile from "./pages/PremiumProfile";
@@ -288,6 +289,7 @@ const AppContent = () => {
             <Route path="/chat/:chatId" element={<ChatDetail />} />
             <Route path="/coin-detail/:coinId" element={<CoinDetailPage />} />
             <Route path="/premium-trade-requests" element={<PremiumTradeRequests />} />
+            <Route path="/create-trade-request" element={<CreateTradeRequest />} />
             <Route path="/premium-payment-status" element={<PremiumPaymentStatus />} />
             <Route path="/premium-2fa" element={<Premium2FA />} />
             <Route path="/premium-profile" element={<PremiumProfile />} />

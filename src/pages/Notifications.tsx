@@ -4,8 +4,9 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
-import { usePremium } from '@/hooks/usePremium';
+import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { usePremium } from '@/hooks/usePremium';
 
 interface NotificationItem {
   id: string;
@@ -59,8 +60,44 @@ const Notifications = () => {
   };
 
   useEffect(() => {
-    // Initialize notifications with read/unread status
-    const initialNotifications: NotificationItem[] = [
+    const loadNotifications = async () => {
+      if (!user) return;
+
+      try {
+        setLoading(true);
+
+        // Get real notifications from Supabase
+        const { data: dbNotifications, error } = await supabase
+          .from('notifications')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false });
+
+        if (error) throw error;
+
+        // Transform Supabase data to our format
+        const transformedNotifications: NotificationItem[] = (dbNotifications || []).map((notif: any) => ({
+          id: notif.id,
+          type: notif.type,
+          title: notif.title,
+          description: notif.message,
+          time: formatTimeAgo(new Date(notif.created_at)),
+          status: getStatusFromType(notif.type),
+          statusColor: getStatusColor(notif.type),
+          icon: getIconFromType(notif.type),
+          iconBg: getIconBgFromType(notif.type),
+          isRead: notif.read,
+          actionUrl: getActionUrl(notif.type, notif.data),
+          tradeId: notif.data?.trade_id,
+          priority: notif.data?.priority || 'medium'
+        }));
+
+        setNotifications(transformedNotifications);
+      } catch (error) {
+        console.error('Error loading notifications:', error);
+
+        // Fallback to sample notifications for new users
+        const initialNotifications: NotificationItem[] = [
       {
         id: '1',
         type: 'payment',
@@ -132,10 +169,79 @@ const Notifications = () => {
         actionUrl: '/security',
         priority: 'high'
       }
-    ];
-    
-    setNotifications(initialNotifications);
-  }, []);
+        ];
+
+        setNotifications(initialNotifications);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadNotifications();
+  }, [user]);
+
+  // Helper functions for transforming notification data
+  const formatTimeAgo = (date: Date) => {
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins} mins ago`;
+    if (diffHours < 24) return `${diffHours} hours ago`;
+    return `${diffDays} days ago`;
+  };
+
+  const getStatusFromType = (type: string) => {
+    switch (type) {
+      case 'trade_request': return 'Pending';
+      case 'payment_received': return 'Completed';
+      case 'security': return 'Alert';
+      case 'success': return 'Completed';
+      default: return 'Info';
+    }
+  };
+
+  const getStatusColor = (type: string) => {
+    switch (type) {
+      case 'trade_request': return 'text-orange-600';
+      case 'payment_received': return 'text-green-600';
+      case 'security': return 'text-red-600';
+      case 'success': return 'text-green-600';
+      default: return 'text-blue-600';
+    }
+  };
+
+  const getIconFromType = (type: string) => {
+    switch (type) {
+      case 'trade_request': return 'refresh-cw';
+      case 'payment_received': return 'credit-card';
+      case 'security': return 'alert-triangle';
+      case 'success': return 'check-circle';
+      default: return 'bell';
+    }
+  };
+
+  const getIconBgFromType = (type: string) => {
+    switch (type) {
+      case 'trade_request': return 'bg-blue-100';
+      case 'payment_received': return 'bg-green-100';
+      case 'security': return 'bg-red-100';
+      case 'success': return 'bg-green-100';
+      default: return 'bg-gray-100';
+    }
+  };
+
+  const getActionUrl = (type: string, data: any) => {
+    switch (type) {
+      case 'trade_request': return '/premium-trade-requests';
+      case 'payment_received': return '/premium-payment-status';
+      case 'security': return '/premium-settings';
+      default: return null;
+    }
+  };
 
   const handleNotificationClick = (notification: NotificationItem) => {
     setSelectedNotification(notification);
@@ -147,23 +253,53 @@ const Notifications = () => {
     }
   };
 
-  const markAsRead = (notificationId: string) => {
-    setNotifications(prev => 
-      prev.map(n => 
-        n.id === notificationId ? { ...n, isRead: true } : n
-      )
-    );
+  const markAsRead = async (notificationId: string) => {
+    try {
+      // Update in database
+      await supabase
+        .from('notifications')
+        .update({ read: true })
+        .eq('id', notificationId);
+
+      // Update local state
+      setNotifications(prev =>
+        prev.map(n =>
+          n.id === notificationId ? { ...n, isRead: true } : n
+        )
+      );
+    } catch (error) {
+      console.error('Error marking notification as read:', error);
+    }
   };
 
-  const markAllAsRead = () => {
-    setNotifications(prev => 
-      prev.map(n => ({ ...n, isRead: true }))
-    );
-    
-    toast({
-      title: "All notifications marked as read",
-      description: "All your notifications have been marked as read",
-    });
+  const markAllAsRead = async () => {
+    if (!user) return;
+
+    try {
+      // Update all unread notifications in database
+      await supabase
+        .from('notifications')
+        .update({ read: true })
+        .eq('user_id', user.id)
+        .eq('read', false);
+
+      // Update local state
+      setNotifications(prev =>
+        prev.map(n => ({ ...n, isRead: true }))
+      );
+
+      toast({
+        title: "All notifications marked as read",
+        description: "All your notifications have been marked as read",
+      });
+    } catch (error) {
+      console.error('Error marking all notifications as read:', error);
+      toast({
+        title: "Error",
+        description: "Failed to mark notifications as read",
+        variant: "destructive"
+      });
+    }
   };
 
   const handleNotificationAction = (notification: NotificationItem) => {

@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 
 interface PremiumContextType {
   isPremium: boolean;
@@ -26,40 +27,64 @@ export const PremiumProvider: React.FC<{ children: React.ReactNode }> = ({ child
   ];
 
   useEffect(() => {
-    // Check premium status from localStorage
-    const premiumStatus = localStorage.getItem('premium-status');
-    const premiumExpiryStr = localStorage.getItem('premium-expiry');
-    
-    if (premiumStatus === 'true' && premiumExpiryStr) {
-      const expiry = new Date(premiumExpiryStr);
-      if (expiry > new Date()) {
-        setIsPremium(true);
-        setPremiumExpiry(expiry);
-      } else {
-        // Premium expired
-        localStorage.removeItem('premium-status');
-        localStorage.removeItem('premium-expiry');
+    // Check premium status from Supabase user profile
+    const checkPremiumStatus = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        const { data: profile } = await supabase
+          .from('user_profiles')
+          .select('is_premium, premium_expires_at')
+          .eq('user_id', user.id)
+          .single();
+
+        if (profile) {
+          const isCurrentlyPremium = profile.is_premium &&
+            (!profile.premium_expires_at || new Date(profile.premium_expires_at) > new Date());
+
+          setIsPremium(isCurrentlyPremium);
+          setPremiumExpiry(profile.premium_expires_at ? new Date(profile.premium_expires_at) : null);
+        }
+      } catch (error) {
+        console.error('Error checking premium status:', error);
         setIsPremium(false);
         setPremiumExpiry(null);
       }
-    }
+    };
+
+    checkPremiumStatus();
   }, []);
 
-  const setPremium = (status: boolean) => {
-    setIsPremium(status);
-    
-    if (status) {
-      // Set premium for 1 year
-      const expiry = new Date();
-      expiry.setFullYear(expiry.getFullYear() + 1);
+  const setPremium = async (status: boolean) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      let expiry = null;
+      if (status) {
+        // Set premium for 1 year
+        expiry = new Date();
+        expiry.setFullYear(expiry.getFullYear() + 1);
+      }
+
+      // Update database
+      const { error } = await supabase
+        .from('user_profiles')
+        .update({
+          is_premium: status,
+          premium_expires_at: expiry?.toISOString() || null,
+          verification_level: status ? 'premium' : 'basic'
+        })
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+
+      // Update local state
+      setIsPremium(status);
       setPremiumExpiry(expiry);
-      
-      localStorage.setItem('premium-status', 'true');
-      localStorage.setItem('premium-expiry', expiry.toISOString());
-    } else {
-      setPremiumExpiry(null);
-      localStorage.removeItem('premium-status');
-      localStorage.removeItem('premium-expiry');
+    } catch (error) {
+      console.error('Error updating premium status:', error);
     }
   };
 

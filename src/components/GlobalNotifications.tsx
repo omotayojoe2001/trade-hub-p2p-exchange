@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { notificationService, realtimeService } from '@/services/supabaseService';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 interface Notification {
   id: string;
@@ -33,13 +34,20 @@ const GlobalNotifications = () => {
   useEffect(() => {
     const loadNotifications = async () => {
       if (!user) return;
-      
+
       try {
-        // Use mock notifications instead of Supabase for now
-        const dbNotifications = [];
-        
+        // Get real notifications from Supabase
+        const { data: dbNotifications, error } = await supabase
+          .from('notifications')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false })
+          .limit(20);
+
+        if (error) throw error;
+
         // Transform Supabase data to our format
-        const transformedNotifications = dbNotifications.map((notif: any) => ({
+        const transformedNotifications = (dbNotifications || []).map((notif: any) => ({
           id: notif.id,
           type: notif.type as any,
           title: notif.title,
@@ -47,13 +55,13 @@ const GlobalNotifications = () => {
           timestamp: new Date(notif.created_at),
           isRead: notif.read,
           actionRequired: notif.type === 'trade_request' || notif.type === 'security',
-          tradeId: notif.trade_id,
-          isPremium: notif.is_premium || notif.type === 'premium',
-          priority: notif.priority || 'medium'
+          tradeId: notif.data?.trade_id,
+          isPremium: notif.type === 'premium' || notif.data?.is_premium,
+          priority: notif.data?.priority || 'medium'
         }));
-        
+
         setNotifications(transformedNotifications);
-        
+
         // Show notification if there are unread ones
         const unreadCount = transformedNotifications.filter(n => !n.isRead).length;
         if (unreadCount > 0) {
@@ -61,6 +69,18 @@ const GlobalNotifications = () => {
         }
       } catch (error) {
         console.error('Error loading notifications:', error);
+        // Create sample notification for new users
+        setNotifications([{
+          id: 'welcome',
+          type: 'premium',
+          title: 'Welcome to Central Exchange!',
+          message: 'Your account is ready. Start trading crypto with confidence.',
+          timestamp: new Date(),
+          isRead: false,
+          actionRequired: false,
+          isPremium: true,
+          priority: 'medium'
+        }]);
       }
     };
 
@@ -123,10 +143,29 @@ const GlobalNotifications = () => {
     }
   };
 
-  const handleNotificationClick = (notification: Notification) => {
+  const handleNotificationClick = async (notification: Notification) => {
     setSelectedNotification(notification);
     setShowDetailPopup(true);
     setIsVisible(false);
+
+    // Mark as read if not already read
+    if (!notification.isRead) {
+      try {
+        await supabase
+          .from('notifications')
+          .update({ read: true })
+          .eq('id', notification.id);
+
+        // Update local state
+        setNotifications(prev =>
+          prev.map(n =>
+            n.id === notification.id ? { ...n, isRead: true } : n
+          )
+        );
+      } catch (error) {
+        console.error('Error marking notification as read:', error);
+      }
+    }
   };
 
   const handleNotificationAction = async (notification: Notification, action: string) => {

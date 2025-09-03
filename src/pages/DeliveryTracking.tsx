@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Crown, MapPin, Clock, CheckCircle, Truck, Phone, Copy, Search } from 'lucide-react';
+import { ArrowLeft, Crown, MapPin, Clock, CheckCircle, Truck, Phone, Copy, Search, Loader2 } from 'lucide-react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
+import { deliveryTrackingService } from '@/services/supabaseService';
 import PremiumBottomNavigation from '@/components/premium/PremiumBottomNavigation';
 
 const DeliveryTracking = () => {
@@ -13,6 +14,7 @@ const DeliveryTracking = () => {
   const { toast } = useToast();
   const [trackingCode, setTrackingCode] = useState('');
   const [trackingResult, setTrackingResult] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
 
   // Mock tracking data
   const mockTrackingData = {
@@ -53,18 +55,40 @@ const DeliveryTracking = () => {
     }
   };
 
-  const handleTrackOrder = () => {
-    if (trackingCode) {
-      const result = mockTrackingData[trackingCode as keyof typeof mockTrackingData];
-      if (result) {
-        setTrackingResult(result);
-      } else {
-        toast({
-          title: "Code Not Found",
-          description: "Please check your tracking code and try again",
-          variant: "destructive"
-        });
-      }
+  const handleTrackOrder = async () => {
+    if (!trackingCode) return;
+
+    try {
+      setLoading(true);
+
+      // Try to get real tracking data from Supabase
+      const result = await deliveryTrackingService.getTrackingByCode(trackingCode);
+
+      // Transform the data for display
+      const transformedResult = {
+        code: result.tracking_code,
+        type: result.delivery_type === 'cash_delivery' ? 'Cash Delivery' : 'Cash Pickup',
+        amount: `${result.currency === 'NGN' ? '₦' : '$'}${result.amount.toLocaleString()}`,
+        crypto: result.crypto_type,
+        status: result.status,
+        agentName: result.agent_name || 'Agent Pending',
+        agentPhone: result.agent_phone || 'N/A',
+        estimatedArrival: result.estimated_arrival ? new Date(result.estimated_arrival).toLocaleTimeString() : 'TBD',
+        currentLocation: result.current_location || 'Processing',
+        timeline: result.timeline || []
+      };
+
+      setTrackingResult(transformedResult);
+
+    } catch (error) {
+      console.error('Error fetching tracking data:', error);
+      toast({
+        title: "Code Not Found",
+        description: "Please check your tracking code and try again",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -143,10 +167,15 @@ const DeliveryTracking = () => {
             />
             <Button
               onClick={handleTrackOrder}
+              disabled={loading || !trackingCode}
               className="bg-yellow-600 hover:bg-yellow-700 text-white"
             >
-              <Search size={16} className="mr-2" />
-              Track
+              {loading ? (
+                <Loader2 size={16} className="mr-2 animate-spin" />
+              ) : (
+                <Search size={16} className="mr-2" />
+              )}
+              {loading ? 'Tracking...' : 'Track'}
             </Button>
           </div>
           <p className="text-sm text-gray-600 mt-2">

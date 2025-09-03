@@ -16,52 +16,77 @@ const PushNotifications = () => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isVisible, setIsVisible] = useState(false);
 
-  // Demo notifications
-  const demoNotifications: Notification[] = [
-    {
-      id: '1',
-      type: 'trade',
-      title: 'Trade Match Found!',
-      message: 'MercyPay wants to sell you 0.0045 BTC for ₦125,000. Tap to proceed.',
-      timestamp: new Date(Date.now() - 2 * 60 * 1000), // 2 minutes ago
-      isRead: false,
-      actionRequired: true
-    },
-    {
-      id: '2',
-      type: 'payment',
-      title: 'Payment Received',
-      message: 'You received ₦558,792 from CryptoKing for 0.021 BTC trade.',
-      timestamp: new Date(Date.now() - 15 * 60 * 1000), // 15 minutes ago
-      isRead: false
-    },
-    {
-      id: '3',
-      type: 'security',
-      title: 'Security Alert',
-      message: 'New device login detected from Lagos, Nigeria. Was this you?',
-      timestamp: new Date(Date.now() - 60 * 60 * 1000), // 1 hour ago
-      isRead: true,
-      actionRequired: true
-    },
-    {
-      id: '4',
-      type: 'premium',
-      title: 'Premium Feature Unlocked!',
-      message: 'Welcome to Premium! You can now access instant withdrawals and priority support.',
-      timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000), // 2 hours ago
-      isRead: true
+  // Load real notifications from Supabase
+  const loadRealNotifications = async (): Promise<Notification[]> => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return [];
+
+      const { data: dbNotifications, error } = await supabase
+        .from('notifications')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(10);
+
+      if (error) throw error;
+
+      return (dbNotifications || []).map((notif: any) => ({
+        id: notif.id,
+        type: notif.type === 'trade_request' ? 'trade' :
+              notif.type === 'payment_received' ? 'payment' :
+              notif.type === 'security' ? 'security' : 'system',
+        title: notif.title,
+        message: notif.message,
+        timestamp: new Date(notif.created_at),
+        isRead: notif.read,
+        actionRequired: notif.type === 'trade_request' || notif.type === 'security'
+      }));
+    } catch (error) {
+      console.error('Error loading notifications:', error);
+      return [];
     }
-  ];
+  };
 
   useEffect(() => {
-    // Simulate real-time notifications
-    const timer = setTimeout(() => {
-      setNotifications(demoNotifications);
-      showNewNotification();
-    }, 2000);
+    // Load real notifications
+    const loadNotifications = async () => {
+      const realNotifications = await loadRealNotifications();
+      setNotifications(realNotifications);
+      if (realNotifications.length > 0 && !realNotifications[0].isRead) {
+        showNewNotification();
+      }
+    };
 
-    return () => clearTimeout(timer);
+    const setupNotifications = async () => {
+      await loadNotifications();
+
+      // Set up real-time subscription for new notifications
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const channel = supabase
+          .channel('notification-updates')
+          .on('postgres_changes',
+            { event: 'INSERT', schema: 'public', table: 'notifications', filter: `user_id=eq.${user.id}` },
+            () => loadNotifications()
+          )
+          .subscribe();
+
+        return channel;
+      }
+      return null;
+    };
+
+    let channel: any = null;
+    setupNotifications().then(ch => {
+      channel = ch;
+    });
+
+    return () => {
+      if (channel) {
+        supabase.removeChannel(channel);
+      }
+    };
   }, []);
 
   const showNewNotification = () => {

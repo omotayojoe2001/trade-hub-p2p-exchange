@@ -2,18 +2,47 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Home, ArrowUpDown, Briefcase, Settings, Newspaper } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 
 const BottomNavigation = () => {
   const location = useLocation();
   const [hasNewTradeRequest, setHasNewTradeRequest] = useState(false);
 
-  // Mock new trade request notification
+  // Check for real unread notifications
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setHasNewTradeRequest(true);
-    }, 5000); // Show notification after 5 seconds
-    
-    return () => clearTimeout(timer);
+    const checkNotifications = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        const { data: notifications } = await supabase
+          .from('notifications')
+          .select('id')
+          .eq('user_id', user.id)
+          .eq('read', false)
+          .eq('type', 'trade_request')
+          .limit(1);
+
+        setHasNewTradeRequest(notifications && notifications.length > 0);
+      } catch (error) {
+        console.error('Error checking notifications:', error);
+      }
+    };
+
+    checkNotifications();
+
+    // Set up real-time subscription for new notifications
+    const channel = supabase
+      .channel('notification-updates')
+      .on('postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'notifications' },
+        () => checkNotifications()
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const navItems = [
