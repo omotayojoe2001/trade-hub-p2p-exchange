@@ -57,17 +57,42 @@ const ProfileSettings = () => {
     if (!user) return;
 
     try {
-      // Save to Supabase
-      const { error } = await supabase
+      // Save to both tables for compatibility
+      const profileData = {
+        user_id: user.id,
+        display_name: formData.displayName,
+        phone_number: formData.phoneNumber,
+        bio: formData.bio,
+        location: formData.location,
+        date_of_birth: formData.dateOfBirth,
+        occupation: formData.occupation,
+        updated_at: new Date().toISOString()
+      };
+
+      // Update profiles table
+      const { error: profileError } = await supabase
         .from('profiles')
+        .upsert(profileData);
+
+      if (profileError) throw profileError;
+
+      // Update user_profiles table
+      const { error: userProfileError } = await supabase
+        .from('user_profiles')
         .upsert({
           user_id: user.id,
-          display_name: formData.displayName,
-          phone_number: formData.phoneNumber,
+          full_name: formData.displayName,
+          phone: formData.phoneNumber,
+          bio: formData.bio,
+          location: formData.location,
+          date_of_birth: formData.dateOfBirth,
+          occupation: formData.occupation,
           updated_at: new Date().toISOString()
         });
 
-      if (error) throw error;
+      if (userProfileError) {
+        console.warn('Failed to update user_profiles:', userProfileError);
+      }
 
       setIsEditing(false);
       toast({
@@ -159,46 +184,75 @@ const ProfileSettings = () => {
     }
   };
 
-  const handleProfilePictureSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleProfilePictureSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      // Validate file size (2MB max)
-      if (file.size > 2 * 1024 * 1024) {
-        toast({
-          title: "File too large",
-          description: "Please select an image smaller than 2MB",
-          variant: "destructive"
-        });
-        return;
-      }
+    if (!file || !user) return;
 
-      // Validate file type
-      if (!file.type.startsWith('image/')) {
-        toast({
-          title: "Invalid file type",
-          description: "Please select an image file",
-          variant: "destructive"
-        });
-        return;
-      }
+    // Validate file size (2MB max)
+    if (file.size > 2 * 1024 * 1024) {
+      toast({
+        title: "File too large",
+        description: "Please select an image smaller than 2MB",
+        variant: "destructive"
+      });
+      return;
+    }
 
-      setIsUploadingPicture(true);
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast({
+        title: "Invalid file type",
+        description: "Please select an image file",
+        variant: "destructive"
+      });
+      return;
+    }
 
-      // Convert to base64 and save
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const result = e.target?.result as string;
-        setProfilePicture(result);
-        localStorage.setItem('profile-picture', result);
-        setShowProfilePictureDialog(false);
-        setIsUploadingPicture(false);
+    setIsUploadingPicture(true);
 
-        toast({
-          title: "Profile Picture Updated",
-          description: "Your profile picture has been updated successfully",
-        });
-      };
-      reader.readAsDataURL(file);
+    try {
+      // Upload to Supabase Storage
+      const fileName = `${user.id}/${Date.now()}.${file.name.split('.').pop()}`;
+      const { error: uploadError } = await supabase.storage
+        .from('profiles')
+        .upload(fileName, file);
+
+      if (uploadError) throw uploadError;
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('profiles')
+        .getPublicUrl(fileName);
+
+      // Update profile with new avatar URL
+      await supabase.from('profiles').upsert({
+        user_id: user.id,
+        avatar_url: publicUrl,
+        updated_at: new Date().toISOString()
+      });
+
+      await supabase.from('user_profiles').upsert({
+        user_id: user.id,
+        avatar_url: publicUrl,
+        updated_at: new Date().toISOString()
+      });
+
+      setProfilePicture(publicUrl);
+      setShowProfilePictureDialog(false);
+
+      toast({
+        title: "Profile Picture Updated",
+        description: "Your profile picture has been updated successfully",
+      });
+    } catch (error) {
+      console.error('Error uploading profile picture:', error);
+      toast({
+        title: "Upload Failed",
+        description: "Failed to upload profile picture. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsUploadingPicture(false);
     }
   };
 

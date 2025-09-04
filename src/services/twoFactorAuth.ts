@@ -129,7 +129,35 @@ export const getTwoFactorData = (): TwoFactorData => {
 };
 
 // Enable 2FA for user
-export const enableTwoFactor = (secret: string, backupCodes: string[]): void => {
+export const enableTwoFactor = async (secret: string, backupCodes: string[]): Promise<void> => {
+  // Store 2FA settings securely in database
+  try {
+    const { supabase } = await import('@/integrations/supabase/client');
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (user) {
+      // Update both tables for compatibility
+      await supabase.from('profiles').upsert({
+        user_id: user.id,
+        two_factor_enabled: true,
+        two_factor_secret: secret,
+        backup_codes: backupCodes,
+        updated_at: new Date().toISOString()
+      });
+
+      await supabase.from('user_profiles').upsert({
+        user_id: user.id,
+        two_factor_enabled: true,
+        two_factor_secret: secret,
+        backup_codes: backupCodes,
+        updated_at: new Date().toISOString()
+      });
+    }
+  } catch (error) {
+    console.error('Error enabling 2FA in database:', error);
+  }
+  
+  // Also store locally for quick access
   const data: TwoFactorData = {
     isEnabled: true,
     secret,

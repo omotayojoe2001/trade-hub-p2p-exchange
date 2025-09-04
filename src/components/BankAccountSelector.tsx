@@ -39,29 +39,21 @@ const BankAccountSelector: React.FC<BankAccountSelectorProps> = ({
     try {
       setLoading(true);
 
-      // Fetch user's bank accounts from payment_methods table
-      const { data: paymentMethods, error } = await supabase
-        .from('payment_methods')
+      // Fetch user's bank accounts from user_bank_accounts table
+      const { data: bankAccounts, error } = await supabase
+        .from('user_bank_accounts')
         .select('*')
-        .eq('user_id', user.id)
-        .eq('type', 'bank_account');
+        .eq('user_id', user.id);
 
       if (error) {
         console.error('Error fetching bank accounts:', error);
         return;
       }
 
-      const bankAccounts = (paymentMethods || []).map(method => ({
-        id: method.id,
-        bank_name: method.bank_name || 'Unknown Bank',
-        account_number: method.account_number || '',
-        account_name: method.account_name || 'Unknown Account'
-      }));
-
-      setAccounts(bankAccounts);
+      setAccounts(bankAccounts || []);
 
       // Auto-select first account if none selected
-      if (bankAccounts.length > 0 && !selectedAccount) {
+      if (bankAccounts && bankAccounts.length > 0 && !selectedAccount) {
         onAccountSelect(bankAccounts[0]);
       }
 

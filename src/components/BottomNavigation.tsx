@@ -85,9 +85,7 @@ const BottomNavigation = () => {
     navItems.splice(4, 0, {
       path: '/merchant-trade-requests',
       icon: Bell,
-      label: 'Requests',
-      hasAlert: hasNewTradeRequest,
-      alertCount: notificationCount
+      label: 'Requests'
     });
   }
 
@@ -109,18 +107,6 @@ const BottomNavigation = () => {
           >
             <div className="relative">
               <item.icon className="w-4 h-4 mb-2" />
-              {item.hasAlert && (
-                <div className="absolute -top-1 -right-1 min-w-[16px] h-4 bg-red-500 rounded-full flex items-center justify-center animate-pulse">
-                  {item.alertCount && item.alertCount > 0 && (
-                    <span className="text-white text-xs font-bold leading-none">
-                      {item.alertCount > 9 ? '9+' : item.alertCount}
-                    </span>
-                  )}
-                  {(!item.alertCount || item.alertCount === 0) && (
-                    <div className="w-2 h-2 bg-white rounded-full" />
-                  )}
-                </div>
-              )}
             </div>
             <span className={`text-xs ${
               location.pathname === item.path ? 'font-medium' : ''

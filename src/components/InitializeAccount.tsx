@@ -5,7 +5,6 @@ import { Crown, CheckCircle, Loader2, Database, Users, Bell } from 'lucide-react
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { useToast } from '@/hooks/use-toast';
 
 const InitializeAccount = () => {
   const { user } = useAuth();

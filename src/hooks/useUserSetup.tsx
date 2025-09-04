@@ -29,21 +29,8 @@ export const useUserSetup = () => {
           return;
         }
 
-        // Create user profile automatically (FREE by default)
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .insert({
-            user_id: user.id,
-            display_name: user.email?.split('@')[0] || 'User',
-            user_type: 'customer',
-            is_merchant: false,
-            profile_completed: true
-          });
-
-        if (profileError) {
-          console.error('Profile creation error:', profileError);
-          throw profileError;
-        }
+        // Profile creation is now handled by the database trigger
+        // The handle_new_user function creates both profiles and user_profiles entries automatically
 
         // Create welcome notification
         const { error: notificationError } = await supabase
