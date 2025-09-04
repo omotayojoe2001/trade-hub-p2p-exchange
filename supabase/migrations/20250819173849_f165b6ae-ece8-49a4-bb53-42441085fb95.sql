@@ -96,8 +96,11 @@ ALTER TABLE public.blog_posts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.trades ENABLE ROW LEVEL SECURITY;
 
 -- Notifications policies
+DROP POLICY IF EXISTS "Users can view their own notifications" ON public.notifications;
 CREATE POLICY "Users can view their own notifications" ON public.notifications FOR SELECT USING (auth.uid() = user_id);
+DROP POLICY IF EXISTS "System can insert notifications" ON public.notifications;
 CREATE POLICY "System can insert notifications" ON public.notifications FOR INSERT WITH CHECK (true);
+DROP POLICY IF EXISTS "Users can update their own notifications" ON public.notifications;
 CREATE POLICY "Users can update their own notifications" ON public.notifications FOR UPDATE USING (auth.uid() = user_id);
 
 -- Messages policies
@@ -106,8 +109,11 @@ CREATE POLICY "Users can send messages" ON public.messages FOR INSERT WITH CHECK
 CREATE POLICY "Users can update messages they received" ON public.messages FOR UPDATE USING (auth.uid() = receiver_id);
 
 -- Trade requests policies
+DROP POLICY IF EXISTS "Users can view all trade requests" ON public.trade_requests;
 CREATE POLICY "Users can view all trade requests" ON public.trade_requests FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Users can create their own trade requests" ON public.trade_requests;
 CREATE POLICY "Users can create their own trade requests" ON public.trade_requests FOR INSERT WITH CHECK (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Users can update their own trade requests" ON public.trade_requests;
 CREATE POLICY "Users can update their own trade requests" ON public.trade_requests FOR UPDATE USING (auth.uid() = user_id OR auth.uid() = merchant_id);
 
 -- Receipts policies
@@ -125,8 +131,11 @@ CREATE POLICY "Anyone can view published blog posts" ON public.blog_posts FOR SE
 CREATE POLICY "Authors can manage their own posts" ON public.blog_posts FOR ALL USING (auth.uid() = author_id);
 
 -- Trades policies
+DROP POLICY IF EXISTS "Users can view their own trades" ON public.trades;
 CREATE POLICY "Users can view their own trades" ON public.trades FOR SELECT USING (auth.uid() = buyer_id OR auth.uid() = seller_id);
+DROP POLICY IF EXISTS "Users can create trades" ON public.trades;
 CREATE POLICY "Users can create trades" ON public.trades FOR INSERT WITH CHECK (auth.uid() = buyer_id OR auth.uid() = seller_id);
+DROP POLICY IF EXISTS "Users can update their trades" ON public.trades;
 CREATE POLICY "Users can update their own trades" ON public.trades FOR UPDATE USING (auth.uid() = buyer_id OR auth.uid() = seller_id);
 
 -- Add indexes for better performance
@@ -141,7 +150,9 @@ CREATE INDEX IF NOT EXISTS idx_trades_seller_id ON public.trades(seller_id);
 CREATE INDEX IF NOT EXISTS idx_trades_status ON public.trades(status);
 
 -- Add triggers for updated_at
+DROP TRIGGER IF EXISTS update_trades_updated_at ON public.trades;
 CREATE TRIGGER update_trades_updated_at BEFORE UPDATE ON public.trades FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+DROP TRIGGER IF EXISTS update_blog_posts_updated_at ON public.blog_posts;
 CREATE TRIGGER update_blog_posts_updated_at BEFORE UPDATE ON public.blog_posts FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- Enable realtime
@@ -150,8 +161,42 @@ ALTER TABLE public.messages REPLICA IDENTITY FULL;
 ALTER TABLE public.trade_requests REPLICA IDENTITY FULL;
 ALTER TABLE public.trades REPLICA IDENTITY FULL;
 
--- Add tables to realtime publication
-ALTER publication supabase_realtime ADD TABLE public.notifications;
-ALTER publication supabase_realtime ADD TABLE public.messages;
-ALTER publication supabase_realtime ADD TABLE public.trade_requests;
-ALTER publication supabase_realtime ADD TABLE public.trades;
+-- Add tables to realtime publication (safely)
+DO $$
+BEGIN
+    -- Add notifications table if not already in publication
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_publication_tables
+        WHERE pubname = 'supabase_realtime'
+        AND tablename = 'notifications'
+    ) THEN
+        ALTER publication supabase_realtime ADD TABLE public.notifications;
+    END IF;
+
+    -- Add messages table if not already in publication
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_publication_tables
+        WHERE pubname = 'supabase_realtime'
+        AND tablename = 'messages'
+    ) THEN
+        ALTER publication supabase_realtime ADD TABLE public.messages;
+    END IF;
+
+    -- Add trade_requests table if not already in publication
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_publication_tables
+        WHERE pubname = 'supabase_realtime'
+        AND tablename = 'trade_requests'
+    ) THEN
+        ALTER publication supabase_realtime ADD TABLE public.trade_requests;
+    END IF;
+
+    -- Add trades table if not already in publication
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_publication_tables
+        WHERE pubname = 'supabase_realtime'
+        AND tablename = 'trades'
+    ) THEN
+        ALTER publication supabase_realtime ADD TABLE public.trades;
+    END IF;
+END $$;

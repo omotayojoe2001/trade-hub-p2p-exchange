@@ -83,31 +83,28 @@ const SelectCoin = () => {
 
   const handleCoinSelect = (coinId: string) => {
     setSelectedCoin(coinId);
-    if (mode === 'buy') {
-      // For buy flow, go to buy crypto flow with selected coin
-      navigate('/buy-crypto-flow', { 
-        state: { 
-          selectedCoin: coinId,
-          coinData: coins.find(c => c.id === coinId)
-        } 
-      });
-    } else {
-      // For sell flow, go to merchant selection
-      navigate('/merchant-selection', { 
-        state: { 
-          selectedCoin: coinId,
-          coinData: coins.find(c => c.id === coinId)
-        } 
-      });
-    }
+    // BOTH buy and sell flows should go to merchant selection FIRST
+    // This ensures rate calculation is based on selected merchant
+    navigate('/merchant-list', {
+      state: {
+        selectedCoin: coinId,
+        coinData: coins.find(c => c.id === coinId),
+        mode: mode,
+        type: mode,
+        coinType: coins.find(c => c.id === coinId)?.symbol || 'BTC'
+      }
+    });
   };
 
   const handleAutoMatch = () => {
-    if (mode === 'buy') {
-      navigate('/buy-crypto-flow');
-    } else {
-      navigate('/sell-crypto');
-    }
+    // Auto match should also go to merchant selection to pick best rate
+    navigate('/merchant-list', {
+      state: {
+        mode: mode,
+        type: mode,
+        autoMatch: true // Flag to indicate auto-matching
+      }
+    });
   };
 
   const handleBrowseSellers = () => {
@@ -176,7 +173,7 @@ const SelectCoin = () => {
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center">
                     <div className={`w-12 h-12 ${coin.iconBg} rounded-full flex items-center justify-center mr-3`}>
-                      <CryptoIcon symbol={coin.symbol} size={24} />
+                      <CryptoIcon symbol={coin.symbol || 'BTC'} size={24} />
                     </div>
                     <div>
                       <h3 className="text-lg font-semibold text-gray-900">{coin.name}</h3>

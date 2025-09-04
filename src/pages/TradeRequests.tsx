@@ -10,6 +10,7 @@ import { useQuickAuth } from '@/hooks/useQuickAuth';
 import { useAuth } from '@/hooks/useAuth';
 import { tradeRequestService } from '@/services/supabaseService';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 import CryptoIcon from '@/components/CryptoIcon';
 
 const TradeRequests = () => {
@@ -104,11 +105,45 @@ const TradeRequests = () => {
     return names[index];
   };
 
-  const handleAcceptTrade = (requestId: string) => {
-    const request = tradeRequests.find(r => r.id === requestId);
-    navigate('/trade-request-details', { 
-      state: { request }
-    });
+  const handleAcceptTrade = async (requestId: string) => {
+    try {
+      const request = tradeRequests.find(r => r.id === requestId);
+      if (!request) {
+        toast({
+          title: "Error",
+          description: "Trade request not found.",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // Update trade request status to accepted in Supabase
+      const { error } = await supabase
+        .from('trade_requests')
+        .update({ status: 'accepted' })
+        .eq('id', requestId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Trade Accepted",
+        description: "You have successfully accepted this trade request.",
+        duration: 3000,
+      });
+
+      // Navigate to trade details
+      navigate('/trade-request-details', {
+        state: { request: { ...request, status: 'accepted' } }
+      });
+    } catch (error) {
+      console.error('Error accepting trade:', error);
+      toast({
+        title: "Error",
+        description: "Failed to accept trade. Please try again.",
+        variant: "destructive",
+        duration: 3000,
+      });
+    }
   };
 
   const filteredRequests = tradeRequests.filter(request => {

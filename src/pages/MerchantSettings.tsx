@@ -7,9 +7,10 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Settings, TrendingUp, Shield, Clock, DollarSign, Coins, Globe, CreditCard, MapPin, Calendar } from 'lucide-react';
+import { ArrowLeft, Settings, TrendingUp, Shield, Clock, DollarSign, Coins, Globe, CreditCard, MapPin, Calendar, Save, Loader2 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import BottomNavigation from '@/components/BottomNavigation';
 
@@ -42,15 +43,15 @@ interface MerchantSettings {
 }
 
 const MerchantSettings = () => {
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const navigate = useNavigate();
+
   const [settings, setSettings] = useState<MerchantSettings>({
     merchant_type: 'manual',
-    supported_coins: ['BTC', 'USDT'],
+    supported_coins: [],
     supported_currencies: ['NGN'],
-    exchange_rates: {
-      BTC: { buy_rate: null, sell_rate: null },
-      USDT: { buy_rate: null, sell_rate: null },
-      ETH: { buy_rate: null, sell_rate: null }
-    },
+    exchange_rates: {},
     min_trade_amount: 1000,
     max_trade_amount: 10000000,
     auto_accept_trades: false,
@@ -58,8 +59,8 @@ const MerchantSettings = () => {
     is_online: true,
     accepts_new_trades: true,
     avg_response_time_minutes: 10,
-    payment_methods: ['bank_transfer'],
-    service_locations: ['Nigeria'],
+    payment_methods: [],
+    service_locations: [],
     business_hours: {
       enabled: false,
       monday: { start: '09:00', end: '17:00', enabled: true },
@@ -74,16 +75,82 @@ const MerchantSettings = () => {
     min_customer_rating: 0
   });
 
-  const [loading, setLoading] = useState(false);
-  const [currentPrices, setCurrentPrices] = useState<Record<string, number>>({
-    BTC: 68500,
-    USDT: 1,
-    ETH: 3200,
-    DOGE: 0.15,
-    ADA: 0.45
-  });
-  const navigate = useNavigate();
-  const { toast } = useToast();
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [currentPrices, setCurrentPrices] = useState<Record<string, number>>({});
+
+  // Load merchant settings from Supabase
+  useEffect(() => {
+    if (user) {
+      loadMerchantSettings();
+    }
+  }, [user]);
+
+  const loadMerchantSettings = async () => {
+    try {
+      setLoading(true);
+
+      // Load merchant settings from profiles table
+      const { data: profile, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('user_id', user!.id)
+        .single();
+
+      if (error && error.code !== 'PGRST116') {
+        throw error;
+      }
+
+      if (profile && profile.merchant_settings) {
+        setSettings(profile.merchant_settings);
+      }
+    } catch (error) {
+      console.error('Error loading merchant settings:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load merchant settings.",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const saveMerchantSettings = async () => {
+    if (!user) return;
+
+    try {
+      setSaving(true);
+
+      // Save merchant settings to profiles table
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          merchant_settings: settings,
+          is_merchant: true,
+          updated_at: new Date().toISOString()
+        })
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Settings Saved",
+        description: "Your merchant settings have been saved successfully.",
+        duration: 3000
+      });
+    } catch (error) {
+      console.error('Error saving merchant settings:', error);
+      toast({
+        title: "Error",
+        description: "Failed to save merchant settings. Please try again.",
+        variant: "destructive",
+        duration: 3000
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const availableCoins = ['BTC', 'USDT', 'ETH', 'DOGE', 'ADA', 'BNB', 'XRP', 'SOL', 'MATIC', 'DOT'];
   const availableCurrencies = ['NGN', 'USD', 'EUR', 'GBP', 'KES', 'ZAR', 'GHS'];
@@ -91,39 +158,10 @@ const MerchantSettings = () => {
   const availableCountries = ['Nigeria', 'Kenya', 'South Africa', 'Ghana', 'Uganda', 'Rwanda', 'Tanzania', 'Ethiopia'];
 
   useEffect(() => {
-    loadMerchantSettings();
     fetchCurrentPrices();
   }, []);
 
-  const loadMerchantSettings = async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
 
-      const { data, error } = await supabase
-        .from('merchant_settings')
-        .select('*')
-        .eq('user_id', user.id)
-        .maybeSingle();
-
-      if (data) {
-        setSettings(prev => ({
-          ...prev,
-          merchant_type: data.merchant_type as 'auto' | 'manual',
-          min_trade_amount: data.min_trade_amount || prev.min_trade_amount,
-          max_trade_amount: data.max_trade_amount || prev.max_trade_amount,
-          auto_accept_trades: data.auto_accept_trades ?? prev.auto_accept_trades,
-          auto_release_escrow: data.auto_release_escrow ?? prev.auto_release_escrow,
-          is_online: data.is_online ?? prev.is_online,
-          accepts_new_trades: data.accepts_new_trades ?? prev.accepts_new_trades,
-          avg_response_time_minutes: data.avg_response_time_minutes || prev.avg_response_time_minutes,
-          payment_methods: Array.isArray(data.payment_methods) ? data.payment_methods as string[] : prev.payment_methods
-        }));
-      }
-    } catch (error) {
-      console.error('Error loading merchant settings:', error);
-    }
-  };
 
   const fetchCurrentPrices = async () => {
     try {
@@ -152,11 +190,29 @@ const MerchantSettings = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
+      // Only save fields that exist in the database schema
+      const dbSettings = {
+        user_id: user.id,
+        merchant_type: settings.merchant_type,
+        btc_buy_rate: settings.exchange_rates.BTC?.buy_rate,
+        btc_sell_rate: settings.exchange_rates.BTC?.sell_rate,
+        usdt_buy_rate: settings.exchange_rates.USDT?.buy_rate,
+        usdt_sell_rate: settings.exchange_rates.USDT?.sell_rate,
+        min_trade_amount: settings.min_trade_amount,
+        max_trade_amount: settings.max_trade_amount,
+        auto_accept_trades: settings.auto_accept_trades,
+        auto_release_escrow: settings.auto_release_escrow,
+        is_online: settings.is_online,
+        accepts_new_trades: settings.accepts_new_trades,
+        avg_response_time_minutes: settings.avg_response_time_minutes,
+        payment_methods: settings.payment_methods
+      };
+
       const { error } = await supabase
         .from('merchant_settings')
-        .upsert({
-          user_id: user.id,
-          ...settings
+        .upsert(dbSettings, {
+          onConflict: 'user_id',
+          ignoreDuplicates: false
         });
 
       if (error) throw error;

@@ -43,31 +43,12 @@ async function setupDatabase() {
   console.log('🚀 Setting up database tables and functions...');
   
   try {
-    // Step 1: Create sample agents
-    console.log('👥 Creating sample agents...');
-    const { error: agentsError } = await supabase
+    // Step 1: Verify agents table exists (no sample data creation)
+    console.log('👥 Verifying agents table...');
+    const { data: agentsTest, error: agentsError } = await supabase
       .from('agents')
-      .upsert([
-        {
-          name: 'Michael Johnson',
-          phone: '+234 801 234 5678',
-          email: 'michael@tradehub.com',
-          location: 'Victoria Island, Lagos',
-          status: 'available',
-          rating: 4.8,
-          total_deliveries: 156,
-          specialties: ['cash_delivery', 'cash_pickup']
-        },
-        {
-          name: 'Sarah Williams',
-          phone: '+234 802 345 6789',
-          email: 'sarah@tradehub.com',
-          location: 'Ikeja, Lagos',
-          status: 'available',
-          rating: 4.9,
-          total_deliveries: 203,
-          specialties: ['cash_delivery', 'cash_pickup']
-        },
+      .select('count')
+      .limit(1);
         {
           name: 'David Okafor',
           phone: '+234 803 456 7890',
@@ -80,72 +61,31 @@ async function setupDatabase() {
         }
       ], { onConflict: 'name' });
 
-    if (agentsError && !agentsError.message.includes('does not exist')) {
-      console.log('⚠️  Agents table might not exist yet. This is normal if tables haven\'t been created.');
-    } else if (!agentsError) {
-      console.log('✅ Sample agents created!');
+    if (agentsError) {
+      console.log('❌ Agents table verification failed:', agentsError.message);
+    } else {
+      console.log('✅ Agents table verified!');
     }
 
-    // Step 2: Create sample user profiles
-    console.log('👤 Creating sample user profiles...');
-    const { error: profilesError } = await supabase
+    // Step 2: Verify user profiles table exists (no sample data creation)
+    console.log('👤 Verifying user profiles table...');
+    const { data: profilesTest, error: profilesError } = await supabase
       .from('user_profiles')
-      .upsert([
-        {
-          user_id: '00000000-0000-0000-0000-000000000001',
-          full_name: 'Sarah Wilson',
-          is_premium: true,
-          verification_level: 'premium',
-          trade_count: 25,
-          rating: 4.8,
-          total_volume: 150000
-        },
-        {
-          user_id: '00000000-0000-0000-0000-000000000002',
-          full_name: 'Mike Chen',
-          is_premium: true,
-          verification_level: 'premium',
-          trade_count: 18,
-          rating: 4.9,
-          total_volume: 89000
-        }
-      ], { onConflict: 'user_id' });
+      .select('count')
+      .limit(1);
 
-    if (profilesError && !profilesError.message.includes('does not exist')) {
-      console.log('⚠️  User profiles table might not exist yet.');
-    } else if (!profilesError) {
-      console.log('✅ Sample user profiles created!');
+    if (profilesError) {
+      console.log('❌ User profiles table verification failed:', profilesError.message);
+    } else {
+      console.log('✅ User profiles table verified!');
     }
 
-    // Step 3: Create sample trade requests
-    console.log('💰 Creating sample trade requests...');
-    const { error: tradeRequestsError } = await supabase
+    // Step 3: Verify trade requests table exists (no sample data creation)
+    console.log('💰 Verifying trade requests table...');
+    const { data: tradeRequestsTest, error: tradeRequestsError } = await supabase
       .from('trade_requests')
-      .upsert([
-        {
-          id: '11111111-1111-1111-1111-111111111111',
-          user_id: '00000000-0000-0000-0000-000000000001',
-          trade_type: 'sell',
-          coin_type: 'BTC',
-          amount: 0.05,
-          naira_amount: 7500000,
-          rate: 150000000,
-          payment_method: 'bank_transfer',
-          status: 'open',
-          expires_at: new Date(Date.now() + 3600000).toISOString()
-        },
-        {
-          id: '22222222-2222-2222-2222-222222222222',
-          user_id: '00000000-0000-0000-0000-000000000002',
-          trade_type: 'buy',
-          coin_type: 'ETH',
-          amount: 2.5,
-          naira_amount: 13375000,
-          rate: 5350000,
-          payment_method: 'cash_delivery',
-          status: 'open',
-          expires_at: new Date(Date.now() + 7200000).toISOString()
-        }
+      .select('count')
+      .limit(1);
       ], { onConflict: 'id' });
 
     if (tradeRequestsError) {

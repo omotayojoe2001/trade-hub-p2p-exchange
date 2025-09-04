@@ -7,7 +7,10 @@ import { Card } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
 import { getBanksByCountry, verifyAccountName, validateAccountNumber, Bank } from '@/services/banksAPI';
+import { bankAccountService } from '@/services/bankAccountService';
 
 interface BankAccount {
   id: string;
@@ -21,11 +24,14 @@ interface BankAccount {
 }
 
 const PaymentMethods = () => {
+  const { user } = useAuth();
   const [isAddingBank, setIsAddingBank] = useState(false);
   const [editingAccount, setEditingAccount] = useState<BankAccount | null>(null);
   const [availableBanks, setAvailableBanks] = useState<Bank[]>([]);
   const [verifyingAccount, setVerifyingAccount] = useState(false);
   const [accountVerified, setAccountVerified] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const { toast } = useToast();
 
   const [bankData, setBankData] = useState({
@@ -33,37 +39,55 @@ const PaymentMethods = () => {
     bankCode: '',
     accountNumber: '',
     accountName: '',
-    country: 'NG',
-    customBankName: '',
-    useCustomBank: false
+    country: 'NG'
   });
 
-  const [bankAccounts, setBankAccounts] = useState<BankAccount[]>([
-    {
-      id: '1',
-      bankName: 'Access Bank',
-      bankCode: '044',
-      accountNumber: '1234567890',
-      accountName: 'John Doe',
-      isDefault: true,
-      country: 'NG',
-      createdAt: new Date().toISOString()
-    },
-    {
-      id: '2',
-      bankName: 'GTBank',
-      bankCode: '058',
-      accountNumber: '0987654321',
-      accountName: 'John Doe',
-      isDefault: false,
-      country: 'NG',
-      createdAt: new Date().toISOString()
-    }
-  ]);
+  const [bankAccounts, setBankAccounts] = useState<BankAccount[]>([]);
 
   useEffect(() => {
-    loadBanks();
-  }, []);
+    if (user) {
+      loadBankAccounts();
+      loadBanks();
+    }
+  }, [user]);
+
+  const loadBankAccounts = async () => {
+    if (!user) return;
+
+    try {
+      setLoading(true);
+      const { data: accounts, error } = await supabase
+        .from('payment_methods')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('type', 'bank_account')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      const formattedAccounts = (accounts || []).map(account => ({
+        id: account.id,
+        bankName: account.bank_name || '',
+        bankCode: account.bank_code || '',
+        accountNumber: account.account_number || '',
+        accountName: account.account_name || '',
+        isDefault: account.is_default || false,
+        country: account.country || 'NG',
+        createdAt: account.created_at
+      }));
+
+      setBankAccounts(formattedAccounts);
+    } catch (error) {
+      console.error('Error loading bank accounts:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load bank accounts.",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const loadBanks = async () => {
     try {
@@ -79,10 +103,10 @@ const PaymentMethods = () => {
   };
 
   const handleVerifyAccount = async () => {
-    if (!bankData.accountNumber || (!bankData.bankCode && !bankData.useCustomBank) || (bankData.useCustomBank && !bankData.customBankName)) {
+    if (!bankData.accountNumber || !bankData.bankCode) {
       toast({
         title: "Missing Information",
-        description: "Please enter account number and select/enter a bank name",
+        description: "Please enter account number and select a bank",
         variant: "destructive"
       });
       return;
@@ -93,16 +117,6 @@ const PaymentMethods = () => {
         title: "Invalid Account Number",
         description: `Account number format is invalid for ${bankData.country}`,
         variant: "destructive"
-      });
-      return;
-    }
-
-    // For custom banks, skip verification and allow manual account name entry
-    if (bankData.useCustomBank) {
-      setAccountVerified(true);
-      toast({
-        title: "Custom Bank Added",
-        description: "Please enter the account holder name manually",
       });
       return;
     }
@@ -136,7 +150,7 @@ const PaymentMethods = () => {
     }
   };
 
-  const handleAddBankAccount = () => {
+  const handleAddBankAccount = async () => {
     // Basic validation
     if (!bankData.accountNumber.trim()) {
       toast({
@@ -156,18 +170,8 @@ const PaymentMethods = () => {
       return;
     }
 
-    // For custom banks, ensure custom bank name is provided
-    if (bankData.useCustomBank && !bankData.customBankName.trim()) {
-      toast({
-        title: "Missing Bank Name",
-        description: "Please enter the bank name",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    // For predefined banks, ensure a bank is selected
-    if (!bankData.useCustomBank && !bankData.bankCode) {
+    // Ensure a bank is selected
+    if (!bankData.bankCode) {
       toast({
         title: "No Bank Selected",
         description: "Please select a bank from the list",
@@ -176,30 +180,60 @@ const PaymentMethods = () => {
       return;
     }
 
-    const bankName = bankData.useCustomBank ? bankData.customBankName :
-      (availableBanks.find(bank => bank.code === bankData.bankCode)?.name || '');
+    if (!user) {
+      toast({
+        title: "Authentication Required",
+        description: "Please log in to add a bank account",
+        variant: "destructive"
+      });
+      return;
+    }
 
-    const bankCode = bankData.useCustomBank ? 'custom' : bankData.bankCode;
+    try {
+      setSaving(true);
 
-    const newAccount: BankAccount = {
-      id: Date.now().toString(),
-      bankName,
-      bankCode,
-      accountNumber: bankData.accountNumber,
-      accountName: bankData.accountName,
-      isDefault: bankAccounts.length === 0, // First account is default
-      country: bankData.country,
-      createdAt: new Date().toISOString()
-    };
+      const bankName = availableBanks.find(bank => bank.code === bankData.bankCode)?.name || '';
 
-    setBankAccounts(prev => [...prev, newAccount]);
-    resetBankForm();
-    setIsAddingBank(false);
+      const accountData = {
+        user_id: user.id,
+        type: 'bank_account',
+        bank_name: bankName,
+        bank_code: bankData.bankCode,
+        account_number: bankData.accountNumber,
+        account_name: bankData.accountName,
+        country: bankData.country,
+        is_default: bankAccounts.length === 0, // First account is default
+        is_active: true
+      };
 
-    toast({
-      title: "Bank Account Added",
-      description: "Your bank account has been added successfully",
-    });
+      // Add new account to Supabase
+      const { error } = await supabase
+        .from('payment_methods')
+        .insert(accountData);
+
+      if (error) throw error;
+
+      toast({
+        title: "Bank Account Added",
+        description: "Your bank account has been added successfully",
+        duration: 3000
+      });
+
+      // Reload bank accounts to show the new one
+      await loadBankAccounts();
+      resetBankForm();
+      setIsAddingBank(false);
+    } catch (error) {
+      console.error('Error saving bank account:', error);
+      toast({
+        title: "Error",
+        description: "Failed to save bank account. Please try again.",
+        variant: "destructive",
+        duration: 3000
+      });
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleSetDefault = (accountId: string) => {
@@ -243,9 +277,7 @@ const PaymentMethods = () => {
       bankCode: '',
       accountNumber: '',
       accountName: '',
-      country: 'NG',
-      customBankName: '',
-      useCustomBank: false
+      country: 'NG'
     });
     setAccountVerified(false);
     setEditingAccount(null);
@@ -258,9 +290,7 @@ const PaymentMethods = () => {
       bankCode: account.bankCode,
       accountNumber: account.accountNumber,
       accountName: account.accountName,
-      country: account.country,
-      customBankName: account.bankCode === 'custom' ? account.bankName : '',
-      useCustomBank: account.bankCode === 'custom'
+      country: account.country
     });
     setAccountVerified(true); // Assume existing accounts are verified
     setIsAddingBank(true);
@@ -276,9 +306,7 @@ const PaymentMethods = () => {
       return;
     }
 
-    const selectedBank = bankData.useCustomBank
-      ? { name: bankData.customBankName, code: 'custom' }
-      : availableBanks.find(bank => bank.code === bankData.bankCode);
+    const selectedBank = availableBanks.find(bank => bank.code === bankData.bankCode);
 
     if (!selectedBank) return;
 
@@ -372,7 +400,7 @@ const PaymentMethods = () => {
               <p className="text-gray-500 mb-4">No bank accounts added yet</p>
               <Button onClick={() => setIsAddingBank(true)}>
                 <Plus size={16} className="mr-2" />
-                Add Your First Bank Account
+                ADD YOUR BANK ACCOUNT
               </Button>
             </div>
           ) : (
@@ -468,69 +496,24 @@ const PaymentMethods = () => {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Bank Name</label>
 
-                <div className="space-y-3">
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="radio"
-                      id="predefined-bank"
-                      name="bankType"
-                      checked={!bankData.useCustomBank}
-                      onChange={() => handleBankInputChange('useCustomBank', 'false')}
-                      className="w-4 h-4 text-blue-600"
-                    />
-                    <label htmlFor="predefined-bank" className="text-sm text-gray-700">
-                      Select from list
-                    </label>
-                  </div>
-
-                  {!bankData.useCustomBank && (
-                    <Select value={bankData.bankCode} onValueChange={(value) => {
-                      const selectedBank = availableBanks.find(bank => bank.code === value);
-                      if (selectedBank) {
-                        handleBankInputChange('bankCode', value);
-                        handleBankInputChange('bankName', selectedBank.name);
-                      }
-                    }}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select your bank" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {availableBanks.map((bank) => (
-                          <SelectItem key={bank.id} value={bank.code}>
-                            {bank.name} {bank.ussd && `(${bank.ussd})`}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  )}
-
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="radio"
-                      id="custom-bank"
-                      name="bankType"
-                      checked={bankData.useCustomBank}
-                      onChange={() => handleBankInputChange('useCustomBank', 'true')}
-                      className="w-4 h-4 text-blue-600"
-                    />
-                    <label htmlFor="custom-bank" className="text-sm text-gray-700">
-                      Enter custom bank name
-                    </label>
-                  </div>
-
-                  {bankData.useCustomBank && (
-                    <Input
-                      value={bankData.customBankName}
-                      onChange={(e) => {
-                        handleBankInputChange('customBankName', e.target.value);
-                        handleBankInputChange('bankName', e.target.value);
-                        handleBankInputChange('bankCode', 'custom');
-                      }}
-                      placeholder="Enter your bank name"
-                      className="w-full"
-                    />
-                  )}
-                </div>
+                <Select value={bankData.bankCode} onValueChange={(value) => {
+                  const selectedBank = availableBanks.find(bank => bank.code === value);
+                  if (selectedBank) {
+                    handleBankInputChange('bankCode', value);
+                    handleBankInputChange('bankName', selectedBank.name);
+                  }
+                }}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select your bank" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availableBanks.map((bank) => (
+                      <SelectItem key={bank.id} value={bank.code}>
+                        {bank.name} {bank.ussd && `(${bank.ussd})`}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               <div>
@@ -543,64 +526,30 @@ const PaymentMethods = () => {
                     maxLength={bankData.country === 'NG' ? 10 : 20}
                     className="flex-1"
                   />
-                  {!bankData.useCustomBank && (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={handleVerifyAccount}
-                      disabled={
-                        !bankData.accountNumber ||
-                        !bankData.bankCode ||
-                        verifyingAccount
-                      }
-                    >
-                      {verifyingAccount ? (
-                        <Loader2 size={16} className="animate-spin" />
-                      ) : accountVerified ? (
-                        <Check size={16} className="text-green-600" />
-                      ) : (
-                        'Verify'
-                      )}
-                    </Button>
-                  )}
+
                 </div>
                 {bankData.country === 'NG' && (
                   <p className="text-xs text-gray-500 mt-1">Nigerian account numbers are 10 digits</p>
                 )}
               </div>
 
-              {/* Account Name - Manual input for custom banks, verified display for others */}
-              {bankData.useCustomBank ? (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Account Holder Name</label>
-                  <Input
-                    value={bankData.accountName}
-                    onChange={(e) => handleBankInputChange('accountName', e.target.value)}
-                    placeholder="Enter account holder name"
-                    className="w-full"
-                  />
-                  <p className="text-xs text-gray-500 mt-1">Enter the name as it appears on the bank account</p>
-                </div>
-              ) : (
-                bankData.accountName && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Account Name</label>
-                    <div className="flex items-center p-3 bg-green-50 border border-green-200 rounded-lg">
-                      <Check size={16} className="text-green-600 mr-2" />
-                      <span className="text-green-800 font-medium">{bankData.accountName}</span>
-                    </div>
-                  </div>
-                )
-              )}
+              {/* Account Holder Name - Always show input field */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Account Holder Name</label>
+                <Input
+                  value={bankData.accountName}
+                  onChange={(e) => handleBankInputChange('accountName', e.target.value)}
+                  placeholder="Enter account holder name"
+                  className="w-full"
+                />
+                <p className="text-xs text-gray-500 mt-1">Enter the name as it appears on the bank account</p>
+              </div>
 
-              {!accountVerified && bankData.accountNumber && (bankData.bankCode || bankData.useCustomBank) && (
+              {!accountVerified && bankData.accountNumber && bankData.bankCode && (
                 <div className="flex items-center p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
                   <AlertCircle size={16} className="text-yellow-600 mr-2" />
                   <span className="text-yellow-800 text-sm">
-                    {bankData.useCustomBank
-                      ? "Please enter account holder name and verify details"
-                      : "Please verify your account number before adding"
-                    }
+                    Please verify your account number before adding
                   </span>
                 </div>
               )}
@@ -611,8 +560,8 @@ const PaymentMethods = () => {
                 disabled={
                   !bankData.accountNumber ||
                   !bankData.accountName ||
-                  (!bankData.useCustomBank && !accountVerified) ||
-                  (bankData.useCustomBank && !bankData.customBankName)
+                  !bankData.bankCode ||
+                  saving
                 }
               >
                 {editingAccount ? 'Update Bank Account' : 'Add Bank Account'}

@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, MoreVertical, Copy, Clock, Shield, CheckCircle, Loader2 } from 'lucide-react';
+import { ArrowLeft, MoreVertical, Copy, Clock, Shield, CheckCircle, Loader2, Flag, Trash2, Play } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import QRCodeLib from 'qrcode';
@@ -39,6 +40,10 @@ interface TradeTemplateProps {
   onActionClick?: () => void;
   actionButtonText?: string;
   actionButtonDisabled?: boolean;
+  onReportTrade?: () => void;
+  onDeleteTrade?: () => void;
+  onResumeTrade?: () => void;
+  canResume?: boolean;
 }
 
 export const TradeTemplate: React.FC<TradeTemplateProps> = ({
@@ -50,7 +55,11 @@ export const TradeTemplate: React.FC<TradeTemplateProps> = ({
   children,
   onActionClick,
   actionButtonText,
-  actionButtonDisabled = false
+  actionButtonDisabled = false,
+  onReportTrade,
+  onDeleteTrade,
+  onResumeTrade,
+  canResume = false
 }) => {
   const [qrDataUrl, setQrDataUrl] = useState<string>('');
 
@@ -106,7 +115,35 @@ export const TradeTemplate: React.FC<TradeTemplateProps> = ({
               <p className="text-sm text-gray-500">{tradeData.id}</p>
             </div>
           </div>
-          <MoreVertical size={24} className="text-gray-700" />
+
+          {/* 3-dot menu */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                <MoreVertical size={20} className="text-gray-700" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              {canResume && onResumeTrade && (
+                <DropdownMenuItem onClick={onResumeTrade} className="text-blue-600">
+                  <Play size={16} className="mr-2" />
+                  Resume Trade
+                </DropdownMenuItem>
+              )}
+              {onReportTrade && (
+                <DropdownMenuItem onClick={onReportTrade} className="text-orange-600">
+                  <Flag size={16} className="mr-2" />
+                  Report Trade
+                </DropdownMenuItem>
+              )}
+              {onDeleteTrade && (
+                <DropdownMenuItem onClick={onDeleteTrade} className="text-red-600">
+                  <Trash2 size={16} className="mr-2" />
+                  Delete Trade
+                </DropdownMenuItem>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 
@@ -115,11 +152,11 @@ export const TradeTemplate: React.FC<TradeTemplateProps> = ({
         <Card className="bg-white shadow-sm">
           <CardHeader className="text-center pb-4">
             <div className="space-y-2">
-              <h2 className="text-3xl font-bold text-gray-900">{tradeData.amount}</h2>
-              <p className="text-lg text-gray-600">@ {tradeData.nairaAmount} per {tradeData.coin}</p>
-              <p className="text-2xl font-semibold text-gray-900">Total: {tradeData.total}</p>
+              <h2 className="text-3xl font-bold text-gray-900">{tradeData.amount || '0'} {tradeData.coin || 'BTC'}</h2>
+              <p className="text-lg text-gray-600">@ ₦{tradeData.nairaAmount || '0'} per {tradeData.coin || 'BTC'}</p>
+              <p className="text-2xl font-semibold text-gray-900">Total: ₦{tradeData.total || '0'}</p>
               <Badge className={`${getStatusColor(tradeData.status)} border`}>
-                {tradeData.status.charAt(0).toUpperCase() + tradeData.status.slice(1)}
+                {(tradeData.status || 'pending').charAt(0).toUpperCase() + (tradeData.status || 'pending').slice(1)}
               </Badge>
             </div>
           </CardHeader>

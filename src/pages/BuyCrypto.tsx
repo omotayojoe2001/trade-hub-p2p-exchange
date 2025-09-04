@@ -25,8 +25,14 @@ const BuyCrypto = () => {
   };
 
   const handleContinue = () => {
-    // Navigate to match screen with the entered amount
-    navigate("/buy-crypto-match", { state: { amount, nairaAmount } });
+    // Navigate to merchant list with the entered amount
+    navigate("/merchant-list", {
+      state: {
+        amount: parseFloat(amount),
+        nairaAmount: parseFloat(nairaAmount.replace(/,/g, '')),
+        coinType: 'BTC'
+      }
+    });
   };
 
   return (

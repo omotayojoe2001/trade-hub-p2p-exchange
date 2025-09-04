@@ -28,13 +28,44 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [profile, setProfile] = useState<any>(null);
 
   const fetchProfile = async (userId: string) => {
-    const { data: profileData } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('user_id', userId)
-      .single();
-    
-    setProfile(profileData);
+    try {
+      // Try profiles table first (for profile setup compatibility)
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('user_id', userId)
+        .single();
+
+      if (!profileError && profileData) {
+        setProfile(profileData);
+        return;
+      }
+
+      // Fallback to user_profiles table
+      const { data: userProfileData, error: userProfileError } = await supabase
+        .from('user_profiles')
+        .select('*')
+        .eq('user_id', userId)
+        .single();
+
+      if (userProfileError && userProfileError.code !== 'PGRST116') {
+        console.error('Error fetching user profile:', userProfileError);
+        return;
+      }
+
+      // Transform user_profiles data to match expected profile structure
+      if (userProfileData) {
+        setProfile({
+          ...userProfileData,
+          profile_completed: true, // Assume completed if user_profiles exists
+          user_type: 'customer',
+          display_name: userProfileData.full_name,
+          username: userProfileData.full_name?.toLowerCase().replace(/\s+/g, '_') || 'user'
+        });
+      }
+    } catch (error) {
+      console.error('Error in fetchProfile:', error);
+    }
   };
 
   const refreshProfile = async () => {

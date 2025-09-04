@@ -10,13 +10,14 @@ import { supabase } from '@/integrations/supabase/client';
 
 interface Notification {
   id: string;
-  type: 'trade' | 'payment' | 'security' | 'premium' | 'update';
+  type: 'trade' | 'payment' | 'security' | 'premium' | 'update' | 'trade_request';
   title: string;
   message: string;
   timestamp: Date;
   isRead: boolean;
   actionRequired?: boolean;
   tradeId?: string;
+  tradeRequestId?: string;
   isPremium?: boolean;
   priority?: 'low' | 'medium' | 'high';
 }
@@ -147,6 +148,15 @@ const GlobalNotifications = () => {
     setSelectedNotification(notification);
     setShowDetailPopup(true);
     setIsVisible(false);
+
+    // Navigate based on notification type
+    if (notification.type === 'trade_request' && notification.tradeRequestId) {
+      // Navigate to merchant trade requests
+      setTimeout(() => window.location.href = '/merchant-trade-requests', 500);
+    } else if (notification.tradeId) {
+      // Navigate to specific trade
+      setTimeout(() => window.location.href = `/trade-details/${notification.tradeId}`, 500);
+    }
 
     // Mark as read if not already read
     if (!notification.isRead) {

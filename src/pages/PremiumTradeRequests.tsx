@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent } from '@/components/ui/card';
 import PremiumBottomNavigation from '@/components/premium/PremiumBottomNavigation';
 import { useAuth } from '@/hooks/useAuth';
-import { realTimeTradeRequestService, deliveryTrackingService } from '@/services/supabaseService';
+import { tradeRequestService, TradeRequest as TradeRequestType } from '@/services/tradeRequestService';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import CryptoIcon from '@/components/CryptoIcon';
@@ -99,33 +99,44 @@ const PremiumTradeRequests = () => {
         setError(null);
 
         // Get real trade requests from Supabase
-        const requests = await realTimeTradeRequestService.getOpenTradeRequests();
+        const requests = await tradeRequestService.getOpenTradeRequests();
         
         // Transform requests for display
-        const transformedRequests = requests.map((request: TradeRequest) => {
+        const transformedRequests = requests.map((request: TradeRequestType) => {
           const timeLeft = calculateTimeLeft(request.expires_at);
 
           return {
             id: request.id,
-            userName: request.user_profiles?.full_name || 'Anonymous User',
-            rating: request.user_profiles?.rating || 5.0,
-            coin: request.coin_type,
-            amount: request.amount.toString(),
-            rate: `₦${request.rate.toLocaleString()}/${request.coin_type}`,
-            nairaAmount: `₦${request.naira_amount.toLocaleString()}`,
-            timeLeft,
-            paymentMethods: ['Bank Transfer', 'Cash Delivery', 'Cash Pickup'],
-            type: request.trade_type,
-            direction: request.trade_type === 'sell'
+            user_id: request.user_id,
+            trade_type: request.trade_type,
+            coin_type: request.coin_type,
+            amount: request.amount,
+            naira_amount: request.naira_amount,
+            rate: request.rate,
+            payment_method: request.payment_method,
+            status: request.status,
+            expires_at: request.expires_at,
+            created_at: request.created_at,
+            updated_at: request.created_at, // Use created_at as fallback
+            notes: request.notes,
+            // Display properties
+            display_name: request.merchant_name || 'Anonymous User',
+            display_rating: request.merchant_rating || 5.0,
+            display_coin: request.coin_type,
+            display_amount: request.amount.toString(),
+            display_rate: `₦${request.rate.toLocaleString()}/${request.coin_type}`,
+            display_naira_amount: `₦${request.naira_amount.toLocaleString()}`,
+            display_time_left: timeLeft,
+            display_payment_methods: [request.payment_method || 'Bank Transfer'],
+            display_type: request.trade_type,
+            display_direction: request.trade_type === 'sell'
               ? 'User wants to sell crypto to you'
               : 'User wants to buy crypto from you',
-            status: request.status,
-            created_at: request.created_at,
-            isPremium: request.user_profiles?.verification_level === 'premium',
-            tradeCount: request.user_profiles?.trade_count || 0,
-            verificationLevel: request.user_profiles?.verification_level || 'basic',
+            display_is_premium: false, // Will be enhanced later
+            display_trade_count: request.merchant_trade_count || 0,
+            verificationLevel: 'basic',
             originalRequest: request
-          };
+          } as TradeRequest;
         });
 
         setTradeRequests(transformedRequests);
@@ -192,43 +203,19 @@ const PremiumTradeRequests = () => {
       setAcceptingRequest(requestId);
 
       // Accept the trade request in Supabase
-      const { trade, request } = await realTimeTradeRequestService.acceptTradeRequest(requestId);
+      const trade = await tradeRequestService.acceptTradeRequest(requestId, user.id);
 
       toast({
         title: "Trade Request Accepted!",
         description: `You've accepted the ${request.trade_type} request for ${request.amount} ${request.coin_type}`,
       });
 
-      // Create delivery tracking if it's a cash delivery/pickup trade
-      if (request.payment_method === 'cash_delivery' || request.payment_method === 'cash_pickup') {
-        const trackingData = await deliveryTrackingService.createDeliveryTracking({
-          trade_id: trade.id,
-          delivery_type: request.payment_method,
-          amount: request.naira_amount,
-          currency: 'NGN',
-          crypto_type: request.coin_type,
-          crypto_amount: request.amount,
-          pickup_location: request.payment_method === 'cash_pickup' ? 'Ikeja City Mall' : undefined,
-          delivery_address: request.payment_method === 'cash_delivery' ? 'User Address' : undefined
-        });
-
-        // Navigate to tracking page
-        navigate('/delivery-tracking', {
-          state: {
-            trackingCode: trackingData.tracking_code,
-            trade: trade,
-            request: request
-          }
-        });
-      } else {
-        // Navigate to premium payment status for bank transfers
-        navigate('/premium-payment-status', {
-          state: {
-            trade: trade,
-            request: request
-          }
-        });
-      }
+      // Navigate to trade details page
+      navigate('/trade-details', {
+        state: {
+          trade: trade
+        }
+      });
 
     } catch (error) {
       console.error('Error accepting trade:', error);
@@ -250,12 +237,12 @@ const PremiumTradeRequests = () => {
   };
 
   const filteredRequests = tradeRequests.filter(request => {
-    const matchesSearch = request.userName.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCoin = coinFilter === 'all' || request.coin === coinFilter;
+    const matchesSearch = (request.display_name || '').toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesCoin = coinFilter === 'all' || request.coin_type === coinFilter;
     return matchesSearch && matchesCoin;
   });
 
-  const availableCoins = [...new Set(tradeRequests.map(r => r.coin))];
+  const availableCoins = [...new Set(tradeRequests.map(r => r.coin_type))];
 
   if (loading) {
     return (

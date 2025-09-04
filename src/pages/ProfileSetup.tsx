@@ -33,8 +33,16 @@ const ProfileSetup = () => {
         .eq('user_id', session.user.id)
         .single();
 
-      if (existingProfile && existingProfile.profile_completed) {
+      // Also check user_profiles table
+      const { data: userProfile } = await supabase
+        .from('user_profiles')
+        .select('*')
+        .eq('user_id', session.user.id)
+        .single();
+
+      if ((existingProfile && existingProfile.profile_completed) || userProfile) {
         // Profile already completed, redirect to home
+        console.log('Profile completed, redirecting to home');
         navigate('/home');
         return;
       }
@@ -70,27 +78,51 @@ const ProfileSetup = () => {
     setError('');
 
     try {
-      const { error } = await supabase
+      // Create/update profiles table
+      const { error: profileError } = await supabase
         .from('profiles')
-        .update({
+        .upsert({
+          user_id: currentUser.id,
+          display_name: currentUser.user_metadata?.full_name || currentUser.email?.split('@')[0] || 'User',
           user_type: userType,
           is_merchant: userType === 'merchant',
-          profile_completed: true
-        })
-        .eq('user_id', currentUser.id);
+          profile_completed: true,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'user_id' });
 
-      if (error) {
-        setError(error.message);
-        return;
+      if (profileError) {
+        console.warn('Profiles update failed:', profileError.message);
+      }
+
+      // Also ensure user_profiles table exists
+      const { error: userProfileError } = await supabase
+        .from('user_profiles')
+        .upsert({
+          user_id: currentUser.id,
+          full_name: currentUser.user_metadata?.full_name || currentUser.email?.split('@')[0] || 'User',
+          is_premium: false,
+          verification_level: 'basic',
+          trade_count: 0,
+          rating: 5.0,
+          total_volume: 0,
+          preferred_payment_methods: ['bank_transfer']
+        }, { onConflict: 'user_id' });
+
+      if (userProfileError) {
+        console.warn('User profiles update failed:', userProfileError.message);
       }
 
       toast({
         title: "Profile setup complete!",
-                  description: `Welcome to Central Exchange as a ${userType}.`,
+        description: `Welcome to Central Exchange as a ${userType}.`,
       });
 
-      // Navigate without full page reload
-      navigate('/home');
+      // Force redirect to break any loops
+      console.log('Profile setup completed, redirecting to home...');
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 1000);
     } catch (err) {
       setError('An unexpected error occurred');
     } finally {

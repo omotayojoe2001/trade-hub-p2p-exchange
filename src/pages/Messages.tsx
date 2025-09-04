@@ -8,6 +8,8 @@ import { useAuth } from '@/hooks/useAuth';
 import { usePremium } from '@/hooks/usePremium';
 import { messageService, realtimeService } from '@/services/supabaseService';
 import ClickableUser from '@/components/ClickableUser';
+import MessagesList from '@/components/MessagesList';
+import BottomNavigation from '@/components/BottomNavigation';
 
 const Messages = () => {
   const navigate = useNavigate();
@@ -16,6 +18,9 @@ const Messages = () => {
   const { user } = useAuth();
   const { isPremium } = usePremium();
   const { tradeId, recipientName, message: initialMessage } = location.state || {};
+
+  // If no tradeId, show messages list
+  const showMessagesList = !tradeId;
 
   // Redirect premium users to premium messages
   React.useEffect(() => {
@@ -150,12 +155,37 @@ const Messages = () => {
     }
   };
 
+  // Show messages list if no specific conversation selected
+  if (showMessagesList) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex flex-col">
+        {/* Header */}
+        <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-white">
+          <div className="flex items-center">
+            <button onClick={() => navigate(-1)}>
+              <ArrowLeft className="h-6 w-6 text-gray-900" />
+            </button>
+            <h1 className="ml-3 text-lg font-semibold text-gray-900">Messages</h1>
+          </div>
+        </div>
+
+        {/* Messages List */}
+        <div className="flex-1 p-4">
+          <MessagesList />
+        </div>
+
+        {/* Bottom Navigation */}
+        <BottomNavigation />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-border bg-card">
         <div className="flex items-center">
-          <button onClick={() => navigate(-1)}>
+          <button onClick={() => navigate('/messages')}>
             <ArrowLeft size={24} className="text-foreground mr-4" />
           </button>
           <ClickableUser

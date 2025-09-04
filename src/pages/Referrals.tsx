@@ -1,57 +1,117 @@
-import React, { useState } from 'react';
-import { ArrowLeft, Copy, Share2, Twitter, MessageCircle, Filter, MoreVertical } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { ArrowLeft, Copy, Share2, Twitter, MessageCircle, Filter, MoreVertical, Loader2, Users, DollarSign, TrendingUp } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
+import BottomNavigation from '@/components/BottomNavigation';
+
+interface ReferralData {
+  id: string;
+  name: string;
+  joinDate: string;
+  earnings: number;
+  status: string;
+  totalTrades: number;
+}
+
+interface ReferralStats {
+  totalReferrals: number;
+  totalEarnings: number;
+  activeReferrals: number;
+  pendingEarnings: number;
+}
 
 const Referrals = () => {
-  const [activeTab, setActiveTab] = useState('Week');
+  const { user } = useAuth();
   const { toast } = useToast();
-  
-  const referralLink = "https://app.example.com/refer/username123";
-  
-  const referralData = [
-    {
-      id: 1,
-      name: "Aminu B.",
-      joinDate: "Apr 2",
-      earnings: "₦6,300",
-      status: "Active"
-    },
-    {
-      id: 2,
-      name: "Kelvin O.",
-      joinDate: "May 8",
-      earnings: "₦1,020",
-      status: "Active"
-    },
-    {
-      id: 3,
-      name: "Fatima A.",
-      joinDate: "May 12",
-      earnings: "₦0.00",
-      status: "Pending"
+
+  const [activeTab, setActiveTab] = useState('Week');
+  const [loading, setLoading] = useState(true);
+  const [referralData, setReferralData] = useState<ReferralData[]>([]);
+  const [referralStats, setReferralStats] = useState<ReferralStats>({
+    totalReferrals: 0,
+    totalEarnings: 0,
+    activeReferrals: 0,
+    pendingEarnings: 0
+  });
+
+  const referralLink = user ? `https://tradehub.app/refer/${user.id}` : "";
+
+  // Load referral data from Supabase
+  useEffect(() => {
+    if (user) {
+      loadReferralData();
     }
-  ];
+  }, [user]);
+
+  const loadReferralData = async () => {
+    try {
+      setLoading(true);
+
+      // Load referrals from profiles table
+      const { data: referrals, error: referralsError } = await supabase
+        .from('profiles')
+        .select('user_id, display_name, created_at')
+        .eq('referred_by', user!.id);
+
+      if (referralsError) throw referralsError;
+
+      // Load referral commissions
+      const { data: commissions, error: commissionsError } = await supabase
+        .from('referral_commissions')
+        .select('*')
+        .eq('referrer_id', user!.id);
+
+      if (commissionsError) throw commissionsError;
+
+      // Calculate stats and format data
+      const formattedReferrals = (referrals || []).map(referral => {
+        const userCommissions = (commissions || []).filter(c => c.referred_user_id === referral.user_id);
+        const totalEarnings = userCommissions.reduce((sum, c) => sum + (c.commission_amount || 0), 0);
+        const hasActiveTrades = userCommissions.length > 0;
+
+        return {
+          id: referral.user_id,
+          name: referral.display_name || 'Anonymous User',
+          joinDate: new Date(referral.created_at).toLocaleDateString(),
+          earnings: totalEarnings,
+          status: hasActiveTrades ? 'Active' : 'Pending',
+          totalTrades: userCommissions.length
+        };
+      });
+
+      const stats = {
+        totalReferrals: referrals?.length || 0,
+        totalEarnings: (commissions || []).reduce((sum, c) => sum + (c.commission_amount || 0), 0),
+        activeReferrals: formattedReferrals.filter(r => r.status === 'Active').length,
+        pendingEarnings: (commissions || []).filter(c => c.status === 'pending').reduce((sum, c) => sum + (c.commission_amount || 0), 0)
+      };
+
+      setReferralData(formattedReferrals);
+      setReferralStats(stats);
+    } catch (error) {
+      console.error('Error loading referral data:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load referral data.",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleCopyLink = () => {
     navigator.clipboard.writeText(referralLink);
     toast({
       title: "Link copied!",
-      description: "Your referral link has been copied to clipboard."
+      description: "Your referral link has been copied to clipboard.",
+      duration: 3000
     });
   };
-
-  const chartData = [
-    { day: 'Mon', value: 2000 },
-    { day: 'Tue', value: 3000 },
-    { day: 'Wed', value: 1800 },
-    { day: 'Thu', value: 4200 },
-    { day: 'Fri', value: 3800 },
-    { day: 'Sat', value: 2800 },
-    { day: 'Sun', value: 2400 }
-  ];
 
   const maxValue = Math.max(...chartData.map(d => d.value));
 

@@ -6,9 +6,13 @@ interface PaymentConfirmationDialogProps {
   isOpen: boolean;
   onClose: () => void;
   onConfirm: (received: boolean) => void;
+  amount: number;
+  bankAccount: string;
+  merchantName: string;
+  bankName?: string;
 }
 
-const PaymentConfirmationDialog = ({ isOpen, onClose, onConfirm }: PaymentConfirmationDialogProps) => {
+const PaymentConfirmationDialog = ({ isOpen, onClose, onConfirm, amount, bankAccount, merchantName, bankName }: PaymentConfirmationDialogProps) => {
   if (!isOpen) return null;
 
   return (
@@ -32,7 +36,7 @@ const PaymentConfirmationDialog = ({ isOpen, onClose, onConfirm }: PaymentConfir
               Have you received your payment?
             </h4>
             <p className="text-gray-600 text-sm">
-              Please confirm if you have received ₦558,792 in your GTBank account ending in 4875.
+              Please confirm if you have received ₦{amount.toLocaleString()} in your {bankAccount} account.
             </p>
           </div>
 
@@ -41,15 +45,19 @@ const PaymentConfirmationDialog = ({ isOpen, onClose, onConfirm }: PaymentConfir
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
                 <span className="text-gray-600">Expected Amount:</span>
-                <span className="font-medium text-gray-900">₦558,792</span>
+                <span className="font-medium text-gray-900">₦{amount.toLocaleString()}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-600">Bank Name:</span>
+                <span className="font-medium text-gray-900">{bankName || 'Your Bank'}</span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-gray-600">Bank Account:</span>
-                <span className="font-medium text-gray-900">GTBank • • • • 4875</span>
+                <span className="font-medium text-gray-900">{bankAccount}</span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-gray-600">Merchant:</span>
-                <span className="font-medium text-gray-900">MercyPay</span>
+                <span className="font-medium text-gray-900">{merchantName}</span>
               </div>
             </div>
           </div>

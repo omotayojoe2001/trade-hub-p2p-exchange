@@ -1,14 +1,25 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Shield, Key, Eye, EyeOff, Lock, AlertTriangle } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { ArrowLeft, Shield, Key, Eye, EyeOff, Lock, AlertTriangle, LogOut } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
+import { useAuth } from '@/hooks/useAuth';
+import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 const Security = () => {
+  const { user, signOut } = useAuth();
+  const { toast } = useToast();
+  const navigate = useNavigate();
+
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+
   const [passwordData, setPasswordData] = useState({
     currentPassword: '',
     newPassword: '',
@@ -20,6 +31,97 @@ const Security = () => {
       ...prev,
       [field]: value
     }));
+  };
+
+  const handlePasswordUpdate = async () => {
+    if (!passwordData.newPassword || !passwordData.confirmPassword) {
+      toast({
+        title: "Missing Information",
+        description: "Please fill in all password fields.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      toast({
+        title: "Password Mismatch",
+        description: "New password and confirmation don't match.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (passwordData.newPassword.length < 6) {
+      toast({
+        title: "Password Too Short",
+        description: "Password must be at least 6 characters long.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      setIsChangingPassword(true);
+
+      // Update password in Supabase
+      const { error } = await supabase.auth.updateUser({
+        password: passwordData.newPassword
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Password Updated",
+        description: "Your password has been successfully changed.",
+      });
+
+      // Clear form
+      setPasswordData({
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: ''
+      });
+
+    } catch (error: any) {
+      console.error('Error updating password:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update password. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsChangingPassword(false);
+    }
+  };
+
+  const handleLogoutAllSessions = async () => {
+    try {
+      setIsLoggingOut(true);
+
+      // Sign out from all sessions
+      const { error } = await supabase.auth.signOut({ scope: 'global' });
+
+      if (error) throw error;
+
+      toast({
+        title: "Logged Out",
+        description: "You have been logged out from all devices.",
+      });
+
+      // Redirect to auth page
+      navigate('/auth');
+
+    } catch (error: any) {
+      console.error('Error logging out:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to logout from all sessions.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoggingOut(false);
+    }
   };
 
   return (
@@ -91,98 +193,60 @@ const Security = () => {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Confirm New Password</label>
-              <Input
-                type="password"
-                value={passwordData.confirmPassword}
-                onChange={(e) => handlePasswordChange('confirmPassword', e.target.value)}
-                placeholder="Confirm new password"
-              />
+              <div className="relative">
+                <Input
+                  type={showConfirmPassword ? 'text' : 'password'}
+                  value={passwordData.confirmPassword}
+                  onChange={(e) => handlePasswordChange('confirmPassword', e.target.value)}
+                  placeholder="Confirm new password"
+                />
+                <button
+                  type="button"
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                >
+                  {showConfirmPassword ? (
+                    <EyeOff size={16} className="text-gray-400" />
+                  ) : (
+                    <Eye size={16} className="text-gray-400" />
+                  )}
+                </button>
+              </div>
             </div>
 
-            <Button className="w-full">
-              Update Password
+            <Button
+              className="w-full"
+              onClick={handlePasswordUpdate}
+              disabled={isChangingPassword}
+            >
+              {isChangingPassword ? 'Updating...' : 'Update Password'}
             </Button>
           </div>
         </Card>
 
 
 
-        {/* Login Activity */}
+        {/* Session Management */}
         <Card className="bg-white p-6">
           <div className="flex items-center mb-4">
             <Shield size={20} className="text-purple-600 mr-2" />
-            <h3 className="text-lg font-semibold text-gray-900">Login Activity</h3>
-          </div>
-          
-          <div className="space-y-3">
-            <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-              <div>
-                <p className="text-sm font-medium text-gray-900">Current Session</p>
-                <p className="text-sm text-gray-500">Chrome on Windows • Lagos, Nigeria</p>
-              </div>
-              <div className="flex items-center">
-                <div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
-                <span className="text-sm text-green-600">Active</span>
-              </div>
-            </div>
-
-            <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-              <div>
-                <p className="text-sm font-medium text-gray-900">Mobile App</p>
-                <p className="text-sm text-gray-500">iPhone • 2 hours ago</p>
-              </div>
-              <Button variant="outline" size="sm">
-                Revoke
-              </Button>
-            </div>
-
-            <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-              <div>
-                <p className="text-sm font-medium text-gray-900">Firefox on Mac</p>
-                <p className="text-sm text-gray-500">Abuja, Nigeria • 1 day ago</p>
-              </div>
-              <Button variant="outline" size="sm">
-                Revoke
-              </Button>
-            </div>
+            <h3 className="text-lg font-semibold text-gray-900">Session Management</h3>
           </div>
 
-          <Button variant="outline" className="w-full mt-4">
-            Sign Out All Devices
-          </Button>
-        </Card>
-
-        {/* Privacy Settings */}
-        <Card className="bg-white p-6">
-          <div className="flex items-center mb-4">
-            <Lock size={20} className="text-gray-600 mr-2" />
-            <h3 className="text-lg font-semibold text-gray-900">Privacy Settings</h3>
-          </div>
-          
           <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-900 font-medium">Profile Visibility</p>
-                <p className="text-sm text-gray-500">Allow others to see your profile</p>
-              </div>
-              <Switch defaultChecked />
-            </div>
+            <p className="text-sm text-gray-600">
+              Sign out from all devices and sessions for enhanced security.
+            </p>
 
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-900 font-medium">Trade History</p>
-                <p className="text-sm text-gray-500">Show trading activity to other users</p>
-              </div>
-              <Switch />
-            </div>
-
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-900 font-medium">Online Status</p>
-                <p className="text-sm text-gray-500">Show when you're online</p>
-              </div>
-              <Switch defaultChecked />
-            </div>
+            <Button
+              variant="outline"
+              className="w-full text-red-600 border-red-200 hover:bg-red-50"
+              onClick={handleLogoutAllSessions}
+              disabled={isLoggingOut}
+            >
+              <LogOut className="mr-2" size={16} />
+              {isLoggingOut ? 'Signing Out...' : 'Sign Out All Devices'}
+            </Button>
           </div>
         </Card>
 

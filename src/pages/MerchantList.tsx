@@ -1,95 +1,167 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Bell, Filter, MapPin, Clock, Star } from 'lucide-react';
+import { ArrowLeft, Bell, Filter, MapPin, Clock, Star, Loader2 } from 'lucide-react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import BottomNavigation from '@/components/BottomNavigation';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
+import { merchantService, MerchantProfile } from '@/services/merchantService';
+import { useAuth } from '@/hooks/useAuth';
 
 const MerchantList = () => {
   const [sortBy, setSortBy] = useState('best-rate');
+  const [merchants, setMerchants] = useState<MerchantProfile[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
   const location = useLocation();
-  const { amount, nairaAmount } = (location.state as any) || {};
-
-  const merchants = [
-    {
-      id: 1,
-      name: 'Alpha Trades',
-      avatar: 'AT',
-      rating: 4.8,
-      status: 'Online',
-      statusColor: 'bg-green-500',
-      nairaToBtc: '₦1,250,000',
-      btcToNaira: '₦1,245,000',
-      nairaToUsdt: '₦750',
-      usdtToNaira: '₦748',
-      limits: '₦1k - ₦10M',
-      estimatedTime: '5 mins'
-    },
-    {
-      id: 2,
-      name: 'Swift Exchange',
-      avatar: 'SE',
-      rating: 4.9,
-      status: 'Online',
-      statusColor: 'bg-green-500',
-      nairaToBtc: '₦1,251,000',
-      btcToNaira: '₦1,246,000',
-      nairaToUsdt: '₦752',
-      usdtToNaira: '₦749',
-      limits: '₦5k - ₦50M',
-      estimatedTime: '3 mins'
-    },
-    {
-      id: 3,
-      name: 'Secure Wallets',
-      avatar: 'SW',
-      rating: 4.5,
-      status: 'Offline',
-      statusColor: 'bg-gray-400',
-      nairaToBtc: '₦1,248,000',
-      btcToNaira: '₦1,243,000',
-      nairaToUsdt: '₦749',
-      usdtToNaira: '₦747',
-      limits: '₦10k - ₦20M',
-      estimatedTime: '10 mins'
-    },
-    {
-      id: 4,
-      name: 'Global Connect',
-      avatar: 'GC',
-      rating: 4.7,
-      status: 'Online',
-      statusColor: 'bg-green-500',
-      nairaToBtc: '₦1,252,000',
-      btcToNaira: '₦1,247,000',
-      nairaToUsdt: '₦753',
-      usdtToNaira: '₦750',
-      limits: '₦2k - ₦30M',
-      estimatedTime: '4 mins'
-    },
-    {
-      id: 5,
-      name: 'Reliable Trader',
-      avatar: 'RT',
-      rating: 4.3,
-      status: 'Offline',
-      statusColor: 'bg-gray-400',
-      nairaToBtc: '₦1,253,000',
-      btcToNaira: '₦1,248,000',
-      nairaToUsdt: '₦754',
-      usdtToNaira: '₦751',
-      limits: '₦1k - ₦5M',
-      estimatedTime: '8 mins'
-    }
-  ];
-
-  const handleMerchantSelect = (merchantId: number) => {
-    console.log('Selected merchant:', merchantId);
-    // Proceed to the unified payment status flow with selected merchant and amounts
-    navigate('/payment-status', { state: { amount, nairaAmount, merchantId, mode: 'buy', step: 1 } });
+  const { amount, nairaAmount, coinType } = (location.state as any) || {
+    amount: 0.01,
+    nairaAmount: 1500000,
+    coinType: 'BTC'
   };
+  const { toast } = useToast();
+  const { user } = useAuth();
+
+  // Fetch real merchants from database using merchant service
+  useEffect(() => {
+    if (user?.id) {
+      fetchMerchants();
+
+      // Set up real-time subscription for merchant updates
+      const channel = merchantService.subscribeToMerchantUpdates(async () => {
+        // Refresh merchant list excluding current user
+        const updatedMerchants = await merchantService.getMerchants(user.id);
+        setMerchants(updatedMerchants);
+      });
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    }
+  }, [user?.id]); // Add user.id as dependency
+
+  const fetchMerchants = async () => {
+    if (!user?.id) {
+      console.log('No user ID available for merchant fetch');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError(null);
+
+      console.log('Fetching merchants excluding user:', user.id.slice(0, 8) + '...');
+
+      // Exclude current user from merchant list
+      const merchantsData = await merchantService.getMerchants(user.id);
+
+      console.log('Found merchants:', merchantsData.length);
+      setMerchants(merchantsData);
+
+      if (merchantsData.length === 0) {
+        toast({
+          title: "No merchants available",
+          description: "No merchants are currently online. Please try again later.",
+        });
+      }
+
+    } catch (err) {
+      console.error('Error fetching merchants:', err);
+      setError('Failed to load merchants. Please try again.');
+      toast({
+        title: "Error",
+        description: "Failed to load merchants. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleMerchantSelect = (merchantId: string) => {
+    // Find merchant by user_id (not id)
+    const selectedMerchant = merchants.find(m => m.user_id === merchantId);
+    if (!selectedMerchant) {
+      toast({
+        title: "Error",
+        description: "Selected merchant not found",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    console.log('Selected merchant:', selectedMerchant);
+
+    // Navigate to payment status page with selected merchant data
+    // DO NOT create trade request yet - that happens when user enters amount
+    navigate('/payment-status', {
+      state: {
+        selectedMerchant: {
+          id: selectedMerchant.user_id,
+          user_id: selectedMerchant.user_id,
+          name: selectedMerchant.display_name,
+          display_name: selectedMerchant.display_name,
+          rating: selectedMerchant.rating,
+          response_time: selectedMerchant.avg_response_time_minutes || 10,
+          // Add merchant rates if available (these might not exist yet)
+          btc_rate: 150000000, // Default BTC rate
+          eth_rate: 5000000,   // Default ETH rate
+          usdt_rate: 750       // Default USDT rate
+        },
+        coinType: coinType || 'BTC',
+        mode: 'buy',
+        step: 1
+      }
+    });
+  };
+
+  const getStatusColor = (isOnline: boolean) => {
+    return isOnline ? 'bg-green-500' : 'bg-gray-400';
+  };
+
+  const getStatusText = (isOnline: boolean) => {
+    return isOnline ? 'Online' : 'Offline';
+  };
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('en-NG', {
+      style: 'currency',
+      currency: 'NGN',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(amount);
+  };
+
+  const getAvatarInitials = (name: string) => {
+    return name.split(' ').map(word => word[0]).join('').toUpperCase().slice(0, 2);
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-blue-500" />
+          <p className="text-gray-600">Loading merchants...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-600 mb-4">{error}</p>
+          <Button onClick={fetchMerchants} className="bg-blue-500 hover:bg-blue-600">
+            Try Again
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-white">
@@ -154,76 +226,83 @@ const MerchantList = () => {
 
       {/* Merchant List */}
       <div className="p-4 space-y-4 pb-20">
-        {merchants.map((merchant) => (
-          <Card key={merchant.id} className="p-4 bg-white border border-gray-200 rounded-xl hover:shadow-md transition-shadow">
-            {/* Merchant Header */}
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center">
-                <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center mr-3">
-                  <span className="text-lg">{merchant.avatar}</span>
-                </div>
-                <div>
-                  <h3 className="font-semibold text-gray-800">{merchant.name}</h3>
-                  <div className="flex items-center">
-                    {[...Array(5)].map((_, i) => (
-                      <Star
-                        key={i}
-                        size={12}
-                        className={`${
-                          i < Math.floor(merchant.rating) 
-                            ? 'text-yellow-400 fill-current' 
-                            : 'text-gray-300'
-                        }`}
-                      />
-                    ))}
-                    <span className="text-sm text-gray-600 ml-1">{merchant.rating}</span>
+        {merchants.length === 0 ? (
+          <div className="text-center py-12">
+            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <MapPin className="h-8 w-8 text-gray-400" />
+            </div>
+            <h3 className="text-lg font-semibold text-gray-800 mb-2">No Merchants Available</h3>
+            <p className="text-gray-600 mb-4">
+              No merchants are currently online in your area. Try again later or check back soon.
+            </p>
+            <Button onClick={fetchMerchants} variant="outline">
+              Refresh
+            </Button>
+          </div>
+        ) : (
+          merchants.map((merchant) => (
+            <Card key={merchant.id} className="p-4 bg-white border border-gray-200 rounded-xl hover:shadow-md transition-shadow">
+              {/* Merchant Header */}
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center">
+                  <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center mr-3">
+                    <span className="text-lg font-semibold text-gray-600">
+                      {getAvatarInitials(merchant.display_name)}
+                    </span>
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-gray-800">{merchant.display_name}</h3>
+                    <div className="flex items-center">
+                      {[...Array(5)].map((_, i) => (
+                        <Star
+                          key={i}
+                          size={12}
+                          className={`${
+                            i < Math.floor(merchant.rating)
+                              ? 'text-yellow-400 fill-current'
+                              : 'text-gray-300'
+                          }`}
+                        />
+                      ))}
+                      <span className="text-sm text-gray-600 ml-1">{merchant.rating.toFixed(1)}</span>
+                    </div>
                   </div>
                 </div>
+                <span className={`${getStatusColor(merchant.is_online)} text-white text-xs px-2 py-1 rounded-full`}>
+                  {getStatusText(merchant.is_online)}
+                </span>
               </div>
-              <span className={`${merchant.statusColor} text-white text-xs px-2 py-1 rounded-full`}>
-                {merchant.status}
-              </span>
-            </div>
 
-            {/* Trading Pairs */}
-            <div className="grid grid-cols-2 gap-4 mb-4">
-              <div>
-                <p className="text-xs text-blue-500 font-medium mb-1">Naira to BTC</p>
-                <p className="text-sm font-semibold text-gray-800">{merchant.nairaToBtc}</p>
-                <p className="text-xs text-blue-500 font-medium mb-1 mt-2">Naira to USDT</p>
-                <p className="text-sm font-semibold text-gray-800">{merchant.nairaToUsdt}</p>
+              {/* Merchant Stats */}
+              <div className="grid grid-cols-2 gap-4 mb-4">
+                <div>
+                  <p className="text-xs text-blue-500 font-medium mb-1">Total Trades</p>
+                  <p className="text-sm font-semibold text-gray-800">{merchant.trade_count}</p>
+                  <p className="text-xs text-blue-500 font-medium mb-1 mt-2">Payment Methods</p>
+                  <p className="text-sm font-semibold text-gray-800">
+                    {merchant.payment_methods.slice(0, 2).join(', ')}
+                    {merchant.payment_methods.length > 2 && ` +${merchant.payment_methods.length - 2}`}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs text-blue-500 font-medium mb-1">Total Volume</p>
+                  <p className="text-sm font-semibold text-gray-800">{formatCurrency(merchant.total_volume)}</p>
+                  <p className="text-xs text-blue-500 font-medium mb-1 mt-2">Response Time</p>
+                  <p className="text-sm font-semibold text-gray-800">{merchant.avg_response_time_minutes} mins</p>
+                </div>
               </div>
-              <div>
-                <p className="text-xs text-blue-500 font-medium mb-1">BTC to Naira</p>
-                <p className="text-sm font-semibold text-gray-800">{merchant.btcToNaira}</p>
-                <p className="text-xs text-blue-500 font-medium mb-1 mt-2">USDT to Naira</p>
-                <p className="text-sm font-semibold text-gray-800">{merchant.usdtToNaira}</p>
-              </div>
-            </div>
 
-            {/* Limits and Time */}
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center text-blue-500 text-sm">
-                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
-                </svg>
-                <span>Limits: {merchant.limits}</span>
-              </div>
-              <div className="flex items-center text-blue-500 text-sm">
-                <Clock size={14} className="mr-1" />
-                <span>Est. Time: {merchant.estimatedTime}</span>
-              </div>
-            </div>
-
-            {/* Action Button */}
-            <Button 
-              onClick={() => handleMerchantSelect(merchant.id)}
-              className="w-full h-10 bg-blue-500 hover:bg-blue-600 text-white font-medium rounded-lg"
-            >
-              Select This Merchant
-            </Button>
-          </Card>
-        ))}
+              {/* Action Button */}
+              <Button
+                onClick={() => handleMerchantSelect(merchant.user_id)}
+                className="w-full h-10 bg-blue-500 hover:bg-blue-600 text-white font-medium rounded-lg"
+                disabled={!merchant.is_online}
+              >
+                {merchant.is_online ? 'Select This Merchant' : 'Merchant Offline'}
+              </Button>
+            </Card>
+          ))
+        )}
       </div>
 
       <BottomNavigation />

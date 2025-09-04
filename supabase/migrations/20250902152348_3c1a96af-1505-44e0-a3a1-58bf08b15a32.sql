@@ -106,67 +106,93 @@ ALTER TABLE public.user_sessions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.tracking_codes ENABLE ROW LEVEL SECURITY;
 
 -- RLS Policies for trade_requests
-CREATE POLICY "Users can view their own trade requests" 
-  ON public.trade_requests FOR SELECT 
-  USING (auth.uid() = user_id OR auth.uid() = matched_user_id);
+DROP POLICY IF EXISTS "Users can view their own trade requests" ON public.trade_requests;
+CREATE POLICY "Users can view their own trade requests"
+  ON public.trade_requests FOR SELECT
+  USING (auth.uid() = user_id OR auth.uid() = merchant_id);
 
-CREATE POLICY "Users can create trade requests" 
-  ON public.trade_requests FOR INSERT 
+DROP POLICY IF EXISTS "Users can create trade requests" ON public.trade_requests;
+CREATE POLICY "Users can create trade requests"
+  ON public.trade_requests FOR INSERT
   WITH CHECK (auth.uid() = user_id);
 
-CREATE POLICY "Users can update their own trade requests" 
-  ON public.trade_requests FOR UPDATE 
+DROP POLICY IF EXISTS "Users can update their own trade requests" ON public.trade_requests;
+CREATE POLICY "Users can update their own trade requests"
+  ON public.trade_requests FOR UPDATE
   USING (auth.uid() = user_id);
 
 -- RLS Policies for notifications
-CREATE POLICY "Users can view their own notifications" 
-  ON public.notifications FOR SELECT 
+DROP POLICY IF EXISTS "Users can view their own notifications" ON public.notifications;
+CREATE POLICY "Users can view their own notifications"
+  ON public.notifications FOR SELECT
   USING (auth.uid() = user_id);
 
-CREATE POLICY "Users can update their own notifications" 
-  ON public.notifications FOR UPDATE 
+DROP POLICY IF EXISTS "Users can update their own notifications" ON public.notifications;
+CREATE POLICY "Users can update their own notifications"
+  ON public.notifications FOR UPDATE
   USING (auth.uid() = user_id);
 
 -- RLS Policies for messages
-CREATE POLICY "Users can view messages for their trades" 
-  ON public.messages FOR SELECT 
+DROP POLICY IF EXISTS "Users can view messages for their trades" ON public.messages;
+CREATE POLICY "Users can view messages for their trades"
+  ON public.messages FOR SELECT
   USING (auth.uid() = sender_id OR auth.uid() = receiver_id);
 
-CREATE POLICY "Users can send messages" 
-  ON public.messages FOR INSERT 
+DROP POLICY IF EXISTS "Users can send messages" ON public.messages;
+CREATE POLICY "Users can send messages"
+  ON public.messages FOR INSERT
   WITH CHECK (auth.uid() = sender_id);
 
-CREATE POLICY "Users can update their messages" 
-  ON public.messages FOR UPDATE 
+DROP POLICY IF EXISTS "Users can update their messages" ON public.messages;
+CREATE POLICY "Users can update their messages"
+  ON public.messages FOR UPDATE
   USING (auth.uid() = sender_id);
 
 -- RLS Policies for receipts
-CREATE POLICY "Users can view their own receipts" 
-  ON public.receipts FOR SELECT 
-  USING (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Users can view their own receipts" ON public.receipts;
+CREATE POLICY "Users can view their own receipts"
+  ON public.receipts FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM trades t
+      WHERE t.id = receipts.trade_id
+      AND (t.buyer_id = auth.uid() OR t.seller_id = auth.uid())
+    )
+  );
 
-CREATE POLICY "Users can create receipts" 
-  ON public.receipts FOR INSERT 
-  WITH CHECK (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Users can create receipts" ON public.receipts;
+CREATE POLICY "Users can create receipts"
+  ON public.receipts FOR INSERT
+  WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM trades t
+      WHERE t.id = receipts.trade_id
+      AND (t.buyer_id = auth.uid() OR t.seller_id = auth.uid())
+    )
+  );
 
 -- RLS Policies for blog_posts
-CREATE POLICY "Published blog posts are viewable by everyone" 
-  ON public.blog_posts FOR SELECT 
+DROP POLICY IF EXISTS "Published blog posts are viewable by everyone" ON public.blog_posts;
+CREATE POLICY "Published blog posts are viewable by everyone"
+  ON public.blog_posts FOR SELECT
   USING (published = true);
 
 -- RLS Policies for user_sessions
-CREATE POLICY "Users can manage their own sessions" 
-  ON public.user_sessions FOR ALL 
-  USING (auth.uid() = user_id) 
+DROP POLICY IF EXISTS "Users can manage their own sessions" ON public.user_sessions;
+CREATE POLICY "Users can manage their own sessions"
+  ON public.user_sessions FOR ALL
+  USING (auth.uid() = user_id)
   WITH CHECK (auth.uid() = user_id);
 
 -- RLS Policies for tracking_codes
-CREATE POLICY "Users can view their own tracking codes" 
-  ON public.tracking_codes FOR SELECT 
+DROP POLICY IF EXISTS "Users can view their own tracking codes" ON public.tracking_codes;
+CREATE POLICY "Users can view their own tracking codes"
+  ON public.tracking_codes FOR SELECT
   USING (auth.uid() = user_id);
 
-CREATE POLICY "Users can create tracking codes" 
-  ON public.tracking_codes FOR INSERT 
+DROP POLICY IF EXISTS "Users can create tracking codes" ON public.tracking_codes;
+CREATE POLICY "Users can create tracking codes"
+  ON public.tracking_codes FOR INSERT
   WITH CHECK (auth.uid() = user_id);
 
 -- Create indexes for better performance
@@ -181,31 +207,81 @@ CREATE INDEX IF NOT EXISTS idx_user_sessions_user_id ON public.user_sessions(use
 CREATE INDEX IF NOT EXISTS idx_tracking_codes_user_id ON public.tracking_codes(user_id);
 
 -- Add triggers for updated_at columns
+DROP TRIGGER IF EXISTS update_trade_requests_updated_at ON public.trade_requests;
 CREATE TRIGGER update_trade_requests_updated_at
     BEFORE UPDATE ON public.trade_requests
     FOR EACH ROW
     EXECUTE FUNCTION public.update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_user_sessions_updated_at ON public.user_sessions;
 CREATE TRIGGER update_user_sessions_updated_at
     BEFORE UPDATE ON public.user_sessions
     FOR EACH ROW
     EXECUTE FUNCTION public.update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_blog_posts_updated_at ON public.blog_posts;
 CREATE TRIGGER update_blog_posts_updated_at
     BEFORE UPDATE ON public.blog_posts
     FOR EACH ROW
     EXECUTE FUNCTION public.update_updated_at_column();
 
--- Enable realtime for all tables
-ALTER PUBLICATION supabase_realtime ADD TABLE public.trade_requests;
-ALTER PUBLICATION supabase_realtime ADD TABLE public.notifications;
-ALTER PUBLICATION supabase_realtime ADD TABLE public.messages;
-ALTER PUBLICATION supabase_realtime ADD TABLE public.receipts;
-ALTER PUBLICATION supabase_realtime ADD TABLE public.user_sessions;
-ALTER PUBLICATION supabase_realtime ADD TABLE public.tracking_codes;
+-- Enable realtime for all tables (safely)
+DO $$
+BEGIN
+    -- Add trade_requests table if not already in publication
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_publication_tables
+        WHERE pubname = 'supabase_realtime'
+        AND tablename = 'trade_requests'
+    ) THEN
+        ALTER PUBLICATION supabase_realtime ADD TABLE public.trade_requests;
+    END IF;
 
--- Insert some sample blog posts
-INSERT INTO public.blog_posts (title, content, excerpt, published, featured_image, tags, slug) VALUES
-('Understanding Bitcoin Trading', 'Complete guide to Bitcoin trading strategies and market analysis...', 'Learn the fundamentals of Bitcoin trading', true, '/src/assets/blog-bitcoin-analysis.jpg', ARRAY['bitcoin', 'trading'], 'understanding-bitcoin-trading'),
-('P2P Trading Security', 'Best practices for secure peer-to-peer cryptocurrency trading...', 'Security tips for P2P trading', true, '/src/assets/blog-security.jpg', ARRAY['security', 'p2p'], 'p2p-trading-security'),
-('Cryptocurrency Regulation Updates', 'Latest updates on cryptocurrency regulations worldwide...', 'Stay updated with crypto regulations', true, '/src/assets/blog-regulation.jpg', ARRAY['regulation', 'legal'], 'crypto-regulation-updates');
+    -- Add notifications table if not already in publication
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_publication_tables
+        WHERE pubname = 'supabase_realtime'
+        AND tablename = 'notifications'
+    ) THEN
+        ALTER PUBLICATION supabase_realtime ADD TABLE public.notifications;
+    END IF;
+
+    -- Add messages table if not already in publication
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_publication_tables
+        WHERE pubname = 'supabase_realtime'
+        AND tablename = 'messages'
+    ) THEN
+        ALTER PUBLICATION supabase_realtime ADD TABLE public.messages;
+    END IF;
+
+    -- Add receipts table if not already in publication
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_publication_tables
+        WHERE pubname = 'supabase_realtime'
+        AND tablename = 'receipts'
+    ) THEN
+        ALTER PUBLICATION supabase_realtime ADD TABLE public.receipts;
+    END IF;
+
+    -- Add user_sessions table if not already in publication
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_publication_tables
+        WHERE pubname = 'supabase_realtime'
+        AND tablename = 'user_sessions'
+    ) THEN
+        ALTER PUBLICATION supabase_realtime ADD TABLE public.user_sessions;
+    END IF;
+
+    -- Add tracking_codes table if not already in publication
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_publication_tables
+        WHERE pubname = 'supabase_realtime'
+        AND tablename = 'tracking_codes'
+    ) THEN
+        ALTER PUBLICATION supabase_realtime ADD TABLE public.tracking_codes;
+    END IF;
+END $$;
+
+-- No sample data - using real database data only
+-- Migration completed successfully

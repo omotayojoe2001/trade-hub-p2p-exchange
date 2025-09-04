@@ -54,131 +54,17 @@ CREATE TRIGGER on_user_profile_created
     AFTER INSERT ON public.user_profiles
     FOR EACH ROW EXECUTE FUNCTION public.create_welcome_notification();
 
--- Function to notify users of new trade requests
-CREATE OR REPLACE FUNCTION public.notify_new_trade_request()
-RETURNS TRIGGER AS $$
-BEGIN
-    -- Notify all premium users about new trade requests
-    INSERT INTO public.notifications (user_id, type, title, message, read, data)
-    SELECT 
-        up.user_id,
-        'trade_request',
-        'New Trade Request Available',
-        CASE 
-            WHEN NEW.trade_type = 'buy' THEN 
-                'Someone wants to buy ' || NEW.amount || ' ' || NEW.coin_type || ' for ₦' || NEW.naira_amount
-            ELSE 
-                'Someone wants to sell ' || NEW.amount || ' ' || NEW.coin_type || ' for ₦' || NEW.naira_amount
-        END,
-        false,
-        jsonb_build_object(
-            'trade_request_id', NEW.id,
-            'trade_type', NEW.trade_type,
-            'coin_type', NEW.coin_type,
-            'amount', NEW.amount,
-            'naira_amount', NEW.naira_amount
-        )
-    FROM public.user_profiles up
-    WHERE up.is_premium = true 
-    AND up.user_id != NEW.user_id;
-    
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
+-- Note: notify_new_trade_request function moved to first migration
 
--- Trigger for new trade request notifications
-DROP TRIGGER IF EXISTS on_trade_request_created ON public.trade_requests;
-CREATE TRIGGER on_trade_request_created
-    AFTER INSERT ON public.trade_requests
-    FOR EACH ROW EXECUTE FUNCTION public.notify_new_trade_request();
+-- Note: Trigger for trade_requests will be created after table exists
 
--- Function to notify when trade is accepted
-CREATE OR REPLACE FUNCTION public.notify_trade_accepted()
-RETURNS TRIGGER AS $$
-DECLARE
-    request_record RECORD;
-BEGIN
-    -- Get the trade request details
-    SELECT * INTO request_record 
-    FROM public.trade_requests 
-    WHERE id = NEW.trade_request_id;
-    
-    IF FOUND THEN
-        -- Notify the original requester
-        INSERT INTO public.notifications (user_id, type, title, message, read, data)
-        VALUES (
-            request_record.user_id,
-            'trade_update',
-            'Trade Request Accepted!',
-            'Your ' || request_record.trade_type || ' request for ' || request_record.amount || ' ' || request_record.coin_type || ' has been accepted.',
-            false,
-            jsonb_build_object(
-                'trade_id', NEW.id,
-                'trade_request_id', NEW.trade_request_id,
-                'status', NEW.status
-            )
-        );
-        
-        -- Notify the accepter
-        INSERT INTO public.notifications (user_id, type, title, message, read, data)
-        VALUES (
-            CASE 
-                WHEN NEW.buyer_id = request_record.user_id THEN NEW.seller_id 
-                ELSE NEW.buyer_id 
-            END,
-            'trade_update',
-            'Trade Started!',
-            'You have accepted a ' || request_record.trade_type || ' request for ' || request_record.amount || ' ' || request_record.coin_type || '.',
-            false,
-            jsonb_build_object(
-                'trade_id', NEW.id,
-                'trade_request_id', NEW.trade_request_id,
-                'status', NEW.status
-            )
-        );
-    END IF;
-    
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
+-- Note: notify_trade_accepted function moved to first migration
 
--- Trigger for trade acceptance notifications
-DROP TRIGGER IF EXISTS on_trade_created ON public.trades;
-CREATE TRIGGER on_trade_created
-    AFTER INSERT ON public.trades
-    FOR EACH ROW EXECUTE FUNCTION public.notify_trade_accepted();
+-- Note: Trigger for trades will be created after table exists
 
--- Function to notify delivery tracking updates
-CREATE OR REPLACE FUNCTION public.notify_delivery_update()
-RETURNS TRIGGER AS $$
-BEGIN
-    -- Only notify on status changes
-    IF OLD.status IS DISTINCT FROM NEW.status THEN
-        INSERT INTO public.notifications (user_id, type, title, message, read, data)
-        VALUES (
-            NEW.user_id,
-            'trade_update',
-            'Delivery Update',
-            'Your ' || REPLACE(NEW.delivery_type, '_', ' ') || ' status has been updated to: ' || REPLACE(NEW.status, '_', ' '),
-            false,
-            jsonb_build_object(
-                'tracking_code', NEW.tracking_code,
-                'delivery_tracking_id', NEW.id,
-                'status', NEW.status,
-                'delivery_type', NEW.delivery_type
-            )
-        );
-    END IF;
-    
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
+-- Note: notify_delivery_update function moved to first migration
 
--- Trigger for delivery tracking notifications
-DROP TRIGGER IF EXISTS on_delivery_tracking_updated ON public.delivery_tracking;
-CREATE TRIGGER on_delivery_tracking_updated
-    AFTER UPDATE ON public.delivery_tracking
-    FOR EACH ROW EXECUTE FUNCTION public.notify_delivery_update();
+-- Note: Trigger for delivery_tracking will be created after table exists
 
 -- Function to get user's recent trades
 CREATE OR REPLACE FUNCTION public.get_user_recent_trades(user_uuid UUID)
@@ -251,26 +137,5 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- Insert sample data for testing
-INSERT INTO public.user_profiles (user_id, full_name, is_premium, verification_level, trade_count, rating, total_volume)
-VALUES 
-    ('00000000-0000-0000-0000-000000000001', 'Demo User 1', true, 'premium', 25, 4.8, 150000),
-    ('00000000-0000-0000-0000-000000000002', 'Demo User 2', true, 'premium', 18, 4.9, 89000),
-    ('00000000-0000-0000-0000-000000000003', 'Demo User 3', false, 'verified', 12, 4.6, 45000)
-ON CONFLICT (user_id) DO NOTHING;
-
--- Insert sample trade requests for testing
-INSERT INTO public.trade_requests (user_id, trade_type, coin_type, amount, naira_amount, rate, payment_method, status, expires_at)
-VALUES 
-    ('00000000-0000-0000-0000-000000000001', 'sell', 'BTC', 0.05, 7500000, 150000000, 'bank_transfer', 'open', now() + interval '1 hour'),
-    ('00000000-0000-0000-0000-000000000002', 'buy', 'ETH', 2.5, 13375000, 5350000, 'cash_delivery', 'open', now() + interval '2 hours'),
-    ('00000000-0000-0000-0000-000000000003', 'sell', 'USDT', 1000, 1550000, 1550, 'cash_pickup', 'open', now() + interval '30 minutes')
-ON CONFLICT (id) DO NOTHING;
-
--- Insert sample notifications for testing
-INSERT INTO public.notifications (user_id, type, title, message, read, data)
-VALUES 
-    ('00000000-0000-0000-0000-000000000001', 'trade_request', 'New Trade Request', 'Someone wants to buy 0.05 BTC from you', false, '{"trade_request_id": "sample"}'),
-    ('00000000-0000-0000-0000-000000000002', 'payment_received', 'Payment Received', 'You received ₦1,500,000 for your BTC trade', false, '{"amount": 1500000}'),
-    ('00000000-0000-0000-0000-000000000003', 'security', 'Security Alert', 'New device login detected', true, '{"device": "mobile"}')
-ON CONFLICT (id) DO NOTHING;
+-- No sample data - using real database data only
+-- All data will come from actual user signups and real trading activity

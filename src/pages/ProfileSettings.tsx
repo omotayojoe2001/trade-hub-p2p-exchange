@@ -1,22 +1,32 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { ArrowLeft, Edit2, Camera, Mail, Phone, MapPin, Calendar, User, Shield, Upload } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { ArrowLeft, Edit2, Camera, Mail, Phone, MapPin, Calendar, User, Shield, Upload, AlertTriangle, Trash2 } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 const ProfileSettings = () => {
-  const { user, profile } = useAuth();
+  const { user, profile, signOut } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [isEditing, setIsEditing] = useState(false);
   const [showProfilePictureDialog, setShowProfilePictureDialog] = useState(false);
   const [profilePicture, setProfilePicture] = useState<string | null>(null);
   const [isUploadingPicture, setIsUploadingPicture] = useState(false);
+
+  // Delete/Deactivate states
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showDeactivateDialog, setShowDeactivateDialog] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isDeactivating, setIsDeactivating] = useState(false);
 
   const [formData, setFormData] = useState({
     displayName: profile?.display_name || '',
@@ -43,13 +53,110 @@ const ProfileSettings = () => {
     }));
   };
 
-  const handleSave = () => {
-    // Handle save logic here
-    setIsEditing(false);
-    toast({
-      title: "Profile Updated",
-      description: "Your profile has been updated successfully",
-    });
+  const handleSave = async () => {
+    if (!user) return;
+
+    try {
+      // Save to Supabase
+      const { error } = await supabase
+        .from('profiles')
+        .upsert({
+          user_id: user.id,
+          display_name: formData.displayName,
+          phone_number: formData.phoneNumber,
+          updated_at: new Date().toISOString()
+        });
+
+      if (error) throw error;
+
+      setIsEditing(false);
+      toast({
+        title: "Profile Updated",
+        description: "Your profile has been updated successfully",
+      });
+    } catch (error) {
+      console.error('Error saving profile:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update profile. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (deleteConfirmText !== 'DELETE MY ACCOUNT') {
+      toast({
+        title: "Confirmation Required",
+        description: "Please type 'DELETE MY ACCOUNT' to confirm.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      setIsDeleting(true);
+
+      // Delete user data from Supabase
+      const { error } = await supabase.auth.admin.deleteUser(user!.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Account Deleted",
+        description: "Your account has been permanently deleted.",
+      });
+
+      // Sign out and redirect
+      await signOut();
+      navigate('/auth');
+    } catch (error) {
+      console.error('Error deleting account:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete account. Please contact support.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsDeleting(false);
+      setShowDeleteDialog(false);
+    }
+  };
+
+  const handleDeactivateAccount = async () => {
+    try {
+      setIsDeactivating(true);
+
+      // Update profile to mark as deactivated
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          is_active: false,
+          deactivated_at: new Date().toISOString()
+        })
+        .eq('user_id', user!.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Account Deactivated",
+        description: "Your account has been deactivated. You can reactivate it by logging in again.",
+      });
+
+      // Sign out and redirect
+      await signOut();
+      navigate('/auth');
+    } catch (error) {
+      console.error('Error deactivating account:', error);
+      toast({
+        title: "Error",
+        description: "Failed to deactivate account. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsDeactivating(false);
+      setShowDeactivateDialog(false);
+    }
   };
 
   const handleProfilePictureSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -319,10 +426,19 @@ const ProfileSettings = () => {
           <h3 className="text-lg font-semibold text-red-600 mb-4">Danger Zone</h3>
           
           <div className="space-y-3">
-            <Button variant="outline" className="w-full text-red-600 border-red-200 hover:bg-red-50">
+            <Button
+              variant="outline"
+              className="w-full text-orange-600 border-orange-200 hover:bg-orange-50"
+              onClick={() => setShowDeactivateDialog(true)}
+            >
               Deactivate Account
             </Button>
-            <Button variant="outline" className="w-full text-red-600 border-red-200 hover:bg-red-50">
+            <Button
+              variant="outline"
+              className="w-full text-red-600 border-red-200 hover:bg-red-50"
+              onClick={() => setShowDeleteDialog(true)}
+            >
+              <Trash2 className="mr-2" size={16} />
               Delete Account
             </Button>
           </div>
@@ -405,6 +521,83 @@ const ProfileSettings = () => {
               </ul>
             </div>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Account Dialog */}
+      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="text-red-600">Delete Account</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+              <div className="flex items-start">
+                <AlertTriangle className="text-red-500 mr-3 mt-0.5" size={20} />
+                <div>
+                  <h4 className="font-medium text-red-800 mb-1">Warning: This action is permanent</h4>
+                  <p className="text-red-700 text-sm">
+                    Deleting your account will permanently remove all your data, including trades, messages, and settings. This cannot be undone.
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div>
+              <Label htmlFor="deleteConfirm">Type "DELETE MY ACCOUNT" to confirm:</Label>
+              <Input
+                id="deleteConfirm"
+                value={deleteConfirmText}
+                onChange={(e) => setDeleteConfirmText(e.target.value)}
+                placeholder="DELETE MY ACCOUNT"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowDeleteDialog(false)}>
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDeleteAccount}
+              disabled={isDeleting || deleteConfirmText !== 'DELETE MY ACCOUNT'}
+            >
+              {isDeleting ? 'Deleting...' : 'Delete Account'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Deactivate Account Dialog */}
+      <Dialog open={showDeactivateDialog} onOpenChange={setShowDeactivateDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="text-orange-600">Deactivate Account</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+              <div className="flex items-start">
+                <AlertTriangle className="text-orange-500 mr-3 mt-0.5" size={20} />
+                <div>
+                  <h4 className="font-medium text-orange-800 mb-1">Account Deactivation</h4>
+                  <p className="text-orange-700 text-sm">
+                    Your account will be temporarily disabled. You can reactivate it anytime by logging in again. Your data will be preserved.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowDeactivateDialog(false)}>
+              Cancel
+            </Button>
+            <Button
+              className="bg-orange-600 hover:bg-orange-700"
+              onClick={handleDeactivateAccount}
+              disabled={isDeactivating}
+            >
+              {isDeactivating ? 'Deactivating...' : 'Deactivate Account'}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

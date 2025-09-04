@@ -16,44 +16,7 @@ const DeliveryTracking = () => {
   const [trackingResult, setTrackingResult] = useState<any>(null);
   const [loading, setLoading] = useState(false);
 
-  // Mock tracking data
-  const mockTrackingData = {
-    'TD-2024-5678': {
-      code: 'TD-2024-5678',
-      type: 'Cash Delivery',
-      amount: '$8,641.95',
-      crypto: 'ETH',
-      status: 'in_transit',
-      agentName: 'Michael Johnson',
-      agentPhone: '+234 801 234 5678',
-      estimatedArrival: '2:30 PM',
-      currentLocation: 'Victoria Island, Lagos',
-      timeline: [
-        { step: 'Order Received', time: '12:00 PM', completed: true },
-        { step: 'Agent Assigned', time: '12:15 PM', completed: true },
-        { step: 'Cash Prepared', time: '1:00 PM', completed: true },
-        { step: 'Out for Delivery', time: '1:30 PM', completed: true, current: true },
-        { step: 'Delivered', time: 'Pending', completed: false }
-      ]
-    },
-    'TP-2024-9012': {
-      code: 'TP-2024-9012',
-      type: 'Cash Pickup',
-      amount: '$1,500.00',
-      crypto: 'USDT',
-      status: 'ready',
-      pickupLocation: 'Ikeja City Mall, Lagos',
-      agentName: 'Sarah Williams',
-      agentPhone: '+234 802 345 6789',
-      timeline: [
-        { step: 'Order Received', time: '11:00 AM', completed: true },
-        { step: 'Agent Assigned', time: '11:10 AM', completed: true },
-        { step: 'Cash Prepared', time: '11:45 AM', completed: true },
-        { step: 'Ready for Pickup', time: '12:00 PM', completed: true, current: true },
-        { step: 'Collected', time: 'Pending', completed: false }
-      ]
-    }
-  };
+  // No mock data - only real tracking codes from database
 
   const handleTrackOrder = async () => {
     if (!trackingCode) return;

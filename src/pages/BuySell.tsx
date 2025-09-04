@@ -1,19 +1,81 @@
 
-import React, { useState } from 'react';
-import { Bell, ArrowUpRight, ArrowDownLeft, HelpCircle, Clock, Shield, List, User, UserCheck, MessageCircle, Zap, Search } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { ArrowUpRight, ArrowDownLeft, HelpCircle, Clock, Shield, List, User, UserCheck, MessageCircle, Zap, Search } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { useNavigate } from 'react-router-dom';
 import BottomNavigation from '@/components/BottomNavigation';
 import { useQuickAuth } from '@/hooks/useQuickAuth';
 import { usePremium } from '@/hooks/usePremium';
 import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
 
 const BuySell = () => {
   const [hoveredCard, setHoveredCard] = useState<string | null>(null);
+  const [tradeRequests, setTradeRequests] = useState<any[]>([]);
+  const [loadingRequests, setLoadingRequests] = useState(false);
+  const [unreadMessages, setUnreadMessages] = useState(0);
   const { isQuickAuthActive } = useQuickAuth();
   const { isPremium } = usePremium();
   const { user } = useAuth();
   const navigate = useNavigate();
+
+  // Fetch real trade requests
+  useEffect(() => {
+    if (user) {
+      fetchTradeRequests();
+      fetchUnreadMessages();
+    }
+  }, [user]);
+
+  const fetchUnreadMessages = async () => {
+    if (!user) return;
+
+    try {
+      const { data: messages, error } = await supabase
+        .from('messages')
+        .select('id')
+        .eq('receiver_id', user.id)
+        .eq('read', false);
+
+      if (error) {
+        console.error('Error fetching unread messages:', error);
+        return;
+      }
+
+      setUnreadMessages(messages?.length || 0);
+    } catch (error) {
+      console.error('Error in fetchUnreadMessages:', error);
+    }
+  };
+
+  const fetchTradeRequests = async () => {
+    if (!user) return;
+
+    try {
+      setLoadingRequests(true);
+
+      // Fetch recent open trade requests (excluding current user's requests)
+      const { data: requests, error } = await supabase
+        .from('trade_requests')
+        .select('*')
+        .eq('status', 'open')
+        .neq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(2);
+
+      if (error) {
+        console.error('Error fetching trade requests:', error);
+        return;
+      }
+
+      setTradeRequests(requests || []);
+
+    } catch (error) {
+      console.error('Error in fetchTradeRequests:', error);
+    } finally {
+      setLoadingRequests(false);
+    }
+  };
 
   // Redirect premium users to premium trade page
   React.useEffect(() => {
@@ -23,11 +85,11 @@ const BuySell = () => {
   }, [user, isPremium, navigate]);
 
   const handleSellCrypto = () => {
-    navigate('/select-coin');
+    navigate('/select-coin', { state: { mode: 'sell' } });
   };
 
   const handleBuyCrypto = () => {
-    navigate('/select-coin');
+    navigate('/select-coin', { state: { mode: 'buy' } });
   };
 
   return (
@@ -48,10 +110,7 @@ const BuySell = () => {
             <List size={24} />
             <div className="absolute -top-1 -right-1 w-3 h-3 bg-orange-500 rounded-full"></div>
           </button>
-          <div className="relative">
-            <Bell size={24} className="text-gray-600 dark:text-gray-400" />
-            <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full"></div>
-          </div>
+
         </div>
       </div>
 
@@ -188,71 +247,65 @@ const BuySell = () => {
             </Button>
           </div>
           
-          <div className="space-y-3">
-            <div className="bg-white border border-gray-200 rounded-lg p-3">
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center">
-                  <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-2">
-                    <User size={16} className="text-blue-600" />
-                  </div>
-                  <div>
-                    <p className="font-medium text-gray-900 text-sm">CryptoMaster</p>
+          {loadingRequests ? (
+            <div className="text-center py-4">
+              <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
+              <p className="text-gray-500 text-xs">Loading requests...</p>
+            </div>
+          ) : tradeRequests.length > 0 ? (
+            <div className="space-y-3">
+              {tradeRequests.map((request) => (
+                <div key={request.id} className="bg-white border border-gray-200 rounded-lg p-3">
+                  <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center">
-                      <span className="text-yellow-500 text-xs">★ 4.9</span>
+                      <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-2">
+                        <User size={16} className="text-blue-600" />
+                      </div>
+                      <div>
+                        <p className="font-medium text-gray-900 text-sm">
+                          Trader
+                        </p>
+                        <div className="flex items-center">
+                          <span className="text-yellow-500 text-xs">★ 4.5</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-xs text-gray-500">
+                        {new Date(request.created_at).toLocaleDateString()}
+                      </p>
                     </div>
                   </div>
-                </div>
-                <div className="text-right">
-                  <p className="text-xs text-gray-500">5 min left</p>
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-2 text-xs mb-2">
-                <div>
-                  <span className="text-gray-500">Buying:</span>
-                  <p className="font-medium">0.005 BTC</p>
-                </div>
-                <div>
-                  <span className="text-gray-500">Rate:</span>
-                  <p className="font-medium">₦1,180/USD</p>
-                </div>
-              </div>
-              <Button size="sm" className="w-full bg-blue-500 hover:bg-blue-600 text-white text-xs py-1">
-                Accept Trade
-              </Button>
-            </div>
-
-            <div className="bg-white border border-gray-200 rounded-lg p-3">
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center">
-                  <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center mr-2">
-                    <UserCheck size={16} className="text-green-600" />
-                  </div>
-                  <div>
-                    <p className="font-medium text-gray-900 text-sm">FastTrader</p>
-                    <div className="flex items-center">
-                      <span className="text-yellow-500 text-xs">★ 4.7</span>
+                  <div className="grid grid-cols-2 gap-2 text-xs mb-2">
+                    <div>
+                      <span className="text-gray-500">
+                        {request.trade_type === 'buy' ? 'Buying:' : 'Selling:'}
+                      </span>
+                      <p className="font-medium">{request.amount} {request.coin_type}</p>
+                    </div>
+                    <div>
+                      <span className="text-gray-500">Amount:</span>
+                      <p className="font-medium">₦{request.naira_amount?.toLocaleString()}</p>
                     </div>
                   </div>
+                  <Button
+                    size="sm"
+                    className="w-full bg-blue-500 hover:bg-blue-600 text-white text-xs py-1"
+                    onClick={() => navigate('/trade-request-details', { state: { request: request } })}
+                  >
+                    View Request
+                  </Button>
                 </div>
-                <div className="text-right">
-                  <p className="text-xs text-gray-500">12 min left</p>
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-2 text-xs mb-2">
-                <div>
-                  <span className="text-gray-500">Buying:</span>
-                  <p className="font-medium">300 USDT</p>
-                </div>
-                <div>
-                  <span className="text-gray-500">Rate:</span>
-                  <p className="font-medium">₦1,175/USD</p>
-                </div>
-              </div>
-              <Button size="sm" className="w-full bg-green-500 hover:bg-green-600 text-white text-xs py-1">
-                Accept Trade
-              </Button>
+              ))}
             </div>
-          </div>
+          ) : (
+            <div className="text-center py-6">
+              <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                <List className="h-6 w-6 text-gray-400" />
+              </div>
+              <p className="text-gray-500 text-sm">No active trade requests</p>
+            </div>
+          )}
         </div>
       </div>
 
@@ -266,7 +319,9 @@ const BuySell = () => {
               </div>
               <div>
                 <h4 className="font-semibold text-gray-900">Messages</h4>
-                <p className="text-gray-600 text-sm">3 unread messages</p>
+                <p className="text-gray-600 text-sm">
+                  {unreadMessages > 0 ? `${unreadMessages} unread message${unreadMessages > 1 ? 's' : ''}` : 'No unread messages'}
+                </p>
               </div>
             </div>
             <Button
@@ -280,50 +335,7 @@ const BuySell = () => {
           </div>
         </div>
       </div>
-      {/* Trade in Progress */}
-      <div className="mx-4 mb-4">
-        <div className="bg-orange-50 border border-orange-200 rounded-xl p-4">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center">
-              <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center mr-3">
-                <Zap size={16} className="text-white" />
-              </div>
-              <div>
-                <h4 className="font-semibold text-gray-900">Trade in Progress</h4>
-                <p className="text-gray-600 text-sm">Started 1 hour ago</p>
-              </div>
-            </div>
-            <span className="bg-orange-100 text-orange-700 px-3 py-1 rounded-full text-xs font-medium">
-              Pending
-            </span>
-          </div>
-          
-          <div className="grid grid-cols-3 gap-4 mb-4">
-            <div>
-              <p className="text-gray-500 text-xs mb-1">Type</p>
-              <p className="font-medium text-gray-900 text-sm">Selling BTC</p>
-            </div>
-            <div>
-              <p className="text-gray-500 text-xs mb-1">Amount</p>
-              <p className="font-medium text-gray-900 text-sm">0.0045 BTC</p>
-            </div>
-            <div>
-              <p className="text-gray-500 text-xs mb-1">Value</p>
-              <p className="font-medium text-gray-900 text-sm">₦125,000</p>
-            </div>
-          </div>
-          
-          <div className="flex items-center text-gray-600 text-sm mb-4">
-            <div className="w-2 h-2 bg-gray-400 rounded-full mr-2"></div>
-            <span>Waiting for merchant to pay</span>
-          </div>
-          
-          <Button className="w-full bg-orange-500 hover:bg-orange-600 text-white py-3 rounded-lg font-medium">
-            <Search size={16} className="mr-2" />
-            Resume Trade
-          </Button>
-        </div>
-      </div>
+
 
       {!isQuickAuthActive && <BottomNavigation />}
     </div>

@@ -5,15 +5,19 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useNavigate, useLocation } from 'react-router-dom';
 import CryptoIcon from '@/components/CryptoIcon';
 import { useToast } from '@/hooks/use-toast';
+import { tradeRequestService } from '@/services/tradeRequestService';
+import { useAuth } from '@/hooks/useAuth';
 
 const TradeRequestDetails = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
+  const { user } = useAuth();
   const { request } = location.state || {};
-  
+
   const [timeLeft, setTimeLeft] = useState(60);
   const [isExpired, setIsExpired] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   // Countdown timer
   useEffect(() => {
@@ -31,7 +35,7 @@ const TradeRequestDetails = () => {
     }
   }, [timeLeft]);
 
-  const handleAccept = () => {
+  const handleAccept = async () => {
     if (isExpired) {
       toast({
         title: "Request Expired",
@@ -41,28 +45,86 @@ const TradeRequestDetails = () => {
       return;
     }
 
-    // Navigate directly to payment step (no auto/manual selection needed)
-    navigate('/merchant-trade-flow', { 
-      state: { 
-        request,
-        accepted: true 
-      }
-    });
-    
-    toast({
-      title: "Trade Accepted",
-      description: "You have accepted this trade request",
-      variant: "default"
-    });
+    if (!user) {
+      toast({
+        title: "Authentication Required",
+        description: "Please log in to accept trade requests",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (isProcessing) return;
+
+    try {
+      setIsProcessing(true);
+
+      // Accept the trade request using the service
+      const trade = await tradeRequestService.acceptTradeRequest(request.id, user.id);
+
+      toast({
+        title: "Trade Accepted!",
+        description: "You have successfully accepted this trade request. The customer has been notified.",
+        variant: "default"
+      });
+
+      // Navigate to merchant trade flow with the created trade
+      navigate('/merchant-trade-flow', {
+        state: {
+          request,
+          trade,
+          accepted: true
+        }
+      });
+
+    } catch (error) {
+      console.error('Error accepting trade:', error);
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to accept trade request. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
-  const handleDecline = () => {
-    navigate('/trade-requests');
-    toast({
-      title: "Trade Declined",
-      description: "You have declined this trade request",
-      variant: "destructive"
-    });
+  const handleDecline = async () => {
+    if (!user) {
+      toast({
+        title: "Authentication Required",
+        description: "Please log in to decline trade requests",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (isProcessing) return;
+
+    try {
+      setIsProcessing(true);
+
+      // Decline the trade request as a merchant
+      await tradeRequestService.declineTradeRequest(request.id, user.id);
+
+      toast({
+        title: "Trade Declined",
+        description: "You have declined this trade request. The customer has been notified.",
+        variant: "destructive"
+      });
+
+      navigate('/trade-requests');
+
+    } catch (error) {
+      console.error('Error declining trade:', error);
+      toast({
+        title: "Error",
+        description: "Failed to decline trade request. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   if (!request) {
@@ -222,16 +284,16 @@ const TradeRequestDetails = () => {
             onClick={handleDecline}
             variant="outline"
             className="flex-1 h-12"
-            disabled={isExpired}
+            disabled={isExpired || isProcessing}
           >
-            Decline
+            {isProcessing ? 'Processing...' : 'Decline'}
           </Button>
           <Button
             onClick={handleAccept}
-            className={`flex-1 h-12 ${isExpired ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'}`}
-            disabled={isExpired}
+            className={`flex-1 h-12 ${isExpired || isProcessing ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'}`}
+            disabled={isExpired || isProcessing}
           >
-            {isExpired ? 'Expired' : 'Accept Trade'}
+            {isProcessing ? 'Accepting...' : isExpired ? 'Expired' : 'Accept Trade'}
           </Button>
         </div>
 

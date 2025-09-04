@@ -27,6 +27,9 @@ import SelectCoin from "./pages/SelectCoin";
 import MyTrades from "./pages/MyTrades";
 
 import PaymentStatus from "./pages/PaymentStatus";
+import SellPaymentStatus from "./pages/SellPaymentStatus";
+import TradeStatus from "./pages/TradeStatus";
+import MerchantTradeRequests from "./pages/MerchantTradeRequests";
 import TradeDetails from "./pages/TradeDetails";
 import SellCrypto from "./pages/SellCrypto";
 import TradeCompleted from "./pages/TradeCompleted";
@@ -249,6 +252,9 @@ const AppContent = () => {
             <Route path="/news" element={<CryptoNews />} />
 
             <Route path="/payment-status" element={<PaymentStatus />} />
+            <Route path="/sell-payment-status" element={<SellPaymentStatus />} />
+            <Route path="/trade-status" element={<TradeStatus />} />
+            <Route path="/merchant-trade-requests" element={<MerchantTradeRequests />} />
             <Route path="/trade-details/:tradeId" element={<TradeDetails />} />
             <Route path="/sell-crypto" element={<SellCrypto />} />
             <Route path="/sell-crypto-match" element={<SellCryptoMatch />} />

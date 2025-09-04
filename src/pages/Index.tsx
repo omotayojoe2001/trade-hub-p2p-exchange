@@ -13,6 +13,8 @@ import CryptoIcon from '@/components/CryptoIcon';
 import ThemeToggle from '@/components/ThemeToggle';
 import { useAuth } from '@/hooks/useAuth';
 import { useQuickAuth } from '@/hooks/useQuickAuth';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 import { useCryptoData } from '@/hooks/useCryptoData';
 import { usePremium } from '@/hooks/usePremium';
 
@@ -23,9 +25,89 @@ const Index = () => {
   const { cryptoData, loading: cryptoLoading, error: cryptoError } = useCryptoData(50);
   const { isSetupComplete, isSettingUp } = useUserSetup();
   const [selectedTimeFilter, setSelectedTimeFilter] = useState('Today');
+  const [recentTrades, setRecentTrades] = useState<any[]>([]);
+  const [loadingTrades, setLoadingTrades] = useState(false);
+  const { toast } = useToast();
   const [selectedCoinFilter, setSelectedCoinFilter] = useState('All');
 
   const navigate = useNavigate();
+
+  // Fetch recent trades
+  const fetchRecentTrades = async () => {
+    if (!user) return;
+
+    try {
+      setLoadingTrades(true);
+
+      // Fetch ALL recent trades on the platform (not just user's trades)
+      const { data: tradesData, error } = await supabase
+        .from('trades')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(10);
+
+      if (error) {
+        console.error('Error fetching recent trades:', error);
+        return;
+      }
+
+      // Fetch ALL recent trade requests on the platform
+      const { data: requestsData, error: requestsError } = await supabase
+        .from('trade_requests')
+        .select('*')
+        .in('status', ['open', 'accepted', 'pending'])
+        .order('created_at', { ascending: false })
+        .limit(10);
+
+      if (requestsError) {
+        console.error('Error fetching trade requests:', requestsError);
+      }
+
+      // Format completed trades (show all platform trades)
+      const formattedTrades = (tradesData || []).map(trade => ({
+        id: trade.id,
+        type: trade.trade_type || 'buy', // Use trade_type from database
+        coin: trade.coin_type || 'BTC',
+        amount: trade.amount || 0,
+        nairaAmount: trade.naira_amount || 0,
+        status: trade.status,
+        merchant: 'Trader', // Generic name since we don't have profile joins
+        date: new Date(trade.created_at),
+        isTradeRequest: false
+      }));
+
+      // Format pending trade requests
+      const formattedRequests = (requestsData || []).map(request => ({
+        id: request.id,
+        type: request.trade_type,
+        coin: request.coin_type || 'BTC',
+        amount: request.amount || 0,
+        nairaAmount: request.naira_amount || 0,
+        status: request.status === 'open' ? 'pending' : request.status,
+        merchant: 'Pending Match',
+        date: new Date(request.created_at),
+        isTradeRequest: true
+      }));
+
+      // Combine and sort by date
+      const allTrades = [...formattedTrades, ...formattedRequests]
+        .sort((a, b) => b.date.getTime() - a.date.getTime())
+        .slice(0, 3);
+
+      setRecentTrades(allTrades);
+
+    } catch (error) {
+      console.error('Error in fetchRecentTrades:', error);
+    } finally {
+      setLoadingTrades(false);
+    }
+  };
+
+  useEffect(() => {
+    if (user) {
+      fetchRecentTrades();
+    }
+  }, [user]);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -53,8 +135,16 @@ const Index = () => {
     return null;
   }
 
-  const displayName = profile?.display_name || user.email?.split('@')[0] || 'User';
+  // Get display name from current user's profile only
+  const displayName = profile?.display_name ||
+                     user?.user_metadata?.full_name ||
+                     user?.email?.split('@')[0] ||
+                     'User';
   const userType = profile?.user_type || 'customer';
+
+  // Get user's own profile picture or use initials
+  const userInitials = displayName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+  const profilePicture = profile?.profile_picture_url;
 
   // Mock data that changes based on time filter
   const getStatsData = () => {
@@ -93,8 +183,24 @@ const Index = () => {
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-            <User size={20} className="text-blue-600" />
+          <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center overflow-hidden">
+            {profilePicture ? (
+              <img
+                src={profilePicture}
+                alt={displayName}
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                  // Fallback to initials if image fails to load
+                  e.currentTarget.style.display = 'none';
+                  e.currentTarget.nextElementSibling.style.display = 'flex';
+                }}
+              />
+            ) : null}
+            <div
+              className={`w-full h-full flex items-center justify-center text-blue-600 font-medium ${profilePicture ? 'hidden' : 'flex'}`}
+            >
+              {userInitials}
+            </div>
           </div>
           <div>
             <p className="text-gray-500 dark:text-gray-400 text-sm">Good Morning</p>
@@ -183,39 +289,68 @@ const Index = () => {
         </div>
       </div>
 
-      {/* Recent Trades */}
+      {/* Recent Trades - Real Data */}
       <div className="mb-6">
-        <h2 className="text-gray-900 text-lg font-semibold mb-4">Recent Trades</h2>
-        <div className="space-y-3">
-          <Link to="/trade-completed" className="block">
-            <div className="bg-white p-4 rounded-xl border border-gray-200 flex items-center justify-between hover:shadow-sm transition-shadow">
-              <div className="flex items-center">
-                <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center mr-3">
-                  <CheckCircle size={16} className="text-green-500" />
-                </div>
-                <div>
-                  <p className="font-semibold text-gray-900">Trade #124 Completed</p>
-                  <p className="text-sm text-gray-500">BTC/USD • $45,230</p>
-                </div>
-              </div>
-              <span className="text-xs text-gray-500">2m ago</span>
-            </div>
-          </Link>
-          <Link to="/trade-details" className="block">
-            <div className="bg-white p-4 rounded-xl border border-gray-200 flex items-center justify-between hover:shadow-sm transition-shadow">
-              <div className="flex items-center">
-                <div className="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center mr-3">
-                  <Clock size={16} className="text-yellow-500" />
-                </div>
-                <div>
-                  <p className="font-semibold text-gray-900">Trade #123 Pending</p>
-                  <p className="text-sm text-gray-500">ETH/USD • $3,120</p>
-                </div>
-              </div>
-              <span className="text-xs text-gray-500">5m ago</span>
-            </div>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-gray-900 text-lg font-semibold">Recent Trades</h2>
+          <Link to="/my-trades" className="text-blue-600 text-sm font-medium hover:text-blue-700">
+            See All
           </Link>
         </div>
+
+        {loadingTrades ? (
+          <div className="text-center py-8">
+            <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
+            <p className="text-gray-500 text-sm">Loading trades...</p>
+          </div>
+        ) : recentTrades.length > 0 ? (
+          <div className="space-y-3">
+            {recentTrades.map((trade) => (
+              <Link key={trade.id} to={`/trade-details/${trade.id}`} className="block">
+                <div className="bg-white p-4 rounded-xl border border-gray-200 flex items-center justify-between hover:shadow-sm transition-shadow">
+                  <div className="flex items-center">
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center mr-3 ${
+                      trade.status === 'completed'
+                        ? 'bg-green-100'
+                        : trade.status === 'cancelled'
+                        ? 'bg-red-100'
+                        : 'bg-yellow-100'
+                    }`}>
+                      {trade.status === 'completed' ? (
+                        <CheckCircle size={16} className="text-green-500" />
+                      ) : (
+                        <Clock size={16} className={trade.status === 'cancelled' ? 'text-red-500' : 'text-yellow-500'} />
+                      )}
+                    </div>
+                    <div>
+                      <p className="font-semibold text-gray-900">
+                        {trade.type === 'buy' ? 'Purchase' : 'Sale'}: {trade.amount} {trade.coin}
+                      </p>
+                      <p className="text-sm text-gray-500">
+                        {trade.status === 'completed' ? 'Completed' :
+                         trade.status === 'cancelled' ? 'Cancelled' :
+                         trade.status === 'failed' ? 'Failed' : 'In Progress'} • ₦{(trade.nairaAmount || 0).toLocaleString()}
+                      </p>
+                    </div>
+                  </div>
+                  <span className="text-xs text-gray-500">
+                    {trade.date.toLocaleDateString()}
+                  </span>
+                </div>
+              </Link>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-8">
+            <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
+              <DollarSign className="h-6 w-6 text-gray-400" />
+            </div>
+            <p className="text-gray-500 text-sm">No recent trades</p>
+            <Link to="/buy-sell" className="text-blue-600 text-sm font-medium hover:text-blue-700">
+              Start Trading
+            </Link>
+          </div>
+        )}
       </div>
 
       {/* Withdraw USD Banner */}

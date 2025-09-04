@@ -1,69 +1,158 @@
-import React, { useState } from 'react';
-import { Crown, MessageCircle, Search, Star, Clock, Shield, Send, Phone } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Crown, MessageCircle, Search, Star, Clock, Shield, Send, Phone, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { useNavigate } from 'react-router-dom';
 import PremiumBottomNavigation from '@/components/premium/PremiumBottomNavigation';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
+import { useToast } from '@/hooks/use-toast';
+
+interface Conversation {
+  id: string;
+  trade_id: string;
+  other_user_id: string;
+  other_user_name: string;
+  last_message: string;
+  last_message_time: string;
+  unread_count: number;
+  is_premium: boolean;
+  rating?: number;
+}
 
 const PremiumMessages = () => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedChat, setSelectedChat] = useState<string | null>(null);
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
+  const { toast } = useToast();
 
-  const conversations = [
-    {
-      id: '1',
-      name: 'John Doe',
-      avatar: '👨‍💼',
-      lastMessage: 'Payment confirmed! Thanks for the smooth transaction.',
-      time: '2 mins ago',
-      unread: 2,
-      status: 'online',
-      rating: 4.9,
-      tradeId: 'PT001',
-      isPremium: true
-    },
-    {
-      id: '2',
-      name: 'Sarah Wilson',
-      avatar: '👩‍💻',
-      lastMessage: 'Cash delivery agent is on the way!',
-      time: '15 mins ago',
-      unread: 0,
-      status: 'online',
-      rating: 5.0,
-      tradeId: 'PT002',
-      isPremium: true
-    },
-    {
-      id: '3',
-      name: 'Premium Support',
-      avatar: '🛡️',
-      lastMessage: 'Your priority trade has been processed successfully.',
-      time: '1 hour ago',
-      unread: 1,
-      status: 'online',
-      rating: 5.0,
-      isSupport: true,
-      isPremium: true
-    },
-    {
-      id: '4',
-      name: 'Mike Chen',
-      avatar: '👨‍🎓',
-      lastMessage: 'Great doing business with you!',
-      time: '3 hours ago',
-      unread: 0,
-      status: 'offline',
-      rating: 4.8,
-      tradeId: 'PT003',
-      isPremium: false
+  useEffect(() => {
+    if (user) {
+      fetchConversations();
+
+      // Set up real-time subscription for new messages
+      const channel = supabase
+        .channel('user-messages')
+        .on('postgres_changes', {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'messages',
+          filter: `receiver_id=eq.${user.id}`
+        }, () => {
+          fetchConversations(); // Refresh conversations when new message arrives
+        })
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
     }
-  ];
+  }, [user]);
+
+  const fetchConversations = async () => {
+    if (!user) return;
+
+    try {
+      setLoading(true);
+
+      // Get all trades where user is involved
+      const { data: trades, error: tradesError } = await supabase
+        .from('trades')
+        .select(`
+          id,
+          buyer_id,
+          seller_id,
+          status,
+          created_at
+        `)
+        .or(`buyer_id.eq.${user.id},seller_id.eq.${user.id}`)
+        .order('created_at', { ascending: false });
+
+      if (tradesError) throw tradesError;
+
+      if (!trades || trades.length === 0) {
+        setConversations([]);
+        return;
+      }
+
+      // Get latest message for each trade
+      const conversationsData: Conversation[] = [];
+
+      for (const trade of trades) {
+        const otherUserId = trade.buyer_id === user.id ? trade.seller_id : trade.buyer_id;
+
+        // Get latest message for this trade
+        const { data: messages, error: messagesError } = await supabase
+          .from('messages')
+          .select('content, created_at, sender_id')
+          .eq('trade_id', trade.id)
+          .order('created_at', { ascending: false })
+          .limit(1);
+
+        if (messagesError) {
+          console.error('Error fetching messages:', messagesError);
+          continue;
+        }
+
+        // Get other user's profile
+        const { data: otherUserProfile, error: profileError } = await supabase
+          .from('profiles')
+          .select('display_name, user_type')
+          .eq('user_id', otherUserId)
+          .single();
+
+        if (profileError) {
+          console.error('Error fetching user profile:', profileError);
+          continue;
+        }
+
+        // Get unread count
+        const { count: unreadCount, error: unreadError } = await supabase
+          .from('messages')
+          .select('*', { count: 'exact', head: true })
+          .eq('trade_id', trade.id)
+          .eq('receiver_id', user.id)
+          .eq('read', false);
+
+        if (unreadError) {
+          console.error('Error fetching unread count:', unreadError);
+        }
+
+        const lastMessage = messages && messages.length > 0 ? messages[0] : null;
+
+        conversationsData.push({
+          id: trade.id,
+          trade_id: trade.id,
+          other_user_id: otherUserId,
+          other_user_name: otherUserProfile?.display_name || 'User',
+          last_message: lastMessage?.content || 'No messages yet',
+          last_message_time: lastMessage?.created_at || trade.created_at,
+          unread_count: unreadCount || 0,
+          is_premium: otherUserProfile?.user_type === 'premium',
+          rating: 5.0 // Default rating for now
+        });
+      }
+
+      setConversations(conversationsData);
+
+    } catch (error) {
+      console.error('Error fetching conversations:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load conversations",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const filteredConversations = conversations.filter(conv =>
-    conv.name.toLowerCase().includes(searchTerm.toLowerCase())
+    conv.other_user_name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const getStatusColor = (status: string) => {
@@ -138,51 +227,46 @@ const PremiumMessages = () => {
             >
               <div className="flex items-start space-x-3">
                 <div className="relative">
-                  <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center text-2xl">
-                    {conversation.avatar}
+                  <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center text-lg font-semibold text-gray-600">
+                    {conversation.other_user_name.charAt(0).toUpperCase()}
                   </div>
-                  <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white ${getStatusColor(conversation.status)}`} />
-                  {conversation.isPremium && (
+                  <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white bg-green-500`} />
+                  {conversation.is_premium && (
                     <Crown size={12} className="absolute -top-1 -right-1 text-yellow-500" />
                   )}
                 </div>
-                
+
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between mb-1">
                     <div className="flex items-center space-x-2">
-                      <h4 className="font-semibold text-gray-900">{conversation.name}</h4>
-                      {conversation.isSupport && (
-                        <div className="bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full text-xs font-medium">
-                          Support
-                        </div>
-                      )}
-                      {conversation.rating && !conversation.isSupport && (
+                      <h4 className="font-semibold text-gray-900">{conversation.other_user_name}</h4>
+                      {conversation.rating && (
                         <div className="flex items-center text-xs text-yellow-600">
                           <Star size={12} className="mr-1 fill-current" />
-                          {conversation.rating}
+                          {conversation.rating.toFixed(1)}
                         </div>
                       )}
                     </div>
                     <div className="flex items-center space-x-2">
-                      <span className="text-xs text-gray-500">{conversation.time}</span>
-                      {conversation.unread > 0 && (
+                      <span className="text-xs text-gray-500">
+                        {new Date(conversation.last_message_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </span>
+                      {conversation.unread_count > 0 && (
                         <div className="bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                          {conversation.unread}
+                          {conversation.unread_count}
                         </div>
                       )}
                     </div>
                   </div>
-                  
+
                   <p className="text-sm text-gray-600 line-clamp-1 mb-2">
-                    {conversation.lastMessage}
+                    {conversation.last_message}
                   </p>
-                  
-                  {conversation.tradeId && (
-                    <div className="flex items-center text-xs text-blue-600">
-                      <MessageCircle size={12} className="mr-1" />
-                      Trade: {conversation.tradeId}
-                    </div>
-                  )}
+
+                  <div className="flex items-center text-xs text-blue-600">
+                    <MessageCircle size={12} className="mr-1" />
+                    Trade: {conversation.trade_id}
+                  </div>
                 </div>
               </div>
             </Card>

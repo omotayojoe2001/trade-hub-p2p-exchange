@@ -10,7 +10,10 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "setup-db": "node scripts/setup-database.js",
-    "db:setup": "node scripts/setup-database.js"
+    "db:setup": "node scripts/setup-database.js",
+    "ngrok": "ngrok http 5173",
+    "test:realtime": "node scripts/test-realtime-flow.js",
+    "test:merchants": "node scripts/test-merchant-simple.js"
   },
   "dependencies": {
     "@capacitor/android": "^7.4.1",

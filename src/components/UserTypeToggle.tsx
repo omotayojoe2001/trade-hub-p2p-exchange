@@ -5,6 +5,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { User, Store, ArrowRightLeft } from 'lucide-react';
+import { merchantService } from '@/services/merchantService';
+import { useAuth } from '@/hooks/useAuth';
 
 interface UserTypeToggleProps {
   className?: string;
@@ -14,57 +16,41 @@ const UserTypeToggle: React.FC<UserTypeToggleProps> = ({ className }) => {
   const [userType, setUserType] = useState<'customer' | 'merchant'>('customer');
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+  const { user } = useAuth();
 
   useEffect(() => {
     const fetchUserType = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('user_type')
-          .eq('user_id', user.id)
-          .single();
-        
-        if (profile) {
-          setUserType((profile.user_type as 'customer' | 'merchant') || 'customer');
-        }
+        const isMerchant = await merchantService.isUserMerchant(user.id);
+        setUserType(isMerchant ? 'merchant' : 'customer');
       }
     };
-    
+
     fetchUserType();
-  }, []);
+  }, [user]);
 
   const handleToggle = async () => {
+    if (!user) return;
+
     setLoading(true);
-    const newUserType = userType === 'customer' ? 'merchant' : 'customer';
-    
+    const enableMerchant = userType === 'customer';
+
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) return;
+      const result = await merchantService.toggleMerchantMode(user.id, enableMerchant);
 
-      const { error } = await supabase
-        .from('profiles')
-        .update({
-          user_type: newUserType,
-          is_merchant: newUserType === 'merchant'
-        })
-        .eq('user_id', user.id);
-
-      if (error) {
+      if (result.success) {
+        setUserType(result.is_merchant ? 'merchant' : 'customer');
+        toast({
+          title: "Success",
+          description: `Switched to ${result.is_merchant ? 'merchant' : 'customer'} mode`,
+        });
+      } else {
         toast({
           title: "Error",
-          description: "Failed to switch user type",
+          description: result.error || "Failed to switch user type",
           variant: "destructive"
         });
-        return;
       }
-
-      setUserType(newUserType);
-      toast({
-        title: "Success",
-        description: `Switched to ${newUserType} mode`,
-      });
     } catch (error) {
       toast({
         title: "Error",

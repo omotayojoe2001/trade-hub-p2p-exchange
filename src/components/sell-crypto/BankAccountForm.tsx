@@ -10,6 +10,7 @@ interface BankAccountFormProps {
   onAccountNameChange: (value: string) => void;
   onSelectedBankChange: (value: string) => void;
   onAccountNumberChange: (value: string) => void;
+  onAddAccount?: () => void;
 }
 
 const BankAccountForm = ({
@@ -20,13 +21,17 @@ const BankAccountForm = ({
   onSelectedAccountChange,
   onAccountNameChange,
   onSelectedBankChange,
-  onAccountNumberChange
+  onAccountNumberChange,
+  onAddAccount
 }: BankAccountFormProps) => {
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-semibold text-gray-900">Bank Account Details</h3>
-        <button className="text-blue-600 font-medium text-sm flex items-center">
+        <button
+          onClick={onAddAccount}
+          className="text-blue-600 font-medium text-sm flex items-center hover:text-blue-700 transition-colors"
+        >
           <Plus size={16} className="mr-1" />
           Add Account
         </button>

@@ -44,6 +44,41 @@ const RateMerchant = () => {
     }));
   };
 
+  const updateMerchantRating = async (merchantId: string) => {
+    try {
+      // Calculate average rating for the merchant
+      const { data: ratings, error: ratingsError } = await supabase
+        .from('merchant_ratings')
+        .select('rating, communication_rating, speed_rating, reliability_rating')
+        .eq('merchant_id', merchantId);
+
+      if (ratingsError) throw ratingsError;
+
+      if (ratings && ratings.length > 0) {
+        const avgRating = ratings.reduce((sum, r) => sum + r.rating, 0) / ratings.length;
+        const avgCommunication = ratings.filter(r => r.communication_rating).reduce((sum, r) => sum + (r.communication_rating || 0), 0) / ratings.filter(r => r.communication_rating).length || 0;
+        const avgSpeed = ratings.filter(r => r.speed_rating).reduce((sum, r) => sum + (r.speed_rating || 0), 0) / ratings.filter(r => r.speed_rating).length || 0;
+        const avgReliability = ratings.filter(r => r.reliability_rating).reduce((sum, r) => sum + (r.reliability_rating || 0), 0) / ratings.filter(r => r.reliability_rating).length || 0;
+
+        // Update user profile with new ratings
+        const { error: updateError } = await supabase
+          .from('profiles')
+          .update({
+            rating: Number(avgRating.toFixed(2)),
+            communication_rating: Number(avgCommunication.toFixed(2)),
+            speed_rating: Number(avgSpeed.toFixed(2)),
+            reliability_rating: Number(avgReliability.toFixed(2)),
+            total_ratings: ratings.length
+          })
+          .eq('user_id', merchantId);
+
+        if (updateError) throw updateError;
+      }
+    } catch (error) {
+      console.error('Error updating merchant rating:', error);
+    }
+  };
+
   const submitRating = async () => {
     if (ratings.rating === 0) {
       toast({
@@ -73,6 +108,9 @@ const RateMerchant = () => {
         });
 
       if (error) throw error;
+
+      // Update merchant's average rating
+      await updateMerchantRating(merchantId);
 
       toast({
         title: "Rating submitted!",

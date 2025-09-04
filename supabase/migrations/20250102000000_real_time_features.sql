@@ -87,11 +87,43 @@ CREATE TABLE IF NOT EXISTS public.user_profiles (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()
 );
 
+-- Create trade_requests table for P2P trading
+CREATE TABLE IF NOT EXISTS public.trade_requests (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID NOT NULL,
+  merchant_id UUID,
+  crypto_type TEXT NOT NULL,
+  amount DECIMAL(20,8) NOT NULL,
+  rate DECIMAL(20,2) NOT NULL,
+  cash_amount DECIMAL(20,2) NOT NULL,
+  direction TEXT NOT NULL CHECK (direction IN ('crypto_to_cash', 'cash_to_crypto')),
+  status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'accepted', 'rejected', 'expired')),
+  bank_details JSONB,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+  expires_at TIMESTAMP WITH TIME ZONE DEFAULT (now() + interval '1 hour'),
+  accepted_at TIMESTAMP WITH TIME ZONE,
+  completed_at TIMESTAMP WITH TIME ZONE
+);
+
+-- Create notifications table for real-time alerts
+CREATE TABLE IF NOT EXISTS public.notifications (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID NOT NULL,
+  type TEXT NOT NULL,
+  title TEXT NOT NULL,
+  message TEXT NOT NULL,
+  data JSONB DEFAULT '{}'::jsonb,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+  read BOOLEAN DEFAULT false
+);
+
 -- Enable RLS on new tables
 ALTER TABLE public.delivery_tracking ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.agents ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.trades ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.user_profiles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.trade_requests ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.notifications ENABLE ROW LEVEL SECURITY;
 
 -- RLS Policies for delivery_tracking
 CREATE POLICY "Users can view their own delivery tracking" 
@@ -133,8 +165,30 @@ CREATE POLICY "Users can create their own profile"
   ON public.user_profiles FOR INSERT 
   WITH CHECK (auth.uid() = user_id);
 
-CREATE POLICY "Users can update their own profile" 
-  ON public.user_profiles FOR UPDATE 
+CREATE POLICY "Users can update their own profile"
+  ON public.user_profiles FOR UPDATE
+  USING (auth.uid() = user_id);
+
+-- RLS Policies for trade_requests
+CREATE POLICY "Users can view all trade requests"
+  ON public.trade_requests FOR SELECT
+  TO authenticated;
+
+CREATE POLICY "Users can create their own trade requests"
+  ON public.trade_requests FOR INSERT
+  WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can update their own trade requests"
+  ON public.trade_requests FOR UPDATE
+  USING (auth.uid() = user_id);
+
+-- RLS Policies for notifications
+CREATE POLICY "Users can view their own notifications"
+  ON public.notifications FOR SELECT
+  USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can update their own notifications"
+  ON public.notifications FOR UPDATE
   USING (auth.uid() = user_id);
 
 -- Create indexes for performance
@@ -148,6 +202,20 @@ CREATE INDEX IF NOT EXISTS idx_trades_seller_id ON public.trades(seller_id);
 CREATE INDEX IF NOT EXISTS idx_trades_status ON public.trades(status);
 CREATE INDEX IF NOT EXISTS idx_user_profiles_user_id ON public.user_profiles(user_id);
 CREATE INDEX IF NOT EXISTS idx_user_profiles_is_premium ON public.user_profiles(is_premium);
+CREATE INDEX IF NOT EXISTS idx_trade_requests_user_id ON public.trade_requests(user_id);
+CREATE INDEX IF NOT EXISTS idx_trade_requests_status ON public.trade_requests(status);
+CREATE INDEX IF NOT EXISTS idx_trade_requests_crypto_type ON public.trade_requests(crypto_type);
+CREATE INDEX IF NOT EXISTS idx_notifications_user_id ON public.notifications(user_id);
+CREATE INDEX IF NOT EXISTS idx_notifications_read ON public.notifications(read);
+
+-- Create the update_updated_at_column function first
+CREATE OR REPLACE FUNCTION public.update_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = now();
+    RETURN NEW;
+END;
+$$ language 'plpgsql';
 
 -- Add triggers for updated_at columns
 CREATE TRIGGER update_delivery_tracking_updated_at
@@ -175,6 +243,8 @@ ALTER PUBLICATION supabase_realtime ADD TABLE public.delivery_tracking;
 ALTER PUBLICATION supabase_realtime ADD TABLE public.agents;
 ALTER PUBLICATION supabase_realtime ADD TABLE public.trades;
 ALTER PUBLICATION supabase_realtime ADD TABLE public.user_profiles;
+ALTER PUBLICATION supabase_realtime ADD TABLE public.trade_requests;
+ALTER PUBLICATION supabase_realtime ADD TABLE public.notifications;
 
 -- Insert sample agents for testing
 INSERT INTO public.agents (name, phone, email, location, status, rating, total_deliveries, specialties) VALUES
@@ -243,3 +313,136 @@ BEGIN
     RETURN agent_id;
 END;
 $$ LANGUAGE plpgsql;
+
+-- Create notification functions for triggers
+-- Function to notify users of new trade requests
+CREATE OR REPLACE FUNCTION public.notify_new_trade_request()
+RETURNS TRIGGER AS $$
+BEGIN
+    -- Notify all premium users about new trade requests
+    INSERT INTO public.notifications (user_id, type, title, message, read, data)
+    SELECT
+        up.user_id,
+        'trade_request',
+        'New Trade Request Available',
+        CASE
+            WHEN NEW.direction = 'cash_to_crypto' THEN
+                'Someone wants to buy ' || NEW.amount || ' ' || NEW.crypto_type || ' for ₦' || NEW.cash_amount
+            ELSE
+                'Someone wants to sell ' || NEW.amount || ' ' || NEW.crypto_type || ' for ₦' || NEW.cash_amount
+        END,
+        false,
+        jsonb_build_object(
+            'trade_request_id', NEW.id,
+            'direction', NEW.direction,
+            'crypto_type', NEW.crypto_type,
+            'amount', NEW.amount,
+            'cash_amount', NEW.cash_amount
+        )
+    FROM public.user_profiles up
+    WHERE up.is_premium = true
+    AND up.user_id != NEW.user_id;
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Function to notify when trade is accepted
+CREATE OR REPLACE FUNCTION public.notify_trade_accepted()
+RETURNS TRIGGER AS $$
+DECLARE
+    request_record RECORD;
+BEGIN
+    -- Get the trade request details
+    SELECT * INTO request_record
+    FROM public.trade_requests
+    WHERE id = NEW.trade_request_id;
+
+    IF FOUND THEN
+        -- Notify the original requester
+        INSERT INTO public.notifications (user_id, type, title, message, read, data)
+        VALUES (
+            request_record.user_id,
+            'trade_update',
+            'Trade Request Accepted!',
+            'Your ' || request_record.direction || ' request for ' || request_record.amount || ' ' || request_record.crypto_type || ' has been accepted.',
+            false,
+            jsonb_build_object(
+                'trade_id', NEW.id,
+                'trade_request_id', NEW.trade_request_id,
+                'status', NEW.status
+            )
+        );
+
+        -- Notify the accepter
+        INSERT INTO public.notifications (user_id, type, title, message, read, data)
+        VALUES (
+            CASE
+                WHEN NEW.buyer_id = request_record.user_id THEN NEW.seller_id
+                ELSE NEW.buyer_id
+            END,
+            'trade_update',
+            'Trade Started!',
+            'You have accepted a ' || request_record.direction || ' request for ' || request_record.amount || ' ' || request_record.crypto_type || '.',
+            false,
+            jsonb_build_object(
+                'trade_id', NEW.id,
+                'trade_request_id', NEW.trade_request_id,
+                'status', NEW.status
+            )
+        );
+    END IF;
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Function to notify delivery tracking updates
+CREATE OR REPLACE FUNCTION public.notify_delivery_update()
+RETURNS TRIGGER AS $$
+BEGIN
+    -- Only notify on status changes
+    IF OLD.status IS DISTINCT FROM NEW.status THEN
+        INSERT INTO public.notifications (user_id, type, title, message, read, data)
+        VALUES (
+            NEW.user_id,
+            'trade_update',
+            'Delivery Update',
+            'Your ' || REPLACE(NEW.delivery_type, '_', ' ') || ' status has been updated to: ' || REPLACE(NEW.status, '_', ' '),
+            false,
+            jsonb_build_object(
+                'tracking_code', NEW.tracking_code,
+                'delivery_tracking_id', NEW.id,
+                'status', NEW.status,
+                'delivery_type', NEW.delivery_type
+            )
+        );
+    END IF;
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Create additional triggers for real-time notifications
+-- (These need to be created after tables exist)
+
+-- Trigger for new trade request notifications
+DROP TRIGGER IF EXISTS on_trade_request_created ON public.trade_requests;
+CREATE TRIGGER on_trade_request_created
+    AFTER INSERT ON public.trade_requests
+    FOR EACH ROW EXECUTE FUNCTION public.notify_new_trade_request();
+
+-- Trigger for trade acceptance notifications
+DROP TRIGGER IF EXISTS on_trade_created ON public.trades;
+CREATE TRIGGER on_trade_created
+    AFTER INSERT ON public.trades
+    FOR EACH ROW EXECUTE FUNCTION public.notify_trade_accepted();
+
+-- Trigger for delivery tracking notifications
+DROP TRIGGER IF EXISTS on_delivery_tracking_updated ON public.delivery_tracking;
+CREATE TRIGGER on_delivery_tracking_updated
+    AFTER UPDATE ON public.delivery_tracking
+    FOR EACH ROW EXECUTE FUNCTION public.notify_delivery_update();
+
+-- Success message
+SELECT 'Database setup completed successfully! You can now use real-time trading features.' as message;

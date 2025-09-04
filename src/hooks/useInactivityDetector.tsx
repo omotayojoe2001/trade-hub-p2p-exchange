@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 
-const INACTIVITY_TIMEOUT = 60 * 1000; // 60 seconds in milliseconds
+const INACTIVITY_TIMEOUT = 24 * 60 * 60 * 1000; // 24 hours in milliseconds (effectively disabled)
 
 const useInactivityDetector = () => {
   const [isInactive, setIsInactive] = useState(false);
