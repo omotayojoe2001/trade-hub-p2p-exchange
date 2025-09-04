@@ -285,31 +285,64 @@ export type Database = {
       }
       profiles: {
         Row: {
+          avatar_url: string | null
+          backup_codes: string[] | null
+          bio: string | null
+          bvn: string | null
           created_at: string | null
+          date_of_birth: string | null
+          deactivated_at: string | null
           display_name: string | null
+          is_active: boolean | null
           is_merchant: boolean | null
+          location: string | null
+          occupation: string | null
           phone_number: string | null
           profile_completed: boolean | null
+          two_factor_enabled: boolean | null
+          two_factor_secret: string | null
           updated_at: string | null
           user_id: string
           user_type: string | null
         }
         Insert: {
+          avatar_url?: string | null
+          backup_codes?: string[] | null
+          bio?: string | null
+          bvn?: string | null
           created_at?: string | null
+          date_of_birth?: string | null
+          deactivated_at?: string | null
           display_name?: string | null
+          is_active?: boolean | null
           is_merchant?: boolean | null
+          location?: string | null
+          occupation?: string | null
           phone_number?: string | null
           profile_completed?: boolean | null
+          two_factor_enabled?: boolean | null
+          two_factor_secret?: string | null
           updated_at?: string | null
           user_id: string
           user_type?: string | null
         }
         Update: {
+          avatar_url?: string | null
+          backup_codes?: string[] | null
+          bio?: string | null
+          bvn?: string | null
           created_at?: string | null
+          date_of_birth?: string | null
+          deactivated_at?: string | null
           display_name?: string | null
+          is_active?: boolean | null
           is_merchant?: boolean | null
+          location?: string | null
+          occupation?: string | null
           phone_number?: string | null
           profile_completed?: boolean | null
+          two_factor_enabled?: boolean | null
+          two_factor_secret?: string | null
           updated_at?: string | null
           user_id?: string
           user_type?: string | null
