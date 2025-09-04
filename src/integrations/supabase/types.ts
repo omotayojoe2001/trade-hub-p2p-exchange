@@ -677,13 +677,22 @@ export type Database = {
       }
       user_profiles: {
         Row: {
+          avatar_url: string | null
+          backup_codes: string[] | null
           bank_accounts: Json | null
+          bio: string | null
+          bvn: string | null
           created_at: string | null
           crypto_addresses: Json | null
+          date_of_birth: string | null
+          deactivated_at: string | null
           full_name: string | null
           id: string
+          is_active: boolean | null
           is_premium: boolean | null
           kyc_status: string | null
+          location: string | null
+          occupation: string | null
           phone: string | null
           preferred_payment_methods: string[] | null
           premium_expires_at: string | null
@@ -692,18 +701,29 @@ export type Database = {
           success_rate: number | null
           total_volume: number | null
           trade_count: number | null
+          two_factor_enabled: boolean | null
+          two_factor_secret: string | null
           updated_at: string | null
           user_id: string
           verification_level: string | null
         }
         Insert: {
+          avatar_url?: string | null
+          backup_codes?: string[] | null
           bank_accounts?: Json | null
+          bio?: string | null
+          bvn?: string | null
           created_at?: string | null
           crypto_addresses?: Json | null
+          date_of_birth?: string | null
+          deactivated_at?: string | null
           full_name?: string | null
           id?: string
+          is_active?: boolean | null
           is_premium?: boolean | null
           kyc_status?: string | null
+          location?: string | null
+          occupation?: string | null
           phone?: string | null
           preferred_payment_methods?: string[] | null
           premium_expires_at?: string | null
@@ -712,18 +732,29 @@ export type Database = {
           success_rate?: number | null
           total_volume?: number | null
           trade_count?: number | null
+          two_factor_enabled?: boolean | null
+          two_factor_secret?: string | null
           updated_at?: string | null
           user_id: string
           verification_level?: string | null
         }
         Update: {
+          avatar_url?: string | null
+          backup_codes?: string[] | null
           bank_accounts?: Json | null
+          bio?: string | null
+          bvn?: string | null
           created_at?: string | null
           crypto_addresses?: Json | null
+          date_of_birth?: string | null
+          deactivated_at?: string | null
           full_name?: string | null
           id?: string
+          is_active?: boolean | null
           is_premium?: boolean | null
           kyc_status?: string | null
+          location?: string | null
+          occupation?: string | null
           phone?: string | null
           preferred_payment_methods?: string[] | null
           premium_expires_at?: string | null
@@ -732,6 +763,8 @@ export type Database = {
           success_rate?: number | null
           total_volume?: number | null
           trade_count?: number | null
+          two_factor_enabled?: boolean | null
+          two_factor_secret?: string | null
           updated_at?: string | null
           user_id?: string
           verification_level?: string | null
