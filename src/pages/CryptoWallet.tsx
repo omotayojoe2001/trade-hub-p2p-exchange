@@ -15,8 +15,11 @@ interface CryptoWallet {
   coin_type: string;
   deposit_address: string;
   available_balance: number;
-  escrow_balance: number;
-  wallet_type: string;
+  pending_balance: number;
+  total_balance: number;
+  created_at: string;
+  updated_at: string;
+  user_id: string;
 }
 
 const CryptoWallet = () => {
@@ -46,8 +49,7 @@ const CryptoWallet = () => {
       const { data, error } = await supabase
         .from('crypto_wallets')
         .select('*')
-        .eq('user_id', user.id)
-        .eq('wallet_type', 'user');
+        .eq('user_id', user.id);
 
       if (error) throw error;
       setWallets(data || []);
@@ -73,7 +75,9 @@ const CryptoWallet = () => {
           user_id: user.id,
           coin_type: coinType,
           deposit_address: mockAddress,
-          wallet_type: 'user'
+          available_balance: 0,
+          pending_balance: 0,
+          total_balance: 0
         });
 
       if (error) throw error;
@@ -184,9 +188,9 @@ const CryptoWallet = () => {
                 <div className="text-2xl font-bold text-gray-900">
                   {currentWallet.available_balance.toFixed(8)} {selectedCoin}
                 </div>
-                {currentWallet.escrow_balance > 0 && (
+                {currentWallet.pending_balance > 0 && (
                   <div className="text-sm text-orange-600">
-                    {currentWallet.escrow_balance.toFixed(8)} {selectedCoin} in escrow
+                    {currentWallet.pending_balance.toFixed(8)} {selectedCoin} pending
                   </div>
                 )}
               </div>

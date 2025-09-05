@@ -64,7 +64,12 @@ const UserProfile = () => {
         .single();
 
       if (error) throw error;
-      setProfileData(data);
+      if (data) {
+        setProfileData({
+          ...data,
+          id: data.user_id
+        });
+      }
     } catch (error) {
       console.error('Error fetching user profile:', error);
     }
@@ -117,7 +122,7 @@ const UserProfile = () => {
       // Fetch rating statistics
       const { data: ratingsData, error: ratingsError } = await supabase
         .from('merchant_ratings')
-        .select('rating')
+        .select('overall_rating')
         .eq('merchant_id', userId);
 
       if (ratingsError) throw ratingsError;
@@ -126,7 +131,7 @@ const UserProfile = () => {
       const completedTrades = trades?.filter(t => t.status === 'completed').length || 0;
       const successRate = totalTrades > 0 ? (completedTrades / totalTrades) * 100 : 0;
       const avgRating = ratingsData?.length > 0 
-        ? ratingsData.reduce((sum, r) => sum + r.rating, 0) / ratingsData.length 
+        ? ratingsData.reduce((sum, r) => sum + (r.overall_rating || 5), 0) / ratingsData.length 
         : 0;
 
       setTradeStats({

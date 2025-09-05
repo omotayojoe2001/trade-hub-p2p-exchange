@@ -101,8 +101,26 @@ const MerchantSettings = () => {
         throw error;
       }
 
-      if (profile && profile.merchant_settings) {
-        setSettings(profile.merchant_settings);
+      // Check merchant_settings table separately
+      const { data: merchantSettings } = await supabase
+        .from('merchant_settings')
+        .select('*')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      
+      if (merchantSettings) {
+        setIsOnline(merchantSettings.is_online || false);
+        setAcceptsNewTrades(merchantSettings.accepts_new_trades || false);
+        setAutoAcceptTrades(merchantSettings.auto_accept_trades || false);
+        setMinTradeAmount(merchantSettings.min_trade_amount || 0);
+        setMaxTradeAmount(merchantSettings.max_trade_amount || 1000000);
+        setAvgResponseTime(merchantSettings.avg_response_time_minutes || 15);
+        setBtcBuyRate(merchantSettings.btc_buy_rate || 0);
+        setBtcSellRate(merchantSettings.btc_sell_rate || 0);
+        setEthBuyRate(merchantSettings.eth_buy_rate || 0);
+        setEthSellRate(merchantSettings.eth_sell_rate || 0);
+        setUsdtBuyRate(merchantSettings.usdt_buy_rate || 0);
+        setUsdtSellRate(merchantSettings.usdt_sell_rate || 0);
       }
     } catch (error) {
       console.error('Error loading merchant settings:', error);

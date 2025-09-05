@@ -191,8 +191,12 @@ const Index = () => {
                 className="w-full h-full object-cover"
                 onError={(e) => {
                   // Fallback to initials if image fails to load
-                  e.currentTarget.style.display = 'none';
-                  e.currentTarget.nextElementSibling.style.display = 'flex';
+                  const currentTarget = e.currentTarget as HTMLImageElement;
+                  const nextSibling = currentTarget.nextElementSibling as HTMLElement;
+                  currentTarget.style.display = 'none';
+                  if (nextSibling) {
+                    nextSibling.style.display = 'flex';
+                  }
                 }}
               />
             ) : null}

@@ -3,18 +3,26 @@ import { ArrowLeft, MapPin, Phone, User, Home, Building2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { useLocation, useNavigate } from 'react-router-dom';
+import PremiumTradeFlow from '@/components/PremiumTradeFlow';
+import { usePremium } from '@/hooks/usePremium';
 
 const CashDeliveryDetails: React.FC = () => {
   const navigate = useNavigate();
   const { state } = useLocation() as any;
   const { amount, nairaAmount } = state || {};
+  const { isPremium } = usePremium();
 
+  const [showPremiumFlow, setShowPremiumFlow] = useState(false);
   const [fullName, setFullName] = useState('');
   const [phone, setPhone] = useState('');
   const [address, setAddress] = useState('');
   const [city, setCity] = useState('');
   const [stateLoc, setStateLoc] = useState('');
   const [note, setNote] = useState('');
+
+  if (showPremiumFlow) {
+    return <PremiumTradeFlow onBack={() => setShowPremiumFlow(false)} />;
+  }
 
   return (
     <div className="min-h-screen bg-white pb-20">
@@ -58,11 +66,21 @@ const CashDeliveryDetails: React.FC = () => {
           </div>
         </Card>
 
+        {isPremium && (
+          <Button
+            className="w-full bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 text-primary-foreground mb-3"
+            onClick={() => setShowPremiumFlow(true)}
+          >
+            Premium Cash Delivery
+          </Button>
+        )}
+        
         <Button
-          className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+          variant="outline"
+          className="w-full"
           onClick={() => navigate('/payment-status', { state: { amount, nairaAmount, mode: 'sell', method: 'delivery', address, city, state: stateLoc, phone, fullName } })}
         >
-          Proceed to Payment
+          Regular P2P Trade
         </Button>
       </div>
     </div>

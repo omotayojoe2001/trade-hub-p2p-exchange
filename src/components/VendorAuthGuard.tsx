@@ -33,13 +33,13 @@ const VendorAuthGuard: React.FC<VendorAuthGuardProps> = ({ children }) => {
         .from('profiles')
         .select('role')
         .eq('user_id', session.user.id)
-        .single();
+        .maybeSingle();
 
       if (error) {
         console.error('Error checking vendor role:', error);
         setIsVendor(false);
       } else {
-        setIsVendor(profile.role === 'vendor');
+        setIsVendor(profile?.role === 'vendor');
       }
     } catch (error) {
       console.error('Error in vendor auth guard:', error);

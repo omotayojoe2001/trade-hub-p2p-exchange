@@ -95,6 +95,78 @@ export type Database = {
         }
         Relationships: []
       }
+      credit_purchase_transactions: {
+        Row: {
+          created_at: string | null
+          credits_amount: number
+          id: string
+          payment_proof_url: string | null
+          payment_reference: string | null
+          price_paid_naira: number
+          status: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          credits_amount: number
+          id?: string
+          payment_proof_url?: string | null
+          payment_reference?: string | null
+          price_paid_naira: number
+          status?: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          credits_amount?: number
+          id?: string
+          payment_proof_url?: string | null
+          payment_reference?: string | null
+          price_paid_naira?: number
+          status?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      crypto_wallets: {
+        Row: {
+          available_balance: number | null
+          coin_type: string
+          created_at: string | null
+          deposit_address: string
+          id: string
+          pending_balance: number | null
+          total_balance: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          available_balance?: number | null
+          coin_type: string
+          created_at?: string | null
+          deposit_address: string
+          id?: string
+          pending_balance?: number | null
+          total_balance?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          available_balance?: number | null
+          coin_type?: string
+          created_at?: string | null
+          deposit_address?: string
+          id?: string
+          pending_balance?: number | null
+          total_balance?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       delivery_tracking: {
         Row: {
           agent_id: string | null
@@ -179,6 +251,7 @@ export type Database = {
           id: string
           merchant_id: string | null
           overall_rating: number | null
+          rating: number | null
           reliability_rating: number | null
           speed_rating: number | null
           trade_id: string | null
@@ -191,6 +264,7 @@ export type Database = {
           id?: string
           merchant_id?: string | null
           overall_rating?: number | null
+          rating?: number | null
           reliability_rating?: number | null
           speed_rating?: number | null
           trade_id?: string | null
@@ -203,6 +277,7 @@ export type Database = {
           id?: string
           merchant_id?: string | null
           overall_rating?: number | null
+          rating?: number | null
           reliability_rating?: number | null
           speed_rating?: number | null
           trade_id?: string | null
@@ -216,6 +291,69 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      merchant_settings: {
+        Row: {
+          accepts_new_trades: boolean | null
+          auto_accept_trades: boolean | null
+          auto_release_escrow: boolean | null
+          avg_response_time_minutes: number | null
+          btc_buy_rate: number | null
+          btc_sell_rate: number | null
+          created_at: string | null
+          eth_buy_rate: number | null
+          eth_sell_rate: number | null
+          id: string
+          is_online: boolean | null
+          max_trade_amount: number | null
+          min_trade_amount: number | null
+          payment_methods: string[] | null
+          updated_at: string | null
+          usdt_buy_rate: number | null
+          usdt_sell_rate: number | null
+          user_id: string | null
+        }
+        Insert: {
+          accepts_new_trades?: boolean | null
+          auto_accept_trades?: boolean | null
+          auto_release_escrow?: boolean | null
+          avg_response_time_minutes?: number | null
+          btc_buy_rate?: number | null
+          btc_sell_rate?: number | null
+          created_at?: string | null
+          eth_buy_rate?: number | null
+          eth_sell_rate?: number | null
+          id?: string
+          is_online?: boolean | null
+          max_trade_amount?: number | null
+          min_trade_amount?: number | null
+          payment_methods?: string[] | null
+          updated_at?: string | null
+          usdt_buy_rate?: number | null
+          usdt_sell_rate?: number | null
+          user_id?: string | null
+        }
+        Update: {
+          accepts_new_trades?: boolean | null
+          auto_accept_trades?: boolean | null
+          auto_release_escrow?: boolean | null
+          avg_response_time_minutes?: number | null
+          btc_buy_rate?: number | null
+          btc_sell_rate?: number | null
+          created_at?: string | null
+          eth_buy_rate?: number | null
+          eth_sell_rate?: number | null
+          id?: string
+          is_online?: boolean | null
+          max_trade_amount?: number | null
+          min_trade_amount?: number | null
+          payment_methods?: string[] | null
+          updated_at?: string | null
+          usdt_buy_rate?: number | null
+          usdt_sell_rate?: number | null
+          user_id?: string | null
+        }
+        Relationships: []
       }
       messages: {
         Row: {
@@ -283,6 +421,127 @@ export type Database = {
         }
         Relationships: []
       }
+      payment_methods: {
+        Row: {
+          account_name: string | null
+          account_number: string | null
+          bank_code: string | null
+          bank_name: string | null
+          country: string | null
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          is_default: boolean | null
+          is_verified: boolean | null
+          type: string
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          account_name?: string | null
+          account_number?: string | null
+          bank_code?: string | null
+          bank_name?: string | null
+          country?: string | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_default?: boolean | null
+          is_verified?: boolean | null
+          type?: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          account_name?: string | null
+          account_number?: string | null
+          bank_code?: string | null
+          bank_name?: string | null
+          country?: string | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_default?: boolean | null
+          is_verified?: boolean | null
+          type?: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      premium_trade_codes: {
+        Row: {
+          amount_naira: number
+          amount_usd: number
+          code: string
+          created_at: string | null
+          delivery_type: string
+          expires_at: string | null
+          id: string
+          premium_user_id: string
+          status: string
+          trade_id: string | null
+          updated_at: string | null
+          vendor_id: string | null
+          vendor_job_id: string | null
+          verified_at: string | null
+        }
+        Insert: {
+          amount_naira: number
+          amount_usd: number
+          code: string
+          created_at?: string | null
+          delivery_type: string
+          expires_at?: string | null
+          id?: string
+          premium_user_id: string
+          status?: string
+          trade_id?: string | null
+          updated_at?: string | null
+          vendor_id?: string | null
+          vendor_job_id?: string | null
+          verified_at?: string | null
+        }
+        Update: {
+          amount_naira?: number
+          amount_usd?: number
+          code?: string
+          created_at?: string | null
+          delivery_type?: string
+          expires_at?: string | null
+          id?: string
+          premium_user_id?: string
+          status?: string
+          trade_id?: string | null
+          updated_at?: string | null
+          vendor_id?: string | null
+          vendor_job_id?: string | null
+          verified_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "premium_trade_codes_trade_id_fkey"
+            columns: ["trade_id"]
+            isOneToOne: false
+            referencedRelation: "trades"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "premium_trade_codes_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "premium_trade_codes_vendor_job_id_fkey"
+            columns: ["vendor_job_id"]
+            isOneToOne: false
+            referencedRelation: "vendor_jobs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -290,17 +549,22 @@ export type Database = {
           bio: string | null
           bvn: string | null
           created_at: string | null
+          credits_balance: number | null
           date_of_birth: string | null
           deactivated_at: string | null
           display_name: string | null
           is_active: boolean | null
           is_merchant: boolean | null
+          is_premium: boolean | null
           location: string | null
+          merchant_mode: boolean | null
           occupation: string | null
           phone_number: string | null
           profile_completed: boolean | null
-          two_factor_enabled: boolean | null
-          two_factor_secret: string | null
+          rating: number | null
+          referral_code: string | null
+          referred_by: string | null
+          role: Database["public"]["Enums"]["user_role"] | null
           updated_at: string | null
           user_id: string
           user_type: string | null
@@ -311,17 +575,22 @@ export type Database = {
           bio?: string | null
           bvn?: string | null
           created_at?: string | null
+          credits_balance?: number | null
           date_of_birth?: string | null
           deactivated_at?: string | null
           display_name?: string | null
           is_active?: boolean | null
           is_merchant?: boolean | null
+          is_premium?: boolean | null
           location?: string | null
+          merchant_mode?: boolean | null
           occupation?: string | null
           phone_number?: string | null
           profile_completed?: boolean | null
-          two_factor_enabled?: boolean | null
-          two_factor_secret?: string | null
+          rating?: number | null
+          referral_code?: string | null
+          referred_by?: string | null
+          role?: Database["public"]["Enums"]["user_role"] | null
           updated_at?: string | null
           user_id: string
           user_type?: string | null
@@ -332,17 +601,22 @@ export type Database = {
           bio?: string | null
           bvn?: string | null
           created_at?: string | null
+          credits_balance?: number | null
           date_of_birth?: string | null
           deactivated_at?: string | null
           display_name?: string | null
           is_active?: boolean | null
           is_merchant?: boolean | null
+          is_premium?: boolean | null
           location?: string | null
+          merchant_mode?: boolean | null
           occupation?: string | null
           phone_number?: string | null
           profile_completed?: boolean | null
-          two_factor_enabled?: boolean | null
-          two_factor_secret?: string | null
+          rating?: number | null
+          referral_code?: string | null
+          referred_by?: string | null
+          role?: Database["public"]["Enums"]["user_role"] | null
           updated_at?: string | null
           user_id?: string
           user_type?: string | null
@@ -376,6 +650,132 @@ export type Database = {
           receipt_type?: string
           trade_id?: string
           trade_request_id?: string | null
+        }
+        Relationships: []
+      }
+      referral_commissions: {
+        Row: {
+          commission_amount: number
+          commission_rate: number | null
+          created_at: string | null
+          currency: string
+          id: string
+          paid_at: string | null
+          referred_user_id: string
+          referrer_id: string
+          status: string
+          trade_id: string | null
+        }
+        Insert: {
+          commission_amount: number
+          commission_rate?: number | null
+          created_at?: string | null
+          currency?: string
+          id?: string
+          paid_at?: string | null
+          referred_user_id: string
+          referrer_id: string
+          status?: string
+          trade_id?: string | null
+        }
+        Update: {
+          commission_amount?: number
+          commission_rate?: number | null
+          created_at?: string | null
+          currency?: string
+          id?: string
+          paid_at?: string | null
+          referred_user_id?: string
+          referrer_id?: string
+          status?: string
+          trade_id?: string | null
+        }
+        Relationships: []
+      }
+      support_tickets: {
+        Row: {
+          admin_response: string | null
+          category: string
+          created_at: string | null
+          id: string
+          message: string
+          priority: string
+          status: string
+          subject: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          admin_response?: string | null
+          category?: string
+          created_at?: string | null
+          id?: string
+          message: string
+          priority?: string
+          status?: string
+          subject: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          admin_response?: string | null
+          category?: string
+          created_at?: string | null
+          id?: string
+          message?: string
+          priority?: string
+          status?: string
+          subject?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      system_config: {
+        Row: {
+          description: string | null
+          key: string
+          updated_at: string | null
+          value: string
+        }
+        Insert: {
+          description?: string | null
+          key: string
+          updated_at?: string | null
+          value: string
+        }
+        Update: {
+          description?: string | null
+          key?: string
+          updated_at?: string | null
+          value?: string
+        }
+        Relationships: []
+      }
+      system_rates: {
+        Row: {
+          buy_rate: number
+          currency_pair: string
+          id: string
+          last_updated: string | null
+          sell_rate: number
+          updated_by: string | null
+        }
+        Insert: {
+          buy_rate: number
+          currency_pair: string
+          id?: string
+          last_updated?: string | null
+          sell_rate: number
+          updated_by?: string | null
+        }
+        Update: {
+          buy_rate?: number
+          currency_pair?: string
+          id?: string
+          last_updated?: string | null
+          sell_rate?: number
+          updated_by?: string | null
         }
         Relationships: []
       }
@@ -477,6 +877,7 @@ export type Database = {
           amount: number
           bank_details: Json | null
           cash_amount: number
+          coin_type: string | null
           completed_at: string | null
           created_at: string | null
           crypto_type: string
@@ -486,7 +887,9 @@ export type Database = {
           last_action_timestamp: string | null
           merchant_id: string | null
           merchant_rate: number | null
+          naira_amount: number | null
           net_amount: number | null
+          payment_method: string | null
           platform_fee_amount: number | null
           platform_fee_percentage: number | null
           rate: number
@@ -494,6 +897,7 @@ export type Database = {
           request_step: number | null
           selected_merchant_id: string | null
           status: string | null
+          trade_type: string | null
           user_id: string
         }
         Insert: {
@@ -501,6 +905,7 @@ export type Database = {
           amount: number
           bank_details?: Json | null
           cash_amount: number
+          coin_type?: string | null
           completed_at?: string | null
           created_at?: string | null
           crypto_type: string
@@ -510,7 +915,9 @@ export type Database = {
           last_action_timestamp?: string | null
           merchant_id?: string | null
           merchant_rate?: number | null
+          naira_amount?: number | null
           net_amount?: number | null
+          payment_method?: string | null
           platform_fee_amount?: number | null
           platform_fee_percentage?: number | null
           rate: number
@@ -518,6 +925,7 @@ export type Database = {
           request_step?: number | null
           selected_merchant_id?: string | null
           status?: string | null
+          trade_type?: string | null
           user_id: string
         }
         Update: {
@@ -525,6 +933,7 @@ export type Database = {
           amount?: number
           bank_details?: Json | null
           cash_amount?: number
+          coin_type?: string | null
           completed_at?: string | null
           created_at?: string | null
           crypto_type?: string
@@ -534,7 +943,9 @@ export type Database = {
           last_action_timestamp?: string | null
           merchant_id?: string | null
           merchant_rate?: number | null
+          naira_amount?: number | null
           net_amount?: number | null
+          payment_method?: string | null
           platform_fee_amount?: number | null
           platform_fee_percentage?: number | null
           rate?: number
@@ -542,6 +953,7 @@ export type Database = {
           request_step?: number | null
           selected_merchant_id?: string | null
           status?: string | null
+          trade_type?: string | null
           user_id?: string
         }
         Relationships: []
@@ -549,6 +961,7 @@ export type Database = {
       trades: {
         Row: {
           amount: number
+          assigned_vendor_job_id: string | null
           bank_account_details: Json | null
           buyer_id: string
           coin_type: string
@@ -557,6 +970,7 @@ export type Database = {
           created_at: string | null
           dispute_reason: string | null
           escrow_address: string | null
+          expires_at: string | null
           id: string
           last_action_timestamp: string | null
           merchant_rate: number | null
@@ -578,6 +992,7 @@ export type Database = {
         }
         Insert: {
           amount: number
+          assigned_vendor_job_id?: string | null
           bank_account_details?: Json | null
           buyer_id: string
           coin_type: string
@@ -586,6 +1001,7 @@ export type Database = {
           created_at?: string | null
           dispute_reason?: string | null
           escrow_address?: string | null
+          expires_at?: string | null
           id?: string
           last_action_timestamp?: string | null
           merchant_rate?: number | null
@@ -607,6 +1023,7 @@ export type Database = {
         }
         Update: {
           amount?: number
+          assigned_vendor_job_id?: string | null
           bank_account_details?: Json | null
           buyer_id?: string
           coin_type?: string
@@ -615,6 +1032,7 @@ export type Database = {
           created_at?: string | null
           dispute_reason?: string | null
           escrow_address?: string | null
+          expires_at?: string | null
           id?: string
           last_action_timestamp?: string | null
           merchant_rate?: number | null
@@ -634,7 +1052,15 @@ export type Database = {
           transaction_hash?: string | null
           updated_at?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "trades_assigned_vendor_job_id_fkey"
+            columns: ["assigned_vendor_job_id"]
+            isOneToOne: false
+            referencedRelation: "vendor_jobs"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_bank_accounts: {
         Row: {
@@ -677,22 +1103,13 @@ export type Database = {
       }
       user_profiles: {
         Row: {
-          avatar_url: string | null
-          backup_codes: string[] | null
           bank_accounts: Json | null
-          bio: string | null
-          bvn: string | null
           created_at: string | null
           crypto_addresses: Json | null
-          date_of_birth: string | null
-          deactivated_at: string | null
           full_name: string | null
           id: string
-          is_active: boolean | null
           is_premium: boolean | null
           kyc_status: string | null
-          location: string | null
-          occupation: string | null
           phone: string | null
           preferred_payment_methods: string[] | null
           premium_expires_at: string | null
@@ -701,29 +1118,18 @@ export type Database = {
           success_rate: number | null
           total_volume: number | null
           trade_count: number | null
-          two_factor_enabled: boolean | null
-          two_factor_secret: string | null
           updated_at: string | null
           user_id: string
           verification_level: string | null
         }
         Insert: {
-          avatar_url?: string | null
-          backup_codes?: string[] | null
           bank_accounts?: Json | null
-          bio?: string | null
-          bvn?: string | null
           created_at?: string | null
           crypto_addresses?: Json | null
-          date_of_birth?: string | null
-          deactivated_at?: string | null
           full_name?: string | null
           id?: string
-          is_active?: boolean | null
           is_premium?: boolean | null
           kyc_status?: string | null
-          location?: string | null
-          occupation?: string | null
           phone?: string | null
           preferred_payment_methods?: string[] | null
           premium_expires_at?: string | null
@@ -732,29 +1138,18 @@ export type Database = {
           success_rate?: number | null
           total_volume?: number | null
           trade_count?: number | null
-          two_factor_enabled?: boolean | null
-          two_factor_secret?: string | null
           updated_at?: string | null
           user_id: string
           verification_level?: string | null
         }
         Update: {
-          avatar_url?: string | null
-          backup_codes?: string[] | null
           bank_accounts?: Json | null
-          bio?: string | null
-          bvn?: string | null
           created_at?: string | null
           crypto_addresses?: Json | null
-          date_of_birth?: string | null
-          deactivated_at?: string | null
           full_name?: string | null
           id?: string
-          is_active?: boolean | null
           is_premium?: boolean | null
           kyc_status?: string | null
-          location?: string | null
-          occupation?: string | null
           phone?: string | null
           preferred_payment_methods?: string[] | null
           premium_expires_at?: string | null
@@ -763,8 +1158,6 @@ export type Database = {
           success_rate?: number | null
           total_volume?: number | null
           trade_count?: number | null
-          two_factor_enabled?: boolean | null
-          two_factor_secret?: string | null
           updated_at?: string | null
           user_id?: string
           verification_level?: string | null
@@ -807,6 +1200,245 @@ export type Database = {
         }
         Relationships: []
       }
+      vendor_activity_log: {
+        Row: {
+          action: string
+          created_at: string | null
+          id: string
+          job_id: string | null
+          meta: Json | null
+          vendor_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string | null
+          id?: string
+          job_id?: string | null
+          meta?: Json | null
+          vendor_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string | null
+          id?: string
+          job_id?: string | null
+          meta?: Json | null
+          vendor_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendor_activity_log_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "vendor_jobs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendor_activity_log_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vendor_jobs: {
+        Row: {
+          address_json: Json | null
+          amount_naira_received: number | null
+          amount_usd: number
+          bank_tx_reference: string | null
+          buyer_id: string | null
+          code_expires_at: string | null
+          code_generated_at: string | null
+          completed_at: string | null
+          created_at: string | null
+          credits_deducted: boolean | null
+          credits_required: number
+          customer_notes: string | null
+          customer_phone: string | null
+          delivery_type: string
+          fee_naira: number | null
+          id: string
+          last_message_at: string | null
+          payment_proof_url: string | null
+          payment_received_at: string | null
+          premium_user_id: string
+          status: string
+          trade_id: string | null
+          updated_at: string | null
+          vendor_id: string | null
+          vendor_notes: string | null
+          vendor_phone: string | null
+          verification_code: string | null
+          verification_code_hash: string | null
+        }
+        Insert: {
+          address_json?: Json | null
+          amount_naira_received?: number | null
+          amount_usd: number
+          bank_tx_reference?: string | null
+          buyer_id?: string | null
+          code_expires_at?: string | null
+          code_generated_at?: string | null
+          completed_at?: string | null
+          created_at?: string | null
+          credits_deducted?: boolean | null
+          credits_required?: number
+          customer_notes?: string | null
+          customer_phone?: string | null
+          delivery_type: string
+          fee_naira?: number | null
+          id?: string
+          last_message_at?: string | null
+          payment_proof_url?: string | null
+          payment_received_at?: string | null
+          premium_user_id: string
+          status?: string
+          trade_id?: string | null
+          updated_at?: string | null
+          vendor_id?: string | null
+          vendor_notes?: string | null
+          vendor_phone?: string | null
+          verification_code?: string | null
+          verification_code_hash?: string | null
+        }
+        Update: {
+          address_json?: Json | null
+          amount_naira_received?: number | null
+          amount_usd?: number
+          bank_tx_reference?: string | null
+          buyer_id?: string | null
+          code_expires_at?: string | null
+          code_generated_at?: string | null
+          completed_at?: string | null
+          created_at?: string | null
+          credits_deducted?: boolean | null
+          credits_required?: number
+          customer_notes?: string | null
+          customer_phone?: string | null
+          delivery_type?: string
+          fee_naira?: number | null
+          id?: string
+          last_message_at?: string | null
+          payment_proof_url?: string | null
+          payment_received_at?: string | null
+          premium_user_id?: string
+          status?: string
+          trade_id?: string | null
+          updated_at?: string | null
+          vendor_id?: string | null
+          vendor_notes?: string | null
+          vendor_phone?: string | null
+          verification_code?: string | null
+          verification_code_hash?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendor_jobs_trade_id_fkey"
+            columns: ["trade_id"]
+            isOneToOne: false
+            referencedRelation: "trades"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendor_jobs_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vendor_messages: {
+        Row: {
+          created_at: string | null
+          id: string
+          job_id: string
+          message: string
+          message_type: string | null
+          read_at: string | null
+          sender_id: string
+          sender_type: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          job_id: string
+          message: string
+          message_type?: string | null
+          read_at?: string | null
+          sender_id: string
+          sender_type: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          job_id?: string
+          message?: string
+          message_type?: string | null
+          read_at?: string | null
+          sender_id?: string
+          sender_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendor_messages_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "vendor_jobs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vendors: {
+        Row: {
+          active: boolean | null
+          bank_account: string
+          bank_code: string | null
+          bank_name: string
+          created_at: string | null
+          display_name: string
+          id: string
+          location_lat: number | null
+          location_lng: number | null
+          phone: string
+          updated_at: string | null
+          user_id: string | null
+          working_hours: Json | null
+        }
+        Insert: {
+          active?: boolean | null
+          bank_account: string
+          bank_code?: string | null
+          bank_name: string
+          created_at?: string | null
+          display_name: string
+          id?: string
+          location_lat?: number | null
+          location_lng?: number | null
+          phone: string
+          updated_at?: string | null
+          user_id?: string | null
+          working_hours?: Json | null
+        }
+        Update: {
+          active?: boolean | null
+          bank_account?: string
+          bank_code?: string | null
+          bank_name?: string
+          created_at?: string | null
+          display_name?: string
+          id?: string
+          location_lat?: number | null
+          location_lng?: number | null
+          phone?: string
+          updated_at?: string | null
+          user_id?: string | null
+          working_hours?: Json | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -814,6 +1446,14 @@ export type Database = {
     Functions: {
       assign_agent: {
         Args: { delivery_location: string; delivery_type: string }
+        Returns: string
+      }
+      auto_match_trade_request: {
+        Args: {
+          p_amount_usd: number
+          p_delivery_type: string
+          p_premium_user_id: string
+        }
         Returns: string
       }
       calculate_platform_fee: {
@@ -824,8 +1464,33 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      create_premium_trade_with_vendor: {
+        Args: {
+          p_amount_usd: number
+          p_delivery_address?: Json
+          p_delivery_type: string
+          p_premium_user_id: string
+        }
+        Returns: string
+      }
+      create_vendor_user: {
+        Args: {
+          p_bank_account: string
+          p_bank_code?: string
+          p_bank_name: string
+          p_display_name: string
+          p_email: string
+          p_password: string
+          p_phone: string
+        }
+        Returns: string
+      }
       generate_tracking_code: {
         Args: { delivery_type: string }
+        Returns: string
+      }
+      generate_trade_code: {
+        Args: Record<PropertyKey, never>
         Returns: string
       }
       get_trade_messages: {
@@ -861,7 +1526,7 @@ export type Database = {
       }
     }
     Enums: {
-      [_ in never]: never
+      user_role: "user" | "vendor" | "admin"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -988,6 +1653,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      user_role: ["user", "vendor", "admin"],
+    },
   },
 } as const

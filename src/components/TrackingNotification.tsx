@@ -29,13 +29,21 @@ const TrackingNotification = () => {
       const { data: trades } = await supabase
         .from('trades')
         .select('*')
-        .eq('buyer_id', user.id)
-        .in('status', ['waiting_payment', 'payment_sent', 'waiting_confirmation'])
-        .eq('is_demo', false)
+        .or(`buyer_id.eq.${user.id},seller_id.eq.${user.id}`)
+        .in('status', ['pending', 'in_progress', 'payment_pending'])
         .order('created_at', { ascending: false });
 
       if (trades && trades.length > 0) {
-        setActiveTrades(trades);
+        const mappedTrades: ActiveTrade[] = trades.map(trade => ({
+          id: trade.id,
+          coin_type: trade.coin_type,
+          amount: Number(trade.amount),
+          naira_amount: Number(trade.naira_amount),
+          status: trade.status,
+          trade_type: trade.trade_type,
+          expires_at: trade.expires_at || new Date(Date.now() + 3600000).toISOString()
+        }));
+        setActiveTrades(mappedTrades);
       }
       setLoading(false);
     };

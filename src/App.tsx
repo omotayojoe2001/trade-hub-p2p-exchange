@@ -298,6 +298,7 @@ const AppContent = () => {
             <Route path="/trending-coins" element={<TrendingCoins />} />
             <Route path="/premium-referral" element={<PremiumReferral />} />
             <Route path="/premium-chat/:id" element={<PremiumChatDetail />} />
+            <Route path="/vendor-dashboard" element={<VendorDashboard />} />
             <Route path="/premium-payment-methods" element={<PremiumPaymentMethods />} />
             <Route path="/premium-support" element={<PremiumSupport />} />
             <Route path="/delivery-tracking" element={<DeliveryTracking />} />
