@@ -124,6 +124,7 @@ import VendorLogin from "./pages/VendorLogin";
 import SimpleVendorDashboard from "./pages/SimpleVendorDashboard";
 import CreditsPurchase from "./pages/CreditsPurchase";
 import VendorAuthGuard from "./components/VendorAuthGuard";
+import VendorDashboard from "./components/VendorDashboard";
 import PremiumCashDelivery from "./pages/PremiumCashDelivery";
 import VendorBankDetails from "./pages/VendorBankDetails";
 import VendorProfile from "./pages/VendorProfile";
