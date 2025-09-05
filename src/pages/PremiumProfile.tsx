@@ -8,6 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 import PremiumBottomNavigation from '@/components/premium/PremiumBottomNavigation';
 import { creditsService } from '@/services/creditsService';
 import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
 
 const PremiumProfile = () => {
   const navigate = useNavigate();
@@ -16,21 +17,19 @@ const PremiumProfile = () => {
 
   const [isEditing, setIsEditing] = useState(false);
   const [creditsBalance, setCreditsBalance] = useState(0);
-  const [profileData, setProfileData] = useState({
-    firstName: 'John',
-    lastName: 'Doe',
-    email: 'john.doe@example.com',
-    phone: '+234 801 234 5678',
-    location: 'Lagos, Nigeria',
-    joinDate: 'December 2024',
-    bio: 'Premium crypto trader with 5+ years experience'
+  const [profile, setProfile] = useState<any>(null);
+  const [editData, setEditData] = useState({
+    firstName: '',
+    lastName: '',
+    phone: '',
+    location: '',
+    bio: ''
   });
-
-  const [editData, setEditData] = useState(profileData);
 
   useEffect(() => {
     loadCreditsBalance();
-  }, []);
+    loadProfile();
+  }, [user]);
 
   const loadCreditsBalance = async () => {
     if (!user?.id) return;
@@ -42,17 +41,68 @@ const PremiumProfile = () => {
     }
   };
 
-  const handleSave = () => {
-    setProfileData(editData);
-    setIsEditing(false);
-    toast({
-      title: "Profile Updated",
-      description: "Your premium profile has been updated successfully",
-    });
+  const loadProfile = async () => {
+    if (!user?.id) return;
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
+
+      if (error) throw error;
+      setProfile(data);
+
+      // Update edit data when profile loads
+      if (data) {
+        const nameParts = data.display_name?.split(' ') || [];
+        setEditData({
+          firstName: nameParts[0] || '',
+          lastName: nameParts.slice(1).join(' ') || '',
+          phone: data.phone_number || '',
+          location: data.location || '',
+          bio: data.bio || ''
+        });
+      }
+    } catch (error) {
+      console.error('Error loading profile:', error);
+    }
+  };
+
+  const handleSave = async () => {
+    try {
+      // Update profile in database
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          display_name: `${editData.firstName} ${editData.lastName}`,
+          phone_number: editData.phone,
+          location: editData.location,
+          bio: editData.bio
+        })
+        .eq('user_id', user?.id);
+
+      if (error) throw error;
+
+      // Reload profile data
+      await loadProfile();
+      setIsEditing(false);
+
+      toast({
+        title: "Profile Updated",
+        description: "Your premium profile has been updated successfully",
+      });
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update profile",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleCancel = () => {
-    setEditData(profileData);
     setIsEditing(false);
   };
 
@@ -94,7 +144,7 @@ const PremiumProfile = () => {
             <div className="relative">
               <div className="w-20 h-20 bg-gradient-to-br from-yellow-400 to-amber-500 rounded-full flex items-center justify-center">
                 <span className="text-2xl font-bold text-white">
-                  {profileData.firstName[0]}{profileData.lastName[0]}
+                  {profile?.display_name?.[0] || user?.email?.[0] || 'U'}
                 </span>
               </div>
               <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-yellow-500 rounded-full flex items-center justify-center">
@@ -106,9 +156,9 @@ const PremiumProfile = () => {
             </div>
             <div className="flex-1">
               <h2 className="text-xl font-bold text-gray-900">
-                {profileData.firstName} {profileData.lastName}
+                {profile?.display_name || user?.email?.split('@')[0] || 'Premium User'}
               </h2>
-              <p className="text-gray-600">{profileData.email}</p>
+              <p className="text-gray-600">{user?.email}</p>
               <div className="flex items-center mt-2 space-x-4">
                 <div className="flex items-center space-x-1">
                   <Star size={14} className="text-yellow-500 fill-current" />
@@ -141,7 +191,7 @@ const PremiumProfile = () => {
                 <Crown size={24} className="text-yellow-600" />
                 <div>
                   <h3 className="font-semibold text-yellow-900">Premium Member</h3>
-                  <p className="text-sm text-yellow-700">Active since {profileData.joinDate}</p>
+                  <p className="text-sm text-yellow-700">Active since {new Date(profile?.created_at || Date.now()).toLocaleDateString()}</p>
                 </div>
               </div>
               <div className="text-right">
@@ -168,7 +218,7 @@ const PremiumProfile = () => {
                 ) : (
                   <div className="flex items-center space-x-2">
                     <User size={16} className="text-gray-400" />
-                    <span className="text-gray-900">{profileData.firstName}</span>
+                    <span className="text-gray-900">{profile?.display_name?.split(' ')[0] || 'User'}</span>
                   </div>
                 )}
               </div>
@@ -182,7 +232,7 @@ const PremiumProfile = () => {
                 ) : (
                   <div className="flex items-center space-x-2">
                     <User size={16} className="text-gray-400" />
-                    <span className="text-gray-900">{profileData.lastName}</span>
+                    <span className="text-gray-900">{profile?.display_name?.split(' ').slice(1).join(' ') || 'User'}</span>
                   </div>
                 )}
               </div>
@@ -199,7 +249,7 @@ const PremiumProfile = () => {
               ) : (
                 <div className="flex items-center space-x-2">
                   <Mail size={16} className="text-gray-400" />
-                  <span className="text-gray-900">{profileData.email}</span>
+                  <span className="text-gray-900">{user?.email}</span>
                 </div>
               )}
             </div>
@@ -215,7 +265,7 @@ const PremiumProfile = () => {
               ) : (
                 <div className="flex items-center space-x-2">
                   <Phone size={16} className="text-gray-400" />
-                  <span className="text-gray-900">{profileData.phone}</span>
+                  <span className="text-gray-900">{profile?.phone_number || 'Not provided'}</span>
                 </div>
               )}
             </div>
@@ -230,7 +280,7 @@ const PremiumProfile = () => {
               ) : (
                 <div className="flex items-center space-x-2">
                   <MapPin size={16} className="text-gray-400" />
-                  <span className="text-gray-900">{profileData.location}</span>
+                  <span className="text-gray-900">{profile?.location || 'Not provided'}</span>
                 </div>
               )}
             </div>
@@ -246,7 +296,7 @@ const PremiumProfile = () => {
               ) : (
                 <div className="flex items-center space-x-2">
                   <Edit3 size={16} className="text-gray-400" />
-                  <span className="text-gray-900">{profileData.bio}</span>
+                  <span className="text-gray-900">{profile?.bio || 'No bio provided'}</span>
                 </div>
               )}
             </div>

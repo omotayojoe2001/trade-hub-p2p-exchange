@@ -24,7 +24,8 @@ const BottomNavigation = () => {
   useEffect(() => {
     const checkMerchantStatus = async () => {
       if (profile) {
-        setIsMerchant(profile.is_merchant || false);
+        // Ensure consistent merchant status
+        setIsMerchant(Boolean(profile.is_merchant));
       }
     };
 

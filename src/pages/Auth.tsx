@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Eye, EyeOff, User, Mail, Lock, Database } from 'lucide-react';
 import TwoFactorLogin from '@/components/TwoFactorLogin';
+import { useAuth } from '@/hooks/useAuth';
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -22,9 +23,11 @@ const Auth = () => {
   const [show2FA, setShow2FA] = useState(false);
   const [pendingUser, setPendingUser] = useState<any>(null);
   const [message, setMessage] = useState('');
-  
+  const [userProfile, setUserProfile] = useState<any>(null);
+
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user } = useAuth();
 
   useEffect(() => {
     // Check if user is already logged in

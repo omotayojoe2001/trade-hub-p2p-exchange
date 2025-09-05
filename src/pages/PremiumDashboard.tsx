@@ -1,14 +1,52 @@
-import React from 'react';
-import { ArrowLeft, Crown, Zap, Shield, DollarSign, TrendingUp, Users, Clock, Gift, Truck, RefreshCw, Star, ArrowUpRight, ArrowDownRight, MessageCircle, Bell, FileText, Newspaper, Settings } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { ArrowLeft, Crown, Zap, Shield, DollarSign, TrendingUp, Users, Clock, Gift, Truck, RefreshCw, Star, ArrowUpRight, ArrowDownRight, MessageCircle, Bell, FileText, Newspaper, Settings, CreditCard } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/hooks/useAuth';
+import { creditsService } from '@/services/creditsService';
+import { supabase } from '@/integrations/supabase/client';
 import PremiumBottomNavigation from '@/components/premium/PremiumBottomNavigation';
 import { useUserSetup } from '@/hooks/useUserSetup';
+import { Switch } from "@headlessui/react";
 
 const PremiumDashboard = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { isSetupComplete, isSettingUp } = useUserSetup();
+  const [creditsBalance, setCreditsBalance] = useState(0);
+  const [profile, setProfile] = useState<any>(null);
+
+  useEffect(() => {
+    loadCreditsBalance();
+    loadProfile();
+  }, [user]);
+
+  const loadCreditsBalance = async () => {
+    if (!user?.id) return;
+    try {
+      const balance = await creditsService.getCreditBalance(user.id);
+      setCreditsBalance(balance);
+    } catch (error) {
+      console.error('Error loading credits:', error);
+    }
+  };
+
+  const loadProfile = async () => {
+    if (!user?.id) return;
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
+
+      if (error) throw error;
+      setProfile(data);
+    } catch (error) {
+      console.error('Error loading profile:', error);
+    }
+  };
 
   const premiumFeatures = [
     {
@@ -37,12 +75,13 @@ const PremiumDashboard = () => {
     }
   ];
 
-  const premiumStats = {
-    tradesSaved: '₦125,000',
-    fastMatches: 47,
-    supportResponse: '< 1 min',
-    premiumSince: 'Dec 2024'
-  };
+  // Remove mock stats - will load real data from database
+  const [premiumStats, setPremiumStats] = useState({
+    tradesSaved: '₦0',
+    fastMatches: 0,
+    supportResponse: 'N/A',
+    premiumSince: 'Recently'
+  });
 
   const trendingCoins = [
     {
@@ -159,9 +198,9 @@ const PremiumDashboard = () => {
         <Card className="p-6 mb-6 bg-brand text-brand-foreground">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-2xl font-bold mb-2">Welcome to Premium!</h2>
+              <h2 className="text-2xl font-bold mb-2">Welcome back, {profile?.display_name || user?.email?.split('@')[0] || 'Premium User'}!</h2>
               <p className="text-purple-100">
-                You're now enjoying exclusive features and priority service.
+                You're enjoying exclusive premium features and priority service.
               </p>
             </div>
             <Crown size={48} className="text-yellow-300" />
@@ -183,10 +222,10 @@ const PremiumDashboard = () => {
           <Card className="p-4 bg-white">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">Fast Matches</p>
-                <p className="text-2xl font-bold text-blue-600">{premiumStats.fastMatches}</p>
+                <p className="text-sm text-gray-600">Credits Balance</p>
+                <p className="text-2xl font-bold text-yellow-600">{creditsBalance}</p>
               </div>
-              <Zap size={24} className="text-yellow-500" />
+              <CreditCard size={24} className="text-yellow-500" />
             </div>
           </Card>
 
@@ -204,7 +243,12 @@ const PremiumDashboard = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600">Member Since</p>
-                <p className="text-2xl font-bold text-gray-900">{premiumStats.premiumSince}</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {profile?.created_at
+                    ? new Date(profile.created_at).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
+                    : 'Recently'
+                  }
+                </p>
               </div>
               <Users size={24} className="text-gray-500" />
             </div>

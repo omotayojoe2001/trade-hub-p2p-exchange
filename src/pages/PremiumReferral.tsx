@@ -1,65 +1,66 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Crown, Users, Copy, Share, Gift, DollarSign, TrendingUp, Calendar, Check } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
 import PremiumBottomNavigation from '@/components/premium/PremiumBottomNavigation';
 
 const PremiumReferral = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  
-  const [referralCode] = useState('PREMIUM2024JD');
-  const [referralLink] = useState(`https://tradehub.ng/ref/${referralCode}`);
+  const { user } = useAuth();
 
-  const referralStats = {
-    totalReferred: 12,
-    activeReferrals: 8,
-    lifetimeEarnings: 127500,
-    thisMonthEarnings: 23400,
-    pendingEarnings: 5600
+  const [referralCode, setReferralCode] = useState('');
+  const [referralLink, setReferralLink] = useState('');
+  const [referralStats, setReferralStats] = useState({
+    totalReferred: 0,
+    activeReferrals: 0,
+    lifetimeEarnings: 0,
+    thisMonthEarnings: 0,
+    pendingEarnings: 0
+  });
+  const [recentReferrals, setRecentReferrals] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadReferralData();
+  }, [user]);
+
+  const loadReferralData = async () => {
+    if (!user?.id) return;
+
+    try {
+      setLoading(true);
+
+      // Generate referral code from user ID
+      const code = `REF${user.id.substring(0, 8).toUpperCase()}`;
+      setReferralCode(code);
+      setReferralLink(`https://tradehub.ng/ref/${code}`);
+
+      // Load real referral data from database
+      // For now, show zeros since we don't have referral system implemented
+      setReferralStats({
+        totalReferred: 0,
+        activeReferrals: 0,
+        lifetimeEarnings: 0,
+        thisMonthEarnings: 0,
+        pendingEarnings: 0
+      });
+
+      setRecentReferrals([]);
+
+    } catch (error) {
+      console.error('Error loading referral data:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const recentReferrals = [
-    {
-      id: '1',
-      name: 'Sarah Wilson',
-      joinDate: '2024-12-15',
-      status: 'active',
-      totalTrades: 15,
-      yourEarnings: 12500,
-      lastTrade: '2 days ago'
-    },
-    {
-      id: '2',
-      name: 'Mike Chen',
-      joinDate: '2024-12-10',
-      status: 'active',
-      totalTrades: 8,
-      yourEarnings: 8200,
-      lastTrade: '1 week ago'
-    },
-    {
-      id: '3',
-      name: 'David Okafor',
-      joinDate: '2024-12-08',
-      status: 'active',
-      totalTrades: 22,
-      yourEarnings: 18900,
-      lastTrade: '3 days ago'
-    },
-    {
-      id: '4',
-      name: 'Grace Adebayo',
-      joinDate: '2024-12-05',
-      status: 'inactive',
-      totalTrades: 3,
-      yourEarnings: 1200,
-      lastTrade: '2 weeks ago'
-    }
-  ];
+
 
   const handleCopyCode = () => {
     navigator.clipboard.writeText(referralCode);

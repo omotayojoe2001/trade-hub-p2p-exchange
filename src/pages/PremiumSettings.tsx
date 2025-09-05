@@ -8,20 +8,22 @@ import { useToast } from '@/hooks/use-toast';
 import { usePremium } from '@/hooks/usePremium';
 import { useAuth } from '@/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
 import PremiumBottomNavigation from '@/components/premium/PremiumBottomNavigation';
 
 const PremiumSettings = () => {
   const { toast } = useToast();
   const { isPremium, setPremium, premiumExpiry } = usePremium();
-  const { signOut } = useAuth();
+  const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
-  
+
   const [showProfilePictureDialog, setShowProfilePictureDialog] = useState(false);
   const [profilePicture, setProfilePicture] = useState<string | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
   const [deleteConfirmation, setDeleteConfirmation] = useState('');
+  const [profile, setProfile] = useState<any>(null);
   const [premiumSettings, setPremiumSettings] = useState({
     priorityTrading: true,
     instantNotifications: true,
@@ -36,7 +38,24 @@ const PremiumSettings = () => {
     if (savedPicture) {
       setProfilePicture(savedPicture);
     }
-  }, []);
+    loadProfile();
+  }, [user]);
+
+  const loadProfile = async () => {
+    if (!user?.id) return;
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
+
+      if (error) throw error;
+      setProfile(data);
+    } catch (error) {
+      console.error('Error loading profile:', error);
+    }
+  };
 
   const handleProfilePictureSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -224,7 +243,12 @@ const PremiumSettings = () => {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <div className="text-sm text-yellow-700">Member Since</div>
-              <div className="font-semibold text-yellow-900">December 2024</div>
+              <div className="font-semibold text-yellow-900">
+                {profile?.created_at
+                  ? new Date(profile.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+                  : 'Recently'
+                }
+              </div>
             </div>
             <div>
               <div className="text-sm text-yellow-700">Expires</div>
@@ -266,8 +290,8 @@ const PremiumSettings = () => {
               <Crown size={16} className="absolute -top-1 -right-1 text-yellow-500" />
             </div>
             <div>
-              <h4 className="font-semibold text-gray-900">John Doe</h4>
-              <p className="text-gray-600 text-sm">john.doe@example.com</p>
+              <h4 className="font-semibold text-gray-900">{profile?.display_name || user?.email?.split('@')[0] || 'Premium User'}</h4>
+              <p className="text-gray-600 text-sm">{user?.email}</p>
               <div className="flex items-center text-xs text-yellow-600 mt-1">
                 <Crown size={12} className="mr-1" />
                 Premium Member

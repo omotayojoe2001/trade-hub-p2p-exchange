@@ -1,10 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Crown, CreditCard, Plus, Edit, Trash2, Shield, Star } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
 import PremiumBottomNavigation from '@/components/premium/PremiumBottomNavigation';
 
 interface PaymentMethod {
@@ -19,7 +21,11 @@ interface PaymentMethod {
 const PremiumPaymentMethods = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user } = useAuth();
+
   const [showAddForm, setShowAddForm] = useState(false);
+  const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
+  const [loading, setLoading] = useState(true);
   const [newMethod, setNewMethod] = useState({
     type: 'bank',
     bankName: '',
@@ -27,32 +33,44 @@ const PremiumPaymentMethods = () => {
     accountName: ''
   });
 
-  const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([
-    {
-      id: '1',
-      type: 'bank',
-      name: 'First Bank',
-      details: '****1234 - John Smith',
-      isDefault: true,
-      isPremium: true
-    },
-    {
-      id: '2',
-      type: 'card',
-      name: 'Premium Visa',
-      details: '****5678 - Expires 12/25',
-      isDefault: false,
-      isPremium: true
-    },
-    {
-      id: '3',
-      type: 'crypto',
-      name: 'Bitcoin Wallet',
-      details: 'bc1q...xyz789',
-      isDefault: false,
-      isPremium: true
+  useEffect(() => {
+    loadPaymentMethods();
+  }, [user]);
+
+  const loadPaymentMethods = async () => {
+    if (!user?.id) return;
+
+    try {
+      setLoading(true);
+
+      // Load real payment methods from database
+      const { data, error } = await supabase
+        .from('bank_accounts')
+        .select('*')
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+
+      // Convert bank accounts to payment methods format
+      const methods: PaymentMethod[] = (data || []).map((account: any) => ({
+        id: account.id,
+        type: 'bank' as const,
+        name: account.bank_name || 'Bank Account',
+        details: `****${account.account_number?.slice(-4)} - ${account.account_holder_name}`,
+        isDefault: account.is_default || false,
+        isPremium: true
+      }));
+
+      setPaymentMethods(methods);
+
+    } catch (error) {
+      console.error('Error loading payment methods:', error);
+      // Show empty state if no payment methods
+      setPaymentMethods([]);
+    } finally {
+      setLoading(false);
     }
-  ]);
+  };
 
   const handleAddMethod = () => {
     if (newMethod.bankName && newMethod.accountNumber && newMethod.accountName) {
