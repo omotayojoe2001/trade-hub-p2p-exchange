@@ -118,6 +118,16 @@ import Messages from "./pages/Messages";
 import EscrowFlow from "./pages/EscrowFlow";
 import ReceiptPage from "./pages/ReceiptPage";
 import { Blog } from "./pages/Blog";
+import MerchantMatchingChoice from "./pages/MerchantMatchingChoice";
+import AutoMerchantMatch from "./pages/AutoMerchantMatch";
+import VendorLogin from "./pages/VendorLogin";
+import SimpleVendorDashboard from "./pages/SimpleVendorDashboard";
+import CreditsPurchase from "./pages/CreditsPurchase";
+import VendorAuthGuard from "./components/VendorAuthGuard";
+import PremiumCashDelivery from "./pages/PremiumCashDelivery";
+import VendorBankDetails from "./pages/VendorBankDetails";
+import VendorProfile from "./pages/VendorProfile";
+import VendorMessages from "./pages/VendorMessages";
 import { BlogDetail } from "./pages/BlogDetail";
 import { ThankYouPage } from "./pages/ThankYouPage";
 import SupabaseTest from "./pages/SupabaseTest";
@@ -246,6 +256,8 @@ const AppContent = () => {
             <Route path="/buy-crypto-cancel" element={<BuyCryptoCancel />} />
             <Route path="/buy-crypto-dispute" element={<BuyCryptoDispute />} />
             <Route path="/merchant-selection" element={<MerchantSelection />} />
+            <Route path="/merchant-matching-choice" element={<MerchantMatchingChoice />} />
+            <Route path="/auto-merchant-match" element={<AutoMerchantMatch />} />
             <Route path="/merchant-list" element={<MerchantList />} />
             <Route path="/select-coin" element={<SelectCoin />} />
             <Route path="/my-trades" element={<MyTrades />} />
@@ -321,6 +333,41 @@ const AppContent = () => {
         <Route path="/blog/:postId" element={<BlogDetail />} />
         <Route path="/thank-you" element={<ThankYouPage />} />
         <Route path="/escrow-flow" element={<EscrowFlow />} />
+
+        {/* Vendor Routes */}
+        <Route path="/vendor/login" element={<VendorLogin />} />
+        <Route path="/vendor/dashboard" element={
+          <VendorAuthGuard>
+            <SimpleVendorDashboard />
+          </VendorAuthGuard>
+        } />
+        <Route path="/vendor/profile" element={
+          <VendorAuthGuard>
+            <VendorProfile />
+          </VendorAuthGuard>
+        } />
+        <Route path="/vendor/messages" element={
+          <VendorAuthGuard>
+            <VendorMessages />
+          </VendorAuthGuard>
+        } />
+        <Route path="/vendor/notifications" element={
+          <VendorAuthGuard>
+            <SimpleVendorDashboard />
+          </VendorAuthGuard>
+        } />
+        <Route path="/vendor/settings" element={
+          <VendorAuthGuard>
+            <VendorProfile />
+          </VendorAuthGuard>
+        } />
+
+        {/* Credits Routes */}
+        <Route path="/credits/purchase" element={<CreditsPurchase />} />
+
+        {/* Premium Cash Services */}
+        <Route path="/premium/cash-service" element={<PremiumCashDelivery />} />
+        <Route path="/vendor-bank-details/:jobId?" element={<VendorBankDetails />} />
         <Route path="/supabase-test" element={<SupabaseTest />} />
             <Route path="/notifications-demo" element={<NotificationsDemo />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import BottomNavigation from '@/components/BottomNavigation';
 
 const ProfileSettings = () => {
   const { user, profile, signOut } = useAuth();
@@ -29,22 +30,67 @@ const ProfileSettings = () => {
   const [isDeactivating, setIsDeactivating] = useState(false);
 
   const [formData, setFormData] = useState({
-    displayName: profile?.display_name || '',
-    phoneNumber: profile?.phone_number || '',
+    displayName: '',
+    phoneNumber: '',
     email: user?.email || '',
-    location: 'Lagos, Nigeria',
-    dateOfBirth: '1990-01-01',
-    occupation: 'Software Engineer',
-    bio: 'Crypto enthusiast and trader'
+    location: '',
+    dateOfBirth: '',
+    occupation: '',
+    bio: ''
   });
 
   useEffect(() => {
-    // Load saved profile picture
-    const savedPicture = localStorage.getItem('profile-picture');
-    if (savedPicture) {
-      setProfilePicture(savedPicture);
-    }
-  }, []);
+    // Load profile data from database
+    const loadProfileData = async () => {
+      if (!user) return;
+
+      try {
+        // Try to load from profiles table first
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('user_id', user.id)
+          .single();
+
+        if (profileData) {
+          setFormData({
+            displayName: profileData.display_name || '',
+            phoneNumber: profileData.phone_number || '',
+            email: user.email || '',
+            location: profileData.location || '',
+            dateOfBirth: profileData.date_of_birth || '',
+            occupation: profileData.occupation || '',
+            bio: profileData.bio || ''
+          });
+          setProfilePicture(profileData.avatar_url);
+        } else {
+          // Fallback to user_profiles table
+          const { data: userProfileData } = await supabase
+            .from('user_profiles')
+            .select('*')
+            .eq('user_id', user.id)
+            .single();
+
+          if (userProfileData) {
+            setFormData({
+              displayName: userProfileData.full_name || '',
+              phoneNumber: userProfileData.phone || '',
+              email: user.email || '',
+              location: userProfileData.location || '',
+              dateOfBirth: userProfileData.date_of_birth || '',
+              occupation: userProfileData.occupation || '',
+              bio: userProfileData.bio || ''
+            });
+            setProfilePicture(userProfileData.avatar_url);
+          }
+        }
+      } catch (error) {
+        console.error('Error loading profile data:', error);
+      }
+    };
+
+    loadProfileData();
+  }, [user]);
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({
@@ -57,41 +103,55 @@ const ProfileSettings = () => {
     if (!user) return;
 
     try {
+      // Validate required fields
+      if (!formData.displayName.trim()) {
+        toast({
+          title: "Validation Error",
+          description: "Display name is required.",
+          variant: "destructive"
+        });
+        return;
+      }
+
       // Save to both tables for compatibility
       const profileData = {
         user_id: user.id,
-        display_name: formData.displayName,
-        phone_number: formData.phoneNumber,
-        bio: formData.bio,
-        location: formData.location,
-        date_of_birth: formData.dateOfBirth,
-        occupation: formData.occupation,
+        display_name: formData.displayName.trim(),
+        phone_number: formData.phoneNumber.trim(),
+        bio: formData.bio.trim(),
+        location: formData.location.trim(),
+        date_of_birth: formData.dateOfBirth || null,
+        occupation: formData.occupation.trim(),
         updated_at: new Date().toISOString()
       };
 
       // Update profiles table
       const { error: profileError } = await supabase
         .from('profiles')
-        .upsert(profileData);
+        .upsert(profileData, { onConflict: 'user_id' });
 
-      if (profileError) throw profileError;
+      if (profileError) {
+        console.error('Profile update error:', profileError);
+        throw profileError;
+      }
 
       // Update user_profiles table
       const { error: userProfileError } = await supabase
         .from('user_profiles')
         .upsert({
           user_id: user.id,
-          full_name: formData.displayName,
-          phone: formData.phoneNumber,
-          bio: formData.bio,
-          location: formData.location,
-          date_of_birth: formData.dateOfBirth,
-          occupation: formData.occupation,
+          full_name: formData.displayName.trim(),
+          phone: formData.phoneNumber.trim(),
+          bio: formData.bio.trim(),
+          location: formData.location.trim(),
+          date_of_birth: formData.dateOfBirth || null,
+          occupation: formData.occupation.trim(),
           updated_at: new Date().toISOString()
-        });
+        }, { onConflict: 'user_id' });
 
       if (userProfileError) {
         console.warn('Failed to update user_profiles:', userProfileError);
+        // Don't fail the operation if user_profiles update fails
       }
 
       setIsEditing(false);
@@ -99,6 +159,25 @@ const ProfileSettings = () => {
         title: "Profile Updated",
         description: "Your profile has been updated successfully",
       });
+
+      // Refresh the profile data without page reload
+      const { data: updatedProfile } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
+
+      if (updatedProfile) {
+        setFormData({
+          displayName: updatedProfile.display_name || '',
+          phoneNumber: updatedProfile.phone_number || '',
+          email: user.email || '',
+          location: updatedProfile.location || '',
+          dateOfBirth: updatedProfile.date_of_birth || '',
+          occupation: updatedProfile.occupation || '',
+          bio: updatedProfile.bio || ''
+        });
+      }
     } catch (error) {
       console.error('Error saving profile:', error);
       toast({
@@ -654,6 +733,8 @@ const ProfileSettings = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <BottomNavigation />
     </div>
   );
 };

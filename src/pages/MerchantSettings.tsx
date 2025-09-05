@@ -215,7 +215,18 @@ const MerchantSettings = () => {
           ignoreDuplicates: false
         });
 
-      if (error) throw error;
+      if (error) {
+        if (error.code === '42P01') {
+          // Table doesn't exist, show helpful message
+          toast({
+            title: "Database Setup Required",
+            description: "Merchant settings table needs to be created. Please contact support.",
+            variant: "destructive"
+          });
+          return;
+        }
+        throw error;
+      }
 
       toast({
         title: "Settings saved successfully!",

@@ -12,25 +12,25 @@ const PremiumDashboard = () => {
 
   const premiumFeatures = [
     {
-      icon: <Zap size={20} className="text-yellow-500" />,
+      icon: <Zap size={20} className="text-gray-600" />,
       title: 'Priority Matching',
       description: 'Get matched with merchants 3x faster',
       status: 'active'
     },
     {
-      icon: <DollarSign size={20} className="text-green-500" />,
+      icon: <DollarSign size={20} className="text-gray-600" />,
       title: 'Instant Withdrawals',
       description: 'Cash out to your bank instantly',
       status: 'active'
     },
     {
-      icon: <Shield size={20} className="text-blue-500" />,
+      icon: <Shield size={20} className="text-gray-600" />,
       title: 'Premium Support',
       description: '24/7 dedicated customer support',
       status: 'active'
     },
     {
-      icon: <TrendingUp size={20} className="text-purple-500" />,
+      icon: <TrendingUp size={20} className="text-gray-600" />,
       title: 'Advanced Analytics',
       description: 'Detailed trading insights and reports',
       status: 'active'

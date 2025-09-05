@@ -58,10 +58,8 @@ const PremiumBottomNavigation = () => {
     };
   }, []);
 
-  // Don't show premium navigation if user is not premium
-  if (!isPremium) {
-    return null;
-  }
+  // Only show premium navigation if explicitly called for premium users
+  // The parent component (BottomNavigation) handles the premium check
 
   const navItems = [
     { path: '/premium-dashboard', icon: Home, label: 'Home' },

@@ -66,15 +66,49 @@ export const PremiumProvider: React.FC<{ children: React.ReactNode }> = ({ child
         expiry.setFullYear(expiry.getFullYear() + 1);
       }
 
-      // Update database
-      const { error } = await supabase
+      // First, ensure the user has a profile record
+      const { data: existingProfile } = await supabase
         .from('profiles')
-        .update({
-          user_type: status ? 'premium' : 'customer'
-        })
-        .eq('user_id', user.id);
+        .select('id')
+        .eq('user_id', user.id)
+        .single();
 
-      if (error) throw error;
+      if (!existingProfile) {
+        // Create profile if it doesn't exist
+        const { error: insertError } = await supabase
+          .from('profiles')
+          .insert({
+            user_id: user.id,
+            display_name: user.email?.split('@')[0] || 'User',
+            user_type: status ? 'premium' : 'customer',
+            is_merchant: false
+          });
+
+        if (insertError) throw insertError;
+      } else {
+        // Update existing profile
+        const { error: updateError } = await supabase
+          .from('profiles')
+          .update({
+            user_type: status ? 'premium' : 'customer'
+          })
+          .eq('user_id', user.id);
+
+        if (updateError) throw updateError;
+      }
+
+      // Also update user_profiles table for compatibility
+      const { error: userProfileError } = await supabase
+        .from('user_profiles')
+        .upsert({
+          user_id: user.id,
+          is_premium: status,
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'user_id' });
+
+      if (userProfileError) {
+        console.warn('Failed to update user_profiles:', userProfileError);
+      }
 
       // Update local state
       setIsPremium(status);

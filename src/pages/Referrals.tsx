@@ -38,7 +38,15 @@ const Referrals = () => {
     pendingEarnings: 0
   });
 
-  const referralLink = user ? `https://tradehub.app/refer/${user.id}` : "";
+  // Get current website URL dynamically
+  const getWebsiteUrl = () => {
+    if (typeof window !== 'undefined') {
+      return window.location.origin;
+    }
+    return 'https://tradehub.com'; // fallback
+  };
+
+  const referralLink = user ? `${getWebsiteUrl()}/refer/${user.id}` : "";
 
   // Load referral data from Supabase
   useEffect(() => {
@@ -51,13 +59,31 @@ const Referrals = () => {
     try {
       setLoading(true);
 
-      // Load referrals from profiles table
-      const { data: referrals, error: referralsError } = await supabase
-        .from('profiles')
-        .select('user_id, display_name, created_at')
-        .eq('referred_by', user!.id);
+      // Load referrals from profiles table (handle missing referred_by column gracefully)
+      let referrals = [];
+      try {
+        const { data: referralData, error: referralsError } = await supabase
+          .from('profiles')
+          .select('user_id, display_name, created_at')
+          .eq('referred_by', user!.id);
 
-      if (referralsError) throw referralsError;
+        if (referralsError && referralsError.code === '42703') {
+          // Column doesn't exist yet, use empty array
+          console.log('referred_by column not found, using empty referrals');
+          referrals = [];
+        } else if (referralsError) {
+          throw referralsError;
+        } else {
+          referrals = referralData || [];
+        }
+      } catch (error: any) {
+        if (error.code === '42703') {
+          // Column doesn't exist, use empty array
+          referrals = [];
+        } else {
+          throw error;
+        }
+      }
 
       // Load referral commissions
       const { data: commissions, error: commissionsError } = await supabase
@@ -113,6 +139,17 @@ const Referrals = () => {
     });
   };
 
+  // Sample chart data for referral earnings
+  const chartData = [
+    { day: 'Mon', value: 1200 },
+    { day: 'Tue', value: 1800 },
+    { day: 'Wed', value: 2400 },
+    { day: 'Thu', value: 1600 },
+    { day: 'Fri', value: 3200 },
+    { day: 'Sat', value: 2800 },
+    { day: 'Sun', value: 2000 }
+  ];
+
   const maxValue = Math.max(...chartData.map(d => d.value));
 
   return (
@@ -137,11 +174,11 @@ const Referrals = () => {
           
           <div className="grid grid-cols-2 gap-6 mb-6">
             <div>
-              <p className="text-3xl font-bold text-blue-600">52</p>
+              <p className="text-3xl font-bold text-blue-600">{referralStats.totalReferrals}</p>
               <p className="text-sm text-gray-500">Total Referrals</p>
             </div>
             <div>
-              <p className="text-3xl font-bold text-green-600">36</p>
+              <p className="text-3xl font-bold text-green-600">{referralStats.activeReferrals}</p>
               <p className="text-sm text-gray-500">Active Traders</p>
             </div>
           </div>
@@ -339,7 +376,7 @@ const Referrals = () => {
           
           <div className="flex justify-between items-center mb-4">
             <span className="text-sm text-gray-500">Available Balance</span>
-            <span className="text-xl font-bold text-gray-900">₦184,300</span>
+            <span className="text-xl font-bold text-gray-900">₦{referralStats.totalEarnings.toLocaleString()}</span>
           </div>
 
           <Button className="w-full bg-blue-600 hover:bg-blue-700 mb-4">
@@ -356,6 +393,8 @@ const Referrals = () => {
           </p>
         </Card>
       </div>
+
+      <BottomNavigation />
     </div>
   );
 };

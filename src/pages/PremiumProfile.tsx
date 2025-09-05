@@ -1,17 +1,21 @@
-import React, { useState } from 'react';
-import { ArrowLeft, Crown, User, Mail, Phone, MapPin, Calendar, Camera, Edit3, Shield, Star } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { ArrowLeft, Crown, User, Mail, Phone, MapPin, Calendar, Camera, Edit3, Shield, Star, CreditCard } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import PremiumBottomNavigation from '@/components/premium/PremiumBottomNavigation';
+import { creditsService } from '@/services/creditsService';
+import { useAuth } from '@/hooks/useAuth';
 
 const PremiumProfile = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  
+  const { user } = useAuth();
+
   const [isEditing, setIsEditing] = useState(false);
+  const [creditsBalance, setCreditsBalance] = useState(0);
   const [profileData, setProfileData] = useState({
     firstName: 'John',
     lastName: 'Doe',
@@ -23,6 +27,20 @@ const PremiumProfile = () => {
   });
 
   const [editData, setEditData] = useState(profileData);
+
+  useEffect(() => {
+    loadCreditsBalance();
+  }, []);
+
+  const loadCreditsBalance = async () => {
+    if (!user?.id) return;
+    try {
+      const balance = await creditsService.getCreditBalance(user.id);
+      setCreditsBalance(balance);
+    } catch (error) {
+      console.error('Error loading credits:', error);
+    }
+  };
 
   const handleSave = () => {
     setProfileData(editData);
@@ -91,7 +109,7 @@ const PremiumProfile = () => {
                 {profileData.firstName} {profileData.lastName}
               </h2>
               <p className="text-gray-600">{profileData.email}</p>
-              <div className="flex items-center mt-2">
+              <div className="flex items-center mt-2 space-x-4">
                 <div className="flex items-center space-x-1">
                   <Star size={14} className="text-yellow-500 fill-current" />
                   <Star size={14} className="text-yellow-500 fill-current" />
@@ -99,6 +117,10 @@ const PremiumProfile = () => {
                   <Star size={14} className="text-yellow-500 fill-current" />
                   <Star size={14} className="text-yellow-500 fill-current" />
                   <span className="text-sm text-gray-600 ml-2">5.0 Premium Rating</span>
+                </div>
+                <div className="flex items-center space-x-1 bg-yellow-50 px-2 py-1 rounded-full">
+                  <CreditCard size={14} className="text-yellow-600" />
+                  <span className="text-sm font-semibold text-yellow-800">{creditsBalance} Credits</span>
                 </div>
               </div>
             </div>

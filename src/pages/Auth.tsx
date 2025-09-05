@@ -254,6 +254,17 @@ const Auth = () => {
               </p>
             </div>
           </form>
+
+          {/* Vendor Login Link */}
+          <div className="text-center mt-6 pt-4 border-t border-gray-200">
+            <button
+              type="button"
+              onClick={() => navigate('/vendor/login')}
+              className="text-sm text-gray-500 hover:text-blue-500 font-medium"
+            >
+              Vendor Login
+            </button>
+          </div>
         </div>
       </div>
     );

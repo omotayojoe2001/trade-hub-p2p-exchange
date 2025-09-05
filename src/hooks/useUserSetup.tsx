@@ -32,25 +32,8 @@ export const useUserSetup = () => {
         // Profile creation is now handled by the database trigger
         // The handle_new_user function creates both profiles and user_profiles entries automatically
 
-        // Create welcome notification
-        const { error: notificationError } = await supabase
-          .from('notifications')
-          .insert({
-            user_id: user.id,
-            type: 'success',
-            title: 'Welcome to Central Exchange!',
-            message: 'Your account is ready. Start trading crypto with confidence. Upgrade to Premium for advanced features!',
-            read: false,
-            data: {
-              welcome: true,
-              is_premium: false,
-              setup_complete: true
-            }
-          });
-
-        if (notificationError) {
-          console.error('Notification creation error:', notificationError);
-        }
+        // Welcome notification is now handled by database trigger
+        // No need to create it manually here
 
         // No sample notifications - users will get real notifications from real interactions
 

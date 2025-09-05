@@ -56,11 +56,11 @@ const PaymentMethods = () => {
 
     try {
       setLoading(true);
+      // Use user_bank_accounts table directly
       const { data: accounts, error } = await supabase
-        .from('payment_methods')
+        .from('user_bank_accounts')
         .select('*')
         .eq('user_id', user.id)
-        .eq('type', 'bank_account')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -206,10 +206,18 @@ const PaymentMethods = () => {
         is_active: true
       };
 
-      // Add new account to Supabase
+      // Add to user_bank_accounts table directly
       const { error } = await supabase
-        .from('payment_methods')
-        .insert(accountData);
+        .from('user_bank_accounts')
+        .insert({
+          user_id: user.id,
+          bank_name: bankName,
+          bank_code: bankData.bankCode,
+          account_number: bankData.accountNumber,
+          account_name: bankData.accountName,
+          is_default: bankAccounts.length === 0,
+          is_verified: false
+        });
 
       if (error) throw error;
 

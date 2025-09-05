@@ -41,15 +41,13 @@ export const tradeRequestService = {
         .from('trade_requests')
         .insert({
           user_id: userId,
-          trade_type: data.trade_type,
-          coin_type: data.coin_type,
+          crypto_type: data.coin_type || data.crypto_type,
           amount: data.amount,
-          naira_amount: data.naira_amount,
+          cash_amount: data.naira_amount || data.cash_amount,
           rate: data.rate,
-          payment_method: data.payment_method,
-          status: 'open',
-          expires_at: expiresAt.toISOString(),
-          notes: data.notes
+          direction: data.trade_type === 'sell' ? 'crypto_to_cash' : 'cash_to_crypto',
+          status: 'pending',
+          expires_at: expiresAt.toISOString()
         })
         .select()
         .single();

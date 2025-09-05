@@ -83,9 +83,8 @@ const SelectCoin = () => {
 
   const handleCoinSelect = (coinId: string) => {
     setSelectedCoin(coinId);
-    // BOTH buy and sell flows should go to merchant selection FIRST
-    // This ensures rate calculation is based on selected merchant
-    navigate('/merchant-list', {
+    // Route to merchant matching choice (auto vs manual)
+    navigate('/merchant-matching-choice', {
       state: {
         selectedCoin: coinId,
         coinData: coins.find(c => c.id === coinId),
@@ -97,12 +96,13 @@ const SelectCoin = () => {
   };
 
   const handleAutoMatch = () => {
-    // Auto match should also go to merchant selection to pick best rate
-    navigate('/merchant-list', {
+    // Auto match goes directly to auto-matching
+    navigate('/auto-merchant-match', {
       state: {
         mode: mode,
         type: mode,
-        autoMatch: true // Flag to indicate auto-matching
+        coinType: 'BTC', // Default for auto-match
+        autoMatch: true
       }
     });
   };
