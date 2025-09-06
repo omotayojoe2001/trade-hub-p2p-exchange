@@ -66,7 +66,7 @@ const Index = () => {
         console.error('Error fetching trade requests:', requestsError);
       }
 
-      // Format completed trades (show all platform trades)
+      // Format user's own trades only
       const formattedTrades = (tradesData || []).map(trade => ({
         id: trade.id,
         type: trade.trade_type || 'buy', // Use trade_type from database
@@ -74,12 +74,12 @@ const Index = () => {
         amount: trade.amount || 0,
         nairaAmount: trade.naira_amount || 0,
         status: trade.status,
-        merchant: 'Trader', // Generic name since we don't have profile joins
+        merchant: trade.buyer_id === user.id ? 'Selling to' : 'Buying from', // Show relationship to user
         date: new Date(trade.created_at),
         isTradeRequest: false
       }));
 
-      // Format pending trade requests
+      // Format user's own trade requests only
       const formattedRequests = (requestsData || []).map(request => ({
         id: request.id,
         type: request.trade_type,
@@ -87,7 +87,7 @@ const Index = () => {
         amount: request.amount_crypto || 0,
         nairaAmount: request.amount_fiat || 0,
         status: request.status === 'open' ? 'pending' : request.status,
-        merchant: 'Pending Match',
+        merchant: 'Your Request',
         date: new Date(request.created_at),
         isTradeRequest: true
       }));
