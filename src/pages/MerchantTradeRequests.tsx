@@ -170,7 +170,9 @@ const MerchantTradeRequests = () => {
     try {
       setProcessingId(tradeRequestId);
       
-      await tradeRequestService.cancelTradeRequest(tradeRequestId, user.id);
+      // Use merchantTradeService to decline the request
+      const { merchantTradeService } = await import('@/services/merchantTradeService');
+      await merchantTradeService.declineMerchantTradeRequest(tradeRequestId, user.id);
       
       toast({
         title: "Trade Declined",

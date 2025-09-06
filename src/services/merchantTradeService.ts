@@ -35,7 +35,7 @@ export const merchantTradeService = {
       const expiresAt = new Date();
       expiresAt.setMinutes(expiresAt.getMinutes() + 15); // 15 minutes to respond
 
-      // Create the trade request directly to merchant
+      // Create the trade request
       const { data: tradeRequest, error } = await supabase
         .from('trade_requests')
         .insert({
@@ -57,7 +57,15 @@ export const merchantTradeService = {
         throw error;
       }
 
-      // Create notification for the merchant
+      // Create merchant notification record (for targeted requests)
+      await supabase
+        .from('merchant_notifications')
+        .insert({
+          trade_request_id: tradeRequest.id,
+          merchant_id: merchantId
+        });
+
+      // Create notification for the specific merchant only
       await supabase
         .from('notifications')
         .insert({
@@ -97,66 +105,47 @@ export const merchantTradeService = {
   // Get pending trade requests for a specific merchant only
   async getMerchantTradeRequests(merchantId: string): Promise<MerchantTradeRequest[]> {
     try {
-      // Get trade requests where the merchant was specifically notified
-      const { data: notifications, error: notifError } = await supabase
-        .from('notifications')
+      // Get trade requests specifically targeted to this merchant
+      const { data: merchantNotifications, error: notifError } = await supabase
+        .from('merchant_notifications')
         .select(`
-          data,
-          created_at
+          trade_request_id,
+          created_at,
+          trade_requests!inner(*)
         `)
-        .eq('user_id', merchantId)
-        .eq('type', 'trade_request')
+        .eq('merchant_id', merchantId)
+        .eq('trade_requests.status', 'open')
+        .gt('trade_requests.expires_at', new Date().toISOString())
         .order('created_at', { ascending: false });
 
       if (notifError) {
-        console.error('Error fetching merchant notifications:', notifError);
+        console.error('Error fetching merchant trade requests:', notifError);
         throw notifError;
       }
 
-      if (!notifications || notifications.length === 0) {
+      if (!merchantNotifications || merchantNotifications.length === 0) {
         return [];
-      }
-
-      // Get trade request IDs from notifications
-      const tradeRequestIds = notifications
-        .map(n => {
-          const data = n.data as any;
-          return data?.trade_request_id;
-        })
-        .filter(id => id);
-
-      if (tradeRequestIds.length === 0) {
-        return [];
-      }
-
-      // Get actual trade requests
-      const { data: tradeRequests, error: requestsError } = await supabase
-        .from('trade_requests')
-        .select('*')
-        .in('id', tradeRequestIds)
-        .eq('status', 'open')
-        .gt('expires_at', new Date().toISOString());
-
-      if (requestsError) {
-        throw requestsError;
       }
 
       // Transform the requests
-      return (tradeRequests || []).map(request => ({
-        id: request.id,
-        requester_id: request.user_id,
-        merchant_id: merchantId,
-        trade_type: request.trade_type as 'buy' | 'sell',
-        coin_type: request.crypto_type as 'BTC' | 'ETH' | 'USDT',
-        amount: request.amount_crypto,
-        naira_amount: request.amount_fiat,
-        rate: request.rate,
-        payment_method: request.payment_method,
-        status: 'pending',
-        created_at: request.created_at,
-        expires_at: request.expires_at,
-        requester_name: 'Anonymous'
-      }));
+      return merchantNotifications.map(mn => {
+        const request = (mn as any).trade_requests;
+        return {
+          id: request.id,
+          requester_id: request.user_id,
+          merchant_id: merchantId,
+          trade_type: request.trade_type as 'buy' | 'sell',
+          coin_type: request.crypto_type as 'BTC' | 'ETH' | 'USDT',
+          amount: request.amount_crypto,
+          naira_amount: request.amount_fiat,
+          rate: request.rate,
+          payment_method: request.payment_method,
+          status: 'pending',
+          created_at: request.created_at,
+          expires_at: request.expires_at,
+          requester_name: 'Anonymous'
+        };
+      });
     } catch (error) {
       console.error('Error in getMerchantTradeRequests:', error);
       throw error;

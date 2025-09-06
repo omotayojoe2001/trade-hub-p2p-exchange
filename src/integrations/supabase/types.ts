@@ -242,6 +242,38 @@ export type Database = {
         }
         Relationships: []
       }
+      merchant_notifications: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_read: boolean | null
+          merchant_id: string
+          trade_request_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          merchant_id: string
+          trade_request_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          merchant_id?: string
+          trade_request_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "merchant_notifications_trade_request_id_fkey"
+            columns: ["trade_request_id"]
+            isOneToOne: false
+            referencedRelation: "trade_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       merchant_ratings: {
         Row: {
           communication_rating: number | null

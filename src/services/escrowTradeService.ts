@@ -81,8 +81,15 @@ export class EscrowTradeService {
       // Mark trade request as matched
       await supabase
         .from('trade_requests')
-        .update({ status: 'matched' })
+        .update({ status: 'accepted' })
         .eq('id', tradeRequestId);
+
+      // Mark merchant notification as read to remove from their list
+      await supabase
+        .from('merchant_notifications')
+        .update({ is_read: true })
+        .eq('trade_request_id', tradeRequestId)
+        .eq('merchant_id', merchantId);
 
       // Notify buyer that trade was accepted
       await supabase
