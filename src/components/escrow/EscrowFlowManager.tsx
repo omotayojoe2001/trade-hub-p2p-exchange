@@ -58,24 +58,25 @@ export const useEscrowFlowManager = ({
       const result = await fireblocksService.createEscrowVault(transactionId, 'BTC');
       
       if (result.success) {
-        const mockTransaction: EscrowTransaction = {
+        // Create real escrow transaction - remove mock data
+        const transaction: EscrowTransaction = {
           id: transactionId,
-          amount: 0.5,
+          amount: 0,
           coin: 'bitcoin',
           network: 'mainnet',
           escrowAddress: result.deposit_address!,
           vaultId: result.vault_id,
           receiverBankDetails: {
-            accountNumber: '1234567890',
-            bankName: 'First Bank',
-            accountName: 'John Doe'
+            accountNumber: '',
+            bankName: '',
+            accountName: ''
           },
-          receiverWalletAddress: '', // Will be set by user input
+          receiverWalletAddress: '',
           status: 'vault_created',
           createdAt: new Date()
         };
         
-        setTransaction(mockTransaction);
+        setTransaction(transaction);
         
         toast({
           title: "Escrow Vault Created",

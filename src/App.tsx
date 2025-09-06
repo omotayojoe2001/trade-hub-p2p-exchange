@@ -74,7 +74,7 @@ import BuyCryptoMerchantSelection from "./pages/BuyCryptoMerchantSelection";
 import MerchantDashboard from "./pages/MerchantDashboard";
 import PremiumPayment from "./pages/PremiumPayment";
 import PremiumDashboard from "./pages/PremiumDashboard";
-import NotificationsDemo from "./pages/NotificationsDemo";
+// Removed NotificationsDemo - not needed
 import PremiumSell from "./pages/PremiumSell";
 import CashDeliveryDetails from "./pages/CashDeliveryDetails";
 import CashPickupDetails from "./pages/CashPickupDetails";
@@ -90,14 +90,7 @@ import PremiumMessages from "./pages/PremiumMessages";
 import PremiumNews from "./pages/PremiumNews";
 import TrendingCoins from "./pages/TrendingCoins";
 import PremiumReferral from "./pages/PremiumReferral";
-import PremiumChatDetail from "./pages/PremiumChatDetail";
-import PremiumPaymentMethods from "./pages/PremiumPaymentMethods";
-import PremiumSupport from "./pages/PremiumSupport";
-import DeliveryTracking from "./pages/DeliveryTracking";
-import PremiumTradeRequestDetails from "./pages/PremiumTradeRequestDetails";
-import NewsDetail from "./pages/NewsDetail";
-import PremiumNewsDetail from "./pages/PremiumNewsDetail";
-import ChatDetail from "./pages/ChatDetail";
+// Removed PremiumChatDetail, NewsDetail, PremiumNewsDetail, ChatDetail - not needed
 import CoinDetailPage from "./pages/CoinDetailPage";
 import PremiumTradeRequests from "./pages/PremiumTradeRequests";
 import CreateTradeRequest from "./pages/CreateTradeRequest";
@@ -138,9 +131,9 @@ import PremiumCashDelivery from "./pages/PremiumCashDelivery";
 import VendorBankDetails from "./pages/VendorBankDetails";
 import VendorProfile from "./pages/VendorProfile";
 import VendorMessages from "./pages/VendorMessages";
-import { BlogDetail } from "./pages/BlogDetail";
+// Removed BlogDetail - not needed
 import { ThankYouPage } from "./pages/ThankYouPage";
-import SupabaseTest from "./pages/SupabaseTest";
+// Removed SupabaseTest - not needed
 
 import CryptoNews from "./pages/CryptoNews";
 import React from 'react';
@@ -316,15 +309,7 @@ const AppContent = () => {
             <Route path="/premium-news" element={<PremiumNews />} />
             <Route path="/trending-coins" element={<TrendingCoins />} />
             <Route path="/premium-referral" element={<PremiumReferral />} />
-            <Route path="/premium-chat/:id" element={<PremiumChatDetail />} />
-            <Route path="/vendor-dashboard" element={<VendorDashboard />} />
-            <Route path="/premium-payment-methods" element={<PremiumPaymentMethods />} />
-            <Route path="/premium-support" element={<PremiumSupport />} />
-            <Route path="/delivery-tracking" element={<DeliveryTracking />} />
-            <Route path="/premium-trade-request-details" element={<PremiumTradeRequestDetails />} />
-            <Route path="/news/:id" element={<NewsDetail />} />
-            <Route path="/premium-news/:id" element={<PremiumNewsDetail />} />
-            <Route path="/chat/:chatId" element={<ChatDetail />} />
+            {/* Removed demo chat/news routes - not needed */}
             <Route path="/coin-detail/:coinId" element={<CoinDetailPage />} />
             <Route path="/premium-trade-requests" element={<PremiumTradeRequests />} />
             <Route path="/create-trade-request" element={<CreateTradeRequest />} />
@@ -350,7 +335,7 @@ const AppContent = () => {
         <Route path="/trade-requests" element={<TradeRequests />} />
         <Route path="/messages" element={<Messages />} />
         <Route path="/blog" element={<Blog />} />
-        <Route path="/blog/:postId" element={<BlogDetail />} />
+        {/* Removed blog detail route - not needed */}
         <Route path="/thank-you" element={<ThankYouPage />} />
         <Route path="/escrow-flow" element={<EscrowFlow />} />
 
@@ -388,8 +373,7 @@ const AppContent = () => {
         {/* Premium Cash Services */}
         <Route path="/premium/cash-service" element={<PremiumCashDelivery />} />
         <Route path="/vendor-bank-details/:jobId?" element={<VendorBankDetails />} />
-        <Route path="/supabase-test" element={<SupabaseTest />} />
-            <Route path="/notifications-demo" element={<NotificationsDemo />} />
+        {/* Removed demo/test routes - not needed */}
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

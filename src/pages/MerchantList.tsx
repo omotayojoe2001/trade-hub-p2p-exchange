@@ -18,11 +18,7 @@ const MerchantList = () => {
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
   const location = useLocation();
-  const { amount, nairaAmount, coinType } = (location.state as any) || {
-    amount: 0.01,
-    nairaAmount: 1500000,
-    coinType: 'BTC'
-  };
+  const { amount, nairaAmount, coinType } = (location.state as any) || {};
   const { toast } = useToast();
   const { user } = useAuth();
 
@@ -110,10 +106,10 @@ const MerchantList = () => {
         selectedMerchant.user_id,
         {
           trade_type: 'buy',
-          coin_type: (coinType || 'BTC') as 'BTC' | 'ETH' | 'USDT',
-          amount: amount || 0.01,
-          naira_amount: nairaAmount || 1500000,
-          rate: (nairaAmount || 1500000) / (amount || 0.01),
+          coin_type: coinType as 'BTC' | 'ETH' | 'USDT',
+          amount: amount,
+          naira_amount: nairaAmount,
+          rate: nairaAmount / amount,
           payment_method: 'bank_transfer'
         }
       );
@@ -123,8 +119,8 @@ const MerchantList = () => {
         description: `Your request has been sent to ${selectedMerchant.display_name}. They have 15 minutes to respond.`,
       });
 
-      // Navigate to waiting for merchant response screen
-      navigate('/buy-crypto-searching', {
+      // Navigate directly to payment step 1
+      navigate('/buy-crypto-payment-step1', {
         state: {
           selectedMerchant,
           amount,
