@@ -77,11 +77,21 @@ const TradeDetails = () => {
   useEffect(() => {
     if (tradeId && transactions.length > 0) {
       const trade = transactions.find(t => t.id === tradeId);
-      setCurrentTrade(trade);
+      if (trade) {
+        setCurrentTrade(trade);
+      } else {
+        // Trade not found, show error and redirect
+        toast({
+          title: "Trade Not Found",
+          description: "This trade could not be found or you don't have access to it.",
+          variant: "destructive"
+        });
+        navigate('/my-trades');
+      }
     } else if (location.state?.trade) {
       setCurrentTrade(location.state.trade);
     }
-  }, [tradeId, transactions, location.state]);
+  }, [tradeId, transactions, location.state, navigate, toast]);
 
   const handleReportTrade = async () => {
     if (!reportReason.trim()) {

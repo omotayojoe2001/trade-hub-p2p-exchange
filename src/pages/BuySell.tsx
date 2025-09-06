@@ -291,11 +291,11 @@ const BuySell = () => {
                       <span className="text-gray-500">
                         {request.trade_type === 'buy' ? 'Buying:' : 'Selling:'}
                       </span>
-                      <p className="font-medium">{request.amount} {request.coin_type}</p>
+                      <p className="font-medium">{request.amount_crypto} {request.crypto_type}</p>
                     </div>
                     <div>
                       <span className="text-gray-500">Amount:</span>
-                      <p className="font-medium">₦{request.naira_amount?.toLocaleString()}</p>
+                      <p className="font-medium">₦{request.amount_fiat?.toLocaleString()}</p>
                     </div>
                   </div>
                   <Button

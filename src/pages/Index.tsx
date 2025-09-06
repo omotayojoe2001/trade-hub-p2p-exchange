@@ -310,38 +310,51 @@ const Index = () => {
         ) : recentTrades.length > 0 ? (
           <div className="space-y-3">
             {recentTrades.map((trade) => (
-              <Link key={trade.id} to={`/trade-details/${trade.id}`} className="block">
-                <div className="bg-white p-4 rounded-xl border border-gray-200 flex items-center justify-between hover:shadow-sm transition-shadow">
-                  <div className="flex items-center">
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center mr-3 ${
-                      trade.status === 'completed'
-                        ? 'bg-green-100'
-                        : trade.status === 'cancelled'
-                        ? 'bg-red-100'
-                        : 'bg-yellow-100'
-                    }`}>
-                      {trade.status === 'completed' ? (
-                        <CheckCircle size={16} className="text-green-500" />
-                      ) : (
-                        <Clock size={16} className={trade.status === 'cancelled' ? 'text-red-500' : 'text-yellow-500'} />
-                      )}
-                    </div>
-                    <div>
-                      <p className="font-semibold text-gray-900">
-                        {trade.type === 'buy' ? 'Purchase' : 'Sale'}: {trade.amount} {trade.coin}
-                      </p>
-                      <p className="text-sm text-gray-500">
-                        {trade.status === 'completed' ? 'Completed' :
-                         trade.status === 'cancelled' ? 'Cancelled' :
-                         trade.status === 'failed' ? 'Failed' : 'In Progress'} • ₦{(trade.nairaAmount || 0).toLocaleString()}
-                      </p>
-                    </div>
+              <div 
+                key={trade.id} 
+                onClick={() => {
+                  if (trade.isTradeRequest || trade.status === 'pending') {
+                    console.log('Trade not found or still pending');
+                    toast({
+                      title: "Trade Not Found",
+                      description: "This trade is not available for viewing.",
+                      variant: "destructive"
+                    });
+                  } else {
+                    navigate(`/trade-details/${trade.id}`);
+                  }
+                }}
+                className="bg-white p-4 rounded-xl border border-gray-200 flex items-center justify-between hover:shadow-sm transition-shadow cursor-pointer"
+              >
+                <div className="flex items-center">
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center mr-3 ${
+                    trade.status === 'completed'
+                      ? 'bg-green-100'
+                      : trade.status === 'cancelled'
+                      ? 'bg-red-100'
+                      : 'bg-yellow-100'
+                  }`}>
+                    {trade.status === 'completed' ? (
+                      <CheckCircle size={16} className="text-green-500" />
+                    ) : (
+                      <Clock size={16} className={trade.status === 'cancelled' ? 'text-red-500' : 'text-yellow-500'} />
+                    )}
                   </div>
-                  <span className="text-xs text-gray-500">
-                    {trade.date.toLocaleDateString()}
-                  </span>
+                  <div>
+                    <p className="font-semibold text-gray-900">
+                      {trade.type === 'buy' ? 'Purchase' : 'Sale'}: {trade.amount} {trade.coin}
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      {trade.status === 'completed' ? 'Completed' :
+                       trade.status === 'cancelled' ? 'Cancelled' :
+                       trade.status === 'failed' ? 'Failed' : 'In Progress'} • ₦{(trade.nairaAmount || 0).toLocaleString()}
+                    </p>
+                  </div>
                 </div>
-              </Link>
+                <span className="text-xs text-gray-500">
+                  {trade.date.toLocaleDateString()}
+                </span>
+              </div>
             ))}
           </div>
         ) : (

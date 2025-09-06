@@ -50,16 +50,16 @@ const TradeRequests = () => {
 
           return {
             id: request.id,
-            userName: getUserDisplayName(request.user_id),
+            userName: `User ${request.user_id?.slice(-4) || 'Unknown'}`,
             rating: 4.5 + Math.random() * 0.5, // Random rating between 4.5-5.0
             coin: request.crypto_type,
-            amount: request.amount.toString(),
-            rate: `₦${request.rate.toLocaleString()}/${request.crypto_type}`,
-            nairaAmount: `₦${(request.cash_amount || request.amount * request.rate).toLocaleString()}`,
+            amount: request.amount_crypto?.toString() || '0',
+            rate: `₦${request.rate?.toLocaleString() || 0}/${request.crypto_type}`,
+            nairaAmount: `₦${(request.amount_fiat || request.amount_crypto * request.rate || 0).toLocaleString()}`,
             timeLeft,
             paymentMethods: ['Bank Transfer'],
-            type: request.direction === 'crypto_to_cash' ? 'sell' : 'buy',
-            direction: request.direction === 'crypto_to_cash'
+            type: request.trade_type || 'buy',
+            direction: request.trade_type === 'sell'
               ? 'User wants to sell crypto to you'
               : 'User wants to buy crypto from you',
             status: request.status,

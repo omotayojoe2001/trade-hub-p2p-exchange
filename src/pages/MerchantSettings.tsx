@@ -49,9 +49,12 @@ const MerchantSettings = () => {
 
   const [settings, setSettings] = useState<MerchantSettings>({
     merchant_type: 'manual',
-    supported_coins: [],
-    supported_currencies: ['NGN'],
-    exchange_rates: {},
+    supported_coins: ['BTC', 'USDT'],
+    supported_currencies: ['NGN', 'USD'],
+    exchange_rates: {
+      BTC: { buy_rate: null, sell_rate: null },
+      USDT: { buy_rate: null, sell_rate: null }
+    },
     min_trade_amount: 1000,
     max_trade_amount: 10000000,
     auto_accept_trades: false,
@@ -59,8 +62,8 @@ const MerchantSettings = () => {
     is_online: true,
     accepts_new_trades: true,
     avg_response_time_minutes: 10,
-    payment_methods: [],
-    service_locations: [],
+    payment_methods: ['bank_transfer'],
+    service_locations: ['Lagos', 'Abuja'],
     business_hours: {
       enabled: false,
       monday: { start: '09:00', end: '17:00', enabled: true },
@@ -173,9 +176,9 @@ const MerchantSettings = () => {
     }
   };
 
-  const availableCoins = ['BTC', 'USDT', 'ETH', 'DOGE', 'ADA', 'BNB', 'XRP', 'SOL', 'MATIC', 'DOT'];
-  const availableCurrencies = ['NGN', 'USD', 'EUR', 'GBP', 'KES', 'ZAR', 'GHS'];
-  const availablePaymentMethods = ['bank_transfer', 'mobile_money', 'paypal', 'wise', 'revolut', 'cash_app', 'zelle', 'western_union'];
+  const availableCoins = ['BTC', 'USDT'];
+  const availableCurrencies = ['NGN', 'USD'];
+  const availablePaymentMethods = ['bank_transfer', 'paypal'];
   const availableCountries = ['Nigeria', 'Kenya', 'South Africa', 'Ghana', 'Uganda', 'Rwanda', 'Tanzania', 'Ethiopia'];
 
   useEffect(() => {
@@ -214,11 +217,10 @@ const MerchantSettings = () => {
       // Only save fields that exist in the database schema
       const dbSettings = {
         user_id: user.id,
-        merchant_type: settings.merchant_type,
-        btc_buy_rate: settings.exchange_rates.BTC?.buy_rate,
-        btc_sell_rate: settings.exchange_rates.BTC?.sell_rate,
-        usdt_buy_rate: settings.exchange_rates.USDT?.buy_rate,
-        usdt_sell_rate: settings.exchange_rates.USDT?.sell_rate,
+        btc_buy_rate: settings.exchange_rates.BTC?.buy_rate || 0,
+        btc_sell_rate: settings.exchange_rates.BTC?.sell_rate || 0,
+        usdt_buy_rate: settings.exchange_rates.USDT?.buy_rate || 0,
+        usdt_sell_rate: settings.exchange_rates.USDT?.sell_rate || 0,
         min_trade_amount: settings.min_trade_amount,
         max_trade_amount: settings.max_trade_amount,
         auto_accept_trades: settings.auto_accept_trades,
