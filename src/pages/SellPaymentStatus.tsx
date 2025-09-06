@@ -104,22 +104,13 @@ const SellPaymentStatus = () => {
     setIsSubmitting(true);
     try {
       const tradeRequestData = {
+        user_id: user.id,
         trade_type: 'sell' as const,
-        coin_type: coinType as 'BTC' | 'ETH' | 'USDT',
-        amount: parseFloat(cryptoAmount),
-        naira_amount: calculateNairaValue(),
+        crypto_type: coinType as 'BTC' | 'ETH' | 'USDT',
+        amount_crypto: parseFloat(cryptoAmount),
+        amount_fiat: calculateNairaValue(),
         rate: getMerchantRate(),
-        platform_fee_amount: calculatePlatformFee(),
-        net_amount: calculateNetAmount(),
-        payment_method: 'bank_transfer',
-        selected_merchant_id: selectedMerchant.user_id,
-        request_data: {
-          selectedMerchant,
-          selectedBankAccount: selectedBank,
-          coinType,
-          step: 2
-        },
-        notes: `Sell ${cryptoAmount} ${coinType} for ₦${calculateNairaValue().toLocaleString()}`
+        payment_method: 'bank_transfer'
       };
 
       const { data, error } = await supabase

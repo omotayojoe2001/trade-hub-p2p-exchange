@@ -46,9 +46,9 @@ const TradeStatus = () => {
         filter: `id=eq.${tradeData.id}`
       }, (payload) => {
         console.log('Trade request update:', payload);
-        if (payload.new) {
+        if (payload.new && 'status' in payload.new) {
           setTradeData(payload.new);
-          updateStepFromStatus(payload.new.status);
+          updateStepFromStatus((payload.new as any).status || 'open');
         }
       })
       .on('postgres_changes', {
@@ -58,8 +58,8 @@ const TradeStatus = () => {
         filter: `trade_request_id=eq.${tradeData.id}`
       }, (payload) => {
         console.log('Trade update:', payload);
-        if (payload.new) {
-          updateStepFromTradeStatus(payload.new.status, payload.new.escrow_status);
+        if (payload.new && 'status' in payload.new) {
+          updateStepFromTradeStatus((payload.new as any).status || 'pending', (payload.new as any).escrow_status || 'pending');
         }
       })
       .subscribe();

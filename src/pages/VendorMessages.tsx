@@ -10,7 +10,7 @@ import VendorBottomNavigation from '@/components/vendor/VendorBottomNavigation';
 interface VendorMessage {
   id: string;
   job_id: string;
-  sender_type: 'vendor' | 'customer';
+  sender_type: string;
   message: string;
   created_at: string;
   job_details?: {

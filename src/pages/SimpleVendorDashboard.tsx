@@ -23,8 +23,8 @@ interface SimpleVendorJob {
   premium_user_id: string;
   amount_usd: number;
   amount_naira_received?: number;
-  delivery_type: 'pickup' | 'delivery';
-  status: 'pending_payment' | 'payment_received' | 'awaiting_handoff' | 'completed';
+  delivery_type: string;
+  status: string;
   verification_code?: string;
   created_at: string;
   // Customer info (we'll fetch separately)

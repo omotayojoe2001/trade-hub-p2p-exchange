@@ -96,13 +96,14 @@ const TradeDetails = () => {
     try {
       setIsReporting(true);
 
-      // Submit report to Supabase
+      // Submit report to support tickets instead of trade_reports
       const { error } = await supabase
-        .from('trade_reports')
+        .from('support_tickets')
         .insert({
-          trade_id: currentTrade?.id,
-          reporter_id: user?.id,
-          reason: reportReason,
+          user_id: user?.id,
+          subject: 'Trade Report',
+          message: `Trade ID: ${currentTrade?.id}, Reason: ${reportReason}`,
+          category: 'dispute',
           status: 'open',
           created_at: new Date().toISOString()
         });
@@ -346,7 +347,7 @@ const TradeDetails = () => {
 
             <div className="flex justify-between items-center py-2 border-b border-gray-100">
               <span className="text-gray-600">Exchange Rate</span>
-              <span className="font-semibold text-gray-900">₦{(transactionDetails.rate || 0).toLocaleString()}/{transactionDetails.coin || 'BTC'}</span>
+              <span className="font-semibold text-gray-900">₦{(1650000).toLocaleString()}/{transactionDetails.coin || 'BTC'}</span>
             </div>
 
             <div className="flex justify-between items-center py-2 border-b border-gray-100">

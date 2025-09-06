@@ -61,7 +61,8 @@ const PremiumProfile = () => {
           lastName: nameParts.slice(1).join(' ') || '',
           phone: data.phone_number || '',
           location: data.location || '',
-          bio: data.bio || ''
+          bio: data.bio || '',
+          email: user?.email || ''
         });
       }
     } catch (error) {

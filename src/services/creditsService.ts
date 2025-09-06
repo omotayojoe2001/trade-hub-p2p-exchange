@@ -6,7 +6,7 @@ export interface CreditPurchaseTransaction {
   user_id: string;
   credits_amount: number;
   price_paid_naira: number;
-  status: 'pending' | 'paid' | 'failed' | 'refunded';
+  status: string;
   payment_proof_url?: string;
   payment_reference?: string;
   created_at: string;

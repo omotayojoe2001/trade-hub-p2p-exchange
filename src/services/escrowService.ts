@@ -42,7 +42,7 @@ export interface EscrowInstructions {
 }
 
 export const escrowService = {
-  // Create escrow for a trade
+  // Create escrow for a trade (simplified to work with existing tables)
   async createEscrow(tradeId: string, tradeData: {
     crypto_sender_id: string;
     crypto_receiver_id: string;
@@ -51,29 +51,24 @@ export const escrowService = {
     crypto_type: 'BTC' | 'ETH' | 'USDT';
     crypto_amount: number;
     cash_amount: number;
-  }): Promise<EscrowTransaction> {
+  }): Promise<any> {
     try {
       const platformWallet = PLATFORM_WALLETS[tradeData.crypto_type];
       
-      const { data: escrow, error } = await supabase
-        .from('escrow_transactions')
-        .insert({
-          trade_id: tradeId,
-          crypto_sender_id: tradeData.crypto_sender_id,
-          crypto_receiver_id: tradeData.crypto_receiver_id,
-          cash_sender_id: tradeData.cash_sender_id,
-          cash_receiver_id: tradeData.cash_receiver_id,
-          crypto_type: tradeData.crypto_type,
-          crypto_amount: tradeData.crypto_amount,
-          cash_amount: tradeData.cash_amount,
-          platform_wallet_address: platformWallet,
+      // Update the trade with escrow information
+      const { data: trade, error } = await supabase
+        .from('trades')
+        .update({
+          escrow_address: platformWallet,
+          escrow_status: 'pending',
           status: 'pending_crypto'
         })
+        .eq('id', tradeId)
         .select()
         .single();
 
       if (error) throw error;
-      return escrow;
+      return trade;
     } catch (error) {
       console.error('Error creating escrow:', error);
       throw error;
@@ -83,24 +78,24 @@ export const escrowService = {
   // Get escrow instructions for users
   async getEscrowInstructions(tradeId: string): Promise<EscrowInstructions> {
     try {
-      const { data: escrow, error: escrowError } = await supabase
-        .from('escrow_transactions')
+      const { data: trade, error: tradeError } = await supabase
+        .from('trades')
         .select('*')
-        .eq('trade_id', tradeId)
+        .eq('id', tradeId)
         .single();
 
-      if (escrowError) throw escrowError;
+      if (tradeError) throw tradeError;
 
       // Get cash receiver's bank details
-      const { data: cashReceiverProfile, error: profileError } = await supabase
+      const { data: profile, error: profileError } = await supabase
         .from('user_profiles')
         .select('bank_accounts')
-        .eq('user_id', escrow.cash_receiver_id)
+        .eq('user_id', trade.seller_id)
         .single();
 
       if (profileError) throw profileError;
 
-      const bankAccounts = cashReceiverProfile.bank_accounts as any[];
+      const bankAccounts = profile.bank_accounts as any[];
       const primaryAccount = bankAccounts?.[0] || {
         account_name: 'User Account',
         account_number: '1234567890',
@@ -109,16 +104,16 @@ export const escrowService = {
 
       return {
         crypto_instructions: {
-          send_to_address: escrow.platform_wallet_address,
-          amount: escrow.crypto_amount,
-          crypto_type: escrow.crypto_type,
+          send_to_address: trade.escrow_address || PLATFORM_WALLETS[trade.coin_type],
+          amount: trade.amount,
+          crypto_type: trade.coin_type,
           memo: `Trade-${tradeId.slice(0, 8)}`
         },
         cash_instructions: {
           recipient_name: primaryAccount.account_name,
           account_number: primaryAccount.account_number,
           bank_name: primaryAccount.bank_name,
-          amount: escrow.cash_amount,
+          amount: trade.naira_amount,
           reference: `TRADE-${tradeId.slice(0, 8).toUpperCase()}`
         }
       };
@@ -132,25 +127,15 @@ export const escrowService = {
   async confirmCryptoReceived(tradeId: string, txHash: string): Promise<void> {
     try {
       const { error } = await supabase
-        .from('escrow_transactions')
-        .update({
-          crypto_tx_hash: txHash,
-          status: 'crypto_received',
-          updated_at: new Date().toISOString()
-        })
-        .eq('trade_id', tradeId);
-
-      if (error) throw error;
-
-      // Update trade status
-      await supabase
         .from('trades')
         .update({
+          transaction_hash: txHash,
           escrow_status: 'crypto_received',
           status: 'pending_cash'
         })
         .eq('id', tradeId);
 
+      if (error) throw error;
     } catch (error) {
       console.error('Error confirming crypto received:', error);
       throw error;
@@ -161,25 +146,15 @@ export const escrowService = {
   async confirmCashReceived(tradeId: string, paymentProof?: string): Promise<void> {
     try {
       const { error } = await supabase
-        .from('escrow_transactions')
-        .update({
-          cash_payment_proof: paymentProof,
-          status: 'cash_received',
-          updated_at: new Date().toISOString()
-        })
-        .eq('trade_id', tradeId);
-
-      if (error) throw error;
-
-      // Update trade status
-      await supabase
         .from('trades')
         .update({
+          payment_proof_url: paymentProof,
           escrow_status: 'cash_received',
           status: 'pending_release'
         })
         .eq('id', tradeId);
 
+      if (error) throw error;
     } catch (error) {
       console.error('Error confirming cash received:', error);
       throw error;
@@ -190,17 +165,6 @@ export const escrowService = {
   async releaseCrypto(tradeId: string): Promise<void> {
     try {
       const { error } = await supabase
-        .from('escrow_transactions')
-        .update({
-          status: 'completed',
-          updated_at: new Date().toISOString()
-        })
-        .eq('trade_id', tradeId);
-
-      if (error) throw error;
-
-      // Update trade status
-      await supabase
         .from('trades')
         .update({
           escrow_status: 'completed',
@@ -208,6 +172,7 @@ export const escrowService = {
         })
         .eq('id', tradeId);
 
+      if (error) throw error;
     } catch (error) {
       console.error('Error releasing crypto:', error);
       throw error;
@@ -215,16 +180,16 @@ export const escrowService = {
   },
 
   // Get escrow status
-  async getEscrowStatus(tradeId: string): Promise<EscrowTransaction | null> {
+  async getEscrowStatus(tradeId: string): Promise<any | null> {
     try {
-      const { data: escrow, error } = await supabase
-        .from('escrow_transactions')
+      const { data: trade, error } = await supabase
+        .from('trades')
         .select('*')
-        .eq('trade_id', tradeId)
+        .eq('id', tradeId)
         .single();
 
       if (error) return null;
-      return escrow;
+      return trade;
     } catch (error) {
       console.error('Error getting escrow status:', error);
       return null;
@@ -232,17 +197,17 @@ export const escrowService = {
   },
 
   // Subscribe to escrow updates
-  subscribeToEscrowUpdates(tradeId: string, callback: (escrow: EscrowTransaction) => void) {
+  subscribeToEscrowUpdates(tradeId: string, callback: (trade: any) => void) {
     const channel = supabase
-      .channel(`escrow-${tradeId}`)
+      .channel(`trade-${tradeId}`)
       .on('postgres_changes', {
         event: '*',
         schema: 'public',
-        table: 'escrow_transactions',
-        filter: `trade_id=eq.${tradeId}`
+        table: 'trades',
+        filter: `id=eq.${tradeId}`
       }, async (payload) => {
         if (payload.new) {
-          callback(payload.new as EscrowTransaction);
+          callback(payload.new);
         }
       })
       .subscribe();

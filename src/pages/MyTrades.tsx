@@ -766,16 +766,12 @@ const MyTrades = () => {
       </div>
 
       {/* Confirmation Dialog */}
-      <PaymentConfirmationDialog
+      <PaymentConfirmationDialog 
         isOpen={showConfirmDialog}
         onClose={() => setShowConfirmDialog(false)}
         onConfirm={handleConfirmationResponse}
         amount={100000}
-        bankAccount={{
-          account_number: '1234567890',
-          bank_name: 'First Bank',
-          account_name: 'TradeHub Merchant'
-        }}
+        bankAccount="1234567890 - First Bank"
         merchantName="Merchant"
       />
 

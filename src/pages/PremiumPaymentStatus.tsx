@@ -402,6 +402,9 @@ const PremiumPaymentStatus = () => {
         isOpen={showConfirmDialog}
         onClose={() => setShowConfirmDialog(false)}
         onConfirm={handlePaymentConfirmation}
+        amount={amount || 0}
+        bankAccount="Default Bank Account"
+        merchantName="Merchant"
       />
 
       <PremiumBottomNavigation />
