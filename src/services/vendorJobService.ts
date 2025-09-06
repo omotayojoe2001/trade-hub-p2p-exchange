@@ -133,7 +133,10 @@ class VendorJobService {
         throw new Error('Failed to deduct credits. Job cancelled.');
       }
 
-      return data;
+      return {
+        ...data,
+        delivery_type: data.delivery_type as 'pickup' | 'delivery' | 'naira_to_usd'
+      } as VendorJob;
     } catch (error: any) {
       console.error('Error creating vendor job:', error);
       throw new Error(error.message || 'Failed to create vendor job');
@@ -163,7 +166,10 @@ class VendorJobService {
       const { data, error } = await query;
 
       if (error) throw error;
-      return data || [];
+      return (data || []).map(job => ({
+        ...job,
+        delivery_type: job.delivery_type as 'pickup' | 'delivery' | 'naira_to_usd'
+      })) as VendorJob[];
     } catch (error: any) {
       console.error('Error fetching vendor jobs:', error);
       throw new Error(error.message || 'Failed to fetch vendor jobs');
@@ -182,7 +188,10 @@ class VendorJobService {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return data || [];
+      return (data || []).map(job => ({
+        ...job,
+        delivery_type: job.delivery_type as 'pickup' | 'delivery' | 'naira_to_usd'
+      })) as VendorJob[];
     } catch (error: any) {
       console.error('Error fetching user jobs:', error);
       throw new Error(error.message || 'Failed to fetch user jobs');
@@ -237,7 +246,10 @@ class VendorJobService {
         bank_reference: paymentData.bank_tx_reference
       });
 
-      return updatedJob;
+      return {
+        ...updatedJob,
+        delivery_type: updatedJob.delivery_type as 'pickup' | 'delivery' | 'naira_to_usd'
+      } as VendorJob;
     } catch (error: any) {
       console.error('Error confirming payment:', error);
       throw new Error(error.message || 'Failed to confirm payment');
@@ -319,7 +331,10 @@ class VendorJobService {
         verification_code_used: true
       });
 
-      return completedJob;
+      return {
+        ...completedJob,
+        delivery_type: completedJob.delivery_type as 'pickup' | 'delivery' | 'naira_to_usd'
+      } as VendorJob;
     } catch (error: any) {
       console.error('Error verifying code:', error);
       throw new Error(error.message || 'Failed to verify code');

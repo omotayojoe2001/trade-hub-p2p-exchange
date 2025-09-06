@@ -367,21 +367,19 @@ const TradeDetails = () => {
 
             <div className="flex justify-between items-center py-2">
               <span className="text-gray-600">Current Status</span>
-              <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+               <span className={`px-3 py-1 rounded-full text-sm font-medium ${
                 transactionDetails.status === 'completed' ? 'bg-green-100 text-green-700' :
                 transactionDetails.status === 'pending' ? 'bg-orange-100 text-orange-700' :
-                transactionDetails.status === 'waiting_confirmation' ? 'bg-blue-100 text-blue-700' :
                 'bg-red-100 text-red-700'
               }`}>
                 {transactionDetails.status === 'completed' ? 'Completed' :
-                 transactionDetails.status === 'pending' ? 'Pending Payment' :
-                 transactionDetails.status === 'waiting_confirmation' ? 'Awaiting Confirmation' : 'Failed'}
+                 transactionDetails.status === 'pending' ? 'Pending Payment' : 'Failed'}
               </span>
             </div>
           </div>
 
           {/* Resume Trade Button for Incomplete Trades */}
-          {(transactionDetails.status === 'pending' || transactionDetails.status === 'waiting_confirmation') && (
+          {transactionDetails.status === 'pending' && (
             <div className="mt-6 pt-4 border-t border-gray-100">
               <Button
                 className="w-full bg-blue-600 hover:bg-blue-700 text-white"

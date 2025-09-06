@@ -67,9 +67,11 @@ class TradeMatchingService {
         .insert({
           seller_id: premiumUserId,
           buyer_id: selectedMerchant.user_id,
-          crypto_type: 'USDT',
+          coin_type: 'USDT',
+          amount: amountUsd,
           amount_crypto: amountUsd,
           amount_fiat: amountUsd * 1650, // Approximate NGN rate
+          naira_amount: amountUsd * 1650,
           rate: 1650,
           status: 'pending',
           trade_type: 'sell',

@@ -32,7 +32,7 @@ export const resumeTradeService = {
             step: 1, // Waiting for merchant response
             data: request,
             created_at: request.created_at,
-            updated_at: request.updated_at
+            updated_at: request.created_at
           });
         });
       }

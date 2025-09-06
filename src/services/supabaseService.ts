@@ -14,7 +14,7 @@ type BlogPost = Tables['blog_posts']['Row'];
 export const userService = {
   // Get current user profile
   async getProfile(userId: string) {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('profiles')
       .select('*')
       .eq('id', userId)
@@ -175,7 +175,7 @@ export const tradeService = {
 };
 
 // Notifications Service
-export const notificationService = {
+export const notificationService: any = {
   // Get notifications by user
   async getNotifications(userId: string) {
     const { data, error } = await supabase
@@ -449,7 +449,12 @@ export const realTimeTradeRequestService = {
       .from('trade_requests')
       .insert({
         user_id: user.id,
-        ...request,
+        trade_type: request.trade_type,
+        crypto_type: request.coin_type,
+        amount_crypto: request.amount,
+        amount_fiat: request.naira_amount,
+        rate: request.rate,
+        payment_method: request.payment_method,
         expires_at: new Date(Date.now() + 3600000).toISOString(), // 1 hour
         status: 'open'
       })
@@ -496,13 +501,13 @@ export const realTimeTradeRequestService = {
         trade_request_id: requestId,
         buyer_id: request.trade_type === 'sell' ? user.id : request.user_id,
         seller_id: request.trade_type === 'sell' ? request.user_id : user.id,
-        coin_type: request.coin_type,
-        amount: request.amount,
+        coin_type: request.crypto_type,
+        amount: request.amount_crypto,
         rate: request.rate,
-        naira_amount: request.naira_amount,
+        naira_amount: request.amount_fiat,
         trade_type: request.trade_type,
         payment_method: request.payment_method || 'bank_transfer',
-        bank_account_details: request.bank_account_details,
+        bank_account_details: null,
         status: 'pending'
       })
       .select()

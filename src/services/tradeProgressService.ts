@@ -48,7 +48,10 @@ export const tradeProgressService = {
         .single();
 
       if (error) throw error;
-      return data;
+      return {
+        ...data,
+        trade_type: data.trade_type as 'buy' | 'sell'
+      };
     } catch (error) {
       console.error('Error saving trade progress:', error);
       throw error;
@@ -70,7 +73,10 @@ export const tradeProgressService = {
         .single();
 
       if (error && error.code !== 'PGRST116') throw error;
-      return data || null;
+      return data ? {
+        ...data,
+        trade_type: data.trade_type as 'buy' | 'sell'
+      } : null;
     } catch (error) {
       console.error('Error getting trade progress:', error);
       return null;
@@ -91,7 +97,10 @@ export const tradeProgressService = {
         .single();
 
       if (error) throw error;
-      return data;
+      return {
+        ...data,
+        trade_type: data.trade_type as 'buy' | 'sell'
+      };
     } catch (error) {
       console.error('Error updating trade progress:', error);
       throw error;
@@ -138,7 +147,10 @@ export const tradeProgressService = {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return data || [];
+      return (data || []).map(item => ({
+        ...item,
+        trade_type: item.trade_type as 'buy' | 'sell'
+      }));
     } catch (error) {
       console.error('Error getting user active progress:', error);
       return [];

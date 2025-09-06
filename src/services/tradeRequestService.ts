@@ -41,12 +41,13 @@ export const tradeRequestService = {
         .from('trade_requests')
         .insert({
           user_id: userId,
-          crypto_type: data.coin_type || data.crypto_type,
-          amount: data.amount,
-          cash_amount: data.naira_amount || data.cash_amount,
+          trade_type: data.trade_type,
+          crypto_type: data.coin_type,
+          amount_crypto: data.amount,
+          amount_fiat: data.naira_amount,
           rate: data.rate,
-          direction: data.trade_type === 'sell' ? 'crypto_to_cash' : 'cash_to_crypto',
-          status: 'pending',
+          payment_method: data.payment_method,
+          status: 'open',
           expires_at: expiresAt.toISOString()
         })
         .select()
@@ -57,7 +58,19 @@ export const tradeRequestService = {
         throw error;
       }
 
-      return tradeRequest;
+      return {
+        id: tradeRequest.id,
+        user_id: tradeRequest.user_id,
+        trade_type: tradeRequest.trade_type as 'buy' | 'sell',
+        coin_type: tradeRequest.crypto_type as 'BTC' | 'ETH' | 'USDT',
+        amount: tradeRequest.amount_crypto,
+        naira_amount: tradeRequest.amount_fiat,
+        rate: tradeRequest.rate,
+        payment_method: tradeRequest.payment_method,
+        status: tradeRequest.status as 'open' | 'accepted' | 'completed' | 'cancelled',
+        expires_at: tradeRequest.expires_at,
+        created_at: tradeRequest.created_at
+      };
     } catch (error) {
       console.error('Error in createTradeRequest:', error);
       throw error;
@@ -69,18 +82,7 @@ export const tradeRequestService = {
     try {
       const { data: tradeRequests, error } = await supabase
         .from('trade_requests')
-        .select(`
-          *,
-          profiles!trade_requests_user_id_fkey (
-            display_name,
-            user_type
-          ),
-          user_profiles!trade_requests_user_id_fkey (
-            full_name,
-            rating,
-            trade_count
-          )
-        `)
+        .select('*')
         .eq('status', 'open')
         .gt('expires_at', new Date().toISOString())
         .order('created_at', { ascending: false });
@@ -90,12 +92,22 @@ export const tradeRequestService = {
         throw error;
       }
 
-      // Transform the data to include merchant information
+      // Transform the data to match expected format
       const transformedRequests: TradeRequest[] = (tradeRequests || []).map(request => ({
-        ...request,
-        merchant_name: request.profiles?.display_name || request.user_profiles?.full_name || 'Unknown',
-        merchant_rating: request.user_profiles?.rating || 5.0,
-        merchant_trade_count: request.user_profiles?.trade_count || 0
+        id: request.id,
+        user_id: request.user_id,
+        trade_type: request.trade_type as 'buy' | 'sell',
+        coin_type: request.crypto_type as 'BTC' | 'ETH' | 'USDT',
+        amount: request.amount_crypto,
+        naira_amount: request.amount_fiat,
+        rate: request.rate,
+        payment_method: request.payment_method,
+        status: request.status as 'open' | 'accepted' | 'completed' | 'cancelled',
+        expires_at: request.expires_at,
+        created_at: request.created_at,
+        merchant_name: 'Unknown',
+        merchant_rating: 5.0,
+        merchant_trade_count: 0
       }));
 
       return transformedRequests;
@@ -119,7 +131,19 @@ export const tradeRequestService = {
         throw error;
       }
 
-      return tradeRequests || [];
+      return (tradeRequests || []).map(request => ({
+        id: request.id,
+        user_id: request.user_id,
+        trade_type: request.trade_type as 'buy' | 'sell',
+        coin_type: request.crypto_type as 'BTC' | 'ETH' | 'USDT',
+        amount: request.amount_crypto,
+        naira_amount: request.amount_fiat,
+        rate: request.rate,
+        payment_method: request.payment_method,
+        status: request.status as 'open' | 'accepted' | 'completed' | 'cancelled',
+        expires_at: request.expires_at,
+        created_at: request.created_at
+      }));
     } catch (error) {
       console.error('Error in getUserTradeRequests:', error);
       throw error;
@@ -167,10 +191,11 @@ export const tradeRequestService = {
           trade_request_id: tradeRequestId,
           buyer_id: tradeRequest.trade_type === 'sell' ? acceptingUserId : tradeRequest.user_id,
           seller_id: tradeRequest.trade_type === 'sell' ? tradeRequest.user_id : acceptingUserId,
-          coin_type: tradeRequest.coin_type,
-          amount: tradeRequest.amount,
-          naira_amount: tradeRequest.naira_amount,
+          coin_type: tradeRequest.crypto_type,
+          amount: tradeRequest.amount_crypto,
+          naira_amount: tradeRequest.amount_fiat,
           rate: tradeRequest.rate,
+          trade_type: tradeRequest.trade_type,
           payment_method: tradeRequest.payment_method,
           status: 'pending',
           escrow_status: 'pending'
@@ -208,7 +233,7 @@ export const tradeRequestService = {
           user_id: tradeRequest.user_id,
           type: 'trade_update',
           title: 'Trade Request Accepted!',
-          message: `Your ${tradeRequest.trade_type} request for ${tradeRequest.amount} ${tradeRequest.coin_type} has been accepted`,
+          message: `Your ${tradeRequest.trade_type} request for ${tradeRequest.amount_crypto} ${tradeRequest.crypto_type} has been accepted`,
           data: { trade_id: trade.id, trade_request_id: tradeRequestId }
         });
 
@@ -265,8 +290,7 @@ export const tradeRequestService = {
       const { error } = await supabase
         .from('trade_requests')
         .update({
-          status: 'cancelled',
-          matched_user_id: merchantId // Track who declined it
+          status: 'cancelled'
         })
         .eq('id', tradeRequestId);
 
@@ -282,7 +306,7 @@ export const tradeRequestService = {
           user_id: tradeRequest.user_id,
           type: 'trade_update',
           title: 'Trade Request Declined',
-          message: `Your ${tradeRequest.trade_type} request for ${tradeRequest.amount} ${tradeRequest.coin_type} was declined`,
+          message: `Your ${tradeRequest.trade_type} request for ${tradeRequest.amount_crypto} ${tradeRequest.crypto_type} was declined`,
           data: { trade_request_id: tradeRequestId }
         });
 
@@ -342,18 +366,7 @@ export const tradeRequestService = {
     try {
       const { data: tradeRequest, error } = await supabase
         .from('trade_requests')
-        .select(`
-          *,
-          profiles!trade_requests_user_id_fkey (
-            display_name,
-            user_type
-          ),
-          user_profiles!trade_requests_user_id_fkey (
-            full_name,
-            rating,
-            trade_count
-          )
-        `)
+        .select('*')
         .eq('id', id)
         .single();
 
@@ -363,10 +376,20 @@ export const tradeRequestService = {
       }
 
       return {
-        ...tradeRequest,
-        merchant_name: tradeRequest.profiles?.display_name || tradeRequest.user_profiles?.full_name || 'Unknown',
-        merchant_rating: tradeRequest.user_profiles?.rating || 5.0,
-        merchant_trade_count: tradeRequest.user_profiles?.trade_count || 0
+        id: tradeRequest.id,
+        user_id: tradeRequest.user_id,
+        trade_type: tradeRequest.trade_type as 'buy' | 'sell',
+        coin_type: tradeRequest.crypto_type as 'BTC' | 'ETH' | 'USDT',
+        amount: tradeRequest.amount_crypto,
+        naira_amount: tradeRequest.amount_fiat,
+        rate: tradeRequest.rate,
+        payment_method: tradeRequest.payment_method,
+        status: tradeRequest.status as 'open' | 'accepted' | 'completed' | 'cancelled',
+        expires_at: tradeRequest.expires_at,
+        created_at: tradeRequest.created_at,
+        merchant_name: 'Unknown',
+        merchant_rating: 5.0,
+        merchant_trade_count: 0
       };
     } catch (error) {
       console.error('Error in getTradeRequestById:', error);

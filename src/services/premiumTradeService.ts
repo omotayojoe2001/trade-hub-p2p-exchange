@@ -140,7 +140,15 @@ class PremiumTradeService {
         .eq('vendor_id', vendor.id)
         .order('created_at', { ascending: false });
 
-      return jobs || [];
+      return (jobs || []).map(job => ({
+        ...job,
+        delivery_type: job.delivery_type as 'pickup' | 'delivery',
+        status: job.status as 'completed' | 'cancelled' | 'pending_payment' | 'payment_confirmed' | 'in_progress',
+        premium_user: {
+          display_name: 'Premium User',
+          phone_number: ''
+        }
+      }));
     } catch (error: any) {
       console.error('Error fetching vendor jobs:', error);
       throw new Error(error.message || 'Failed to fetch vendor jobs');
@@ -261,7 +269,15 @@ class PremiumTradeService {
         .eq('premium_user_id', user.id)
         .order('created_at', { ascending: false });
 
-      return jobs || [];
+      return (jobs || []).map(job => ({
+        ...job,
+        delivery_type: job.delivery_type as 'pickup' | 'delivery',
+        status: job.status as 'completed' | 'cancelled' | 'pending_payment' | 'payment_confirmed' | 'in_progress',
+        vendor: {
+          display_name: 'Vendor',
+          phone: ''
+        }
+      }));
     } catch (error: any) {
       console.error('Error fetching premium trade history:', error);
       throw new Error(error.message || 'Failed to fetch trade history');

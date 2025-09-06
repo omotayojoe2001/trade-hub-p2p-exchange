@@ -116,7 +116,7 @@ class VendorAuthService {
     try {
       const { data, error } = await supabase
         .from('vendors')
-        .insert(vendorData)
+        .insert(vendorData as any)
         .select()
         .single();
 
