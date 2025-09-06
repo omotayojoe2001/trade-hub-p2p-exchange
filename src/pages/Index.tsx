@@ -40,10 +40,11 @@ const Index = () => {
     try {
       setLoadingTrades(true);
 
-      // Fetch ALL recent trades on the platform (not just user's trades)
+      // Fetch only user's own trades - SECURITY FIX
       const { data: tradesData, error } = await supabase
         .from('trades')
         .select('*')
+        .or(`buyer_id.eq.${user.id},seller_id.eq.${user.id}`)
         .order('created_at', { ascending: false })
         .limit(10);
 
@@ -52,10 +53,11 @@ const Index = () => {
         return;
       }
 
-      // Fetch ALL recent trade requests on the platform
+      // Fetch only user's own trade requests - SECURITY FIX
       const { data: requestsData, error: requestsError } = await supabase
         .from('trade_requests')
         .select('*')
+        .eq('user_id', user.id)
         .in('status', ['open', 'accepted', 'pending'])
         .order('created_at', { ascending: false })
         .limit(10);
