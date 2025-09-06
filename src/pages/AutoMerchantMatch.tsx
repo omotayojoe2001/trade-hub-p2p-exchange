@@ -40,6 +40,8 @@ const AutoMerchantMatch = () => {
   const findBestMerchant = async () => {
     try {
       // Get ALL real users from database, excluding current user
+      console.log('Auto-match: Fetching users excluding:', user?.id?.slice(0, 8) + '...');
+      
       const { data: merchants, error } = await supabase
         .from('profiles')
         .select(`
@@ -51,6 +53,8 @@ const AutoMerchantMatch = () => {
         `)
         .neq('user_id', user?.id)
         .limit(10);
+
+      console.log('Auto-match: Found users:', merchants?.length || 0);
 
       if (error) {
         console.error('Error fetching merchants:', error);

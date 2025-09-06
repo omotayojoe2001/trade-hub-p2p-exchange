@@ -25,6 +25,8 @@ export const merchantService = {
   // Get all active merchants (excluding current user)
   async getMerchants(excludeUserId?: string): Promise<MerchantProfile[]> {
     try {
+      console.log('Fetching merchants excluding user:', excludeUserId?.slice(0, 8) + '...');
+      
       // Query profiles table for ALL users (not just merchants)
       // Users can trade with each other regardless of merchant status
       let query = supabase
@@ -50,7 +52,10 @@ export const merchantService = {
         throw profilesError;
       }
 
+      console.log('Raw profiles data:', profilesData?.length || 0, 'records');
+
       if (!profilesData || profilesData.length === 0) {
+        console.log('No profiles found in database');
         return [];
       }
 
@@ -118,8 +123,10 @@ export const merchantService = {
         };
       });
 
-      // Show all merchants who have merchant mode enabled
-      // Don't filter too strictly - let customers see all available merchants
+      console.log('Found merchants:', merchants.length);
+      
+      // Return ALL users except the current user - they can all trade with each other
+      // Don't filter by merchant status - everyone can trade
       return merchants;
 
     } catch (error) {
