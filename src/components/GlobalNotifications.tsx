@@ -197,7 +197,7 @@ const GlobalNotifications = () => {
           navigate('/trade-requests');
           break;
         case 'view_payment':
-          navigate('/payment-status');
+          navigate('/my-trades');
           break;
         case 'view_security':
           navigate('/security');
@@ -229,8 +229,8 @@ const GlobalNotifications = () => {
         description: "You have automatically accepted the trade. Please send payment.",
       });
 
-      // Navigate to payment flow
-      navigate(`/payment-status/${tradeId}`);
+      // Navigate to trade details
+      navigate(`/trade-details/${tradeId}`);
     } catch (error) {
       toast({
         title: "Error",

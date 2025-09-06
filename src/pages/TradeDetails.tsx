@@ -177,8 +177,9 @@ const TradeDetails = () => {
   const handleResumeTrade = () => {
     if (!currentTrade) return;
 
-    // Navigate to PaymentStatus to resume the trade
-    navigate('/payment-status', {
+    // Navigate to appropriate payment step to resume the trade
+    const tradeType = currentTrade.type === 'buy' ? 'buy-crypto' : 'sell-crypto';
+    navigate(`/${tradeType}-payment-step2`, {
       state: {
         tradeId: currentTrade.id,
         amount: currentTrade.amount,

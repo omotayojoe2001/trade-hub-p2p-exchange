@@ -97,7 +97,7 @@ const SellCryptoPaymentStep1 = () => {
         rate: getMerchantRate(),
         platform_fee_amount: calculatePlatformFee(),
         net_amount: calculateNetAmount(),
-        status: 'pending_merchant_accept',
+        status: 'pending',
         trade_type: 'sell',
         payment_method: 'bank_transfer'
       };
@@ -155,7 +155,7 @@ const SellCryptoPaymentStep1 = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gradient-to-br from-primary/5 to-secondary/10">
       {/* Header */}
       <div className="sticky top-0 bg-background border-b p-4 flex items-center justify-between">
         <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>

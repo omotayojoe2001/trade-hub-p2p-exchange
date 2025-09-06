@@ -17,6 +17,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useCryptoData } from '@/hooks/useCryptoData';
 import { usePremium } from '@/hooks/usePremium';
+import TradeTimeDisplay from '@/components/TradeTimeDisplay';
 
 const Index = () => {
   const { user, profile, loading } = useAuth();
@@ -351,9 +352,7 @@ const Index = () => {
                     </p>
                   </div>
                 </div>
-                <span className="text-xs text-gray-500">
-                  {trade.date.toLocaleDateString()}
-                </span>
+                <TradeTimeDisplay date={trade.date} />
               </div>
             ))}
           </div>

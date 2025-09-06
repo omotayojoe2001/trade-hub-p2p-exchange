@@ -15,6 +15,7 @@ import { format } from "date-fns";
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import TradeCountdown from '@/components/TradeCountdown';
+import TradeTimeDisplay from '@/components/TradeTimeDisplay';
 
 const MyTrades = () => {
   const navigate = useNavigate();
@@ -131,7 +132,8 @@ const MyTrades = () => {
             rating: 4.5, // Default rating
             status: tradeStatus,
             progress: getTradeProgress(trade.status, trade.escrow_status),
-            startTime: new Date(trade.created_at).toLocaleDateString(),
+                     startTime: new Date(trade.created_at).toLocaleDateString(),
+                     startDateTime: new Date(trade.created_at), // Add full datetime
             date: new Date(trade.created_at),
             avatar: 'T',
             category: trade.status === 'completed' ? 'completed' : trade.status === 'cancelled' ? 'cancelled' : 'ongoing',
@@ -152,7 +154,8 @@ const MyTrades = () => {
           rating: 0,
           status: request.status === 'cancelled' ? 'cancelled' : 'waiting_merchant',
           progress: request.status === 'cancelled' ? 0 : 10,
-          startTime: new Date(request.created_at).toLocaleDateString(),
+           startTime: new Date(request.created_at).toLocaleDateString(),
+           startDateTime: new Date(request.created_at), // Add full datetime
           date: new Date(request.created_at),
           avatar: request.status === 'cancelled' ? 'X' : 'W',
           category: request.status === 'cancelled' ? 'cancelled' : 'ongoing',
@@ -387,16 +390,15 @@ const MyTrades = () => {
         }
       }
 
-      // Navigate to PaymentStatus with complete trade data
-      navigate('/payment-status', {
+      // Navigate to correct payment step based on trade type and status
+      const tradeType = trade.type === 'buy' ? 'buy-crypto' : 'sell-crypto';
+      navigate(`/${tradeType}-payment-step${step}`, {
         state: {
           tradeId: trade.id,
           amount: trade.coinAmount.split(' ')[0], // Extract numeric amount
           nairaAmount: trade.nairaAmount,
-          mode: trade.type,
           selectedMerchant: { name: trade.merchant },
           coinType: trade.coin,
-          activeStep: step,
           resumeTrade: true,
           actionRequired: trade.actionRequired,
           tradeData: trade.tradeData
@@ -629,7 +631,7 @@ const MyTrades = () => {
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="text-xs text-muted-foreground">{trade.startTime}</p>
+                  <TradeTimeDisplay date={trade.startDateTime || trade.date} />
                   {/* Show countdown for incomplete trades */}
                   {trade.awaitingUserAction && trade.status === 'waiting_confirmation' && (
                     <TradeCountdown

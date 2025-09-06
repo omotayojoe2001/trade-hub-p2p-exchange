@@ -98,7 +98,7 @@ const BuyCryptoPaymentStep1 = () => {
         naira_amount: calculateCashAmount(),
         rate: getMerchantRate(),
         platform_fee_amount: calculatePlatformFee(),
-        status: 'pending_merchant_accept',
+        status: 'pending',
         trade_type: 'buy',
         payment_method: 'bank_transfer'
       };
@@ -151,13 +151,16 @@ const BuyCryptoPaymentStep1 = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gradient-to-br from-primary/5 to-secondary/10">
       {/* Header */}
-      <div className="sticky top-0 bg-background border-b p-4 flex items-center justify-between">
-        <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
+      <div className="sticky top-0 bg-card/95 backdrop-blur-sm border-b p-4 flex items-center justify-between shadow-sm">
+        <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="hover:bg-white/80">
           <ArrowLeft className="w-5 h-5" />
         </Button>
-        <h1 className="text-lg font-semibold">Buy {coinType} - Step 1</h1>
+        <div className="text-center">
+          <h1 className="text-lg font-bold">Buy {coinType}</h1>
+          <p className="text-xs text-muted-foreground">Step 1 of 3</p>
+        </div>
         <div className="w-10" />
       </div>
 

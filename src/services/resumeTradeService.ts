@@ -77,7 +77,7 @@ export const resumeTradeService = {
   getResumeUrl(trade: IncompleteTradeData): string {
     switch (trade.type) {
       case 'trade_request':
-        return `/payment-status?resume=${trade.id}`;
+        return `/my-trades`;
       case 'trade':
         return `/trade-details/${trade.id}`;
       default:
