@@ -54,7 +54,7 @@ const BuyCryptoPaymentStep1 = () => {
   };
 
   const handleSendTradeRequest = async () => {
-    if (!cryptoAmount || !walletAddress) {
+    if (!cryptoAmount || !walletAddress || !user || !selectedMerchant) {
       toast({
         title: "Missing Information",
         description: "Please enter crypto amount and wallet address",
@@ -64,45 +64,53 @@ const BuyCryptoPaymentStep1 = () => {
     }
 
     setLoading(true);
+
     try {
-      const tradeData = {
-        buyer_id: user.id,
-        seller_id: selectedMerchant.user_id,
-        coin_type: coinType,
-        amount: parseFloat(cryptoAmount),
-        naira_amount: calculateCashAmount(),
-        rate: getMerchantRate(),
-        platform_fee_amount: calculatePlatformFee(),
-        status: 'pending',
-        trade_type: 'buy',
-        payment_method: 'bank_transfer'
-      };
+      // Calculate rate and naira amount
+      const rate = getMerchantRate();
+      const nairaAmount = parseFloat(cryptoAmount) * rate;
 
-      const { data, error } = await supabase
-        .from('trades')
-        .insert(tradeData)
-        .select()
-        .single();
+      // Import merchantTradeService
+      const { merchantTradeService } = await import('@/services/merchantTradeService');
 
-      if (error) throw error;
+      // Send trade request using merchantTradeService
+      const tradeRequest = await merchantTradeService.sendTradeRequestToMerchant(
+        user.id,
+        selectedMerchant.user_id,
+        {
+          trade_type: 'buy',
+          coin_type: coinType as 'BTC' | 'ETH' | 'USDT',
+          amount: parseFloat(cryptoAmount),
+          naira_amount: nairaAmount,
+          rate: rate,
+          payment_method: 'bank_transfer'
+        }
+      );
 
+      toast({
+        title: "Trade Request Sent!",
+        description: `Your trade request for ${cryptoAmount} ${coinType} has been sent to ${selectedMerchant.display_name}. They have 15 minutes to respond.`,
+      });
+
+      // Navigate to step 2 with trade details
       navigate('/buy-crypto-payment-step2', {
         state: {
-          tradeId: data.id,
+          tradeRequestId: tradeRequest.id,
           coinType,
-          cryptoAmount,
-          cashAmount: calculateCashAmount(),
           selectedMerchant,
-          walletAddress
+          cryptoAmount,
+          walletAddress,
+          nairaAmount,
+          rate
         }
       });
 
-    } catch (error) {
-      console.error('Error creating trade:', error);
+    } catch (error: any) {
+      console.error('Error sending trade request:', error);
       toast({
         title: "Error",
-        description: "Failed to send trade request",
-        variant: "destructive"
+        description: error.message || "Failed to send trade request. Please try again.",
+        variant: "destructive",
       });
     } finally {
       setLoading(false);

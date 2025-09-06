@@ -53,7 +53,7 @@ import IdentityVerification from "./pages/IdentityVerification";
 import FaceVerification from "./pages/FaceVerification";
 import VerificationSuccess from "./pages/VerificationSuccess";
 import CoinDetail from "./pages/CoinDetail";
-import BuyCrypto from "./pages/BuyCrypto";
+
 import BuyCryptoMatch from "./pages/BuyCryptoMatch";
 
 import BuyCryptoWaiting from "./pages/BuyCryptoWaiting";
@@ -250,7 +250,7 @@ const AppContent = () => {
           <Route path="/face-verification" element={<FaceVerification />} />
           <Route path="/verification-success" element={<VerificationSuccess />} />
             <Route path="/coin/:coinId" element={<CoinDetail />} />
-            <Route path="/buy-crypto" element={<BuyCrypto />} />
+            
           <Route path="/buy-crypto-merchant-selection" element={<BuyCryptoMerchantSelection />} />
           <Route path="/buy-crypto-match" element={<BuyCryptoMatch />} />
           {/* Removed buy-crypto-searching route - not needed */}

@@ -78,7 +78,7 @@ const MerchantList = () => {
     }
   };
 
-  const handleMerchantSelect = async (merchantId: string) => {
+  const handleMerchantSelect = (merchantId: string) => {
     // Find merchant by user_id (not id)
     const selectedMerchant = merchants.find(m => m.user_id === merchantId);
     if (!selectedMerchant) {
@@ -93,50 +93,31 @@ const MerchantList = () => {
     if (!user?.id) {
       toast({
         title: "Error",
-        description: "You must be logged in to send trade requests",
+        description: "You must be logged in to continue",
         variant: "destructive"
       });
       return;
     }
 
-    try {
-      // Send trade request directly to the selected merchant
-      await merchantTradeService.sendTradeRequestToMerchant(
-        user.id,
-        selectedMerchant.user_id,
-        {
-          trade_type: 'buy',
-          coin_type: coinType as 'BTC' | 'ETH' | 'USDT',
-          amount: amount,
-          naira_amount: nairaAmount,
-          rate: nairaAmount / amount,
-          payment_method: 'bank_transfer'
-        }
-      );
-
-      toast({
-        title: "Trade Request Sent!",
-        description: `Your request has been sent to ${selectedMerchant.display_name}. They have 15 minutes to respond.`,
-      });
-
-      // Navigate directly to payment step 1
-      navigate('/buy-crypto-payment-step1', {
-        state: {
-          selectedMerchant,
-          amount,
-          nairaAmount,
-          coinType
-        }
-      });
-
-    } catch (error: any) {
-      console.error('Error sending trade request:', error);
+    // Prevent users from selecting themselves
+    if (selectedMerchant.user_id === user.id) {
       toast({
         title: "Error",
-        description: error.message || "Failed to send trade request",
+        description: "You cannot trade with yourself",
         variant: "destructive"
       });
+      return;
     }
+
+    // Navigate directly to payment step 1 - NO trade request sent yet
+    navigate('/buy-crypto-payment-step1', {
+      state: {
+        selectedMerchant,
+        amount,
+        nairaAmount,
+        coinType
+      }
+    });
   };
 
   const getStatusColor = (isOnline: boolean) => {

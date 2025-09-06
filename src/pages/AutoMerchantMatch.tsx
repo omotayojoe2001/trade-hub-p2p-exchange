@@ -119,6 +119,16 @@ const AutoMerchantMatch = () => {
   const handleContinue = () => {
     if (!matchedMerchant) return;
     
+    // Prevent users from trading with themselves
+    if (matchedMerchant.user_id === user?.id) {
+      toast({
+        title: "Error",
+        description: "You cannot trade with yourself",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     // Navigate directly to payment step 1 - NO trade request sent yet
     navigate('/buy-crypto-payment-step1', {
       state: {

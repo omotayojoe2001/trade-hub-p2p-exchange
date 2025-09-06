@@ -94,13 +94,14 @@ export const merchantTradeService = {
     }
   },
 
-  // Get pending trade requests for a merchant
+  // Get pending trade requests for a merchant (filter out self-requests)
   async getMerchantTradeRequests(merchantId: string): Promise<MerchantTradeRequest[]> {
     try {
       const { data: tradeRequests, error } = await supabase
         .from('trade_requests')
         .select('*')
         .eq('status', 'open')
+        .neq('user_id', merchantId) // Exclude requests from the merchant themselves
         .gt('expires_at', new Date().toISOString())
         .order('created_at', { ascending: false });
 

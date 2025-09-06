@@ -135,13 +135,19 @@ export const bankAccountService = {
       // First, unset all defaults for this user
       await supabase
         .from('user_bank_accounts')
-        .update({ is_default: false })
+        .update({ 
+          is_default: false,
+          updated_at: new Date().toISOString()
+        })
         .eq('user_id', userId);
 
       // Then set the selected account as default
       const { error } = await supabase
         .from('user_bank_accounts')
-        .update({ is_default: true })
+        .update({ 
+          is_default: true,
+          updated_at: new Date().toISOString()
+        })
         .eq('id', accountId)
         .eq('user_id', userId);
 
