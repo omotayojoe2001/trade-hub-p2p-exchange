@@ -55,7 +55,7 @@ import VerificationSuccess from "./pages/VerificationSuccess";
 import CoinDetail from "./pages/CoinDetail";
 import BuyCrypto from "./pages/BuyCrypto";
 import BuyCryptoMatch from "./pages/BuyCryptoMatch";
-import BuyCryptoPayment from "./pages/BuyCryptoPayment";
+
 import BuyCryptoWaiting from "./pages/BuyCryptoWaiting";
 import BuyCryptoSuccess from "./pages/BuyCryptoSuccess";
 import BuyCryptoCancel from "./pages/BuyCryptoCancel";
@@ -261,7 +261,7 @@ const AppContent = () => {
           <Route path="/buy-crypto-merchant-selection" element={<BuyCryptoMerchantSelection />} />
           <Route path="/buy-crypto-match" element={<BuyCryptoMatch />} />
           <Route path="/buy-crypto-searching" element={<BuyCryptoSearching />} />
-          <Route path="/buy-crypto-payment" element={<BuyCryptoPayment />} />
+          
             <Route path="/buy-crypto-waiting" element={<BuyCryptoWaiting />} />
             <Route path="/buy-crypto-success" element={<BuyCryptoSuccess />} />
             <Route path="/buy-crypto-cancel" element={<BuyCryptoCancel />} />

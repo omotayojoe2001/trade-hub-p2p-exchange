@@ -27,15 +27,14 @@ const BuyCryptoSearching = () => {
       setStage('escrow');
     }, 9000);
 
-    // Navigate to payment after escrow is ready
+    // Navigate to payment step 1 after escrow is ready
     const timer4 = setTimeout(() => {
-      navigate("/buy-crypto-payment", { 
+      navigate("/buy-crypto-payment-step1", { 
         state: { 
           amount, 
           nairaAmount, 
           selectedMerchant,
-          coinType,
-          step: 'payment'
+          coinType
         } 
       });
     }, 12000);
