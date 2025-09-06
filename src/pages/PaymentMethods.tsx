@@ -244,18 +244,33 @@ const PaymentMethods = () => {
     }
   };
 
-  const handleSetDefault = (accountId: string) => {
-    setBankAccounts(prev =>
-      prev.map(account => ({
-        ...account,
-        isDefault: account.id === accountId
-      }))
-    );
+  const handleSetDefault = async (accountId: string) => {
+    if (!user) return;
 
-    toast({
-      title: "Default Account Updated",
-      description: "Default bank account has been changed",
-    });
+    try {
+      // Use bankAccountService to set default
+      await bankAccountService.setDefaultBankAccount(user.id, accountId);
+
+      // Update local state
+      setBankAccounts(prev =>
+        prev.map(account => ({
+          ...account,
+          isDefault: account.id === accountId
+        }))
+      );
+
+      toast({
+        title: "Default Account Updated",
+        description: "Default bank account has been changed",
+      });
+    } catch (error) {
+      console.error('Error setting default account:', error);
+      toast({
+        title: "Error",
+        description: "Failed to set default account. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
 
   const handleDeleteAccount = (accountId: string) => {

@@ -94,23 +94,54 @@ export const merchantTradeService = {
     }
   },
 
-  // Get pending trade requests for a merchant (filter out self-requests)
+  // Get pending trade requests for a specific merchant only
   async getMerchantTradeRequests(merchantId: string): Promise<MerchantTradeRequest[]> {
     try {
-      const { data: tradeRequests, error } = await supabase
-        .from('trade_requests')
-        .select('*')
-        .eq('status', 'open')
-        .neq('user_id', merchantId) // Exclude requests from the merchant themselves
-        .gt('expires_at', new Date().toISOString())
+      // Get trade requests where the merchant was specifically notified
+      const { data: notifications, error: notifError } = await supabase
+        .from('notifications')
+        .select(`
+          data,
+          created_at
+        `)
+        .eq('user_id', merchantId)
+        .eq('type', 'trade_request')
         .order('created_at', { ascending: false });
 
-      if (error) {
-        console.error('Error fetching merchant trade requests:', error);
-        throw error;
+      if (notifError) {
+        console.error('Error fetching merchant notifications:', notifError);
+        throw notifError;
       }
 
-      // Filter and transform the requests
+      if (!notifications || notifications.length === 0) {
+        return [];
+      }
+
+      // Get trade request IDs from notifications
+      const tradeRequestIds = notifications
+        .map(n => {
+          const data = n.data as any;
+          return data?.trade_request_id;
+        })
+        .filter(id => id);
+
+      if (tradeRequestIds.length === 0) {
+        return [];
+      }
+
+      // Get actual trade requests
+      const { data: tradeRequests, error: requestsError } = await supabase
+        .from('trade_requests')
+        .select('*')
+        .in('id', tradeRequestIds)
+        .eq('status', 'open')
+        .gt('expires_at', new Date().toISOString());
+
+      if (requestsError) {
+        throw requestsError;
+      }
+
+      // Transform the requests
       return (tradeRequests || []).map(request => ({
         id: request.id,
         requester_id: request.user_id,
@@ -132,10 +163,12 @@ export const merchantTradeService = {
     }
   },
 
-  // Accept a trade request (merchant action)
+  // Accept a trade request (merchant action) - Use escrow flow
   async acceptMerchantTradeRequest(tradeRequestId: string, merchantId: string): Promise<any> {
     try {
-      return await tradeRequestService.acceptTradeRequest(tradeRequestId, merchantId);
+      // Import escrow service
+      const { escrowTradeService } = await import('./escrowTradeService');
+      return await escrowTradeService.acceptTradeRequestAndCreateEscrow(tradeRequestId, merchantId);
     } catch (error) {
       console.error('Error in acceptMerchantTradeRequest:', error);
       throw error;

@@ -84,30 +84,17 @@ const MerchantTradeRequests = () => {
     try {
       setLoading(true);
       
-      // Get open trade requests that could be for this merchant
-      const { data: requests, error } = await supabase
-        .from('trade_requests')
-        .select('*')
-        .eq('status', 'open')
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        console.error('Error fetching trade requests:', error);
-        toast({
-          title: "Error",
-          description: "Failed to load trade requests",
-          variant: "destructive"
-        });
-        return;
-      }
-
+      // Use merchantTradeService to get requests targeted to this merchant only
+      const { merchantTradeService } = await import('@/services/merchantTradeService');
+      const requests = await merchantTradeService.getMerchantTradeRequests(user.id);
+      
       if (!requests || requests.length === 0) {
         setTradeRequests([]);
         return;
       }
 
       // Get user profiles for the trade requests
-      const userIds = requests.map(r => r.user_id);
+      const userIds = requests.map(r => r.requester_id);
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
         .select('user_id, display_name, user_type')
@@ -120,17 +107,17 @@ const MerchantTradeRequests = () => {
       // Combine requests with user profiles  
       const formattedRequests = requests.map(request => ({
         id: request.id,
-        user_id: request.user_id,
+        user_id: request.requester_id,
         trade_type: request.trade_type as string,
-        coin_type: request.crypto_type,
-        amount: request.amount_crypto,
-        naira_amount: request.amount_fiat,
+        coin_type: request.coin_type,
+        amount: request.amount,
+        naira_amount: request.naira_amount,
         rate: request.rate,
         payment_method: request.payment_method,
         status: request.status,
         notes: '',
         created_at: request.created_at,
-        user_profile: profiles?.find(p => p.user_id === request.user_id) || {
+        user_profile: profiles?.find(p => p.user_id === request.requester_id) || {
           display_name: 'Unknown User',
           user_type: 'customer'
         }
@@ -150,18 +137,20 @@ const MerchantTradeRequests = () => {
     try {
       setProcessingId(tradeRequestId);
       
-      const trade = await tradeRequestService.acceptTradeRequest(tradeRequestId, user.id);
+      // Use merchant trade service with escrow flow
+      const { merchantTradeService } = await import('@/services/merchantTradeService');
+      const escrowTrade = await merchantTradeService.acceptMerchantTradeRequest(tradeRequestId, user.id);
       
       toast({
         title: "Trade Accepted!",
-        description: "The customer has been notified. Escrow process will begin.",
+        description: "Escrow has been created. Please deposit crypto to the escrow address.",
       });
 
       // Refresh the list
       fetchTradeRequests();
       
-      // Navigate to trade management page
-      navigate(`/trade-management/${trade.id}`);
+      // Navigate to escrow flow page
+      navigate(`/escrow-flow/${escrowTrade.tradeId}`);
       
     } catch (error) {
       console.error('Error accepting trade:', error);

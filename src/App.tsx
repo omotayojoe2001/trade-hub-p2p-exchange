@@ -114,6 +114,7 @@ import TradeRequestDetails from "./pages/TradeRequestDetails";
 import MerchantTradeFlow from "./pages/MerchantTradeFlow";
 import Messages from "./pages/Messages";
 import EscrowFlow from "./pages/EscrowFlow";
+import EscrowTradeFlow from "./pages/EscrowTradeFlow";
 import ReceiptPage from "./pages/ReceiptPage";
 import { Blog } from "./pages/Blog";
 import MerchantMatchingChoice from "./pages/MerchantMatchingChoice";
@@ -338,6 +339,7 @@ const AppContent = () => {
         {/* Removed blog detail route - not needed */}
         <Route path="/thank-you" element={<ThankYouPage />} />
         <Route path="/escrow-flow" element={<EscrowFlow />} />
+        <Route path="/escrow-flow/:tradeId" element={<EscrowTradeFlow />} />
 
         {/* Vendor Routes */}
         <Route path="/vendor/login" element={<VendorLogin />} />
