@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Copy, CheckCircle, Clock, Wallet, CreditCard, Upload } from 'lucide-react';
+import { ArrowLeft, Copy, CheckCircle, Clock, Wallet, CreditCard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -25,8 +25,8 @@ interface TradeDetails {
   merchantBankDetails?: any;
 }
 
-const EscrowTradeFlow = () => {
-  const { tradeId } = useParams();
+const EscrowTradeFlow: React.FC = () => {
+  const { tradeId } = useParams<{ tradeId: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user } = useAuth();
