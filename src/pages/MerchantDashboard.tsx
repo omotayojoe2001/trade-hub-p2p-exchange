@@ -12,7 +12,7 @@ const MerchantDashboard = () => {
     {
       id: 'TR001',
       type: 'sell',
-      customer: 'John Doe',
+      customer: 'No Customer',
       amount: '0.0045 BTC',
       nairaAmount: '₦125,000',
       timeLeft: '14:32',

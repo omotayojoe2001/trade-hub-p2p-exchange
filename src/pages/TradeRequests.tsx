@@ -100,9 +100,7 @@ const TradeRequests = () => {
   };
 
   const getUserDisplayName = (userId: string): string => {
-    const names = ['John Doe', 'Jane Smith', 'Mike Johnson', 'Sarah Wilson', 'David Brown', 'Lisa Davis'];
-    const index = userId.length % names.length;
-    return names[index];
+    return `User ${userId.slice(-4)}`;
   };
 
   const handleAcceptTrade = async (requestId: string) => {

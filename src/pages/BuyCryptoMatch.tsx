@@ -97,39 +97,9 @@ const BuyCryptoMatch = () => {
         </Card>
 
         <Card>
-          <CardHeader>
-            <CardTitle className="text-sm font-medium">Merchant Details</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center space-x-4 mb-4">
-              <Avatar className="w-12 h-12">
-                <AvatarFallback>JD</AvatarFallback>
-              </Avatar>
-              <div className="flex-1">
-                <div className="font-semibold">John Doe</div>
-                <div className="flex items-center space-x-2">
-                  <div className="flex items-center">
-                    <Star className="w-4 h-4 text-yellow-500 mr-1" />
-                    <span className="text-sm">4.8</span>
-                  </div>
-                  <Badge variant="secondary">Verified</Badge>
-                </div>
-              </div>
-            </div>
-            
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Total Trades</span>
-                <span>156</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Success Rate</span>
-                <span className="text-green-600">98%</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Avg. Response Time</span>
-                <span>2 minutes</span>
-              </div>
+          <CardContent className="p-8 text-center">
+            <div className="text-muted-foreground">
+              No merchants available at this time. Please try again later.
             </div>
           </CardContent>
         </Card>

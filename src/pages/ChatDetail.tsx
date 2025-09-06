@@ -18,11 +18,11 @@ const ChatDetail = () => {
   // Mock chat data - in real app, fetch based on chatId
   const chatData = {
     id: chatId,
-    name: 'John Doe',
-    avatar: '👨‍💼',
-    status: 'online',
-    rating: 4.9,
-    tradeId: 'PT001',
+    name: 'No chat available',
+    avatar: '?',
+    status: 'offline',
+    rating: 0,
+    tradeId: 'N/A',
     isPremium: true
   };
 

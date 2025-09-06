@@ -109,15 +109,8 @@ const BuyCryptoWaiting = () => {
             <CardTitle className="text-sm font-medium">Trade Status</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="flex items-center space-x-4 mb-4">
-              <Avatar className="w-12 h-12">
-                <AvatarFallback>JD</AvatarFallback>
-              </Avatar>
-              <div className="flex-1">
-                <div className="font-semibold">John Doe</div>
-                <div className="text-sm text-muted-foreground">Verifying payment...</div>
-              </div>
-              <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+            <div className="text-center text-muted-foreground">
+              No merchant assigned. Please try again later.
             </div>
             
             <div className="space-y-2 text-sm">

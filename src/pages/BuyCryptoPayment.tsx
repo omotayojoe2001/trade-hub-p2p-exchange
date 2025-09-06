@@ -38,9 +38,9 @@ const BuyCryptoPayment = () => {
   };
 
   const bankDetails = {
-    bankName: "GTBank",
-    accountNumber: "0123456789",
-    accountName: "John Doe",
+    bankName: "Select Bank",
+    accountNumber: "000000000",
+    accountName: "No merchant selected",
     reference: "BTC-" + Date.now().toString().slice(-6)
   };
 

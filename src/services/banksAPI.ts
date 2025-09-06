@@ -172,12 +172,12 @@ export const verifyAccountName = async (
     
     if (isValid) {
       const mockNames = [
-        'John Doe',
-        'Jane Smith', 
-        'Michael Johnson',
-        'Sarah Williams',
-        'David Brown',
-        'Emily Davis'
+        'Account Holder',
+        'Bank Customer', 
+        'Account Owner',
+        'Valid Account',
+        'Verified User',
+        'Bank User'
       ];
       
       return {

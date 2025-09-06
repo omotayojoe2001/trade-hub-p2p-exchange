@@ -104,10 +104,10 @@ const EscrowFlow = () => {
       receiverBankDetails: {
         accountNumber: '1234567890',
         bankName: 'First Bank Nigeria',
-        accountName: 'John Doe'
+        accountName: 'No Account'
       },
       completedAt: new Date(),
-      txHash: 'mock-tx-hash-12345'
+      txHash: ''
     };
     
     setReceiptData(receipt);

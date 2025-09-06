@@ -23,11 +23,11 @@ const MerchantTradeFlow = () => {
   const [message, setMessage] = useState('');
   const [step, setStep] = useState('payment'); // payment, waiting, completed
 
-  // Mock user bank details (in production, fetch from API)
+  // No bank details without real trade data
   const userBankDetails = {
-    bankName: 'First Bank Nigeria',
-    accountNumber: '3127584950',
-    accountName: 'John Doe',
+    bankName: '',
+    accountNumber: '',
+    accountName: '',
   };
 
   // Countdown timer
