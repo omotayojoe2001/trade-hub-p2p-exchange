@@ -9,7 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { merchantService, MerchantProfile } from '@/services/merchantService';
 import { useAuth } from '@/hooks/useAuth';
-import { tradeRequestService } from '@/services/tradeRequestService';
+import { merchantTradeService } from '@/services/merchantTradeService';
 
 const MerchantList = () => {
   const [sortBy, setSortBy] = useState('best-rate');
@@ -104,26 +104,34 @@ const MerchantList = () => {
     }
 
     try {
-      // Create a trade request to the selected merchant
-      const tradeRequestData = {
-        trade_type: 'buy' as const,
-        coin_type: (coinType || 'BTC') as 'BTC' | 'ETH' | 'USDT',
-        amount: amount || 0.01,
-        naira_amount: nairaAmount || 1500000,
-        rate: (nairaAmount || 1500000) / (amount || 0.01),
-        payment_method: 'bank_transfer',
-        notes: `Trade request for ${amount || 0.01} ${coinType || 'BTC'}`
-      };
-
-      await tradeRequestService.createTradeRequest(user.id, tradeRequestData);
+      // Send trade request directly to the selected merchant
+      await merchantTradeService.sendTradeRequestToMerchant(
+        user.id,
+        selectedMerchant.user_id,
+        {
+          trade_type: 'buy',
+          coin_type: (coinType || 'BTC') as 'BTC' | 'ETH' | 'USDT',
+          amount: amount || 0.01,
+          naira_amount: nairaAmount || 1500000,
+          rate: (nairaAmount || 1500000) / (amount || 0.01),
+          payment_method: 'bank_transfer'
+        }
+      );
 
       toast({
-        title: "Trade Request Sent",
-        description: `Your trade request has been sent to ${selectedMerchant.display_name}`,
+        title: "Trade Request Sent!",
+        description: `Your request has been sent to ${selectedMerchant.display_name}. They have 15 minutes to respond.`,
       });
 
-      // Navigate back or to a confirmation page
-      navigate('/my-trades');
+      // Navigate to waiting for merchant response screen
+      navigate('/buy-crypto-searching', {
+        state: {
+          selectedMerchant,
+          amount,
+          nairaAmount,
+          coinType
+        }
+      });
 
     } catch (error: any) {
       console.error('Error sending trade request:', error);

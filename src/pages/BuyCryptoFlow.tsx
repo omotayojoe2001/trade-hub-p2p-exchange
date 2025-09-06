@@ -50,12 +50,15 @@ const BuyCryptoFlow = () => {
   };
 
   const handleContinue = () => {
+    if (!cryptoAmount || parseFloat(cryptoAmount) <= 0) return;
+    
     navigate('/buy-crypto-merchant-selection', { 
       state: { 
-        nairaAmount, 
-        cryptoAmount,
+        nairaAmount: parseFloat(nairaAmount), 
+        cryptoAmount: parseFloat(cryptoAmount),
         selectedCoin,
-        coinData: coin
+        coinData: coin,
+        tradeType: 'buy'
       } 
     });
   };
@@ -90,30 +93,11 @@ const BuyCryptoFlow = () => {
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                You pay (Nigerian Naira)
+                Enter Amount to Buy
               </label>
-              <div className="relative">
-                <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">₦</span>
-                <Input
-                  type="number"
-                  placeholder="0.00"
-                  value={nairaAmount}
-                  onChange={(e) => handleNairaChange(e.target.value)}
-                  className="pl-8 text-lg h-12"
-                />
-              </div>
-            </div>
-
-            <div className="flex justify-center">
-              <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
-                <div className="w-4 h-4 border-2 border-gray-400 border-t-blue-500 rounded-full animate-spin"></div>
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                You receive ({coin.symbol})
-              </label>
+              <p className="text-sm text-muted-foreground mb-2">
+                Type the {coin.symbol} amount you want to buy. Rate updates live.
+              </p>
               <div className="relative">
                 <div className="absolute left-3 top-1/2 transform -translate-y-1/2">
                   <CryptoIcon symbol={coin.symbol} size={16} />
@@ -125,7 +109,39 @@ const BuyCryptoFlow = () => {
                   onChange={(e) => handleCryptoChange(e.target.value)}
                   className="pl-10 text-lg h-12"
                 />
+                <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 font-medium">
+                  {coin.symbol}
+                </span>
               </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                Enter amount to offer for trade
+              </p>
+            </div>
+
+            <div className="flex justify-center">
+              <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
+                <div className="w-4 h-4 border-2 border-gray-400 border-t-blue-500 rounded-full animate-spin"></div>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                You'll send (Nigerian Naira)
+              </label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">₦</span>
+                <Input
+                  type="number"
+                  placeholder="0.00"
+                  value={nairaAmount}
+                  onChange={(e) => handleNairaChange(e.target.value)}
+                  className="pl-8 text-lg h-12"
+                  readOnly
+                />
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                Cash to be sent to merchant's bank account
+              </p>
             </div>
           </div>
         </Card>
@@ -152,7 +168,7 @@ const BuyCryptoFlow = () => {
         {/* Continue Button */}
         <Button
           onClick={handleContinue}
-          disabled={!nairaAmount || parseFloat(nairaAmount) <= 0}
+          disabled={!cryptoAmount || parseFloat(cryptoAmount) <= 0}
           className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg"
         >
           Continue to Merchant Selection

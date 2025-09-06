@@ -38,7 +38,15 @@ const BuyCryptoMatch = () => {
   };
 
   const handleContinue = () => {
-    navigate("/payment-status", { state: { amount, nairaAmount, mode: 'buy', step: 1 } });
+    // Navigate to searching page to simulate merchant acceptance and escrow
+    navigate("/buy-crypto-searching", { 
+      state: { 
+        amount, 
+        nairaAmount, 
+        selectedMerchant: location.state?.selectedMerchant,
+        coinType: location.state?.coinType || 'BTC'
+      } 
+    });
   };
 
   const handleCancel = () => {
