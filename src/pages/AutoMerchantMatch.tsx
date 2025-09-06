@@ -116,39 +116,19 @@ const AutoMerchantMatch = () => {
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const handleContinue = async () => {
-    if (!matchedMerchant || !user?.id) return;
+  const handleContinue = () => {
+    if (!matchedMerchant) return;
     
-    try {
-      // Create a trade request to the matched merchant
-      const tradeRequestData = {
-        trade_type: (mode || 'buy') as 'buy' | 'sell',
-        coin_type: (coinType || 'BTC') as 'BTC' | 'ETH' | 'USDT',
-        amount: amount || 0.01,
-        naira_amount: nairaAmount || 1500000,
-        rate: (nairaAmount || 1500000) / (amount || 0.01),
-        payment_method: 'bank_transfer',
-        notes: `Auto-matched trade request for ${amount || 0.01} ${coinType || 'BTC'}`
-      };
-
-      await tradeRequestService.createTradeRequest(user.id, tradeRequestData);
-
-      toast({
-        title: "Trade Request Sent",
-        description: `Your trade request has been sent to ${matchedMerchant.display_name}`,
-      });
-
-      // Navigate to trades page
-      navigate('/my-trades');
-
-    } catch (error: any) {
-      console.error('Error sending trade request:', error);
-      toast({
-        title: "Error",
-        description: error.message || "Failed to send trade request",
-        variant: "destructive"
-      });
-    }
+    // Navigate directly to payment step 1 - NO trade request sent yet
+    navigate('/buy-crypto-payment-step1', {
+      state: {
+        coinType: coinType || 'BTC',
+        selectedMerchant: matchedMerchant,
+        amount,
+        nairaAmount,
+        mode
+      }
+    });
   };
 
   const handleFindAnother = () => {

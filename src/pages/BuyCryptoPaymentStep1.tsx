@@ -20,35 +20,10 @@ const BuyCryptoPaymentStep1 = () => {
   
   const [cryptoAmount, setCryptoAmount] = useState('');
   const [walletAddress, setWalletAddress] = useState('');
-  const [userBankAccounts, setUserBankAccounts] = useState<any[]>([]);
-  const [selectedAccount, setSelectedAccount] = useState<any>(null);
+  // Removed bank account logic - not needed for Buy Crypto
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    fetchUserBankAccounts();
-  }, [user]);
-
-  const fetchUserBankAccounts = async () => {
-    if (!user) return;
-
-    try {
-      const { data, error } = await supabase
-        .from('user_bank_accounts')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('is_default', { ascending: false });
-
-      if (error) throw error;
-      setUserBankAccounts(data || []);
-      
-      const defaultAccount = data?.find(account => account.is_default);
-      if (defaultAccount) {
-        setSelectedAccount(defaultAccount);
-      }
-    } catch (error) {
-      console.error('Error fetching bank accounts:', error);
-    }
-  };
+  // Removed fetchUserBankAccounts - not needed for Buy Crypto
 
   const getMerchantRate = () => {
     if (!selectedMerchant) return 0;
@@ -79,10 +54,10 @@ const BuyCryptoPaymentStep1 = () => {
   };
 
   const handleSendTradeRequest = async () => {
-    if (!cryptoAmount || !walletAddress || !selectedAccount) {
+    if (!cryptoAmount || !walletAddress) {
       toast({
         title: "Missing Information",
-        description: "Please fill all required fields",
+        description: "Please enter crypto amount and wallet address",
         variant: "destructive"
       });
       return;
@@ -231,51 +206,10 @@ const BuyCryptoPaymentStep1 = () => {
           </CardContent>
         </Card>
 
-        {/* Bank Account Selection */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-sm">Payment From Account</CardTitle>
-            <p className="text-xs text-muted-foreground">
-              Regular users can use 1 account. Premium users can use multiple accounts.
-            </p>
-          </CardHeader>
-          <CardContent>
-            {userBankAccounts.length > 0 ? (
-              <div className="space-y-2">
-                {userBankAccounts.slice(0, 1).map((account) => (
-                  <div
-                    key={account.id}
-                    className="p-3 border rounded-lg bg-muted/50"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="font-medium">{account.account_name}</p>
-                        <p className="text-sm text-muted-foreground">
-                          {account.bank_name} • {account.account_number}
-                        </p>
-                      </div>
-                      <CheckCircle className="w-5 h-5 text-primary" />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-4">
-                <p className="text-muted-foreground text-sm mb-3">No bank account found</p>
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={() => navigate('/payment-methods')}
-                >
-                  Add Bank Account
-                </Button>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+        {/* This section removed - not needed for Buy Crypto */}
 
         {/* Trade Summary */}
-        {cryptoAmount && walletAddress && selectedAccount && (
+        {cryptoAmount && walletAddress && (
           <Card>
             <CardHeader>
               <CardTitle className="text-sm">Trade Summary</CardTitle>
@@ -312,8 +246,8 @@ const BuyCryptoPaymentStep1 = () => {
         {/* Send Trade Request Button */}
         <Button
           onClick={handleSendTradeRequest}
-          disabled={!cryptoAmount || !walletAddress || !selectedAccount || loading}
-          className="w-full"
+          disabled={!cryptoAmount || !walletAddress || loading}
+          className="w-full bg-gradient-to-r from-primary to-primary-foreground hover:from-primary/90 hover:to-primary-foreground/90 text-white font-semibold py-6 text-lg shadow-lg hover:shadow-xl transition-all duration-300"
           size="lg"
         >
           {loading ? 'Sending Request...' : 'Send Trade Request'}

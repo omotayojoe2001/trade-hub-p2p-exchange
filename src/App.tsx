@@ -70,7 +70,7 @@ import CryptoWallet from "./pages/CryptoWallet";
 import RateMerchant from "./pages/RateMerchant";
 import BuyCryptoFlow from "./pages/BuyCryptoFlow";
 import BuyCryptoMerchantSelection from "./pages/BuyCryptoMerchantSelection";
-import BuyCryptoSearching from "./pages/BuyCryptoSearching";
+// Removed BuyCryptoSearching - not needed
 import MerchantDashboard from "./pages/MerchantDashboard";
 import PremiumPayment from "./pages/PremiumPayment";
 import PremiumDashboard from "./pages/PremiumDashboard";
@@ -260,7 +260,7 @@ const AppContent = () => {
             <Route path="/buy-crypto" element={<BuyCrypto />} />
           <Route path="/buy-crypto-merchant-selection" element={<BuyCryptoMerchantSelection />} />
           <Route path="/buy-crypto-match" element={<BuyCryptoMatch />} />
-          <Route path="/buy-crypto-searching" element={<BuyCryptoSearching />} />
+          {/* Removed buy-crypto-searching route - not needed */}
           
             <Route path="/buy-crypto-waiting" element={<BuyCryptoWaiting />} />
             <Route path="/buy-crypto-success" element={<BuyCryptoSuccess />} />

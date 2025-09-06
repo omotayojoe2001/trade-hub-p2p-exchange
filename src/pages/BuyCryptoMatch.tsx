@@ -38,8 +38,8 @@ const BuyCryptoMatch = () => {
   };
 
   const handleContinue = () => {
-    // Navigate to searching page to simulate merchant acceptance and escrow
-    navigate("/buy-crypto-searching", { 
+    // Navigate directly to payment step 1 - NO old searching page
+    navigate("/buy-crypto-payment-step1", { 
       state: { 
         amount, 
         nairaAmount, 
