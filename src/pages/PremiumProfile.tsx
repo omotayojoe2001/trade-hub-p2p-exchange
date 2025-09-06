@@ -23,7 +23,8 @@ const PremiumProfile = () => {
     lastName: '',
     phone: '',
     location: '',
-    bio: ''
+    bio: '',
+    email: ''
   });
 
   useEffect(() => {
