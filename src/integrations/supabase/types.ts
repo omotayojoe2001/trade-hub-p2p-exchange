@@ -953,10 +953,13 @@ export type Database = {
           assigned_vendor_job_id: string | null
           bank_account_details: Json | null
           buyer_id: string
+          cash_payment_confirmed_at: string | null
           coin_type: string
           completed_at: string | null
           completion_time: unknown | null
           created_at: string | null
+          crypto_deposited_at: string | null
+          crypto_released_at: string | null
           crypto_type: string | null
           dispute_reason: string | null
           escrow_address: string | null
@@ -988,10 +991,13 @@ export type Database = {
           assigned_vendor_job_id?: string | null
           bank_account_details?: Json | null
           buyer_id: string
+          cash_payment_confirmed_at?: string | null
           coin_type: string
           completed_at?: string | null
           completion_time?: unknown | null
           created_at?: string | null
+          crypto_deposited_at?: string | null
+          crypto_released_at?: string | null
           crypto_type?: string | null
           dispute_reason?: string | null
           escrow_address?: string | null
@@ -1023,10 +1029,13 @@ export type Database = {
           assigned_vendor_job_id?: string | null
           bank_account_details?: Json | null
           buyer_id?: string
+          cash_payment_confirmed_at?: string | null
           coin_type?: string
           completed_at?: string | null
           completion_time?: unknown | null
           created_at?: string | null
+          crypto_deposited_at?: string | null
+          crypto_released_at?: string | null
           crypto_type?: string | null
           dispute_reason?: string | null
           escrow_address?: string | null

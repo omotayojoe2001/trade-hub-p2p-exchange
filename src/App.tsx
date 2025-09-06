@@ -36,6 +36,9 @@ import TradeStatus from "./pages/TradeStatus";
 import MerchantTradeRequests from "./pages/MerchantTradeRequests";
 import TradeDetails from "./pages/TradeDetails";
 import SellCrypto from "./pages/SellCrypto";
+import SellCryptoMerchantSelection from "./pages/SellCryptoMerchantSelection";
+import SellCryptoEscrow from "./pages/SellCryptoEscrow";
+import SellCryptoCompleted from "./pages/SellCryptoCompleted";
 import TradeCompleted from "./pages/TradeCompleted";
 import NotFound from "./pages/NotFound";
 import Referrals from "./pages/Referrals";
@@ -282,6 +285,10 @@ const AppContent = () => {
             <Route path="/merchant-trade-requests" element={<MerchantTradeRequests />} />
             <Route path="/trade-details/:tradeId" element={<TradeDetails />} />
             <Route path="/sell-crypto" element={<SellCrypto />} />
+            <Route path="/sell-crypto-merchant-selection" element={<SellCryptoMerchantSelection />} />
+            <Route path="/sell-crypto-escrow" element={<SellCryptoEscrow />} />
+            <Route path="/sell-crypto-waiting" element={<SellCryptoWaiting />} />
+            <Route path="/sell-crypto-completed" element={<SellCryptoCompleted />} />
             <Route path="/sell-crypto-match" element={<SellCryptoMatch />} />
             <Route path="/sell-crypto-waiting" element={<SellCryptoWaiting />} />
             <Route path="/sell-crypto-confirm-receipt" element={<SellCryptoConfirmReceipt />} />
