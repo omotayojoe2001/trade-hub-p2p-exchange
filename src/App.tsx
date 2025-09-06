@@ -26,8 +26,12 @@ import MerchantList from "./pages/MerchantList";
 import SelectCoin from "./pages/SelectCoin";
 import MyTrades from "./pages/MyTrades";
 
-import PaymentStatus from "./pages/PaymentStatus";
-import SellPaymentStatus from "./pages/SellPaymentStatus";
+import BuyCryptoPaymentStep1 from "./pages/BuyCryptoPaymentStep1";
+import BuyCryptoPaymentStep2 from "./pages/BuyCryptoPaymentStep2";
+import BuyCryptoPaymentStep3 from "./pages/BuyCryptoPaymentStep3";
+import SellCryptoPaymentStep1 from "./pages/SellCryptoPaymentStep1";
+import SellCryptoPaymentStep2 from "./pages/SellCryptoPaymentStep2";
+import SellCryptoPaymentStep3 from "./pages/SellCryptoPaymentStep3";
 import TradeStatus from "./pages/TradeStatus";
 import MerchantTradeRequests from "./pages/MerchantTradeRequests";
 import TradeDetails from "./pages/TradeDetails";
@@ -97,7 +101,7 @@ import ChatDetail from "./pages/ChatDetail";
 import CoinDetailPage from "./pages/CoinDetailPage";
 import PremiumTradeRequests from "./pages/PremiumTradeRequests";
 import CreateTradeRequest from "./pages/CreateTradeRequest";
-import PremiumPaymentStatus from "./pages/PremiumPaymentStatus";
+
 import Premium2FA from "./pages/Premium2FA";
 import PremiumProfile from "./pages/PremiumProfile";
 import UserProfile from "./components/UserProfile";
@@ -274,8 +278,12 @@ const AppContent = () => {
             <Route path="/my-trades" element={<MyTrades />} />
             <Route path="/news" element={<CryptoNews />} />
 
-            <Route path="/payment-status" element={<PaymentStatus />} />
-            <Route path="/sell-payment-status" element={<SellPaymentStatus />} />
+            <Route path="/buy-crypto-payment-step1" element={<BuyCryptoPaymentStep1 />} />
+            <Route path="/buy-crypto-payment-step2" element={<BuyCryptoPaymentStep2 />} />
+            <Route path="/buy-crypto-payment-step3" element={<BuyCryptoPaymentStep3 />} />
+            <Route path="/sell-crypto-payment-step1" element={<SellCryptoPaymentStep1 />} />
+            <Route path="/sell-crypto-payment-step2" element={<SellCryptoPaymentStep2 />} />
+            <Route path="/sell-crypto-payment-step3" element={<SellCryptoPaymentStep3 />} />
             <Route path="/trade-status" element={<TradeStatus />} />
             <Route path="/merchant-trade-requests" element={<MerchantTradeRequests />} />
             <Route path="/trade-details/:tradeId" element={<TradeDetails />} />
@@ -320,7 +328,7 @@ const AppContent = () => {
             <Route path="/coin-detail/:coinId" element={<CoinDetailPage />} />
             <Route path="/premium-trade-requests" element={<PremiumTradeRequests />} />
             <Route path="/create-trade-request" element={<CreateTradeRequest />} />
-            <Route path="/premium-payment-status" element={<PremiumPaymentStatus />} />
+            
             <Route path="/premium-2fa" element={<Premium2FA />} />
             <Route path="/premium-profile" element={<PremiumProfile />} />
             <Route path="/user-profile/:userId" element={<UserProfile />} />
