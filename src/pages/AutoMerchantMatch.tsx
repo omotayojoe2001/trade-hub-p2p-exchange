@@ -7,6 +7,8 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
+import { tradeRequestService } from '@/services/tradeRequestService';
+import { useToast } from '@/hooks/use-toast';
 
 const AutoMerchantMatch = () => {
   const [isMatching, setIsMatching] = useState(true);
@@ -15,6 +17,7 @@ const AutoMerchantMatch = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuth();
+  const { toast } = useToast();
   const { coinType, mode, amount, nairaAmount, selectedCoin, coinData } = location.state || {};
 
   useEffect(() => {
@@ -36,17 +39,16 @@ const AutoMerchantMatch = () => {
 
   const findBestMerchant = async () => {
     try {
-      // Get real merchants from database, excluding current user
+      // Get ALL real users from database, excluding current user
       const { data: merchants, error } = await supabase
         .from('profiles')
         .select(`
           user_id,
           display_name,
           phone_number,
-          is_merchant,
+          user_type,
           created_at
         `)
-        .eq('is_merchant', true)
         .neq('user_id', user?.id)
         .limit(10);
 
@@ -110,22 +112,39 @@ const AutoMerchantMatch = () => {
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const handleContinue = () => {
-    if (!matchedMerchant) return;
+  const handleContinue = async () => {
+    if (!matchedMerchant || !user?.id) return;
     
-    navigate('/payment-status', {
-      state: {
-        selectedMerchant: matchedMerchant,
-        coinType,
-        mode,
-        amount,
-        nairaAmount,
-        selectedCoin,
-        coinData,
-        matchingType: 'auto',
-        step: 1
-      }
-    });
+    try {
+      // Create a trade request to the matched merchant
+      const tradeRequestData = {
+        trade_type: (mode || 'buy') as 'buy' | 'sell',
+        coin_type: (coinType || 'BTC') as 'BTC' | 'ETH' | 'USDT',
+        amount: amount || 0.01,
+        naira_amount: nairaAmount || 1500000,
+        rate: (nairaAmount || 1500000) / (amount || 0.01),
+        payment_method: 'bank_transfer',
+        notes: `Auto-matched trade request for ${amount || 0.01} ${coinType || 'BTC'}`
+      };
+
+      await tradeRequestService.createTradeRequest(user.id, tradeRequestData);
+
+      toast({
+        title: "Trade Request Sent",
+        description: `Your trade request has been sent to ${matchedMerchant.display_name}`,
+      });
+
+      // Navigate to trades page
+      navigate('/my-trades');
+
+    } catch (error: any) {
+      console.error('Error sending trade request:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to send trade request",
+        variant: "destructive"
+      });
+    }
   };
 
   const handleFindAnother = () => {

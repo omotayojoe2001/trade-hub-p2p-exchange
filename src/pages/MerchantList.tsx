@@ -9,6 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { merchantService, MerchantProfile } from '@/services/merchantService';
 import { useAuth } from '@/hooks/useAuth';
+import { tradeRequestService } from '@/services/tradeRequestService';
 
 const MerchantList = () => {
   const [sortBy, setSortBy] = useState('best-rate');
@@ -81,7 +82,7 @@ const MerchantList = () => {
     }
   };
 
-  const handleMerchantSelect = (merchantId: string) => {
+  const handleMerchantSelect = async (merchantId: string) => {
     // Find merchant by user_id (not id)
     const selectedMerchant = merchants.find(m => m.user_id === merchantId);
     if (!selectedMerchant) {
@@ -93,29 +94,45 @@ const MerchantList = () => {
       return;
     }
 
-    console.log('Selected merchant:', selectedMerchant);
+    if (!user?.id) {
+      toast({
+        title: "Error",
+        description: "You must be logged in to send trade requests",
+        variant: "destructive"
+      });
+      return;
+    }
 
-    // Navigate to payment status page with selected merchant data
-    // DO NOT create trade request yet - that happens when user enters amount
-    navigate('/payment-status', {
-      state: {
-        selectedMerchant: {
-          id: selectedMerchant.user_id,
-          user_id: selectedMerchant.user_id,
-          name: selectedMerchant.display_name,
-          display_name: selectedMerchant.display_name,
-          rating: selectedMerchant.rating,
-          response_time: selectedMerchant.avg_response_time_minutes || 10,
-          // Add merchant rates if available (these might not exist yet)
-          btc_rate: 150000000, // Default BTC rate
-          eth_rate: 5000000,   // Default ETH rate
-          usdt_rate: 750       // Default USDT rate
-        },
-        coinType: coinType || 'BTC',
-        mode: 'buy',
-        step: 1
-      }
-    });
+    try {
+      // Create a trade request to the selected merchant
+      const tradeRequestData = {
+        trade_type: 'buy' as const,
+        coin_type: (coinType || 'BTC') as 'BTC' | 'ETH' | 'USDT',
+        amount: amount || 0.01,
+        naira_amount: nairaAmount || 1500000,
+        rate: (nairaAmount || 1500000) / (amount || 0.01),
+        payment_method: 'bank_transfer',
+        notes: `Trade request for ${amount || 0.01} ${coinType || 'BTC'}`
+      };
+
+      await tradeRequestService.createTradeRequest(user.id, tradeRequestData);
+
+      toast({
+        title: "Trade Request Sent",
+        description: `Your trade request has been sent to ${selectedMerchant.display_name}`,
+      });
+
+      // Navigate back or to a confirmation page
+      navigate('/my-trades');
+
+    } catch (error: any) {
+      console.error('Error sending trade request:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to send trade request",
+        variant: "destructive"
+      });
+    }
   };
 
   const getStatusColor = (isOnline: boolean) => {

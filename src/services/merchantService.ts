@@ -25,21 +25,20 @@ export const merchantService = {
   // Get all active merchants (excluding current user)
   async getMerchants(excludeUserId?: string): Promise<MerchantProfile[]> {
     try {
-      // Query profiles table for users with merchant mode enabled
-      // IMPORTANT: Always exclude current user - users should never see themselves in merchant lists
+      // Query profiles table for ALL users (not just merchants)
+      // Users can trade with each other regardless of merchant status
       let query = supabase
         .from('profiles')
         .select(`
           user_id,
           display_name,
+          phone_number,
           is_merchant,
           user_type,
           created_at
-        `)
-        .eq('is_merchant', true)
-        .in('user_type', ['merchant', 'premium']);
+        `);
 
-      // ALWAYS exclude current user from merchant list (users should never see themselves)
+      // CRITICAL: Always exclude current user from merchant list
       if (excludeUserId) {
         query = query.neq('user_id', excludeUserId);
       }
@@ -106,9 +105,9 @@ export const merchantService = {
         return {
           id: profile.user_id,
           user_id: profile.user_id,
-          display_name: profile.display_name || userProfile?.full_name || 'Merchant',
+          display_name: profile.display_name || userProfile?.full_name || 'User',
           rating: userProfile?.rating || 5.0,
-          is_online: merchantSettings?.is_online ?? true,
+          is_online: true, // Show all users as online for trading
           trade_count: userProfile?.trade_count || 0,
           total_volume: userProfile?.total_volume || 0,
           avg_response_time_minutes: merchantSettings?.avg_response_time_minutes || 10,
