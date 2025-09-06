@@ -7,6 +7,7 @@ import { useEscrowFlowManager } from '@/components/escrow/EscrowFlowManager';
 import { EscrowStatusDisplay } from '@/components/escrow/EscrowStatusDisplay';
 import { ReceiptGenerator } from '@/components/escrow/ReceiptGenerator';
 import { CurrencySelector } from '@/components/CurrencySelector';
+import { WalletAddressInput } from '@/components/WalletAddressInput';
 import { useCryptoPayments } from '@/hooks/useCryptoPayments';
 import AmountInput from '@/components/sell-crypto/AmountInput';
 
@@ -34,17 +35,33 @@ const EscrowFlow = () => {
   const [amount, setAmount] = useState<string>(initialAmount || '');
   const [currentRate, setCurrentRate] = useState<number>(1755000);
   
-  // Step 2: Merchant Selection
+  // Step 2: Wallet Address (for buyers)
+  const [walletAddress, setWalletAddress] = useState<string>('');
+  
+  // Step 3: Merchant Selection
   const [merchantSelection, setMerchantSelection] = useState<MerchantSelection>({ type: 'auto' });
   
-  // Step 3: Escrow Status
-  const [escrowStatus, setEscrowStatus] = useState<'pending' | 'crypto_received' | 'cash_sent' | 'completed' | 'disputed'>('pending');
+  // Step 4: Escrow Status
+  const [escrowStatus, setEscrowStatus] = useState<'pending' | 'vault_created' | 'crypto_received' | 'cash_sent' | 'completed' | 'disputed'>('pending');
   const [timeRemaining, setTimeRemaining] = useState<number>(30 * 60); // 30 minutes
   
-  // Step 4: Receipt
+  // Step 5: Receipt
   const [receiptData, setReceiptData] = useState<any>(null);
   
   const { getPaymentAddress, generateQRCode } = useCryptoPayments();
+
+  const {
+    transaction,
+    confirmCashReceived,
+    handleDispute: escrowHandleDispute,
+    isMonitoring,
+    setReceiverWalletAddress
+  } = useEscrowFlowManager({
+    transactionId: transactionId || 'mock-transaction-id',
+    onStatusChange: (status) => {
+      setEscrowStatus(status as any);
+    }
+  });
 
   // Live rate simulation
   useEffect(() => {
@@ -57,7 +74,7 @@ const EscrowFlow = () => {
 
   // Timer countdown
   useEffect(() => {
-    if (currentStep === 3 && timeRemaining > 0) {
+    if (currentStep === 4 && timeRemaining > 0) {
       const interval = setInterval(() => {
         setTimeRemaining(prev => Math.max(0, prev - 1));
       }, 1000);
@@ -73,20 +90,22 @@ const EscrowFlow = () => {
 
   const handleStepForward = () => {
     if (currentStep === 1) {
-      // Generate transaction ID and move to merchant selection
+      // Generate transaction ID and move to wallet address
       const newTransactionId = `ESC-${Date.now()}`;
       setTransactionId(newTransactionId);
       setCurrentStep(2);
     } else if (currentStep === 2) {
-      // Move to escrow monitoring
+      // Move to merchant selection
       setCurrentStep(3);
-      // Start monitoring process
+    } else if (currentStep === 3) {
+      // Move to escrow monitoring
+      setCurrentStep(4);
       startEscrowProcess();
     }
   };
 
   const startEscrowProcess = () => {
-    // Simulate escrow process
+    // Simulate escrow process with Fireblocks
     setTimeout(() => {
       setEscrowStatus('crypto_received');
     }, 5000);
@@ -100,21 +119,22 @@ const EscrowFlow = () => {
       transactionId,
       amount: parseFloat(amount),
       coin: selectedCrypto,
-      escrowAddress: getPaymentAddress('bitcoin', 'mainnet').address,
+      escrowAddress: transaction?.escrowAddress || '',
       receiverBankDetails: {
         accountNumber: '1234567890',
         bankName: 'First Bank Nigeria',
         accountName: 'No Account'
       },
       completedAt: new Date(),
-      txHash: ''
+      txHash: transaction?.txHash || '',
+      walletAddress: walletAddress
     };
     
     setReceiptData(receipt);
-    setCurrentStep(4);
+    setCurrentStep(5);
   };
 
-  const handleDispute = () => {
+  const handleLocalDispute = () => {
     setEscrowStatus('disputed');
     navigate('/dispute', { 
       state: { 
@@ -154,12 +174,12 @@ const EscrowFlow = () => {
             </Card>
 
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <h3 className="font-medium text-blue-900 mb-2">How Escrow Works</h3>
+              <h3 className="font-medium text-blue-900 mb-2">Fireblocks Escrow Protection</h3>
               <ul className="text-sm text-blue-800 space-y-1">
-                <li>• Your crypto is held securely until cash is confirmed</li>
-                <li>• Cash sender receives your bank details</li>
-                <li>• You confirm cash receipt to release crypto</li>
-                <li>• Auto-refund if no confirmation within 30 minutes</li>
+                <li>• Your crypto is held securely in institutional-grade vaults</li>
+                <li>• Multi-signature security and compliance</li>
+                <li>• Automatic release after cash confirmation</li>
+                <li>• Enterprise-level dispute resolution</li>
               </ul>
             </div>
 
@@ -168,7 +188,7 @@ const EscrowFlow = () => {
               disabled={!amount || parseFloat(amount) <= 0}
               className="w-full bg-blue-600 hover:bg-blue-700 text-white"
             >
-              Continue to Merchant Selection
+              Continue to Wallet Address
             </Button>
           </div>
         );
@@ -176,8 +196,30 @@ const EscrowFlow = () => {
       case 2:
         return (
           <div className="space-y-6">
+            <WalletAddressInput
+              cryptoType={selectedCrypto}
+              onAddressSet={(address) => {
+                setWalletAddress(address);
+                setReceiverWalletAddress(address);
+              }}
+              required={true}
+            />
+
+            <Button 
+              onClick={handleStepForward}
+              disabled={!walletAddress}
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+            >
+              Continue to Merchant Selection
+            </Button>
+          </div>
+        );
+
+      case 3:
+        return (
+          <div className="space-y-6">
             <Card className="p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Step 2: Choose Merchant</h2>
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">Step 3: Choose Merchant</h2>
               
               <div className="space-y-4">
                 <div 
@@ -249,46 +291,52 @@ const EscrowFlow = () => {
           </div>
         );
 
-      case 3:
+      case 4:
         return (
           <div className="space-y-6">
             <Card className="p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Step 3: Escrow in Progress</h2>
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">Step 4: Escrow in Progress</h2>
               
               <EscrowStatusDisplay
                 status={escrowStatus}
                 amount={parseFloat(amount)}
                 coin={selectedCrypto}
-                escrowAddress={getPaymentAddress('bitcoin', 'mainnet').address}
+                escrowAddress={transaction?.escrowAddress || ''}
                 timeRemaining={timeRemaining}
                 onConfirmCash={handleCashConfirmed}
-                onDispute={handleDispute}
+                onDispute={handleLocalDispute}
               />
             </Card>
 
-            {escrowStatus === 'pending' && (
+            {(escrowStatus === 'pending' || escrowStatus === 'vault_created') && transaction?.escrowAddress && (
               <Card className="p-4">
-                <h4 className="font-medium text-gray-900 mb-3">Send Crypto to Escrow</h4>
+                <h4 className="font-medium text-gray-900 mb-3">Send Crypto to Fireblocks Escrow</h4>
                 <div className="space-y-3">
                   <div className="bg-gray-50 p-3 rounded text-center">
                     <img 
-                      src={generateQRCode(getPaymentAddress('bitcoin', 'mainnet').address, parseFloat(amount))} 
+                      src={generateQRCode(transaction.escrowAddress, parseFloat(amount))} 
                       alt="Escrow QR Code" 
                       className="w-32 h-32 mx-auto mb-2"
                     />
                     <p className="text-xs text-gray-600">Scan to send {amount} {selectedCrypto}</p>
                   </div>
                   <div className="text-sm">
-                    <p className="text-gray-600">Escrow Address:</p>
-                    <p className="font-mono break-all">{getPaymentAddress('bitcoin', 'mainnet').address}</p>
+                    <p className="text-gray-600">Fireblocks Vault Address:</p>
+                    <p className="font-mono break-all bg-gray-100 p-2 rounded">{transaction.escrowAddress}</p>
                   </div>
+                  {transaction.vaultId && (
+                    <div className="text-sm">
+                      <p className="text-gray-600">Vault ID:</p>
+                      <p className="font-mono text-xs text-gray-500">{transaction.vaultId}</p>
+                    </div>
+                  )}
                 </div>
               </Card>
             )}
           </div>
         );
 
-      case 4:
+      case 5:
         return (
           <div className="space-y-6">
             <h2 className="text-lg font-semibold text-gray-900 text-center">Transaction Completed!</h2>
@@ -332,7 +380,7 @@ const EscrowFlow = () => {
           <Link to="/buy-sell">
             <ArrowLeft size={24} className="text-gray-700 mr-4" />
           </Link>
-          <h1 className="text-lg font-semibold text-gray-900">Crypto Escrow</h1>
+          <h1 className="text-lg font-semibold text-gray-900">Fireblocks Escrow</h1>
         </div>
         <MoreVertical size={24} className="text-gray-700" />
       </div>
@@ -340,14 +388,14 @@ const EscrowFlow = () => {
       {/* Progress Bar */}
       <div className="p-4 bg-gray-50">
         <div className="flex items-center">
-          {[1, 2, 3, 4].map((step) => (
+          {[1, 2, 3, 4, 5].map((step) => (
             <React.Fragment key={step}>
               <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
                 currentStep >= step ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-600'
               }`}>
                 {currentStep > step ? '✓' : step}
               </div>
-              {step < 4 && (
+              {step < 5 && (
                 <div className={`flex-1 h-0.5 mx-2 ${
                   currentStep > step ? 'bg-blue-500' : 'bg-gray-200'
                 }`} />
@@ -357,6 +405,7 @@ const EscrowFlow = () => {
         </div>
         <div className="flex justify-between text-xs text-gray-600 mt-2">
           <span>Details</span>
+          <span>Wallet</span>
           <span>Merchant</span>
           <span>Escrow</span>
           <span>Complete</span>

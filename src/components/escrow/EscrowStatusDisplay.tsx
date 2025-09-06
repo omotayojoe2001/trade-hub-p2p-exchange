@@ -4,7 +4,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 
 interface EscrowStatusDisplayProps {
-  status: 'pending' | 'crypto_received' | 'cash_sent' | 'completed' | 'disputed';
+  status: 'pending' | 'vault_created' | 'crypto_received' | 'cash_sent' | 'completed' | 'disputed';
   amount: number;
   coin: string;
   escrowAddress: string;

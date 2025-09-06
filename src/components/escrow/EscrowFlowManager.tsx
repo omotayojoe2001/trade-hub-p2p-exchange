@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useCryptoPayments } from '@/hooks/useCryptoPayments';
 import { useBlockchainAPI } from '@/hooks/useBlockchainAPI';
 import { useToast } from '@/hooks/use-toast';
+import { FireblocksEscrowService } from '@/services/fireblocksEscrowService';
 
 interface EscrowTransaction {
   id: string;
@@ -15,9 +16,11 @@ interface EscrowTransaction {
     bankName: string;
     accountName: string;
   };
-  status: 'pending' | 'crypto_received' | 'cash_sent' | 'completed' | 'disputed';
+  receiverWalletAddress?: string; // For crypto buyers
+  status: 'pending' | 'vault_created' | 'crypto_received' | 'cash_sent' | 'completed' | 'disputed';
   createdAt: Date;
   txHash?: string;
+  vaultId?: string;
   cashConfirmationTime?: Date;
 }
 
@@ -36,6 +39,7 @@ export const useEscrowFlowManager = ({
   const { verifyTransaction } = useBlockchainAPI();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const fireblocksService = new FireblocksEscrowService();
 
   useEffect(() => {
     // Initialize or load transaction from backend
@@ -49,57 +53,58 @@ export const useEscrowFlowManager = ({
   }, [transaction]);
 
   const initializeTransaction = async () => {
-    // In production, fetch from Supabase
-    // For now, create mock transaction
-    const mockTransaction: EscrowTransaction = {
-      id: transactionId,
-      amount: 0.5,
-      coin: 'bitcoin',
-      network: 'mainnet',
-      escrowAddress: getPaymentAddress('bitcoin', 'mainnet').address,
-      receiverBankDetails: {
-        accountNumber: '1234567890',
-        bankName: 'First Bank',
-        accountName: 'John Doe'
-      },
-      status: 'pending',
-      createdAt: new Date()
-    };
-    
-    setTransaction(mockTransaction);
+    try {
+      // Create Fireblocks escrow vault
+      const result = await fireblocksService.createEscrowVault(transactionId, 'BTC');
+      
+      if (result.success) {
+        const mockTransaction: EscrowTransaction = {
+          id: transactionId,
+          amount: 0.5,
+          coin: 'bitcoin',
+          network: 'mainnet',
+          escrowAddress: result.deposit_address!,
+          vaultId: result.vault_id,
+          receiverBankDetails: {
+            accountNumber: '1234567890',
+            bankName: 'First Bank',
+            accountName: 'John Doe'
+          },
+          receiverWalletAddress: '', // Will be set by user input
+          status: 'vault_created',
+          createdAt: new Date()
+        };
+        
+        setTransaction(mockTransaction);
+        
+        toast({
+          title: "Escrow Vault Created",
+          description: "Fireblocks vault created successfully for secure escrow",
+        });
+      } else {
+        throw new Error(result.error || 'Failed to create vault');
+      }
+    } catch (error) {
+      console.error('Error initializing transaction:', error);
+      toast({
+        title: "Error",
+        description: "Failed to initialize escrow transaction",
+        variant: "destructive",
+      });
+    }
   };
 
   const startCryptoMonitoring = () => {
     setIsMonitoring(true);
     
-    const monitoringInterval = setInterval(async () => {
-      if (!transaction) return;
-
-      try {
-        // Check blockchain for incoming transactions
-        const verification = await verifyTransaction(
-          transaction.txHash || 'mock-hash', 
-          transaction.coin === 'bitcoin' ? 'btc' : 'eth'
-        );
-
-        if (verification && verification.status === 'confirmed') {
-          updateTransactionStatus('crypto_received', verification.hash);
-          clearInterval(monitoringInterval);
-          setIsMonitoring(false);
-          
-          // Notify cash sender
-          await notifyCashSender();
-        }
-      } catch (error) {
-        console.error('Monitoring error:', error);
+    // Use Fireblocks monitoring
+    fireblocksService.monitorEscrowStatus(transactionId, (status) => {
+      if (status.has_received_funds) {
+        updateTransactionStatus('crypto_received');
+        setIsMonitoring(false);
+        notifyCashSender();
       }
-    }, 30000); // Check every 30 seconds
-
-    // Clear after 30 minutes
-    setTimeout(() => {
-      clearInterval(monitoringInterval);
-      setIsMonitoring(false);
-    }, 30 * 60 * 1000);
+    });
   };
 
   const updateTransactionStatus = (status: EscrowTransaction['status'], txHash?: string) => {
@@ -149,12 +154,37 @@ export const useEscrowFlowManager = ({
   };
 
   const releaseCryptoFromEscrow = async () => {
-    // In production, this would trigger blockchain transaction
-    // to release crypto from escrow to cash sender
-    toast({
-      title: "Crypto Released",
-      description: "Crypto has been released from escrow to the cash sender",
-    });
+    if (!transaction?.receiverWalletAddress) {
+      toast({
+        title: "Error",
+        description: "Recipient wallet address not provided",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const result = await fireblocksService.releaseFunds(
+        transactionId, 
+        transaction.receiverWalletAddress
+      );
+      
+      if (result.success) {
+        toast({
+          title: "Crypto Released",
+          description: "Crypto has been released from escrow to the recipient",
+        });
+      } else {
+        throw new Error(result.error || 'Failed to release funds');
+      }
+    } catch (error) {
+      console.error('Error releasing crypto:', error);
+      toast({
+        title: "Error",
+        description: "Failed to release crypto from escrow",
+        variant: "destructive",
+      });
+    }
   };
 
   const generateReceipt = () => {
@@ -177,7 +207,9 @@ export const useEscrowFlowManager = ({
   const getStatusMessage = (status: string) => {
     switch (status) {
       case 'pending':
-        return 'Waiting for crypto payment';
+        return 'Initializing escrow vault';
+      case 'vault_created':
+        return 'Escrow vault created, waiting for crypto deposit';
       case 'crypto_received':
         return 'Crypto received in escrow, notifying cash sender';
       case 'cash_sent':
@@ -188,6 +220,15 @@ export const useEscrowFlowManager = ({
         return 'Transaction under dispute';
       default:
         return 'Status updated';
+    }
+  };
+
+  const setReceiverWalletAddress = (address: string) => {
+    if (transaction) {
+      setTransaction({
+        ...transaction,
+        receiverWalletAddress: address
+      });
     }
   };
 
@@ -206,6 +247,7 @@ export const useEscrowFlowManager = ({
     confirmCashReceived,
     handleDispute,
     isMonitoring,
-    updateTransactionStatus
+    updateTransactionStatus,
+    setReceiverWalletAddress
   };
 };
