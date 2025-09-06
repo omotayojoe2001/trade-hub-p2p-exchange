@@ -337,8 +337,8 @@ export class EscrowTradeService {
         .from('trades')
         .select(`
           *,
-          buyer:profiles!buyer_id(display_name, phone_number),
-          seller:profiles!seller_id(display_name, phone_number)
+          buyer:user_profiles!buyer_id(full_name, phone),
+          seller:user_profiles!seller_id(full_name, phone)
         `)
         .eq('id', tradeId)
         .single();
