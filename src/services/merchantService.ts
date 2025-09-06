@@ -163,7 +163,6 @@ export const merchantService = {
           .from('merchant_settings')
           .upsert({
             user_id: userId,
-            merchant_type: 'manual',
             is_online: true,
             accepts_new_trades: true,
             avg_response_time_minutes: 10,
