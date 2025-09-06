@@ -85,11 +85,21 @@ const BuySell = () => {
   }, [user, isPremium, navigate]);
 
   const handleSellCrypto = () => {
-    navigate('/select-coin', { state: { mode: 'sell' } });
+    // Premium users go to premium merchant choice, regular users to coin selection  
+    if (isPremium) {
+      navigate('/premium-merchant-choice', { state: { mode: 'sell' } });
+    } else {
+      navigate('/select-coin', { state: { mode: 'sell' } });
+    }
   };
 
   const handleBuyCrypto = () => {
-    navigate('/select-coin', { state: { mode: 'buy' } });
+    // Premium users go to premium merchant choice, regular users to coin selection
+    if (isPremium) {
+      navigate('/premium-merchant-choice', { state: { mode: 'buy' } });
+    } else {
+      navigate('/select-coin', { state: { mode: 'buy' } });
+    }
   };
 
   return (

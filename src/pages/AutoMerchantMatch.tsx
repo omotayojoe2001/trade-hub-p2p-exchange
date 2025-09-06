@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Star, Clock, Zap, CheckCircle } from 'lucide-react';
+import { ArrowLeft, Star, Clock, Zap, CheckCircle, Users } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -52,21 +52,20 @@ const AutoMerchantMatch = () => {
 
       if (error) {
         console.error('Error fetching merchants:', error);
-        // Use fallback merchant
-        setMatchedMerchant(createFallbackMerchant());
+        setMatchedMerchant(null);
       } else if (merchants && merchants.length > 0) {
         // Select best merchant based on criteria
         const bestMerchant = selectBestMerchant(merchants);
         setMatchedMerchant(bestMerchant);
       } else {
-        // No merchants found, use fallback
-        setMatchedMerchant(createFallbackMerchant());
+        // No merchants found
+        setMatchedMerchant(null);
       }
       
       setIsMatching(false);
     } catch (error) {
       console.error('Error in auto-matching:', error);
-      setMatchedMerchant(createFallbackMerchant());
+      setMatchedMerchant(null);
       setIsMatching(false);
     }
   };
@@ -103,16 +102,7 @@ const AutoMerchantMatch = () => {
     return merchantsWithScores[0];
   };
 
-  const createFallbackMerchant = () => ({
-    user_id: 'fallback-merchant-1',
-    display_name: 'TradePro Merchant',
-    rating: 4.8,
-    response_time: 8,
-    completion_rate: 98.5,
-    total_trades: 342,
-    is_online: true,
-    verified: true
-  });
+  const createFallbackMerchant = () => null; // Don't create fake merchants
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -121,6 +111,8 @@ const AutoMerchantMatch = () => {
   };
 
   const handleContinue = () => {
+    if (!matchedMerchant) return;
+    
     navigate('/payment-status', {
       state: {
         selectedMerchant: matchedMerchant,
@@ -143,6 +135,40 @@ const AutoMerchantMatch = () => {
       findBestMerchant();
     }, 2000);
   };
+
+  // Show no merchants found screen
+  if (!isMatching && !matchedMerchant) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <div className="flex items-center p-4 bg-white border-b border-gray-200">
+          <button onClick={() => navigate(-1)} className="mr-3">
+            <ArrowLeft size={20} className="text-gray-600" />
+          </button>
+          <h1 className="text-lg font-semibold text-gray-900">No Merchants Available</h1>
+        </div>
+
+        <div className="p-6 text-center">
+          <div className="mb-6">
+            <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
+              <Users className="w-8 h-8 text-gray-400" />
+            </div>
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">
+              No Merchants Found
+            </h2>
+            <p className="text-gray-600 mb-4">
+              No merchants are currently available for auto-matching. Please try manual selection or check back later.
+            </p>
+            <Button
+              onClick={() => navigate('/merchant-list', { state: location.state })}
+              className="bg-blue-600 hover:bg-blue-700 text-white"
+            >
+              Browse Merchants Manually
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (isMatching) {
     return (

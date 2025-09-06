@@ -6,6 +6,8 @@ import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { usePremium } from '@/hooks/usePremium';
+import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
 import PremiumBottomNavigation from '@/components/premium/PremiumBottomNavigation';
 import BottomNavigation from '@/components/BottomNavigation';
 
@@ -13,8 +15,10 @@ const EnhancedBuyCrypto = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { isPremium } = usePremium();
+  const { user } = useAuth();
   const [searchParams] = useSearchParams();
   const preselectedCoin = searchParams.get('coin');
+  const [cryptoPrice, setCryptoPrice] = useState(0);
   
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
@@ -43,44 +47,8 @@ const EnhancedBuyCrypto = () => {
     { value: 'bank_transfer', label: 'Bank Transfer', fee: '0%', time: '5-10 mins', description: 'Direct bank transfer to seller' }
   ];
 
-  const sellers = [
-    {
-      id: '1',
-      name: 'CryptoKing',
-      rating: 4.9,
-      trades: 1247,
-      rate: 150234500,
-      available: '2.5 BTC',
-      paymentMethods: ['Bank Transfer', 'Mobile Money'],
-      responseTime: '2 mins',
-      isPremium: true,
-      online: true
-    },
-    {
-      id: '2',
-      name: 'BitMaster',
-      rating: 4.8,
-      trades: 892,
-      rate: 150245000,
-      available: '1.8 BTC',
-      paymentMethods: ['Bank Transfer', 'Cash Deposit'],
-      responseTime: '5 mins',
-      isPremium: true,
-      online: true
-    },
-    {
-      id: '3',
-      name: 'CoinTrader',
-      rating: 4.7,
-      trades: 634,
-      rate: 150250000,
-      available: '3.2 BTC',
-      paymentMethods: ['Bank Transfer'],
-      responseTime: '8 mins',
-      isPremium: false,
-      online: true
-    }
-  ];
+  const [sellers, setSellers] = useState<any[]>([]);
+  const [loadingSellers, setLoadingSellers] = useState(true);
 
   const getSelectedCrypto = () => {
     return cryptocurrencies.find(crypto => crypto.value === formData.cryptocurrency);
@@ -108,6 +76,69 @@ const EnhancedBuyCrypto = () => {
       selectedSeller: seller
     }));
     setStep(3);
+  };
+
+  useEffect(() => {
+    // Set default crypto price
+    const selectedCrypto = cryptocurrencies.find(c => c.value === formData.cryptocurrency);
+    if (selectedCrypto) {
+      setCryptoPrice(selectedCrypto.rate);
+    }
+    // Load real merchants from database
+    loadMerchants();
+  }, [formData.cryptocurrency, user]);
+
+  const loadMerchants = async () => {
+    if (!user?.id) return;
+    
+    try {
+      setLoadingSellers(true);
+      const { data: merchants, error } = await supabase
+        .from('profiles')
+        .select(`
+          user_id,
+          display_name,
+          is_merchant,
+          merchant_mode,
+          user_type,
+          created_at
+        `)
+        .eq('is_merchant', true)
+        .eq('merchant_mode', true)
+        .neq('user_id', user.id); // Exclude current user
+
+      if (error) {
+        console.error('Error loading merchants:', error);
+        setSellers([]);
+        return;
+      }
+
+      if (!merchants || merchants.length === 0) {
+        setSellers([]);
+        return;
+      }
+
+      // Transform to seller format
+      const transformedSellers = merchants.map((merchant, index) => ({
+        id: merchant.user_id,
+        name: merchant.display_name || `Merchant ${index + 1}`,
+        rating: 4.5 + Math.random() * 0.5, // Random rating for now
+        trades: Math.floor(Math.random() * 1000) + 100,
+        rate: cryptoPrice * (1 + (Math.random() * 0.002 - 0.001)), // Small price variation
+        available: `${(Math.random() * 3 + 0.5).toFixed(1)} ${formData.cryptocurrency}`,
+        paymentMethods: ['Bank Transfer'],
+        responseTime: `${Math.floor(Math.random() * 10) + 2} mins`,
+        isPremium: merchant.user_type === 'premium',
+        online: true
+      }));
+
+      setSellers(transformedSellers);
+    } catch (error) {
+      console.error('Error in loadMerchants:', error);
+      setSellers([]);
+    } finally {
+      setLoadingSellers(false);
+    }
   };
 
   const handleConfirmTrade = () => {

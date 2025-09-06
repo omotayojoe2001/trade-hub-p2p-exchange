@@ -189,8 +189,8 @@ const PremiumSettings = () => {
     {
       icon: <Crown size={20} className="text-purple-600" />,
       title: 'Manage Subscription',
-      description: 'View and manage your premium subscription',
-      action: () => setShowSubscriptionModal(true),
+      description: 'Switch between premium and regular account',
+      action: () => navigate('/manage-subscription'),
       premium: true
     },
     {

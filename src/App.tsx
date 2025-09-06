@@ -119,6 +119,8 @@ import EscrowFlow from "./pages/EscrowFlow";
 import ReceiptPage from "./pages/ReceiptPage";
 import { Blog } from "./pages/Blog";
 import MerchantMatchingChoice from "./pages/MerchantMatchingChoice";
+import PremiumMerchantChoice from "./pages/PremiumMerchantChoice";
+import ManageSubscription from "./pages/ManageSubscription";
 import AutoMerchantMatch from "./pages/AutoMerchantMatch";
 import VendorLogin from "./pages/VendorLogin";
 import SimpleVendorDashboard from "./pages/SimpleVendorDashboard";
@@ -258,8 +260,10 @@ const AppContent = () => {
             <Route path="/buy-crypto-dispute" element={<BuyCryptoDispute />} />
             <Route path="/merchant-selection" element={<MerchantSelection />} />
             <Route path="/merchant-matching-choice" element={<MerchantMatchingChoice />} />
+            <Route path="/premium-merchant-choice" element={<PremiumMerchantChoice />} />
             <Route path="/auto-merchant-match" element={<AutoMerchantMatch />} />
             <Route path="/merchant-list" element={<MerchantList />} />
+            <Route path="/manage-subscription" element={<ManageSubscription />} />
             <Route path="/select-coin" element={<SelectCoin />} />
             <Route path="/my-trades" element={<MyTrades />} />
             <Route path="/news" element={<CryptoNews />} />
