@@ -205,10 +205,13 @@ const PremiumTradeRequests = () => {
       // Accept the trade request in Supabase
       const trade = await tradeRequestService.acceptTradeRequest(requestId, user.id);
 
-      toast({
-        title: "Trade Request Accepted!",
-        description: `You've accepted the ${request.trade_type} request for ${request.amount} ${request.coin_type}`,
-      });
+      const request = tradeRequests.find(r => r.id === requestId);
+      if (request) {
+        toast({
+          title: "Trade Request Accepted!",
+          description: `You've accepted the ${request.trade_type} request for ${request.amount} ${request.coin_type}`,
+        });
+      }
 
       // Navigate to trade details page
       navigate('/trade-details', {
@@ -284,7 +287,7 @@ const PremiumTradeRequests = () => {
               <div className="text-xs text-gray-600">Active Requests</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-gray-900">{filteredRequests.filter(r => r.isPremium).length}</div>
+              <div className="text-2xl font-bold text-gray-900">{filteredRequests.filter(r => r.display_is_premium).length}</div>
               <div className="text-xs text-gray-600">Premium Users</div>
             </div>
             <div className="text-center">
@@ -373,7 +376,7 @@ const PremiumTradeRequests = () => {
           </Card>
         ) : (
           filteredRequests.map((request) => {
-            const isUserBuyingCrypto = request.type === 'buy';
+            const isUserBuyingCrypto = request.trade_type === 'buy';
             const merchantAction = isUserBuyingCrypto ? 'Send Crypto' : 'Send Cash';
             const userAction = isUserBuyingCrypto ? 'Send Cash' : 'Send Crypto';
             
@@ -385,14 +388,14 @@ const PremiumTradeRequests = () => {
                     <div className="flex items-center">
                       <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center mr-3 relative">
                         <ArrowUpDown size={16} className="text-gray-600" />
-                        {request.isPremium && (
+                        {request.display_is_premium && (
                           <Crown size={12} className="absolute -top-1 -right-1 text-yellow-500" />
                         )}
                       </div>
                       <div>
                         <div className="flex items-center space-x-2">
-                          <h4 className="font-medium text-gray-900 text-sm">{request.userName}</h4>
-                          {request.isPremium && (
+                          <h4 className="font-medium text-gray-900 text-sm">{request.display_name}</h4>
+                          {request.display_is_premium && (
                             <div className="bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded-full text-xs font-medium">
                               Premium
                             </div>
@@ -400,16 +403,16 @@ const PremiumTradeRequests = () => {
                         </div>
                         <div className="flex items-center">
                           <Star size={12} className="text-yellow-400 mr-1 fill-current" />
-                          <span className="text-xs text-gray-500">{request.rating.toFixed(1)}</span>
+                          <span className="text-xs text-gray-500">{request.display_rating?.toFixed(1) || '5.0'}</span>
                         </div>
                       </div>
                     </div>
                     <div className="text-right">
                       <div className="flex items-center text-orange-600 text-xs">
                         <Clock size={12} className="mr-1" />
-                        {request.timeLeft}
+                        {request.display_time_left}
                       </div>
-                      {request.isPremium && (
+                      {request.display_is_premium && (
                         <div className="flex items-center text-yellow-600 text-xs mt-1">
                           <Zap size={12} className="mr-1" />
                           Priority
@@ -423,8 +426,8 @@ const PremiumTradeRequests = () => {
                     <div>
                       <p className="text-gray-500 text-xs mb-1">Amount</p>
                       <div className="flex items-center">
-                        <CryptoIcon symbol={request.coin} size={16} className="mr-1" />
-                        <p className="font-semibold text-gray-900 text-sm">{request.amount} {request.coin}</p>
+                        <CryptoIcon symbol={request.coin_type} size={16} className="mr-1" />
+                        <p className="font-semibold text-gray-900 text-sm">{request.amount} {request.coin_type}</p>
                       </div>
                     </div>
                     <div>
@@ -433,29 +436,29 @@ const PremiumTradeRequests = () => {
                     </div>
                     <div>
                       <p className="text-gray-500 text-xs mb-1">Total Value</p>
-                      <p className="font-semibold text-gray-900 text-sm">{request.nairaAmount}</p>
+                      <p className="font-semibold text-gray-900 text-sm">₦{request.naira_amount?.toLocaleString()}</p>
                     </div>
                     <div>
                       <p className="text-gray-500 text-xs mb-1">Payment Methods</p>
-                      <p className="font-semibold text-gray-900 text-sm">{request.paymentMethods.length} options</p>
+                      <p className="font-semibold text-gray-900 text-sm">{request.payment_method || 'Bank Transfer'}</p>
                     </div>
                   </div>
 
                   {/* Action Required */}
-                  <div className={`${request.isPremium ? 'bg-yellow-50 border-yellow-200' : 'bg-gray-50 border-gray-200'} border rounded-lg p-3 mb-3`}>
+                  <div className={`${request.display_is_premium ? 'bg-yellow-50 border-yellow-200' : 'bg-gray-50 border-gray-200'} border rounded-lg p-3 mb-3`}>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center">
                         {isUserBuyingCrypto ? (
-                          <Coins size={16} className={`${request.isPremium ? 'text-yellow-600' : 'text-gray-600'} mr-2`} />
+                          <Coins size={16} className={`${request.display_is_premium ? 'text-yellow-600' : 'text-gray-600'} mr-2`} />
                         ) : (
-                          <Banknote size={16} className={`${request.isPremium ? 'text-yellow-600' : 'text-gray-600'} mr-2`} />
+                          <Banknote size={16} className={`${request.display_is_premium ? 'text-yellow-600' : 'text-gray-600'} mr-2`} />
                         )}
-                        <span className={`text-sm font-semibold ${request.isPremium ? 'text-yellow-800' : 'text-gray-800'}`}>
+                        <span className={`text-sm font-semibold ${request.display_is_premium ? 'text-yellow-800' : 'text-gray-800'}`}>
                           You need to: {merchantAction}
                         </span>
                       </div>
                     </div>
-                    <p className={`text-xs ${request.isPremium ? 'text-yellow-700' : 'text-gray-700'} mt-1`}>
+                    <p className={`text-xs ${request.display_is_premium ? 'text-yellow-700' : 'text-gray-700'} mt-1`}>
                       User will: {userAction}
                     </p>
                   </div>
@@ -478,7 +481,7 @@ const PremiumTradeRequests = () => {
                       }}
                       disabled={acceptingRequest === request.id}
                       className={`py-2 text-sm ${
-                        request.isPremium
+                        request.display_is_premium
                           ? 'bg-yellow-600 hover:bg-yellow-700'
                           : 'bg-gray-900 hover:bg-gray-800'
                       } text-white`}
@@ -486,7 +489,7 @@ const PremiumTradeRequests = () => {
                       {acceptingRequest === request.id ? (
                         <Loader2 size={14} className="mr-2 animate-spin" />
                       ) : (
-                        request.isPremium && <Crown size={14} className="mr-2" />
+                        request.display_is_premium && <Crown size={14} className="mr-2" />
                       )}
                       {acceptingRequest === request.id ? 'Accepting...' : 'Accept Trade'}
                     </Button>

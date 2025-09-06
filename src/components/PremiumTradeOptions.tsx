@@ -35,17 +35,21 @@ const PremiumTradeOptions: React.FC<PremiumTradeOptionsProps> = ({
     try {
       setLoading(true);
       
-      // Create regular trade request
-      const { data, error } = await supabase.rpc('create_premium_trade_request', {
-        p_user_id: user.id,
-        p_crypto_type: tradeData.crypto_type,
-        p_amount_crypto: tradeData.amount_crypto,
-        p_amount_fiat: tradeData.amount_fiat,
-        p_rate: tradeData.rate,
-        p_trade_type: tradeData.trade_type,
-        p_payment_method: tradeData.payment_method,
-        p_auto_match: false
-      });
+      // Create regular trade request  
+      const { data, error } = await supabase
+        .from('trade_requests')
+        .insert({
+          user_id: user.id,
+          crypto_type: tradeData.crypto_type,
+          amount_crypto: tradeData.amount_crypto,
+          amount_fiat: tradeData.amount_fiat,
+          rate: tradeData.rate,
+          trade_type: tradeData.trade_type,
+          payment_method: tradeData.payment_method,
+          status: 'open'
+        })
+        .select()
+        .single();
 
       if (error) throw error;
 
@@ -73,30 +77,25 @@ const PremiumTradeOptions: React.FC<PremiumTradeOptionsProps> = ({
     try {
       setLoading(true);
       
-      // Create auto-match trade request
-      const { data, error } = await supabase.rpc('create_premium_trade_request', {
-        p_user_id: user.id,
-        p_crypto_type: tradeData.crypto_type,
-        p_amount_crypto: tradeData.amount_crypto,
-        p_amount_fiat: tradeData.amount_fiat,
-        p_rate: tradeData.rate,
-        p_trade_type: tradeData.trade_type,
-        p_payment_method: tradeData.payment_method,
-        p_auto_match: true
+      // Create auto-match trade request with vendor system
+      const { data: vendorJob, error } = await supabase.rpc('create_premium_trade_with_vendor', {
+        p_premium_user_id: user.id,
+        p_amount_usd: tradeData.amount_crypto,
+        p_delivery_type: 'delivery'
       });
 
       if (error) throw error;
 
-      const result = data?.[0];
-      if (result?.auto_matched) {
+      if (vendorJob) {
         toast({
-          title: "Auto-Match Successful!",
-          description: `Matched with merchant! Trade ID: ${result.trade_id}`,
+          title: "Premium Trade Created!",
+          description: `Vendor assigned for ${tradeData.trade_type} ${tradeData.amount_crypto} ${tradeData.crypto_type}`,
         });
       } else {
         toast({
-          title: "No Auto-Match Available",
-          description: result?.message || "Posted as manual trade request",
+          title: "No Vendor Available",
+          description: "No vendors available for premium service right now",
+          variant: "destructive"
         });
       }
 

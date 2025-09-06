@@ -80,9 +80,9 @@ const Index = () => {
       const formattedRequests = (requestsData || []).map(request => ({
         id: request.id,
         type: request.trade_type,
-        coin: request.coin_type || 'BTC',
-        amount: request.amount || 0,
-        nairaAmount: request.naira_amount || 0,
+        coin: request.crypto_type || 'BTC',
+        amount: request.amount_crypto || 0,
+        nairaAmount: request.amount_fiat || 0,
         status: request.status === 'open' ? 'pending' : request.status,
         merchant: 'Pending Match',
         date: new Date(request.created_at),

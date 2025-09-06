@@ -72,7 +72,7 @@ const PaymentMethods = () => {
         accountNumber: account.account_number || '',
         accountName: account.account_name || '',
         isDefault: account.is_default || false,
-        country: account.country || 'NG',
+        country: 'NG',
         createdAt: account.created_at
       }));
 

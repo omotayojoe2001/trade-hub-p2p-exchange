@@ -13,13 +13,13 @@ import BottomNavigation from '@/components/BottomNavigation';
 interface TradeRequest {
   id: string;
   user_id: string;
-  trade_type: 'buy' | 'sell';
+  trade_type: string;
   coin_type: string;
   amount: number;
   naira_amount: number;
   rate: number;
   payment_method: string;
-  status: 'open' | 'accepted' | 'cancelled';
+  status: string;
   notes?: string;
   created_at: string;
   user_profile?: {
@@ -117,9 +117,19 @@ const MerchantTradeRequests = () => {
         console.error('Error fetching profiles:', profilesError);
       }
 
-      // Combine requests with user profiles
+      // Combine requests with user profiles  
       const formattedRequests = requests.map(request => ({
-        ...request,
+        id: request.id,
+        user_id: request.user_id,
+        trade_type: request.trade_type as string,
+        coin_type: request.crypto_type,
+        amount: request.amount_crypto,
+        naira_amount: request.amount_fiat,
+        rate: request.rate,
+        payment_method: request.payment_method,
+        status: request.status,
+        notes: '',
+        created_at: request.created_at,
         user_profile: profiles?.find(p => p.user_id === request.user_id) || {
           display_name: 'Unknown User',
           user_type: 'customer'

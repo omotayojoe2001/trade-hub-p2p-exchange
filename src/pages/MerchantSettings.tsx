@@ -109,18 +109,21 @@ const MerchantSettings = () => {
         .maybeSingle();
       
       if (merchantSettings) {
-        setIsOnline(merchantSettings.is_online || false);
-        setAcceptsNewTrades(merchantSettings.accepts_new_trades || false);
-        setAutoAcceptTrades(merchantSettings.auto_accept_trades || false);
-        setMinTradeAmount(merchantSettings.min_trade_amount || 0);
-        setMaxTradeAmount(merchantSettings.max_trade_amount || 1000000);
-        setAvgResponseTime(merchantSettings.avg_response_time_minutes || 15);
-        setBtcBuyRate(merchantSettings.btc_buy_rate || 0);
-        setBtcSellRate(merchantSettings.btc_sell_rate || 0);
-        setEthBuyRate(merchantSettings.eth_buy_rate || 0);
-        setEthSellRate(merchantSettings.eth_sell_rate || 0);
-        setUsdtBuyRate(merchantSettings.usdt_buy_rate || 0);
-        setUsdtSellRate(merchantSettings.usdt_sell_rate || 0);
+        setSettings(prev => ({
+          ...prev,
+          is_online: merchantSettings.is_online || false,
+          accepts_new_trades: merchantSettings.accepts_new_trades || false,
+          auto_accept_trades: merchantSettings.auto_accept_trades || false,
+          min_trade_amount: merchantSettings.min_trade_amount || 0,
+          max_trade_amount: merchantSettings.max_trade_amount || 1000000,
+          avg_response_time_minutes: merchantSettings.avg_response_time_minutes || 15,
+          exchange_rates: {
+            ...prev.exchange_rates,
+            BTC: { buy_rate: merchantSettings.btc_buy_rate || 0, sell_rate: merchantSettings.btc_sell_rate || 0 },
+            ETH: { buy_rate: merchantSettings.eth_buy_rate || 0, sell_rate: merchantSettings.eth_sell_rate || 0 },
+            USDT: { buy_rate: merchantSettings.usdt_buy_rate || 0, sell_rate: merchantSettings.usdt_sell_rate || 0 }
+          }
+        }));
       }
     } catch (error) {
       console.error('Error loading merchant settings:', error);

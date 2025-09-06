@@ -45,7 +45,7 @@ const PremiumPaymentMethods = () => {
 
       // Load real payment methods from database
       const { data, error } = await supabase
-        .from('bank_accounts')
+        .from('payment_methods')
         .select('*')
         .eq('user_id', user.id);
 

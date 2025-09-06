@@ -873,87 +873,42 @@ export type Database = {
       }
       trade_requests: {
         Row: {
-          accepted_at: string | null
-          amount: number
-          bank_details: Json | null
-          cash_amount: number
-          coin_type: string | null
-          completed_at: string | null
+          amount_crypto: number
+          amount_fiat: number
           created_at: string | null
           crypto_type: string
-          direction: string
           expires_at: string | null
           id: string
-          last_action_timestamp: string | null
-          merchant_id: string | null
-          merchant_rate: number | null
-          naira_amount: number | null
-          net_amount: number | null
-          payment_method: string | null
-          platform_fee_amount: number | null
-          platform_fee_percentage: number | null
+          payment_method: string
           rate: number
-          request_data: Json | null
-          request_step: number | null
-          selected_merchant_id: string | null
           status: string | null
-          trade_type: string | null
+          trade_type: string
           user_id: string
         }
         Insert: {
-          accepted_at?: string | null
-          amount: number
-          bank_details?: Json | null
-          cash_amount: number
-          coin_type?: string | null
-          completed_at?: string | null
+          amount_crypto: number
+          amount_fiat: number
           created_at?: string | null
           crypto_type: string
-          direction: string
           expires_at?: string | null
           id?: string
-          last_action_timestamp?: string | null
-          merchant_id?: string | null
-          merchant_rate?: number | null
-          naira_amount?: number | null
-          net_amount?: number | null
-          payment_method?: string | null
-          platform_fee_amount?: number | null
-          platform_fee_percentage?: number | null
+          payment_method: string
           rate: number
-          request_data?: Json | null
-          request_step?: number | null
-          selected_merchant_id?: string | null
           status?: string | null
-          trade_type?: string | null
+          trade_type: string
           user_id: string
         }
         Update: {
-          accepted_at?: string | null
-          amount?: number
-          bank_details?: Json | null
-          cash_amount?: number
-          coin_type?: string | null
-          completed_at?: string | null
+          amount_crypto?: number
+          amount_fiat?: number
           created_at?: string | null
           crypto_type?: string
-          direction?: string
           expires_at?: string | null
           id?: string
-          last_action_timestamp?: string | null
-          merchant_id?: string | null
-          merchant_rate?: number | null
-          naira_amount?: number | null
-          net_amount?: number | null
-          payment_method?: string | null
-          platform_fee_amount?: number | null
-          platform_fee_percentage?: number | null
+          payment_method?: string
           rate?: number
-          request_data?: Json | null
-          request_step?: number | null
-          selected_merchant_id?: string | null
           status?: string | null
-          trade_type?: string | null
+          trade_type?: string
           user_id?: string
         }
         Relationships: []
@@ -961,6 +916,8 @@ export type Database = {
       trades: {
         Row: {
           amount: number
+          amount_crypto: number | null
+          amount_fiat: number | null
           assigned_vendor_job_id: string | null
           bank_account_details: Json | null
           buyer_id: string
@@ -968,8 +925,10 @@ export type Database = {
           completed_at: string | null
           completion_time: unknown | null
           created_at: string | null
+          crypto_type: string | null
           dispute_reason: string | null
           escrow_address: string | null
+          escrow_status: string | null
           expires_at: string | null
           id: string
           last_action_timestamp: string | null
@@ -992,6 +951,8 @@ export type Database = {
         }
         Insert: {
           amount: number
+          amount_crypto?: number | null
+          amount_fiat?: number | null
           assigned_vendor_job_id?: string | null
           bank_account_details?: Json | null
           buyer_id: string
@@ -999,8 +960,10 @@ export type Database = {
           completed_at?: string | null
           completion_time?: unknown | null
           created_at?: string | null
+          crypto_type?: string | null
           dispute_reason?: string | null
           escrow_address?: string | null
+          escrow_status?: string | null
           expires_at?: string | null
           id?: string
           last_action_timestamp?: string | null
@@ -1023,6 +986,8 @@ export type Database = {
         }
         Update: {
           amount?: number
+          amount_crypto?: number | null
+          amount_fiat?: number | null
           assigned_vendor_job_id?: string | null
           bank_account_details?: Json | null
           buyer_id?: string
@@ -1030,8 +995,10 @@ export type Database = {
           completed_at?: string | null
           completion_time?: unknown | null
           created_at?: string | null
+          crypto_type?: string | null
           dispute_reason?: string | null
           escrow_address?: string | null
+          escrow_status?: string | null
           expires_at?: string | null
           id?: string
           last_action_timestamp?: string | null
@@ -1441,7 +1408,39 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      available_merchants: {
+        Row: {
+          completed_trades: number | null
+          created_at: string | null
+          display_name: string | null
+          id: string | null
+          is_merchant: boolean | null
+          is_premium: boolean | null
+          merchant_mode: boolean | null
+          total_trades: number | null
+        }
+        Insert: {
+          completed_trades?: never
+          created_at?: string | null
+          display_name?: string | null
+          id?: string | null
+          is_merchant?: boolean | null
+          is_premium?: boolean | null
+          merchant_mode?: boolean | null
+          total_trades?: never
+        }
+        Update: {
+          completed_trades?: never
+          created_at?: string | null
+          display_name?: string | null
+          id?: string | null
+          is_merchant?: boolean | null
+          is_premium?: boolean | null
+          merchant_mode?: boolean | null
+          total_trades?: never
+        }
+        Relationships: []
+      }
     }
     Functions: {
       assign_agent: {
@@ -1464,12 +1463,49 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      create_premium_trade_request: {
+        Args:
+          | {
+              p_amount_crypto: number
+              p_amount_fiat: number
+              p_auto_match?: boolean
+              p_crypto_type: string
+              p_payment_method: string
+              p_rate: number
+              p_trade_type: string
+              p_user_id: string
+            }
+          | {
+              p_amount_usd: number
+              p_delivery_type: string
+              p_premium_user_id: string
+            }
+        Returns: {
+          auto_matched: boolean
+          matched_merchant_id: string
+          message: string
+          request_id: string
+          trade_id: string
+        }[]
+      }
       create_premium_trade_with_vendor: {
         Args: {
           p_amount_usd: number
           p_delivery_address?: Json
           p_delivery_type: string
           p_premium_user_id: string
+        }
+        Returns: string
+      }
+      create_trade_request: {
+        Args: {
+          p_amount_crypto: number
+          p_amount_fiat: number
+          p_crypto_type: string
+          p_payment_method: string
+          p_rate: number
+          p_trade_type: string
+          p_user_id: string
         }
         Returns: string
       }
@@ -1492,6 +1528,25 @@ export type Database = {
       generate_trade_code: {
         Args: Record<PropertyKey, never>
         Returns: string
+      }
+      get_available_trade_requests: {
+        Args: { p_user_id: string }
+        Returns: {
+          amount_crypto: number
+          amount_fiat: number
+          created_at: string
+          crypto_type: string
+          id: string
+          payment_method: string
+          rate: number
+          trade_type: string
+          user_display_name: string
+          user_id: string
+        }[]
+      }
+      get_credit_balance: {
+        Args: { p_user_id: string }
+        Returns: number
       }
       get_trade_messages: {
         Args: { trade_uuid: string; user_uuid: string }
@@ -1519,6 +1574,18 @@ export type Database = {
           status: string
           trade_type: string
         }[]
+      }
+      notify_merchant_of_trade: {
+        Args: {
+          p_amount_usd: number
+          p_merchant_id: string
+          p_trade_id: string
+        }
+        Returns: undefined
+      }
+      update_credit_balance: {
+        Args: { p_amount: number; p_user_id: string }
+        Returns: boolean
       }
       update_merchant_ratings: {
         Args: { merchant_user_id: string }

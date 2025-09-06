@@ -114,7 +114,7 @@ const Messages = () => {
         receiver_id: 'other-user-id', // In real app, get from trade data
         content: text,
         message_type: 'text',
-        media_url: null,
+        // media_url: null, // Remove this line as it doesn't exist in schema
         read: false
       });
 

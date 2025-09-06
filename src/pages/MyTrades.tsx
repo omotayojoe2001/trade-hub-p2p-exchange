@@ -144,10 +144,10 @@ const MyTrades = () => {
         ...(tradeRequestsData || []).map(request => ({
           id: request.id,
           type: request.trade_type,
-          coin: request.coin_type,
-          amount: `₦${request.naira_amount?.toLocaleString() || '0'}`,
-          coinAmount: `≈ ${request.amount || 0} ${request.coin_type}`,
-          nairaAmount: request.naira_amount || 0,
+          coin: request.crypto_type,
+          amount: `₦${request.amount_fiat?.toLocaleString() || '0'}`,
+          coinAmount: `≈ ${request.amount_crypto || 0} ${request.crypto_type}`,
+          nairaAmount: request.amount_fiat || 0,
           merchant: request.status === 'cancelled' ? 'Cancelled' : 'Waiting for merchant...',
           rating: 0,
           status: request.status === 'cancelled' ? 'cancelled' : 'waiting_merchant',
@@ -314,7 +314,7 @@ const MyTrades = () => {
   };
 
   const handleConfirmPayment = (tradeId: number) => {
-    setSelectedTradeId(tradeId);
+    setSelectedTradeId(tradeId.toString());
     setShowConfirmDialog(true);
   };
 
@@ -770,6 +770,13 @@ const MyTrades = () => {
         isOpen={showConfirmDialog}
         onClose={() => setShowConfirmDialog(false)}
         onConfirm={handleConfirmationResponse}
+        amount={100000}
+        bankAccount={{
+          account_number: '1234567890',
+          bank_name: 'First Bank',
+          account_name: 'TradeHub Merchant'
+        }}
+        merchantName="Merchant"
       />
 
       {!isQuickAuthActive && <BottomNavigation />}

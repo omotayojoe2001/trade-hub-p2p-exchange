@@ -76,12 +76,12 @@ const ProfileSettings = () => {
               displayName: userProfileData.full_name || '',
               phoneNumber: userProfileData.phone || '',
               email: user.email || '',
-              location: userProfileData.location || '',
-              dateOfBirth: userProfileData.date_of_birth || '',
-              occupation: userProfileData.occupation || '',
-              bio: userProfileData.bio || ''
+              location: (userProfileData as any)?.location || '',
+              dateOfBirth: (userProfileData as any)?.date_of_birth || '',
+              occupation: (userProfileData as any)?.occupation || '',
+              bio: (userProfileData as any)?.bio || ''
             });
-            setProfilePicture(userProfileData.avatar_url);
+            setProfilePicture((userProfileData as any)?.avatar_url);
           }
         }
       } catch (error) {
