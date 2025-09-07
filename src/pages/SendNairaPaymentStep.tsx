@@ -46,8 +46,21 @@ const SendNairaPaymentStep = () => {
   const loadBankDetails = async () => {
     try {
       setLoading(true);
-      const bankInfo = await creditsService.getVendorBankDetails();
-      setBankDetails(bankInfo);
+      // Get the first available vendor's bank details
+      const { data: vendor, error } = await supabase
+        .from('vendors')
+        .select('bank_name, bank_account, display_name')
+        .eq('active', true)
+        .limit(1)
+        .single();
+
+      if (error) throw error;
+
+      setBankDetails({
+        account_number: vendor.bank_account,
+        bank_name: vendor.bank_name,
+        account_name: vendor.display_name
+      });
     } catch (error: any) {
       setError(error.message || 'Failed to load bank details');
     } finally {

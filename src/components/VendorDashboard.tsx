@@ -32,12 +32,55 @@ const VendorDashboard: React.FC = () => {
 
   const loadVendorJobs = async () => {
     try {
-      const vendorJobs = await premiumTradeService.getVendorJobs();
-      setJobs(vendorJobs);
+      // Get vendor's cash orders instead of regular crypto jobs
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('User not authenticated');
+
+      // Get vendor profile
+      const { data: vendor } = await supabase
+        .from('vendors')
+        .select('id')
+        .eq('user_id', user.id)
+        .single();
+
+      if (!vendor) throw new Error('Vendor profile not found');
+
+      // Get cash orders for this vendor
+      const { data: cashOrders, error } = await supabase
+        .from('vendor_jobs')
+        .select(`
+          *,
+          cash_order:cash_order_id (
+            *
+          ),
+          vendor:vendor_id (
+            display_name,
+            phone
+          )
+        `)
+        .eq('vendor_id', vendor.id)
+        .eq('order_type', 'naira_to_usd')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      // Transform to match VendorJob interface
+      const transformedJobs = (cashOrders || []).map(job => ({
+        ...job,
+        delivery_type: job.delivery_type as 'pickup' | 'delivery',
+        status: job.status as 'completed' | 'cancelled' | 'pending_payment' | 'payment_confirmed' | 'in_progress',
+        premium_user: {
+          display_name: 'Premium User',
+          phone_number: job.customer_phone || ''
+        }
+      }));
+
+      setJobs(transformedJobs);
     } catch (error: any) {
+      console.error('Error loading vendor jobs:', error);
       toast({
         title: "Error",
-        description: error.message,
+        description: error.message || 'Failed to load jobs',
         variant: "destructive"
       });
     } finally {

@@ -134,10 +134,20 @@ export class CashOrderService {
   // For vendors: Get cash orders assigned to them
   async getVendorCashOrders(vendorUserId: string): Promise<any[]> {
     try {
+      // Get vendor ID first
+      const { data: vendor, error: vendorError } = await supabase
+        .from('vendors')
+        .select('id')
+        .eq('user_id', vendorUserId)
+        .single();
+
+      if (vendorError) throw vendorError;
+
       const { data, error } = await supabase
         .from('vendor_jobs')
         .select(`
           *,
+          cash_order:cash_order_id (*),
           vendor:vendor_id (
             user_id,
             display_name,
@@ -146,6 +156,7 @@ export class CashOrderService {
             bank_name
           )
         `)
+        .eq('vendor_id', vendor.id)
         .eq('order_type', 'naira_to_usd')
         .order('created_at', { ascending: false });
 

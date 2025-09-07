@@ -1322,6 +1322,7 @@ export type Database = {
           amount_usd: number
           bank_tx_reference: string | null
           buyer_id: string | null
+          cash_order_id: string | null
           code_expires_at: string | null
           code_generated_at: string | null
           completed_at: string | null
@@ -1356,6 +1357,7 @@ export type Database = {
           amount_usd: number
           bank_tx_reference?: string | null
           buyer_id?: string | null
+          cash_order_id?: string | null
           code_expires_at?: string | null
           code_generated_at?: string | null
           completed_at?: string | null
@@ -1390,6 +1392,7 @@ export type Database = {
           amount_usd?: number
           bank_tx_reference?: string | null
           buyer_id?: string | null
+          cash_order_id?: string | null
           code_expires_at?: string | null
           code_generated_at?: string | null
           completed_at?: string | null
@@ -1419,6 +1422,13 @@ export type Database = {
           verification_code_hash?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "vendor_jobs_cash_order_id_fkey"
+            columns: ["cash_order_id"]
+            isOneToOne: false
+            referencedRelation: "cash_order_tracking"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "vendor_jobs_trade_id_fkey"
             columns: ["trade_id"]
