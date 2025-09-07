@@ -80,7 +80,16 @@ const SendNairaPaymentStep = () => {
   };
 
   const handleFileUpload = async (file: File) => {
-    if (!user) return;
+    if (!user) {
+      toast({
+        title: "Authentication required",
+        description: "Please log in to upload files",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    console.log('Starting file upload:', file.name, file.type, file.size);
     
     try {
       setUploading(true);
@@ -99,17 +108,29 @@ const SendNairaPaymentStep = () => {
       const fileExt = file.name.split('.').pop();
       const fileName = `${user.id}/payment-proof-${Date.now()}.${fileExt}`;
       
+      console.log('Uploading to:', fileName);
+      
+      // Try uploading to profiles bucket first (fallback)
       const { data, error } = await supabase.storage
-        .from('receipts')
-        .upload(fileName, file);
+        .from('profiles')
+        .upload(fileName, file, {
+          cacheControl: '3600',
+          upsert: false
+        });
         
-      if (error) throw error;
+      if (error) {
+        console.error('Storage upload error:', error);
+        throw error;
+      }
+      
+      console.log('Upload successful:', data);
       
       const { data: urlData } = supabase.storage
-        .from('receipts')
+        .from('profiles')
         .getPublicUrl(fileName);
         
       setPaymentProofUrl(urlData.publicUrl);
+      console.log('Public URL:', urlData.publicUrl);
       
       toast({
         title: "Upload successful",
