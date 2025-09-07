@@ -12,34 +12,20 @@ const VendorBottomNavigation = () => {
       label: 'Jobs',
       icon: Package,
       path: '/vendor/dashboard',
-      badge: 0 // Could be dynamic based on active jobs
+      badge: 0
     },
     {
       id: 'messages',
       label: 'Messages',
       icon: MessageCircle,
       path: '/vendor/messages',
-      badge: 0 // Could be dynamic based on unread messages
-    },
-    {
-      id: 'notifications',
-      label: 'Alerts',
-      icon: Bell,
-      path: '/vendor/notifications',
-      badge: 0 // Could be dynamic based on notifications
+      badge: 0
     },
     {
       id: 'profile',
       label: 'Profile',
       icon: User,
       path: '/vendor/profile',
-      badge: 0
-    },
-    {
-      id: 'settings',
-      label: 'Settings',
-      icon: Settings,
-      path: '/vendor/settings',
       badge: 0
     }
   ];

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, CheckCircle, AlertCircle, Phone, MapPin, User, DollarSign, Clock, Key } from 'lucide-react';
+import { ArrowLeft, CheckCircle, AlertCircle, Phone, MapPin, User, DollarSign, Key } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -7,30 +7,68 @@ import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { cashOrderService } from '@/services/cashOrderService';
+import { supabase } from '@/integrations/supabase/client';
+
+interface CashOrderDetails {
+  id: string;
+  user_id: string;
+  tracking_code: string;
+  order_type: string;
+  naira_amount: number;
+  usd_amount: number;
+  service_fee: number;
+  status: string;
+  payment_proof_url?: string;
+  delivery_details: any;
+  contact_details: any;
+  created_at: string;
+  vendor_job_id: string;
+  vendor_job: {
+    verification_code: string;
+    customer_phone?: string;
+  };
+}
 
 const VendorCashOrderDetails = () => {
-  const [orderDetails, setOrderDetails] = useState<any>(null);
+  const [orderDetails, setOrderDetails] = useState<CashOrderDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [verificationCode, setVerificationCode] = useState('');
   const [submitting, setSubmitting] = useState(false);
   
   const navigate = useNavigate();
-  const { jobId } = useParams();
+  const { orderId } = useParams();
   const { toast } = useToast();
 
   useEffect(() => {
-    if (jobId) {
+    if (orderId) {
       loadOrderDetails();
     }
-  }, [jobId]);
+  }, [orderId]);
 
   const loadOrderDetails = async () => {
     try {
       setLoading(true);
-      const data = await cashOrderService.getCashOrder(jobId!);
+      
+      const { data, error } = await supabase
+        .from('cash_order_tracking')
+        .select(`
+          *,
+          vendor_job:vendor_job_id (
+            verification_code,
+            customer_phone,
+            vendor:vendor_id (
+              display_name,
+              phone
+            )
+          )
+        `)
+        .eq('id', orderId)
+        .single();
+
+      if (error) throw error;
       setOrderDetails(data);
+      
     } catch (error: any) {
       setError(error.message || 'Failed to load order details');
     } finally {
@@ -39,21 +77,53 @@ const VendorCashOrderDetails = () => {
   };
 
   const handleConfirmPayment = async () => {
-    if (!jobId) return;
+    if (!orderDetails) return;
     
     try {
       setSubmitting(true);
-      const vendorUserId = localStorage.getItem('vendor_user_id');
-      if (!vendorUserId) throw new Error('Vendor user ID not found');
       
-      await cashOrderService.confirmPaymentReceived(orderDetails.vendor_job_id, vendorUserId);
+      // Update vendor job status
+      const { error: jobError } = await supabase
+        .from('vendor_jobs')
+        .update({ 
+          status: 'payment_confirmed',
+          payment_confirmed_at: new Date().toISOString()
+        })
+        .eq('id', orderDetails.vendor_job_id);
+
+      if (jobError) throw jobError;
+
+      // Update cash order status
+      const { error: orderError } = await supabase
+        .from('cash_order_tracking')
+        .update({ status: 'payment_confirmed' })
+        .eq('id', orderDetails.id);
+
+      if (orderError) throw orderError;
+
+      // Notify premium user
+      const { error: notifError } = await supabase
+        .from('notifications')
+        .insert({
+          user_id: orderDetails.user_id,
+          type: 'cash_order_update',
+          title: 'Payment Confirmed',
+          message: 'Vendor has confirmed payment. Your cash will be delivered soon.',
+          data: {
+            tracking_code: orderDetails.tracking_code,
+            cash_order_id: orderDetails.id
+          }
+        });
+
+      if (notifError) throw notifError;
       
       toast({
         title: "Payment confirmed",
         description: "Payment has been confirmed. Customer has been notified.",
       });
       
-      await loadOrderDetails(); // Refresh data
+      await loadOrderDetails();
+      
     } catch (error: any) {
       toast({
         title: "Error",
@@ -66,21 +136,61 @@ const VendorCashOrderDetails = () => {
   };
 
   const handleCompleteOrder = async () => {
-    if (!jobId || !verificationCode.trim()) return;
+    if (!orderDetails || !verificationCode.trim()) return;
     
     try {
       setSubmitting(true);
-      const vendorUserId = localStorage.getItem('vendor_user_id');
-      if (!vendorUserId) throw new Error('Vendor user ID not found');
       
-      await cashOrderService.completeOrder(orderDetails.vendor_job_id, verificationCode.trim(), vendorUserId);
+      // Verify the code matches
+      if (verificationCode.trim() !== orderDetails.vendor_job.verification_code) {
+        throw new Error('Invalid verification code');
+      }
+
+      // Update vendor job status
+      const { error: jobError } = await supabase
+        .from('vendor_jobs')
+        .update({ 
+          status: 'completed',
+          completed_at: new Date().toISOString()
+        })
+        .eq('id', orderDetails.vendor_job_id);
+
+      if (jobError) throw jobError;
+
+      // Update cash order status
+      const { error: orderError } = await supabase
+        .from('cash_order_tracking')
+        .update({ 
+          status: 'completed',
+          completed_at: new Date().toISOString()
+        })
+        .eq('id', orderDetails.id);
+
+      if (orderError) throw orderError;
+
+      // Notify premium user
+      const { error: notifError } = await supabase
+        .from('notifications')
+        .insert({
+          user_id: orderDetails.user_id,
+          type: 'cash_order_completed',
+          title: 'Order Completed',
+          message: 'Your cash order has been completed successfully!',
+          data: {
+            tracking_code: orderDetails.tracking_code,
+            cash_order_id: orderDetails.id
+          }
+        });
+
+      if (notifError) throw notifError;
       
       toast({
         title: "Order completed",
         description: "Order has been successfully completed.",
       });
       
-      await loadOrderDetails(); // Refresh data
+      await loadOrderDetails();
+      
     } catch (error: any) {
       toast({
         title: "Error",
@@ -108,32 +218,30 @@ const VendorCashOrderDetails = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading order details...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p>Loading order details...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-20">
+    <div className="min-h-screen bg-background pb-20">
       {/* Header */}
-      <div className="flex items-center p-4 bg-white border-b border-gray-200">
+      <div className="flex items-center p-4 border-b">
         <button onClick={() => navigate('/vendor/dashboard')} className="mr-3">
-          <ArrowLeft size={20} className="text-gray-600" />
+          <ArrowLeft size={20} />
         </button>
-        <h1 className="text-lg font-semibold text-gray-900">Cash Order Details</h1>
+        <h1 className="text-lg font-semibold">Cash Order Details</h1>
       </div>
 
       <div className="p-4">
         {error && (
-          <Alert className="mb-4 border-red-200 bg-red-50">
+          <Alert className="mb-4" variant="destructive">
             <AlertCircle className="h-4 w-4" />
-            <AlertDescription className="text-red-800">
-              {error}
-            </AlertDescription>
+            <AlertDescription>{error}</AlertDescription>
           </Alert>
         )}
 
@@ -152,17 +260,17 @@ const VendorCashOrderDetails = () => {
               <CardContent>
                 <div className="space-y-3">
                   <div className="flex justify-between">
-                    <span className="text-gray-600">Tracking Code:</span>
+                    <span className="text-muted-foreground">Tracking Code:</span>
                     <span className="font-semibold">{orderDetails.tracking_code}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-600">Order Type:</span>
+                    <span className="text-muted-foreground">Order Type:</span>
                     <span className="font-semibold">
                       {orderDetails.order_type === 'naira_to_usd_pickup' ? 'USD Pickup' : 'USD Delivery'}
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-600">Created:</span>
+                    <span className="text-muted-foreground">Created:</span>
                     <span className="font-semibold">
                       {new Date(orderDetails.created_at).toLocaleString()}
                     </span>
@@ -181,20 +289,20 @@ const VendorCashOrderDetails = () => {
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Naira Amount:</span>
+                  <span className="text-muted-foreground">Naira Amount:</span>
                   <span className="font-semibold">₦{orderDetails.naira_amount.toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600">USD Amount:</span>
+                  <span className="text-muted-foreground">USD Amount:</span>
                   <span className="font-semibold">${orderDetails.usd_amount}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Service Fee:</span>
+                  <span className="text-muted-foreground">Service Fee:</span>
                   <span className="font-semibold">₦{orderDetails.service_fee.toLocaleString()}</span>
                 </div>
                 <hr />
                 <div className="flex justify-between text-lg">
-                  <span className="text-gray-800 font-medium">Total Received:</span>
+                  <span className="font-medium">Total Received:</span>
                   <span className="font-bold text-green-600">
                     ₦{(orderDetails.naira_amount + orderDetails.service_fee).toLocaleString()}
                   </span>
@@ -212,7 +320,7 @@ const VendorCashOrderDetails = () => {
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Phone:</span>
+                  <span className="text-muted-foreground">Phone:</span>
                   <a 
                     href={`tel:${orderDetails.contact_details.phoneNumber}`}
                     className="text-blue-600 font-semibold"
@@ -220,29 +328,31 @@ const VendorCashOrderDetails = () => {
                     {orderDetails.contact_details.phoneNumber}
                   </a>
                 </div>
+                {orderDetails.contact_details.whatsappNumber && (
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">WhatsApp:</span>
+                    <a 
+                      href={`https://wa.me/${orderDetails.contact_details.whatsappNumber.replace(/\D/g, '')}`}
+                      className="text-green-600 font-semibold"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      {orderDetails.contact_details.whatsappNumber}
+                    </a>
+                  </div>
+                )}
                 <div className="flex justify-between">
-                  <span className="text-gray-600">WhatsApp:</span>
-                  <a 
-                    href={`https://wa.me/${orderDetails.contact_details.whatsappNumber.replace(/\D/g, '')}`}
-                    className="text-green-600 font-semibold"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    {orderDetails.contact_details.whatsappNumber}
-                  </a>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Preferred Date:</span>
+                  <span className="text-muted-foreground">Preferred Date:</span>
                   <span className="font-semibold">{orderDetails.contact_details.preferredDate}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Preferred Time:</span>
+                  <span className="text-muted-foreground">Preferred Time:</span>
                   <span className="font-semibold">{orderDetails.contact_details.preferredTime}</span>
                 </div>
                 {orderDetails.contact_details.additionalNotes && (
                   <div>
-                    <span className="text-gray-600">Notes:</span>
-                    <p className="mt-1 text-sm bg-gray-50 p-2 rounded">
+                    <span className="text-muted-foreground">Notes:</span>
+                    <p className="mt-1 text-sm bg-muted p-2 rounded">
                       {orderDetails.contact_details.additionalNotes}
                     </p>
                   </div>
@@ -267,11 +377,11 @@ const VendorCashOrderDetails = () => {
                   ) : (
                     <div className="space-y-1">
                       <p className="font-semibold">{orderDetails.delivery_details.street}</p>
-                      <p className="text-gray-600">
+                      <p className="text-muted-foreground">
                         {orderDetails.delivery_details.city}, {orderDetails.delivery_details.state}
                       </p>
                       {orderDetails.delivery_details.landmark && (
-                        <p className="text-sm text-gray-500">
+                        <p className="text-sm text-muted-foreground">
                           Landmark: {orderDetails.delivery_details.landmark}
                         </p>
                       )}
@@ -297,13 +407,34 @@ const VendorCashOrderDetails = () => {
               </Card>
             )}
 
+            {/* Customer's Verification Code (when ready for completion) */}
+            {orderDetails.status === 'payment_confirmed' && (
+              <Card className="mb-6">
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center space-x-2">
+                    <Key className="w-5 h-5 text-blue-600" />
+                    <span>Customer's Verification Code</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="bg-blue-50 p-4 rounded-lg text-center">
+                    <p className="text-sm text-blue-600 mb-2">Customer will provide this code for completion:</p>
+                    <p className="font-mono font-bold text-2xl text-blue-800">
+                      {orderDetails.vendor_job.verification_code}
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
             {/* Action Buttons */}
             <div className="space-y-3">
               {orderDetails.status === 'payment_submitted' && (
                 <Button
                   onClick={handleConfirmPayment}
                   disabled={submitting}
-                  className="w-full h-12 bg-green-600 hover:bg-green-700"
+                  className="w-full h-12"
+                  size="lg"
                 >
                   {submitting ? 'Confirming...' : 'Confirm Payment Received'}
                 </Button>
@@ -312,7 +443,7 @@ const VendorCashOrderDetails = () => {
               {orderDetails.status === 'payment_confirmed' && (
                 <>
                   <div className="space-y-3">
-                    <label className="block text-sm font-medium text-gray-700">
+                    <label className="block text-sm font-medium">
                       Enter customer's verification code:
                     </label>
                     <Input
@@ -326,7 +457,8 @@ const VendorCashOrderDetails = () => {
                   <Button
                     onClick={handleCompleteOrder}
                     disabled={submitting || !verificationCode.trim()}
-                    className="w-full h-12 bg-blue-600 hover:bg-blue-700"
+                    className="w-full h-12"
+                    size="lg"
                   >
                     {submitting ? 'Completing...' : 'Complete Order'}
                   </Button>
