@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Crown, CheckCircle, Star, Gift, ArrowRight } from 'lucide-react';
+import { Crown, CheckCircle, Star, Gift, ArrowRight, Key, Copy } from 'lucide-react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -12,6 +12,7 @@ const CashOrderThankYou = () => {
   const {
     orderType,
     code,
+    trackingCode,
     amount,
     currency,
     estimatedTime
@@ -126,6 +127,34 @@ const CashOrderThankYou = () => {
           </div>
         </Card>
 
+        {/* Quote Code - Most Important */}
+        <Card className="p-4 bg-white border-gray-200">
+          <h3 className="font-semibold text-gray-900 mb-4 flex items-center">
+            <Key size={20} className="mr-2 text-yellow-600" />
+            Your Quote Code (Give this to the vendor)
+          </h3>
+          <div className="bg-yellow-50 border-2 border-yellow-300 rounded-lg p-4 text-center">
+            <div className="text-4xl font-bold text-yellow-900 mb-2 tracking-wider">
+              {code}
+            </div>
+            <p className="text-sm text-yellow-700 mb-3">
+              Show this 6-digit code to the vendor when they deliver your cash
+            </p>
+            <Button
+              onClick={() => {
+                navigator.clipboard.writeText(code);
+                // You could add a toast notification here
+              }}
+              variant="outline"
+              size="sm"
+              className="border-yellow-300 text-yellow-700 hover:bg-yellow-100"
+            >
+              <Copy size={16} className="mr-2" />
+              Copy Code
+            </Button>
+          </div>
+        </Card>
+
         {/* Order Details */}
         <Card className="p-4 bg-white border-gray-200">
           <h3 className="font-semibold text-gray-900 mb-4">Order Details</h3>
@@ -139,7 +168,11 @@ const CashOrderThankYou = () => {
               <span className="font-medium text-gray-900">{amount} {currency}</span>
             </div>
             <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-              <span className="text-gray-600">Your Code:</span>
+              <span className="text-gray-600">Tracking Code:</span>
+              <span className="font-medium text-gray-900">{trackingCode || 'N/A'}</span>
+            </div>
+            <div className="flex justify-between items-center p-3 bg-yellow-50 rounded-lg border border-yellow-200">
+              <span className="text-yellow-700">Your Quote Code:</span>
               <span className="font-bold text-yellow-900 text-lg">{code}</span>
             </div>
             <div className="flex justify-between items-center p-3 bg-yellow-50 rounded-lg border border-yellow-200">

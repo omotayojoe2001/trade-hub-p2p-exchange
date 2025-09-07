@@ -15,6 +15,13 @@ const VendorBottomNavigation = () => {
       badge: 0
     },
     {
+      id: 'transactions',
+      label: 'Transactions',
+      icon: Bell,
+      path: '/vendor/transactions',
+      badge: 0
+    },
+    {
       id: 'messages',
       label: 'Messages',
       icon: MessageCircle,

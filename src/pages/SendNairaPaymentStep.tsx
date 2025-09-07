@@ -211,11 +211,24 @@ const SendNairaPaymentStep = () => {
         description: `Your order ${orderDetails.tracking_code} has been created and payment submitted`,
       });
       
+      // Get the verification code from the vendor job
+      const { data: vendorJobData, error: vendorJobError } = await supabase
+        .from('vendor_jobs')
+        .select('verification_code')
+        .eq('cash_order_id', orderId)
+        .single();
+        
+      if (vendorJobError) {
+        console.error('Failed to fetch verification code:', vendorJobError);
+        throw new Error('Failed to retrieve verification code');
+      }
+      
       // Navigate to thank you page
       navigate('/cash-order-thank-you', {
         state: {
           orderType: orderData.deliveryMethod === 'pickup' ? 'usd-pickup' : 'usd-delivery',
-          code: orderDetails.tracking_code,
+          code: vendorJobData.verification_code, // This is the 6-digit code for the vendor
+          trackingCode: orderDetails.tracking_code, // This is the tracking code
           amount: orderData.usdAmount,
           currency: 'USD',
           estimatedTime: orderData.deliveryMethod === 'pickup' ? '1-3 hours' : '2-6 hours',

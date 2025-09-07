@@ -138,6 +138,7 @@ import VendorMessages from "./pages/VendorMessages";
 import SendNairaPaymentStep from "./pages/SendNairaPaymentStep";
 import VendorCashOrderDetails from "./pages/VendorCashOrderDetails";
 import VendorPaymentConfirmation from "./pages/VendorPaymentConfirmation";
+import VendorTransactions from "./pages/VendorTransactions";
 // Removed BlogDetail - not needed
 import { ThankYouPage } from "./pages/ThankYouPage";
 // Removed SupabaseTest - not needed
@@ -390,6 +391,11 @@ const AppContent = () => {
         <Route path="/vendor/payment-confirmation/:orderId" element={
           <VendorAuthGuard>
             <VendorPaymentConfirmation />
+          </VendorAuthGuard>
+        } />
+        <Route path="/vendor/transactions" element={
+          <VendorAuthGuard>
+            <VendorTransactions />
           </VendorAuthGuard>
         } />
         {/* Removed demo/test routes - not needed */}

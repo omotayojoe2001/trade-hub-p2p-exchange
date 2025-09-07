@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { vendorPaymentService, CashOrderWithUserDetails } from '@/services/vendorPaymentService';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 // Using interfaces from the service
 
@@ -23,6 +24,7 @@ const VendorPaymentConfirmation = () => {
   const [showCompletionForm, setShowCompletionForm] = useState(false);
   const [quoteCode, setQuoteCode] = useState('');
   const [completing, setCompleting] = useState(false);
+  const [showPaymentProof, setShowPaymentProof] = useState(false);
   
   const navigate = useNavigate();
   const { orderId } = useParams();
@@ -361,26 +363,128 @@ const VendorPaymentConfirmation = () => {
                     <p className="font-medium font-mono">{orderDetails.tracking_code}</p>
                   </div>
                 </div>
+
+                {orderDetails.payment_proof_url && (
+                  <div className="flex items-center space-x-2">
+                    <FileText className="w-4 h-4 text-gray-500" />
+                    <div>
+                      <p className="text-sm text-gray-600">Payment Proof</p>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setShowPaymentProof(true)}
+                        className="mt-1"
+                      >
+                        View Payment Proof
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 
             {/* Delivery Details */}
             {orderDetails.delivery_details && (
               <div className="mt-4 p-4 bg-gray-50 rounded-lg">
-                <h4 className="font-medium mb-2">Delivery Information</h4>
-                <pre className="text-sm text-gray-600 whitespace-pre-wrap">
-                  {JSON.stringify(orderDetails.delivery_details, null, 2)}
-                </pre>
+                <h4 className="font-medium mb-3 flex items-center">
+                  <MapPin className="w-4 h-4 mr-2 text-gray-500" />
+                  Delivery Information
+                </h4>
+                <div className="space-y-2">
+                  {orderDetails.delivery_details.address && (
+                    <div className="flex items-start space-x-2">
+                      <MapPin className="w-4 h-4 text-gray-400 mt-0.5" />
+                      <div>
+                        <p className="text-sm text-gray-600">Address</p>
+                        <p className="font-medium text-gray-900">{orderDetails.delivery_details.address}</p>
+                      </div>
+                    </div>
+                  )}
+                  {orderDetails.delivery_details.landmark && (
+                    <div className="flex items-start space-x-2">
+                      <MapPin className="w-4 h-4 text-gray-400 mt-0.5" />
+                      <div>
+                        <p className="text-sm text-gray-600">Landmark</p>
+                        <p className="font-medium text-gray-900">{orderDetails.delivery_details.landmark}</p>
+                      </div>
+                    </div>
+                  )}
+                  {orderDetails.delivery_details.city && (
+                    <div className="flex items-start space-x-2">
+                      <MapPin className="w-4 h-4 text-gray-400 mt-0.5" />
+                      <div>
+                        <p className="text-sm text-gray-600">City</p>
+                        <p className="font-medium text-gray-900">{orderDetails.delivery_details.city}</p>
+                      </div>
+                    </div>
+                  )}
+                  {orderDetails.delivery_details.state && (
+                    <div className="flex items-start space-x-2">
+                      <MapPin className="w-4 h-4 text-gray-400 mt-0.5" />
+                      <div>
+                        <p className="text-sm text-gray-600">State</p>
+                        <p className="font-medium text-gray-900">{orderDetails.delivery_details.state}</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
 
             {/* Contact Details */}
             {orderDetails.contact_details && (
               <div className="mt-4 p-4 bg-gray-50 rounded-lg">
-                <h4 className="font-medium mb-2">Contact Information</h4>
-                <pre className="text-sm text-gray-600 whitespace-pre-wrap">
-                  {JSON.stringify(orderDetails.contact_details, null, 2)}
-                </pre>
+                <h4 className="font-medium mb-3 flex items-center">
+                  <Phone className="w-4 h-4 mr-2 text-gray-500" />
+                  Contact Information
+                </h4>
+                <div className="space-y-2">
+                  {orderDetails.contact_details.phoneNumber && (
+                    <div className="flex items-start space-x-2">
+                      <Phone className="w-4 h-4 text-gray-400 mt-0.5" />
+                      <div>
+                        <p className="text-sm text-gray-600">Phone Number</p>
+                        <p className="font-medium text-gray-900">{orderDetails.contact_details.phoneNumber}</p>
+                      </div>
+                    </div>
+                  )}
+                  {orderDetails.contact_details.whatsappNumber && (
+                    <div className="flex items-start space-x-2">
+                      <Phone className="w-4 h-4 text-gray-400 mt-0.5" />
+                      <div>
+                        <p className="text-sm text-gray-600">WhatsApp Number</p>
+                        <p className="font-medium text-gray-900">{orderDetails.contact_details.whatsappNumber}</p>
+                      </div>
+                    </div>
+                  )}
+                  {orderDetails.contact_details.preferredDate && (
+                    <div className="flex items-start space-x-2">
+                      <Calendar className="w-4 h-4 text-gray-400 mt-0.5" />
+                      <div>
+                        <p className="text-sm text-gray-600">Preferred Date</p>
+                        <p className="font-medium text-gray-900">{orderDetails.contact_details.preferredDate}</p>
+                      </div>
+                    </div>
+                  )}
+                  {orderDetails.contact_details.preferredTime && (
+                    <div className="flex items-start space-x-2">
+                      <Calendar className="w-4 h-4 text-gray-400 mt-0.5" />
+                      <div>
+                        <p className="text-sm text-gray-600">Preferred Time</p>
+                        <p className="font-medium text-gray-900">{orderDetails.contact_details.preferredTime}</p>
+                      </div>
+                    </div>
+                  )}
+                  {orderDetails.contact_details.additionalNotes && (
+                    <div className="flex items-start space-x-2">
+                      <FileText className="w-4 h-4 text-gray-400 mt-0.5" />
+                      <div>
+                        <p className="text-sm text-gray-600">Additional Notes</p>
+                        <p className="font-medium text-gray-900">{orderDetails.contact_details.additionalNotes}</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
           </CardContent>
@@ -491,6 +595,34 @@ const VendorPaymentConfirmation = () => {
             </CardContent>
           </Card>
         )}
+
+        {/* Payment Proof Dialog */}
+        <Dialog open={showPaymentProof} onOpenChange={setShowPaymentProof}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Payment Proof</DialogTitle>
+            </DialogHeader>
+            {orderDetails?.payment_proof_url && (
+              <div className="space-y-4">
+                <div className="text-center">
+                  <img 
+                    src={orderDetails.payment_proof_url} 
+                    alt="Payment proof"
+                    className="max-w-full h-auto rounded-lg border shadow-lg mx-auto"
+                  />
+                </div>
+                <div className="text-center">
+                  <Button
+                    onClick={() => window.open(orderDetails.payment_proof_url, '_blank')}
+                    variant="outline"
+                  >
+                    Open in New Tab
+                  </Button>
+                </div>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
