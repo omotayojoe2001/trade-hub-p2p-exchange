@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -15,15 +16,45 @@ import {
   Truck
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { premiumTradeService, type VendorJob } from '@/services/premiumTradeService';
 import { supabase } from '@/integrations/supabase/client';
 
+// Enhanced interface for cash order vendor jobs
+interface CashOrderVendorJob {
+  id: string;
+  premium_user_id: string;
+  vendor_id: string;
+  amount_usd: number;
+  amount_naira_received?: number;
+  delivery_type: 'pickup' | 'delivery';
+  status: 'pending_payment' | 'payment_submitted' | 'payment_confirmed' | 'in_progress' | 'completed' | 'cancelled';
+  verification_code: string;
+  address_json?: any;
+  created_at: string;
+  cash_order_id?: string;
+  order_type?: string;
+  customer_phone?: string;
+  vendor?: {
+    display_name: string;
+    phone: string;
+  };
+  premium_user?: {
+    display_name: string;
+    phone_number: string;
+  };
+  cash_order?: {
+    id: string;
+    tracking_code: string;
+    contact_details: any;
+  };
+}
+
 const VendorDashboard: React.FC = () => {
-  const [jobs, setJobs] = useState<VendorJob[]>([]);
+  const [jobs, setJobs] = useState<CashOrderVendorJob[]>([]);
   const [loading, setLoading] = useState(true);
   const [verificationCode, setVerificationCode] = useState('');
   const [activeJobId, setActiveJobId] = useState<string | null>(null);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   useEffect(() => {
     loadVendorJobs();
@@ -90,7 +121,18 @@ const VendorDashboard: React.FC = () => {
 
   const setupRealTimeSubscription = () => {
     const subscription = supabase
-      .channel('vendor_jobs_changes')
+      .channel('vendor_cash_orders_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'cash_order_tracking'
+        },
+        () => {
+          loadVendorJobs();
+        }
+      )
       .on(
         'postgres_changes',
         {
@@ -111,7 +153,16 @@ const VendorDashboard: React.FC = () => {
 
   const updateJobStatus = async (jobId: string, status: string) => {
     try {
-      await premiumTradeService.updateVendorJobStatus(jobId, status);
+      const { error } = await supabase
+        .from('vendor_jobs')
+        .update({
+          status,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', jobId);
+
+      if (error) throw error;
+
       await loadVendorJobs();
       
       toast({
@@ -121,7 +172,7 @@ const VendorDashboard: React.FC = () => {
     } catch (error: any) {
       toast({
         title: "Error",
-        description: error.message,
+        description: error.message || 'Failed to update status',
         variant: "destructive"
       });
     }
@@ -138,27 +189,12 @@ const VendorDashboard: React.FC = () => {
     }
 
     try {
-      const isValid = await premiumTradeService.verifyTradeCode(verificationCode, jobId);
-      
-      if (isValid) {
-        toast({
-          title: "Code Verified",
-          description: "Trade completed successfully"
-        });
-        setVerificationCode('');
-        setActiveJobId(null);
-        await loadVendorJobs();
-      } else {
-        toast({
-          title: "Invalid Code",
-          description: "The trade code is incorrect or already used",
-          variant: "destructive"
-        });
-      }
+      // This will be handled in the VendorCashOrderDetails page
+      navigate(`/vendor/cash-order/${jobId}`);
     } catch (error: any) {
       toast({
         title: "Error",
-        description: error.message,
+        description: error.message || 'Failed to process code',
         variant: "destructive"
       });
     }
@@ -167,6 +203,7 @@ const VendorDashboard: React.FC = () => {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'pending_payment': return 'bg-yellow-500';
+      case 'payment_submitted': return 'bg-orange-500';
       case 'payment_confirmed': return 'bg-blue-500';
       case 'in_progress': return 'bg-orange-500';
       case 'completed': return 'bg-green-500';
@@ -175,7 +212,7 @@ const VendorDashboard: React.FC = () => {
     }
   };
 
-  const renderJobCard = (job: VendorJob) => (
+  const renderJobCard = (job: CashOrderVendorJob) => (
     <Card key={job.id} className="p-4 space-y-4">
       <div className="flex justify-between items-start">
         <div>
@@ -220,19 +257,35 @@ const VendorDashboard: React.FC = () => {
 
       <div className="space-y-2">
         {job.status === 'pending_payment' && (
+          <>
+            <p className="text-sm text-muted-foreground">
+              Waiting for customer payment confirmation
+            </p>
+            <Button 
+              onClick={() => navigate(`/vendor/cash-order/${job.cash_order_id || job.id}`)}
+              className="w-full"
+              size="sm"
+              variant="outline"
+            >
+              View Order Details
+            </Button>
+          </>
+        )}
+        
+        {job.status === 'payment_submitted' && (
           <Button 
-            onClick={() => updateJobStatus(job.id, 'payment_confirmed')}
+            onClick={() => navigate(`/vendor/cash-order/${job.cash_order_id || job.id}`)}
             className="w-full"
             size="sm"
           >
             <CheckCircle className="h-4 w-4 mr-2" />
-            Confirm Payment Received
+            Review Payment & Confirm
           </Button>
         )}
         
         {job.status === 'payment_confirmed' && (
           <Button 
-            onClick={() => updateJobStatus(job.id, 'in_progress')}
+            onClick={() => navigate(`/vendor/cash-order/${job.cash_order_id || job.id}`)}
             className="w-full"
             size="sm"
           >
@@ -248,20 +301,12 @@ const VendorDashboard: React.FC = () => {
               <div className="font-mono font-bold text-lg">{job.verification_code}</div>
             </div>
             
-            <Input
-              placeholder="Enter code from customer"
-              value={activeJobId === job.id ? verificationCode : ''}
-              onChange={(e) => {
-                setVerificationCode(e.target.value);
-                setActiveJobId(job.id);
-              }}
-            />
             <Button 
-              onClick={() => verifyTradeCode(job.id)}
+              onClick={() => navigate(`/vendor/cash-order/${job.cash_order_id || job.id}`)}
               className="w-full"
               size="sm"
             >
-              Complete Trade
+              Complete Order
             </Button>
           </div>
         )}
@@ -270,6 +315,14 @@ const VendorDashboard: React.FC = () => {
           <div className="text-center p-3 bg-green-50 rounded">
             <CheckCircle className="h-5 w-5 text-green-500 mx-auto mb-1" />
             <div className="text-sm text-green-600 font-medium">Completed</div>
+            <Button 
+              onClick={() => navigate(`/vendor/cash-order/${job.cash_order_id || job.id}`)}
+              size="sm"
+              variant="outline"
+              className="mt-2"
+            >
+              View Details
+            </Button>
           </div>
         )}
       </div>
