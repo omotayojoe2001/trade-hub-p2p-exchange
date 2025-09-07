@@ -84,7 +84,7 @@ const SendNairaPaymentStep = () => {
     try {
       setUploading(true);
       const fileExt = file.name.split('.').pop();
-      const fileName = `payment-proof-${user.id}-${Date.now()}.${fileExt}`;
+      const fileName = `${user.id}/payment-proof-${Date.now()}.${fileExt}`;
       
       const { data, error } = await supabase.storage
         .from('profiles')
@@ -103,6 +103,7 @@ const SendNairaPaymentStep = () => {
         description: "Payment proof uploaded successfully",
       });
     } catch (error: any) {
+      console.error('Upload error:', error);
       toast({
         title: "Upload failed",
         description: error.message || "Failed to upload payment proof",

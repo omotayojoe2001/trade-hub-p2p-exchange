@@ -141,13 +141,23 @@ export class CashOrderService {
         .eq('user_id', vendorUserId)
         .single();
 
-      if (vendorError) throw vendorError;
+      if (vendorError) {
+        console.error('Vendor not found:', vendorError);
+        return [];
+      }
 
       const { data, error } = await supabase
         .from('vendor_jobs')
         .select(`
           *,
-          cash_order:cash_order_id (*),
+          cash_order:cash_order_id (
+            id,
+            tracking_code,
+            contact_details,
+            delivery_details,
+            payment_proof_url,
+            status
+          ),
           vendor:vendor_id (
             user_id,
             display_name,
@@ -160,11 +170,15 @@ export class CashOrderService {
         .eq('order_type', 'naira_to_usd')
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching vendor jobs:', error);
+        return [];
+      }
+      
       return data || [];
     } catch (error: any) {
       console.error('Error fetching vendor cash orders:', error);
-      throw new Error(error.message || 'Failed to fetch vendor cash orders');
+      return [];
     }
   }
 

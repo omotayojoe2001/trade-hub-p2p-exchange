@@ -68,21 +68,30 @@ const VendorDashboard: React.FC = () => {
       if (!user) throw new Error('User not authenticated');
 
       // Get vendor profile
-      const { data: vendor } = await supabase
+      const { data: vendor, error: vendorError } = await supabase
         .from('vendors')
         .select('id')
         .eq('user_id', user.id)
         .single();
 
-      if (!vendor) throw new Error('Vendor profile not found');
+      if (vendorError || !vendor) {
+        console.error('Vendor profile not found:', vendorError);
+        setJobs([]);
+        return;
+      }
 
-      // Get cash orders for this vendor
+      // Get cash orders for this vendor with proper joins
       const { data: cashOrders, error } = await supabase
         .from('vendor_jobs')
         .select(`
           *,
           cash_order:cash_order_id (
-            *
+            id,
+            tracking_code,
+            contact_details,
+            delivery_details,
+            payment_proof_url,
+            status
           ),
           vendor:vendor_id (
             display_name,
@@ -93,16 +102,20 @@ const VendorDashboard: React.FC = () => {
         .eq('order_type', 'naira_to_usd')
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching vendor jobs:', error);
+        setJobs([]);
+        return;
+      }
 
       // Transform to match VendorJob interface
       const transformedJobs = (cashOrders || []).map(job => ({
         ...job,
         delivery_type: job.delivery_type as 'pickup' | 'delivery',
-        status: job.status as 'completed' | 'cancelled' | 'pending_payment' | 'payment_confirmed' | 'in_progress',
+        status: job.status as 'completed' | 'cancelled' | 'pending_payment' | 'payment_submitted' | 'payment_confirmed' | 'in_progress',
         premium_user: {
           display_name: 'Premium User',
-          phone_number: job.customer_phone || ''
+          phone_number: (job.cash_order?.contact_details as any)?.phoneNumber || job.customer_phone || ''
         }
       }));
 
@@ -341,7 +354,7 @@ const VendorDashboard: React.FC = () => {
   }
 
   const activeJobs = jobs.filter(job => 
-    ['pending_payment', 'payment_confirmed', 'in_progress'].includes(job.status)
+    ['pending_payment', 'payment_submitted', 'payment_confirmed', 'in_progress'].includes(job.status)
   );
   const completedJobs = jobs.filter(job => job.status === 'completed');
 
