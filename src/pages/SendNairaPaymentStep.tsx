@@ -84,17 +84,29 @@ const SendNairaPaymentStep = () => {
     
     try {
       setUploading(true);
+      
+      // Validate file type
+      const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'application/pdf'];
+      if (!validTypes.includes(file.type)) {
+        throw new Error('Please upload only PNG, JPG, or PDF files');
+      }
+      
+      // Validate file size (10MB)
+      if (file.size > 10 * 1024 * 1024) {
+        throw new Error('File size must be less than 10MB');
+      }
+      
       const fileExt = file.name.split('.').pop();
       const fileName = `${user.id}/payment-proof-${Date.now()}.${fileExt}`;
       
       const { data, error } = await supabase.storage
-        .from('profiles')
+        .from('receipts')
         .upload(fileName, file);
         
       if (error) throw error;
       
       const { data: urlData } = supabase.storage
-        .from('profiles')
+        .from('receipts')
         .getPublicUrl(fileName);
         
       setPaymentProofUrl(urlData.publicUrl);
