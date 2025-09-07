@@ -149,47 +149,66 @@ const SendNairaPaymentStep = () => {
   };
 
   const handlePaymentConfirmation = async () => {
-    if (!user || !orderData || !paymentProofUrl) return;
+    if (!user || !orderData || !paymentProofUrl) {
+      toast({
+        title: "Missing information",
+        description: "Please upload payment proof before submitting",
+        variant: "destructive",
+      });
+      return;
+    }
     
     try {
       setSubmitting(true);
       
-      // Create cash order with vendor assignment
-      const orderId = await supabase.rpc('create_cash_order_with_vendor', {
-        p_user_id: user.id,
-        p_naira_amount: parseFloat(orderData.nairaAmount),
-        p_usd_amount: parseFloat(orderData.usdAmount),
-        p_service_fee: orderData.serviceFee,
-        p_order_type: orderData.deliveryMethod === 'pickup' ? 'naira_to_usd_pickup' : 'naira_to_usd_delivery',
-        p_delivery_details: orderData.deliveryMethod === 'pickup' 
+      console.log('Creating cash order with data:', {
+        userId: user.id,
+        nairaAmount: parseFloat(orderData.nairaAmount),
+        usdAmount: parseFloat(orderData.usdAmount),
+        serviceFee: orderData.serviceFee,
+        orderType: orderData.deliveryMethod === 'pickup' ? 'naira_to_usd_pickup' : 'naira_to_usd_delivery'
+      });
+      
+      // Create cash order with vendor assignment using the service
+      const orderId = await cashOrderService.createCashOrder(user.id, {
+        nairaAmount: parseFloat(orderData.nairaAmount),
+        usdAmount: parseFloat(orderData.usdAmount),
+        serviceFee: orderData.serviceFee || 0,
+        orderType: orderData.deliveryMethod === 'pickup' ? 'naira_to_usd_pickup' : 'naira_to_usd_delivery',
+        deliveryDetails: orderData.deliveryMethod === 'pickup' 
           ? { pickup_location: orderData.pickupLocation }
           : orderData.deliveryAddress,
-        p_contact_details: {
-          phone_number: orderData.phoneNumber,
-          whatsapp_number: orderData.whatsappNumber,
-          preferred_date: orderData.preferredDate,
-          preferred_time: orderData.preferredTime,
-          additional_notes: orderData.additionalNotes
+        contactDetails: {
+          phoneNumber: orderData.phoneNumber,
+          whatsappNumber: orderData.whatsappNumber,
+          preferredDate: orderData.preferredDate,
+          preferredTime: orderData.preferredTime,
+          additionalNotes: orderData.additionalNotes
         }
       });
       
-      if (!orderId.data) throw new Error('Failed to create cash order');
+      console.log('Cash order created successfully, ID:', orderId);
       
       // Update with payment proof using the service
-      await cashOrderService.updatePaymentProof(orderId.data, paymentProofUrl);
+      await cashOrderService.updatePaymentProof(orderId, paymentProofUrl);
+      
+      console.log('Payment proof updated successfully');
       
       // Get the tracking code
       const { data: orderDetails, error: fetchError } = await supabase
         .from('cash_order_tracking')
         .select('tracking_code')
-        .eq('id', orderId.data)
+        .eq('id', orderId)
         .single();
         
-      if (fetchError) throw fetchError;
+      if (fetchError) {
+        console.error('Failed to fetch tracking code:', fetchError);
+        throw new Error('Failed to retrieve order tracking information');
+      }
       
       toast({
-        title: "Payment submitted",
-        description: "Your payment has been submitted for verification",
+        title: "Payment submitted successfully",
+        description: `Your order ${orderDetails.tracking_code} has been created and payment submitted`,
       });
       
       // Navigate to thank you page
@@ -205,9 +224,10 @@ const SendNairaPaymentStep = () => {
       });
       
     } catch (error: any) {
+      console.error('Payment confirmation error:', error);
       toast({
         title: "Submission failed",
-        description: error.message || "Failed to submit payment confirmation",
+        description: error.message || "Failed to create cash order. Please try again.",
         variant: "destructive",
       });
     } finally {
