@@ -358,7 +358,7 @@ const SendNairaPaymentStep = () => {
             <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
               <Input
                 type="file"
-                accept="image/*"
+                accept="image/*,application/pdf"
                 onChange={(e) => {
                   const file = e.target.files?.[0];
                   if (file) {
@@ -375,7 +375,7 @@ const SendNairaPaymentStep = () => {
               >
                 <Upload className="w-12 h-12 text-gray-400" />
                 <p className="text-gray-600">Click to upload payment receipt</p>
-                <p className="text-sm text-gray-500">PNG, JPG up to 10MB</p>
+                <p className="text-sm text-gray-500">PNG, JPG, PDF up to 10MB</p>
               </label>
             </div>
             
