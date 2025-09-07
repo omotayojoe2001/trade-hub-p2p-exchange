@@ -316,10 +316,8 @@ const SimpleVendorDashboard = () => {
                         </div>
                         <Button
                           onClick={() => {
-                            const amount = prompt('Enter the Naira amount you received:');
-                            if (amount) {
-                              confirmPaymentReceived(job.id, parseFloat(amount));
-                            }
+                            // Navigate to detailed payment confirmation screen
+                            navigate(`/vendor/payment-confirmation/${job.cash_order_id || job.id}`);
                           }}
                           disabled={processingJobId === job.id}
                           className="w-full bg-green-600 hover:bg-green-700"
@@ -336,10 +334,8 @@ const SimpleVendorDashboard = () => {
                         </div>
                         <Button
                           onClick={() => {
-                            const code = prompt('Enter the verification code from customer:');
-                            if (code) {
-                              completeDelivery(job.id, code);
-                            }
+                            // Navigate to detailed payment confirmation screen for completion
+                            navigate(`/vendor/payment-confirmation/${job.cash_order_id || job.id}`);
                           }}
                           disabled={processingJobId === job.id}
                           className="w-full bg-purple-600 hover:bg-purple-700"
