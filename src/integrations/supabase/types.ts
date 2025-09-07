@@ -95,6 +95,71 @@ export type Database = {
         }
         Relationships: []
       }
+      cash_order_tracking: {
+        Row: {
+          completed_at: string | null
+          contact_details: Json | null
+          created_at: string | null
+          delivery_details: Json | null
+          id: string
+          naira_amount: number
+          order_type: string
+          payment_proof_url: string | null
+          service_fee: number
+          status: string | null
+          tracking_code: string
+          updated_at: string | null
+          usd_amount: number
+          user_id: string
+          vendor_confirmed_at: string | null
+          vendor_job_id: string | null
+        }
+        Insert: {
+          completed_at?: string | null
+          contact_details?: Json | null
+          created_at?: string | null
+          delivery_details?: Json | null
+          id?: string
+          naira_amount: number
+          order_type: string
+          payment_proof_url?: string | null
+          service_fee?: number
+          status?: string | null
+          tracking_code: string
+          updated_at?: string | null
+          usd_amount: number
+          user_id: string
+          vendor_confirmed_at?: string | null
+          vendor_job_id?: string | null
+        }
+        Update: {
+          completed_at?: string | null
+          contact_details?: Json | null
+          created_at?: string | null
+          delivery_details?: Json | null
+          id?: string
+          naira_amount?: number
+          order_type?: string
+          payment_proof_url?: string | null
+          service_fee?: number
+          status?: string | null
+          tracking_code?: string
+          updated_at?: string | null
+          usd_amount?: number
+          user_id?: string
+          vendor_confirmed_at?: string | null
+          vendor_job_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cash_order_tracking_vendor_job_id_fkey"
+            columns: ["vendor_job_id"]
+            isOneToOne: false
+            referencedRelation: "vendor_jobs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       credit_purchase_transactions: {
         Row: {
           created_at: string | null
@@ -1269,10 +1334,14 @@ export type Database = {
           fee_naira: number | null
           id: string
           last_message_at: string | null
+          naira_amount_paid: number | null
+          order_type: string | null
+          payment_confirmed_at: string | null
           payment_proof_url: string | null
           payment_received_at: string | null
           premium_user_id: string
           status: string
+          tracking_code: string | null
           trade_id: string | null
           updated_at: string | null
           vendor_id: string | null
@@ -1299,10 +1368,14 @@ export type Database = {
           fee_naira?: number | null
           id?: string
           last_message_at?: string | null
+          naira_amount_paid?: number | null
+          order_type?: string | null
+          payment_confirmed_at?: string | null
           payment_proof_url?: string | null
           payment_received_at?: string | null
           premium_user_id: string
           status?: string
+          tracking_code?: string | null
           trade_id?: string | null
           updated_at?: string | null
           vendor_id?: string | null
@@ -1329,10 +1402,14 @@ export type Database = {
           fee_naira?: number | null
           id?: string
           last_message_at?: string | null
+          naira_amount_paid?: number | null
+          order_type?: string | null
+          payment_confirmed_at?: string | null
           payment_proof_url?: string | null
           payment_received_at?: string | null
           premium_user_id?: string
           status?: string
+          tracking_code?: string | null
           trade_id?: string | null
           updated_at?: string | null
           vendor_id?: string | null
@@ -1504,6 +1581,18 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      create_cash_order_with_vendor: {
+        Args: {
+          p_contact_details: Json
+          p_delivery_details: Json
+          p_naira_amount: number
+          p_order_type: string
+          p_service_fee: number
+          p_usd_amount: number
+          p_user_id: string
+        }
+        Returns: string
+      }
       create_premium_trade_request: {
         Args:
           | {
@@ -1560,6 +1649,10 @@ export type Database = {
           p_password: string
           p_phone: string
         }
+        Returns: string
+      }
+      generate_cash_order_tracking_code: {
+        Args: { order_type: string }
         Returns: string
       }
       generate_tracking_code: {

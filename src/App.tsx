@@ -135,6 +135,8 @@ import PremiumCashDelivery from "./pages/PremiumCashDelivery";
 import VendorBankDetails from "./pages/VendorBankDetails";
 import VendorProfile from "./pages/VendorProfile";
 import VendorMessages from "./pages/VendorMessages";
+import SendNairaPaymentStep from "./pages/SendNairaPaymentStep";
+import VendorCashOrderDetails from "./pages/VendorCashOrderDetails";
 // Removed BlogDetail - not needed
 import { ThankYouPage } from "./pages/ThankYouPage";
 // Removed SupabaseTest - not needed
@@ -382,6 +384,8 @@ const AppContent = () => {
         {/* Premium Cash Services */}
         <Route path="/premium/cash-service" element={<PremiumCashDelivery />} />
         <Route path="/vendor-bank-details/:jobId?" element={<VendorBankDetails />} />
+        <Route path="/send-naira-payment" element={<SendNairaPaymentStep />} />
+        <Route path="/vendor/cash-order/:jobId" element={<VendorCashOrderDetails />} />
         {/* Removed demo/test routes - not needed */}
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />

@@ -156,29 +156,29 @@ const CashOrderThankYou = () => {
             <div className="flex items-start space-x-3">
               <div className="w-6 h-6 bg-yellow-500 text-white rounded-full flex items-center justify-center text-xs font-bold">1</div>
               <div>
-                <div className="font-medium text-gray-900">Order Processing</div>
-                <div className="text-sm text-gray-600">Your order is being processed with premium priority</div>
+                <div className="font-medium text-gray-900">Payment Verification</div>
+                <div className="text-sm text-gray-600">Vendor is verifying your payment receipt</div>
               </div>
             </div>
             <div className="flex items-start space-x-3">
               <div className="w-6 h-6 bg-yellow-500 text-white rounded-full flex items-center justify-center text-xs font-bold">2</div>
               <div>
-                <div className="font-medium text-gray-900">Agent Assignment</div>
-                <div className="text-sm text-gray-600">A premium agent will be assigned to your order</div>
+                <div className="font-medium text-gray-900">Payment Confirmation</div>
+                <div className="text-sm text-gray-600">You'll receive confirmation once payment is verified</div>
               </div>
             </div>
             <div className="flex items-start space-x-3">
               <div className="w-6 h-6 bg-yellow-500 text-white rounded-full flex items-center justify-center text-xs font-bold">3</div>
               <div>
-                <div className="font-medium text-gray-900">Notification</div>
-                <div className="text-sm text-gray-600">You'll receive updates via phone and WhatsApp</div>
+                <div className="font-medium text-gray-900">Cash Delivery/Pickup</div>
+                <div className="text-sm text-gray-600">Vendor will contact you for delivery or pickup</div>
               </div>
             </div>
             <div className="flex items-start space-x-3">
               <div className="w-6 h-6 bg-yellow-500 text-white rounded-full flex items-center justify-center text-xs font-bold">4</div>
               <div>
                 <div className="font-medium text-gray-900">Code Verification</div>
-                <div className="text-sm text-gray-600">Show your code to receive your cash</div>
+                <div className="text-sm text-gray-600">Show your code to receive your USD cash</div>
               </div>
             </div>
           </div>
@@ -192,9 +192,10 @@ const CashOrderThankYou = () => {
               <h4 className="font-medium text-blue-900">Important Notice</h4>
               <ul className="text-sm text-blue-700 mt-2 space-y-1">
                 <li>• Keep your code safe and don't share it with anyone</li>
-                <li>• You'll see a blinking notification when your order is ready</li>
-                <li>• Our agent will contact you 30 minutes before arrival</li>
+                <li>• You'll receive notifications when payment is confirmed</li>
+                <li>• Our vendor will contact you before delivery/pickup</li>
                 <li>• Have a valid ID ready for verification</li>
+                <li>• Payment verification usually takes 10-30 minutes</li>
               </ul>
             </div>
           </div>
@@ -207,7 +208,7 @@ const CashOrderThankYou = () => {
             className="w-full bg-yellow-600 hover:bg-yellow-700 text-white h-12"
           >
             <Crown size={16} className="mr-2" />
-            View My Premium Trades
+            View My Premium Orders
           </Button>
           
           <Button
@@ -215,7 +216,7 @@ const CashOrderThankYou = () => {
             variant="outline"
             className="w-full border-yellow-300 text-yellow-700 hover:bg-yellow-50 h-12"
           >
-            Start Another Trade
+            Start Another Order
             <ArrowRight size={16} className="ml-2" />
           </Button>
           

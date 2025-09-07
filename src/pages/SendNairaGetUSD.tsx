@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Crown, DollarSign, MapPin, Phone, Clock, Shield, Truck, Key } from 'lucide-react';
+import { ArrowLeft, Crown, DollarSign, MapPin, Phone, Clock, Truck, Key } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -58,20 +58,6 @@ const SendNairaGetUSD = () => {
     { value: 'night', label: '7:00 PM - 9:00 PM', available: false }
   ];
 
-  const getNextSevenDays = () => {
-    const days = [];
-    for (let i = 0; i < 7; i++) {
-      const date = new Date();
-      date.setDate(date.getDate() + i);
-      days.push({
-        value: date.toISOString().split('T')[0],
-        label: i === 0 ? 'Today' : i === 1 ? 'Tomorrow' : date.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' }),
-        available: true
-      });
-    }
-    return days;
-  };
-
   const calculateUSDAmount = () => {
     if (!formData.nairaAmount) return '0';
     const nairaAmount = parseFloat(formData.nairaAmount);
@@ -84,7 +70,6 @@ const SendNairaGetUSD = () => {
       const selectedLocation = pickupLocations.find(loc => loc.value === formData.pickupLocation);
       return selectedLocation?.fee || 0;
     } else if (formData.deliveryMethod === 'delivery') {
-      // Simple zone detection based on city/state
       const city = formData.deliveryAddress.city.toLowerCase();
       const state = formData.deliveryAddress.state.toLowerCase();
       
@@ -124,30 +109,11 @@ const SendNairaGetUSD = () => {
     }
   };
 
-  const generateCode = () => {
-    const prefix = formData.deliveryMethod === 'pickup' ? 'NP' : 'ND';
-    const year = new Date().getFullYear();
-    const random = Math.floor(Math.random() * 9000) + 1000;
-    return `${prefix}-${year}-${random}`;
-  };
-
   const handleConfirmOrder = () => {
-    const code = generateCode();
-    
-    toast({
-      title: "USD Order Confirmed",
-      description: `Your order code is ${code}. Keep it safe!`,
-    });
-    
-    // Navigate to thank you page
-    navigate('/cash-order-thank-you', {
+    // Navigate to payment step instead of directly to thank you page
+    navigate('/send-naira-payment', {
       state: {
-        orderType: formData.deliveryMethod === 'pickup' ? 'usd-pickup' : 'usd-delivery',
-        code,
-        amount: calculateNetUSD(),
-        currency: 'USD',
-        estimatedTime: formData.deliveryMethod === 'pickup' ? '1-3 hours' : '2-6 hours',
-        orderDetails: {
+        orderData: {
           nairaAmount: formData.nairaAmount,
           usdAmount: calculateNetUSD(),
           deliveryMethod: formData.deliveryMethod,
@@ -422,7 +388,7 @@ const SendNairaGetUSD = () => {
                   <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number *</label>
                   <Input
                     type="tel"
-                    placeholder="+234 801 234 5678"
+                    placeholder="+234 802 123 4567"
                     value={formData.phoneNumber}
                     onChange={(e) => handleInputChange('phoneNumber', e.target.value)}
                     className={isPremium ? 'border-yellow-200 focus:border-yellow-400' : ''}
@@ -432,7 +398,7 @@ const SendNairaGetUSD = () => {
                   <label className="block text-sm font-medium text-gray-700 mb-1">WhatsApp Number *</label>
                   <Input
                     type="tel"
-                    placeholder="+234 801 234 5678"
+                    placeholder="+234 802 123 4567"
                     value={formData.whatsappNumber}
                     onChange={(e) => handleInputChange('whatsappNumber', e.target.value)}
                     className={isPremium ? 'border-yellow-200 focus:border-yellow-400' : ''}
@@ -441,7 +407,7 @@ const SendNairaGetUSD = () => {
               </div>
             </Card>
 
-            {/* Date and Time */}
+            {/* Preferred Date and Time */}
             <Card className="p-4 bg-white border-gray-200">
               <h3 className="font-semibold text-gray-900 mb-3 flex items-center">
                 <Clock size={20} className="mr-2 text-gray-600" />
@@ -449,48 +415,35 @@ const SendNairaGetUSD = () => {
               </h3>
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Select Date</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Preferred Date *</label>
                   <Input
                     type="date"
+                    min={new Date().toISOString().split('T')[0]}
                     value={formData.preferredDate}
                     onChange={(e) => handleInputChange('preferredDate', e.target.value)}
-                    min={new Date().toISOString().split('T')[0]}
-                    className={`${
-                      isPremium
-                        ? 'border-yellow-200 focus:border-yellow-400'
-                        : 'border-blue-200 focus:border-blue-400'
-                    }`}
+                    className={isPremium ? 'border-yellow-200 focus:border-yellow-400' : ''}
                   />
-                  <div className="text-sm text-gray-600 mt-2">
-                    <strong>Note:</strong> Service available within 2-6 hours for same-day orders placed before 6 PM
-                  </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Time</label>
-                  <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-3">Preferred Time *</label>
+                  <div className="grid grid-cols-2 gap-3">
                     {timeSlots.map((slot) => (
                       <button
                         key={slot.value}
-                        onClick={() => slot.available && handleInputChange('preferredTime', slot.value)}
+                        onClick={() => handleInputChange('preferredTime', slot.value)}
                         disabled={!slot.available}
-                        className={`w-full p-3 rounded-lg border-2 transition-colors text-left ${
+                        className={`p-3 rounded-lg border-2 transition-colors text-left ${
                           formData.preferredTime === slot.value
                             ? isPremium
                               ? 'border-yellow-500 bg-yellow-50'
                               : 'border-blue-500 bg-blue-50'
-                            : slot.available
-                            ? 'border-gray-200 bg-gray-50'
-                            : 'border-gray-200 bg-gray-100 opacity-50 cursor-not-allowed'
+                            : slot.available 
+                              ? 'border-gray-200 bg-gray-50'
+                              : 'border-gray-100 bg-gray-100 opacity-50 cursor-not-allowed'
                         }`}
                       >
-                        <div className="flex items-center justify-between">
-                          <span className={`font-medium ${slot.available ? 'text-gray-900' : 'text-gray-500'}`}>
-                            {slot.label}
-                          </span>
-                          {!slot.available && (
-                            <span className="text-xs text-red-600 bg-red-100 px-2 py-1 rounded">Unavailable</span>
-                          )}
-                        </div>
+                        <div className="text-sm font-medium text-gray-900">{slot.label}</div>
+                        {!slot.available && <div className="text-xs text-gray-500">Not available</div>}
                       </button>
                     ))}
                   </div>
@@ -502,15 +455,11 @@ const SendNairaGetUSD = () => {
             <Card className="p-4 bg-white border-gray-200">
               <h3 className="font-semibold text-gray-900 mb-3">Additional Notes (Optional)</h3>
               <Textarea
-                placeholder="Any special instructions or additional information..."
+                placeholder="Special instructions, gate codes, or any other information"
                 value={formData.additionalNotes}
                 onChange={(e) => handleInputChange('additionalNotes', e.target.value)}
-                className={`${isPremium ? 'border-yellow-200 focus:border-yellow-400' : ''} min-h-[80px]`}
-                maxLength={500}
+                className={`min-h-[80px] ${isPremium ? 'border-yellow-200 focus:border-yellow-400' : ''}`}
               />
-              <div className="text-xs text-gray-500 mt-1">
-                {formData.additionalNotes.length}/500 characters
-              </div>
             </Card>
 
             {/* Order Summary */}
@@ -519,47 +468,47 @@ const SendNairaGetUSD = () => {
               <div className="space-y-2">
                 <div className="flex justify-between">
                   <span className="text-gray-600">Naira Amount:</span>
-                  <span className="font-medium text-gray-900">₦{parseFloat(formData.nairaAmount).toLocaleString()}</span>
+                  <span className="font-medium">₦{parseFloat(formData.nairaAmount || '0').toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Service Fee:</span>
-                  <span className="font-medium text-gray-900">₦{getServiceFee().toLocaleString()}</span>
+                  <span className="font-medium">₦{getServiceFee().toLocaleString()}</span>
                 </div>
-                <div className="border-t pt-2">
-                  <div className="flex justify-between">
-                    <span className="font-semibold text-gray-900">USD Cash to Receive:</span>
-                    <span className="font-bold text-green-600">${calculateNetUSD()}</span>
-                  </div>
+                <hr className="my-2" />
+                <div className="flex justify-between text-lg">
+                  <span className="font-medium">You'll Receive:</span>
+                  <span className="font-bold text-green-600">${calculateNetUSD()} USD</span>
                 </div>
               </div>
             </Card>
 
-            <div className="space-y-3">
+            {/* Navigation Buttons */}
+            <div className="flex space-x-3">
+              <Button
+                onClick={() => setStep(1)}
+                variant="outline"
+                className="flex-1 h-12"
+              >
+                Back
+              </Button>
               <Button
                 onClick={handleConfirmOrder}
                 disabled={!isStep2Valid()}
-                className={`w-full h-12 ${
+                className={`flex-1 h-12 ${
                   isPremium
                     ? 'bg-yellow-600 hover:bg-yellow-700'
                     : 'bg-blue-600 hover:bg-blue-700'
                 } text-white`}
               >
-                <Key size={16} className="mr-2" />
-                Confirm USD Order
-              </Button>
-              <Button
-                onClick={() => setStep(1)}
-                variant="outline"
-                className="w-full"
-              >
-                Back to Amount
+                {isPremium && <Crown size={16} className="mr-2" />}
+                Proceed to Payment
               </Button>
             </div>
           </>
         )}
       </div>
 
-      {isPremium ? <PremiumBottomNavigation /> : null}
+      {isPremium && <PremiumBottomNavigation />}
     </div>
   );
 };
