@@ -114,6 +114,11 @@ const VendorPaymentConfirmation = () => {
         });
         // Reload order details to show completed status
         await loadOrderDetails();
+        
+        // Redirect to vendor dashboard after 2 seconds
+        setTimeout(() => {
+          navigate('/vendor/dashboard');
+        }, 2000);
       } else {
         toast({
           title: "Invalid Quote Code",
@@ -598,25 +603,27 @@ const VendorPaymentConfirmation = () => {
 
         {/* Payment Proof Dialog */}
         <Dialog open={showPaymentProof} onOpenChange={setShowPaymentProof}>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
+          <DialogContent className="max-w-4xl max-h-[90vh] w-[95vw] p-0">
+            <DialogHeader className="p-6 pb-0">
               <DialogTitle>Payment Proof</DialogTitle>
+              <p className="text-sm text-gray-600">View the payment proof uploaded by the customer</p>
             </DialogHeader>
             {orderDetails?.payment_proof_url && (
-              <div className="space-y-4">
-                <div className="text-center">
+              <div className="flex-1 overflow-hidden">
+                <div className="h-full flex items-center justify-center p-6">
                   <img 
                     src={orderDetails.payment_proof_url} 
                     alt="Payment proof"
-                    className="max-w-full h-auto rounded-lg border shadow-lg mx-auto"
+                    className="max-w-full max-h-full object-contain rounded-lg border shadow-lg"
+                    style={{ maxHeight: 'calc(90vh - 120px)' }}
                   />
                 </div>
-                <div className="text-center">
+                <div className="p-6 pt-0 text-center border-t">
                   <Button
-                    onClick={() => window.open(orderDetails.payment_proof_url, '_blank')}
+                    onClick={() => setShowPaymentProof(false)}
                     variant="outline"
                   >
-                    Open in New Tab
+                    Close
                   </Button>
                 </div>
               </div>

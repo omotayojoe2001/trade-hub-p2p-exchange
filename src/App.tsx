@@ -139,6 +139,7 @@ import SendNairaPaymentStep from "./pages/SendNairaPaymentStep";
 import VendorCashOrderDetails from "./pages/VendorCashOrderDetails";
 import VendorPaymentConfirmation from "./pages/VendorPaymentConfirmation";
 import VendorTransactions from "./pages/VendorTransactions";
+import PersistentQuoteCode from "./components/premium/PersistentQuoteCode";
 // Removed BlogDetail - not needed
 import { ThankYouPage } from "./pages/ThankYouPage";
 // Removed SupabaseTest - not needed
@@ -402,6 +403,9 @@ const AppContent = () => {
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
+        
+        {/* Persistent Quote Code for Premium Users */}
+        <PersistentQuoteCode />
     </>
   );
 };
