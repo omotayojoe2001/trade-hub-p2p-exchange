@@ -61,6 +61,7 @@ export class CashOrderService {
   // Update payment proof for cash order
   async updatePaymentProof(orderId: string, paymentProofUrl: string): Promise<void> {
     try {
+      // Update payment proof
       const { error } = await supabase
         .from('cash_order_tracking')
         .update({ 
@@ -70,6 +71,38 @@ export class CashOrderService {
         .eq('id', orderId);
 
       if (error) throw error;
+
+      // Get order details for notification
+      const { data: orderData } = await supabase
+        .from('cash_order_tracking')
+        .select(`
+          tracking_code,
+          usd_amount,
+          vendor_job:vendor_job_id (
+            vendor:vendor_id (
+              user_id
+            )
+          )
+        `)
+        .eq('id', orderId)
+        .single();
+
+      // Notify vendor about payment proof upload
+      if (orderData?.vendor_job?.vendor?.user_id) {
+        await supabase
+          .from('notifications')
+          .insert({
+            user_id: orderData.vendor_job.vendor.user_id,
+            type: 'payment_proof_uploaded',
+            title: 'Payment Proof Uploaded',
+            message: `Payment proof has been uploaded for order ${orderData.tracking_code} ($${orderData.usd_amount})`,
+            data: {
+              cash_order_id: orderId,
+              tracking_code: orderData.tracking_code,
+              usd_amount: orderData.usd_amount
+            }
+          });
+      }
     } catch (error: any) {
       console.error('Error updating payment proof:', error);
       throw new Error(error.message || 'Failed to update payment proof');
@@ -149,7 +182,18 @@ export class CashOrderService {
       const { data, error } = await supabase
         .from('vendor_jobs')
         .select(`
-          *,
+          id,
+          vendor_id,
+          premium_user_id,
+          amount_usd,
+          delivery_type,
+          status,
+          created_at,
+          updated_at,
+          tracking_code as vendor_tracking_code,
+          verification_code,
+          payment_confirmed_at,
+          completed_at,
           cash_order:cash_order_id (
             id,
             tracking_code,

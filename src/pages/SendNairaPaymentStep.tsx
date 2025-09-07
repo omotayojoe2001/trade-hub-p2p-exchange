@@ -10,6 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { creditsService } from '@/services/creditsService';
+import { cashOrderService } from '@/services/cashOrderService';
 
 interface VendorBankInfo {
   account_number: string;
@@ -121,7 +122,7 @@ const SendNairaPaymentStep = () => {
       setSubmitting(true);
       
       // Create cash order with vendor assignment
-      const { data, error } = await supabase.rpc('create_cash_order_with_vendor', {
+      const orderId = await supabase.rpc('create_cash_order_with_vendor', {
         p_user_id: user.id,
         p_naira_amount: parseFloat(orderData.nairaAmount),
         p_usd_amount: parseFloat(orderData.usdAmount),
@@ -139,24 +140,16 @@ const SendNairaPaymentStep = () => {
         }
       });
       
-      if (error) throw error;
+      if (!orderId.data) throw new Error('Failed to create cash order');
       
-      // Update with payment proof
-      const { error: updateError } = await supabase
-        .from('cash_order_tracking')
-        .update({ 
-          payment_proof_url: paymentProofUrl,
-          status: 'payment_submitted'
-        })
-        .eq('id', data);
-        
-      if (updateError) throw updateError;
+      // Update with payment proof using the service
+      await cashOrderService.updatePaymentProof(orderId.data, paymentProofUrl);
       
       // Get the tracking code
       const { data: orderDetails, error: fetchError } = await supabase
         .from('cash_order_tracking')
         .select('tracking_code')
-        .eq('id', data)
+        .eq('id', orderId.data)
         .single();
         
       if (fetchError) throw fetchError;
