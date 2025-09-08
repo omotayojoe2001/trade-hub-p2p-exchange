@@ -192,7 +192,7 @@ const SelectCoin = () => {
                 <div className="grid grid-cols-2 gap-4 mb-4 text-sm">
                   <div>
                     <p className="text-gray-500 mb-1">Network:</p>
-                    <p className="font-medium text-gray-900">
+                    <div className="font-medium text-gray-900">
                       {coin.networks ? (
                         <div className="flex flex-wrap gap-1">
                           {coin.networks.map((network, index) => (
@@ -206,7 +206,7 @@ const SelectCoin = () => {
                           ))}
                         </div>
                       ) : coin.network}
-                    </p>
+                    </div>
                   </div>
                   <div>
                     <p className="text-gray-500 mb-1">{mode === 'buy' ? 'Sellers:' : 'Buyers:'}</p>

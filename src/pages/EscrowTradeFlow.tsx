@@ -20,8 +20,8 @@ interface TradeDetails {
   status: string;
   escrow_status: string;
   escrow_address?: string;
-  buyer: { display_name: string; phone_number?: string };
-  seller: { display_name: string; phone_number?: string };
+  buyer_profile?: { display_name?: string; phone_number?: string } | null;
+  seller_profile?: { display_name?: string; phone_number?: string } | null;
   merchantBankDetails?: any;
 }
 
@@ -245,11 +245,11 @@ const EscrowTradeFlow: React.FC = () => {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Buyer</p>
-                <p className="font-semibold">{trade.buyer.display_name}</p>
+                <p className="font-semibold">{trade.buyer_profile?.display_name || 'Buyer'}</p>
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Seller</p>
-                <p className="font-semibold">{trade.seller.display_name}</p>
+                <p className="font-semibold">{trade.seller_profile?.display_name || 'Seller'}</p>
               </div>
             </div>
           </CardContent>

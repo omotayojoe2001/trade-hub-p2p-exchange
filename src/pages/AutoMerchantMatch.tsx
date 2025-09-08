@@ -8,6 +8,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { tradeRequestService } from '@/services/tradeRequestService';
+import { merchantService } from '@/services/merchantService';
 import { useToast } from '@/hooks/use-toast';
 
 const AutoMerchantMatch = () => {
@@ -39,27 +40,13 @@ const AutoMerchantMatch = () => {
 
   const findBestMerchant = async () => {
     try {
-      // Get ALL real users from database, excluding current user
-      console.log('Auto-match: Fetching users excluding:', user?.id?.slice(0, 8) + '...');
+      // Use merchant service to get real merchants
+      console.log('Auto-match: Fetching merchants excluding:', user?.id?.slice(0, 8) + '...');
       
-      const { data: merchants, error } = await supabase
-        .from('profiles')
-        .select(`
-          user_id,
-          display_name,
-          phone_number,
-          user_type,
-          created_at
-        `)
-        .neq('user_id', user?.id)
-        .limit(10);
+      const merchants = await merchantService.getMerchants(user?.id);
+      console.log('Auto-match: Found merchants:', merchants?.length || 0);
 
-      console.log('Auto-match: Found users:', merchants?.length || 0);
-
-      if (error) {
-        console.error('Error fetching merchants:', error);
-        setMatchedMerchant(null);
-      } else if (merchants && merchants.length > 0) {
+      if (merchants && merchants.length > 0) {
         // Select best merchant based on criteria
         const bestMerchant = selectBestMerchant(merchants);
         setMatchedMerchant(bestMerchant);
@@ -129,16 +116,28 @@ const AutoMerchantMatch = () => {
       return;
     }
     
-    // Navigate directly to payment step 1 - NO trade request sent yet
-    navigate('/buy-crypto-payment-step1', {
-      state: {
-        coinType: coinType || 'BTC',
-        selectedMerchant: matchedMerchant,
-        amount,
-        nairaAmount,
-        mode
-      }
-    });
+    // Navigate to appropriate payment step based on mode
+    if (mode === 'buy') {
+      navigate('/buy-crypto-payment-step1', {
+        state: {
+          coinType: coinType || 'BTC',
+          selectedMerchant: matchedMerchant,
+          amount,
+          nairaAmount,
+          mode
+        }
+      });
+    } else if (mode === 'sell') {
+      navigate('/sell-crypto-payment-step1', {
+        state: {
+          coinType: coinType || 'BTC',
+          selectedMerchant: matchedMerchant,
+          amount,
+          nairaAmount,
+          mode
+        }
+      });
+    }
   };
 
   const handleFindAnother = () => {

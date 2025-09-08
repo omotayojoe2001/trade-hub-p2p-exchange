@@ -18,7 +18,7 @@ const MerchantList = () => {
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
   const location = useLocation();
-  const { amount, nairaAmount, coinType } = (location.state as any) || {};
+  const { amount, nairaAmount, coinType, mode } = (location.state as any) || {};
   const { toast } = useToast();
   const { user } = useAuth();
 
@@ -109,15 +109,28 @@ const MerchantList = () => {
       return;
     }
 
-    // Navigate directly to payment step 1 - NO trade request sent yet
-    navigate('/buy-crypto-payment-step1', {
-      state: {
-        selectedMerchant,
-        amount,
-        nairaAmount,
-        coinType
-      }
-    });
+    // Navigate to appropriate payment step based on mode
+    if (mode === 'buy') {
+      navigate('/buy-crypto-payment-step1', {
+        state: {
+          selectedMerchant,
+          amount,
+          nairaAmount,
+          coinType,
+          mode
+        }
+      });
+    } else if (mode === 'sell') {
+      navigate('/sell-crypto-payment-step1', {
+        state: {
+          selectedMerchant,
+          amount,
+          nairaAmount,
+          coinType,
+          mode
+        }
+      });
+    }
   };
 
   const getStatusColor = (isOnline: boolean) => {

@@ -60,8 +60,8 @@ export const escrowService = {
         .from('trades')
         .update({
           escrow_address: platformWallet,
-          escrow_status: 'pending',
-          status: 'pending_crypto'
+          escrow_status: 'escrow_created',
+          status: 'pending'
         })
         .eq('id', tradeId)
         .select()
@@ -131,7 +131,7 @@ export const escrowService = {
         .update({
           transaction_hash: txHash,
           escrow_status: 'crypto_received',
-          status: 'pending_cash'
+          status: 'crypto_deposited'
         })
         .eq('id', tradeId);
 
@@ -150,7 +150,7 @@ export const escrowService = {
         .update({
           payment_proof_url: paymentProof,
           escrow_status: 'cash_received',
-          status: 'pending_release'
+          status: 'payment_sent'
         })
         .eq('id', tradeId);
 

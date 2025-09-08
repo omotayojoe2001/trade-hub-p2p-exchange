@@ -13,11 +13,27 @@ const TradeRequestDetails = () => {
   const location = useLocation();
   const { toast } = useToast();
   const { user } = useAuth();
-  const { request } = location.state || {};
+  const { request: initialRequest } = location.state || {};
+  const [request, setRequest] = useState<any>(initialRequest || null);
 
   const [timeLeft, setTimeLeft] = useState(60);
   const [isExpired, setIsExpired] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+
+  // Load latest request from DB to avoid stale status
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const id = initialRequest?.id;
+        if (!id) return;
+        const latest = await tradeRequestService.getTradeRequestById(id);
+        if (latest) setRequest(latest);
+      } catch (e) {
+        // ignore; fallback to initialRequest
+      }
+    };
+    load();
+  }, [initialRequest?.id]);
 
   // Countdown timer
   useEffect(() => {
@@ -56,6 +72,17 @@ const TradeRequestDetails = () => {
 
     if (isProcessing) return;
 
+    // Disallow accepting if already taken
+    const canAccept = request && ['pending','open'].includes((request.status || 'pending') as string);
+    if (!canAccept) {
+      toast({
+        title: "Unavailable",
+        description: `This request cannot be accepted (status=${request?.status || 'unknown'})`,
+        variant: "destructive"
+      });
+      return;
+    }
+
     try {
       setIsProcessing(true);
 
@@ -68,14 +95,8 @@ const TradeRequestDetails = () => {
         variant: "default"
       });
 
-      // Navigate to merchant trade flow with the created trade
-      navigate('/merchant-trade-flow', {
-        state: {
-          request,
-          trade,
-          accepted: true
-        }
-      });
+      // Go to escrow flow so Fireblocks vault/wallet is front-and-center
+      navigate(`/escrow-flow/${trade.id}`, { state: { tradeId: trade.id, request, trade } });
 
     } catch (error) {
       console.error('Error accepting trade:', error);

@@ -10,7 +10,7 @@ export interface TradeRequest {
   naira_amount: number;
   rate: number;
   payment_method: string;
-  status: 'open' | 'accepted' | 'completed' | 'cancelled';
+  status: 'pending' | 'open' | 'accepted' | 'completed' | 'cancelled' | 'rejected';
   expires_at: string;
   created_at: string;
   notes?: string;
@@ -47,7 +47,7 @@ export const tradeRequestService = {
           amount_fiat: data.naira_amount,
           rate: data.rate,
           payment_method: data.payment_method,
-          status: 'open',
+          status: 'pending',
           expires_at: expiresAt.toISOString()
         })
         .select()
@@ -67,7 +67,7 @@ export const tradeRequestService = {
         naira_amount: tradeRequest.amount_fiat,
         rate: tradeRequest.rate,
         payment_method: tradeRequest.payment_method,
-        status: tradeRequest.status as 'open' | 'accepted' | 'completed' | 'cancelled',
+        status: tradeRequest.status as 'pending' | 'open' | 'accepted' | 'completed' | 'cancelled' | 'rejected',
         expires_at: tradeRequest.expires_at,
         created_at: tradeRequest.created_at
       };
@@ -83,7 +83,7 @@ export const tradeRequestService = {
       const { data: tradeRequests, error } = await supabase
         .from('trade_requests')
         .select('*')
-        .eq('status', 'open')
+        .in('status', ['pending', 'open'])
         .gt('expires_at', new Date().toISOString())
         .order('created_at', { ascending: false });
 
@@ -102,7 +102,7 @@ export const tradeRequestService = {
         naira_amount: request.amount_fiat,
         rate: request.rate,
         payment_method: request.payment_method,
-        status: request.status as 'open' | 'accepted' | 'completed' | 'cancelled',
+        status: request.status as 'pending' | 'open' | 'accepted' | 'completed' | 'cancelled' | 'rejected',
         expires_at: request.expires_at,
         created_at: request.created_at,
         merchant_name: 'Unknown',
@@ -140,7 +140,7 @@ export const tradeRequestService = {
         naira_amount: request.amount_fiat,
         rate: request.rate,
         payment_method: request.payment_method,
-        status: request.status as 'open' | 'accepted' | 'completed' | 'cancelled',
+        status: request.status as 'pending' | 'open' | 'accepted' | 'completed' | 'cancelled' | 'rejected',
         expires_at: request.expires_at,
         created_at: request.created_at
       }));
@@ -169,19 +169,24 @@ export const tradeRequestService = {
         throw new Error('Trade request not found');
       }
 
-      if (tradeRequest.status !== 'open') {
-        throw new Error('Trade request is no longer available');
+      console.log('[acceptTradeRequest] request', { id: tradeRequestId, status: tradeRequest.status });
+      const canAccept = tradeRequest.status === 'pending' || tradeRequest.status === 'open';
+      if (!canAccept) {
+        throw new Error(`Trade request is no longer available (status=${tradeRequest.status})`);
       }
 
-      // Update the trade request status
-      const { error: updateError } = await supabase
+      // Atomically set accepted only if still acceptable
+      const { data: updated, error: updateError } = await supabase
         .from('trade_requests')
         .update({ status: 'accepted' })
-        .eq('id', tradeRequestId);
+        .eq('id', tradeRequestId)
+        .in('status', ['pending', 'open'])
+        .select('id, status')
+        .single();
 
-      if (updateError) {
-        console.error('Error updating trade request:', updateError);
-        throw updateError;
+      if (updateError || !updated) {
+        console.error('Error updating trade request (likely already taken):', updateError);
+        throw new Error('Trade request is no longer available (already taken)');
       }
 
       // Create a new trade record
@@ -193,8 +198,12 @@ export const tradeRequestService = {
           seller_id: tradeRequest.trade_type === 'sell' ? tradeRequest.user_id : acceptingUserId,
           coin_type: tradeRequest.crypto_type,
           amount: tradeRequest.amount_crypto,
+          amount_crypto: tradeRequest.amount_crypto,
+          amount_fiat: tradeRequest.amount_fiat,
           naira_amount: tradeRequest.amount_fiat,
           rate: tradeRequest.rate,
+          platform_fee_amount: 0,
+          net_amount: tradeRequest.amount_fiat,
           trade_type: tradeRequest.trade_type,
           payment_method: tradeRequest.payment_method,
           status: 'pending',
@@ -266,7 +275,7 @@ export const tradeRequestService = {
   // Decline a trade request (for merchants)
   async declineTradeRequest(tradeRequestId: string, merchantId: string): Promise<void> {
     try {
-      // First check if the trade request exists and is open
+      // First check if the trade request exists and is pending
       const { data: tradeRequest, error: fetchError } = await supabase
         .from('trade_requests')
         .select('*')
@@ -282,16 +291,15 @@ export const tradeRequestService = {
         throw new Error('Trade request not found');
       }
 
-      if (tradeRequest.status !== 'open') {
+      const canDecline = tradeRequest.status === 'pending' || tradeRequest.status === 'open';
+      if (!canDecline) {
         throw new Error('Trade request is no longer available');
       }
 
-      // Update status to declined
+      // Update status to rejected
       const { error } = await supabase
         .from('trade_requests')
-        .update({
-          status: 'cancelled'
-        })
+        .update({ status: 'rejected' })
         .eq('id', tradeRequestId);
 
       if (error) {
@@ -384,7 +392,7 @@ export const tradeRequestService = {
         naira_amount: tradeRequest.amount_fiat,
         rate: tradeRequest.rate,
         payment_method: tradeRequest.payment_method,
-        status: tradeRequest.status as 'open' | 'accepted' | 'completed' | 'cancelled',
+        status: tradeRequest.status as 'pending' | 'open' | 'accepted' | 'completed' | 'cancelled' | 'rejected',
         expires_at: tradeRequest.expires_at,
         created_at: tradeRequest.created_at,
         merchant_name: 'Unknown',

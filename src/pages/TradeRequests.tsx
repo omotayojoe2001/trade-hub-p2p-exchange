@@ -107,40 +107,21 @@ const TradeRequests = () => {
     try {
       const request = tradeRequests.find(r => r.id === requestId);
       if (!request) {
-        toast({
-          title: "Error",
-          description: "Trade request not found.",
-          variant: "destructive"
-        });
+        toast({ title: "Error", description: "Trade request not found.", variant: "destructive" });
         return;
       }
 
-      // Update trade request status to accepted in Supabase
-      const { error } = await supabase
-        .from('trade_requests')
-        .update({ status: 'accepted' })
-        .eq('id', requestId);
+      // Accept via service (atomic + status guards)
+      const { tradeRequestService } = await import('@/services/tradeRequestService');
+      await tradeRequestService.acceptTradeRequest(requestId, user.id);
 
-      if (error) throw error;
+      toast({ title: "Trade Accepted", description: "You have successfully accepted this trade request.", duration: 3000 });
 
-      toast({
-        title: "Trade Accepted",
-        description: "You have successfully accepted this trade request.",
-        duration: 3000,
-      });
-
-      // Navigate to trade details
-      navigate('/trade-request-details', {
-        state: { request: { ...request, status: 'accepted' } }
-      });
-    } catch (error) {
+      // Navigate to review/details after accept
+      navigate('/trade-request-details', { state: { request: { ...request, status: 'accepted' } } });
+    } catch (error: any) {
       console.error('Error accepting trade:', error);
-      toast({
-        title: "Error",
-        description: "Failed to accept trade. Please try again.",
-        variant: "destructive",
-        duration: 3000,
-      });
+      toast({ title: "Error", description: error.message || "Failed to accept trade. Please try again.", variant: "destructive", duration: 3000 });
     }
   };
 
@@ -236,7 +217,7 @@ const TradeRequests = () => {
             const userAction = isUserBuyingCrypto ? 'Send Cash' : 'Send Crypto';
             
             return (
-              <Card key={request.id} className="bg-white hover:shadow-md transition-shadow cursor-pointer" onClick={() => handleAcceptTrade(request.id)}>
+              <Card key={request.id} className="bg-white hover:shadow-md transition-shadow">
                 <CardContent className="p-4">
                   {/* Header */}
                   <div className="flex items-start justify-between mb-4">
@@ -309,12 +290,23 @@ const TradeRequests = () => {
                     </p>
                   </div>
 
-                  {/* Accept Button */}
+                  {/* Actions */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <Button 
+                      variant="outline"
+                      className="w-full py-2 text-sm"
+                      onClick={() => navigate('/trade-request-details', { state: { request } })}
+                    >
+                      Review
+                    </Button>
                   <Button 
                     className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 text-sm"
+                      onClick={() => handleAcceptTrade(request.id)}
+                      disabled={!['pending','open'].includes((request as any).status || 'pending')}
                   >
-                    Review & Accept
+                      Accept
                   </Button>
+                  </div>
                 </CardContent>
               </Card>
             );

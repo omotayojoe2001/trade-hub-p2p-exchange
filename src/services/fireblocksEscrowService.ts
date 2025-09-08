@@ -36,7 +36,14 @@ export class FireblocksEscrowService {
     };
 
     const assetId = assetMapping[cryptoType] || 'BTC_TEST';
-    return await this.callFireblocksFunction('create_vault', { tradeId, assetId });
+    const res = await this.callFireblocksFunction('create_vault', { tradeId, assetId });
+    if (res.success && (res.vault_id || res.deposit_address)) {
+      // persist to trade so monitoring won't 500
+      await supabase.from('trades')
+        .update({ escrow_vault_id: res.vault_id, escrow_address: res.deposit_address })
+        .eq('id', tradeId);
+    }
+    return res;
   }
 
   async checkEscrowBalance(tradeId: string): Promise<FireblocksEscrowResult> {
@@ -49,6 +56,16 @@ export class FireblocksEscrowService {
 
   async monitorEscrowStatus(tradeId: string, onStatusChange: (status: any) => void): Promise<void> {
     const checkStatus = async () => {
+      // ensure vault exists
+      const { data: trade } = await supabase
+        .from('trades')
+        .select('escrow_vault_id, escrow_address, coin_type')
+        .eq('id', tradeId)
+        .single();
+      if (!trade?.escrow_vault_id || !trade?.escrow_address) {
+        await this.createEscrowVault(tradeId, trade?.coin_type || 'BTC');
+      }
+
       const result = await this.checkEscrowBalance(tradeId);
       if (result.success) {
         onStatusChange(result);

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, CheckCircle, AlertCircle, Phone, MapPin, User, DollarSign, Key } from 'lucide-react';
+import { ArrowLeft, CheckCircle, AlertCircle, Phone, MapPin, User, DollarSign, Key, FileText } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,6 +8,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { isPdfFile, isImageFile, downloadFile } from '@/utils/fileUtils';
 
 interface CashOrderDetails {
   id: string;
@@ -395,14 +396,67 @@ const VendorCashOrderDetails = () => {
             {orderDetails.payment_proof_url && (
               <Card className="mb-6">
                 <CardHeader>
-                  <CardTitle className="text-lg">Payment Proof</CardTitle>
+                  <CardTitle className="text-lg flex items-center justify-between">
+                    <span>Payment Proof</span>
+                    {isPdfFile(orderDetails.payment_proof_url) && (
+                      <Button
+                        onClick={() => downloadFile(orderDetails.payment_proof_url, `payment-proof-${orderDetails.tracking_code}.pdf`)}
+                        size="sm"
+                        className="bg-red-600 hover:bg-red-700"
+                      >
+                        <FileText className="w-4 h-4 mr-2" />
+                        Download PDF
+                      </Button>
+                    )}
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
+                  {isImageFile(orderDetails.payment_proof_url) ? (
                   <img 
                     src={orderDetails.payment_proof_url} 
                     alt="Payment proof"
                     className="w-full max-w-md mx-auto rounded-lg border"
                   />
+                  ) : isPdfFile(orderDetails.payment_proof_url) ? (
+                    <div className="space-y-4">
+                      <div className="text-center p-4 bg-red-50 rounded-lg border border-red-200">
+                        <FileText className="w-12 h-12 text-red-500 mx-auto mb-2" />
+                        <p className="text-sm text-red-700 mb-3">
+                          This payment proof is a PDF document. Click the download button above to view it.
+                        </p>
+                        <Button
+                          onClick={() => downloadFile(orderDetails.payment_proof_url, `payment-proof-${orderDetails.tracking_code}.pdf`)}
+                          size="sm"
+                          className="bg-red-600 hover:bg-red-700"
+                        >
+                          <FileText className="w-4 h-4 mr-2" />
+                          Download PDF
+                        </Button>
+                      </div>
+                      <div className="w-full max-w-2xl mx-auto">
+                        <iframe
+                          src={orderDetails.payment_proof_url}
+                          className="w-full h-96 border rounded-lg"
+                          title="PDF Preview"
+                        />
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-center p-4 bg-gray-50 rounded-lg border">
+                      <FileText className="w-12 h-12 text-gray-400 mx-auto mb-2" />
+                      <p className="text-sm text-gray-600 mb-3">
+                        This file type is not supported for preview. Click the button below to download it.
+                      </p>
+                      <Button
+                        onClick={() => downloadFile(orderDetails.payment_proof_url)}
+                        size="sm"
+                        variant="outline"
+                      >
+                        <FileText className="w-4 h-4 mr-2" />
+                        Download File
+                      </Button>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             )}

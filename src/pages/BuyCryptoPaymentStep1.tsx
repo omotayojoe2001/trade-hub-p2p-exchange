@@ -70,22 +70,42 @@ const BuyCryptoPaymentStep1 = () => {
       const rate = getMerchantRate();
       const nairaAmount = parseFloat(cryptoAmount) * rate;
 
-      // Import merchantTradeService
-      const { merchantTradeService } = await import('@/services/merchantTradeService');
-
-      // Send trade request using merchantTradeService
-      const tradeRequest = await merchantTradeService.sendTradeRequestToMerchant(
-        user.id,
-        selectedMerchant.user_id,
-        {
+      // Create trade request for buy crypto flow
+      const { data: tradeRequest, error: tradeError } = await supabase
+        .from('trade_requests')
+        .insert({
+          user_id: user.id,
+          merchant_id: selectedMerchant.user_id,
           trade_type: 'buy',
-          coin_type: coinType as 'BTC' | 'ETH' | 'USDT',
-          amount: parseFloat(cryptoAmount),
-          naira_amount: nairaAmount,
+          crypto_type: coinType,
+          amount_crypto: parseFloat(cryptoAmount),
+          amount_fiat: nairaAmount,
           rate: rate,
-          payment_method: 'bank_transfer'
-        }
-      );
+          payment_method: 'bank_transfer',
+          status: 'pending',
+          wallet_address: walletAddress
+        })
+        .select()
+        .single();
+
+      if (tradeError) throw tradeError;
+
+      // Notify merchant about the trade request
+      await supabase
+        .from('notifications')
+        .insert({
+          user_id: selectedMerchant.user_id,
+          type: 'trade_request',
+          title: 'New Buy Crypto Request',
+          message: `${user.display_name || 'A user'} wants to buy ${cryptoAmount} ${coinType} for ₦${nairaAmount.toLocaleString()}`,
+          data: {
+            trade_request_id: tradeRequest.id,
+            trade_type: 'buy',
+            crypto_type: coinType,
+            amount_crypto: parseFloat(cryptoAmount),
+            amount_fiat: nairaAmount
+          }
+        });
 
       toast({
         title: "Trade Request Sent!",

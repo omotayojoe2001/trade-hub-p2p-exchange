@@ -158,10 +158,7 @@ export class EscrowTradeService {
         // Get trade details
         const { data: trade, error } = await supabase
           .from('trades')
-          .select(`
-            *,
-            seller:profiles!seller_id(user_id, display_name)
-          `)
+          .select('*')
           .eq('id', tradeId)
           .single();
 
@@ -180,7 +177,7 @@ export class EscrowTradeService {
         const bankDetails = {
           account_number: merchantBank?.account_number || 'N/A',
           bank_name: merchantBank?.bank_name || 'N/A',
-          account_name: merchantBank?.account_name || (trade.seller as any)?.display_name || 'Merchant',
+          account_name: merchantBank?.account_name || 'Merchant',
           amount_naira: trade.amount_fiat,
           trade_reference: `TXN-${tradeId.slice(-8)}`
         };
@@ -335,11 +332,7 @@ export class EscrowTradeService {
     try {
       const { data: trade, error } = await supabase
         .from('trades')
-        .select(`
-          *,
-          buyer:user_profiles!buyer_id(full_name, phone),
-          seller:user_profiles!seller_id(full_name, phone)
-        `)
+        .select('*')
         .eq('id', tradeId)
         .single();
 
@@ -347,7 +340,17 @@ export class EscrowTradeService {
         throw error;
       }
 
-      return trade;
+      // Optionally fetch profiles separately (no FK requirement)
+      const [buyer, seller] = await Promise.all([
+        supabase.from('profiles').select('display_name, phone_number').eq('user_id', trade.buyer_id).single(),
+        supabase.from('profiles').select('display_name, phone_number').eq('user_id', trade.seller_id).single()
+      ]);
+
+      return {
+        ...trade,
+        buyer_profile: buyer.data || null,
+        seller_profile: seller.data || null
+      };
     } catch (error) {
       console.error('Error getting trade status:', error);
       throw error;

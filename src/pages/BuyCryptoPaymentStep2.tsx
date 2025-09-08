@@ -42,38 +42,65 @@ const BuyCryptoPaymentStep2 = () => {
 
   const monitorTradeStatus = async () => {
     try {
-      // Check trade status
-      const { data: trade, error } = await supabase
-        .from('trades')
-        .select('*, seller:profiles!seller_id(*)')
+      // Check trade request status first
+      const { data: tradeRequest, error: requestError } = await supabase
+        .from('trade_requests')
+        .select('*')
         .eq('id', tradeId)
         .single();
 
-      if (error) throw error;
+      if (requestError) throw requestError;
 
-      if (trade.status === 'pending_merchant_accept') {
-        setTradeStatus('searching');
-        // Continue polling
-        setTimeout(monitorTradeStatus, 3000);
-      } else if (trade.status === 'merchant_accepted') {
-        setTradeStatus('accepted');
-        // Wait for escrow funding
-        setTimeout(() => {
-          setTradeStatus('escrow_funded');
-          setMerchantBankDetails({
-            bank_name: 'First Bank',
-            account_number: '1234567890',
-            account_name: selectedMerchant.display_name,
-            reference: `PAY-${tradeId.slice(-8)}`
+      if (tradeRequest) {
+        if (tradeRequest.status === 'pending') {
+          setTradeStatus('searching');
+          // Continue polling every 3 seconds
+          setTimeout(monitorTradeStatus, 3000);
+        } else if (tradeRequest.status === 'accepted') {
+          setTradeStatus('accepted');
+          
+          // Check if trade was created and escrow is funded
+          const { data: trade, error: tradeError } = await supabase
+            .from('trades')
+            .select('*, seller:profiles!seller_id(*)')
+            .eq('trade_request_id', tradeId)
+            .single();
+
+          if (trade && !tradeError) {
+            if (trade.escrow_status === 'crypto_deposited') {
+              setTradeStatus('escrow_funded');
+              
+              // Get merchant's bank details
+              const { data: bankDetails } = await supabase
+                .from('payment_methods')
+                .select('*')
+                .eq('user_id', trade.seller_id)
+                .eq('is_default', true)
+                .single();
+
+              if (bankDetails) {
+                setMerchantBankDetails({
+                  bank_name: bankDetails.bank_name,
+                  account_number: bankDetails.account_number,
+                  account_name: bankDetails.account_name,
+                  reference: `PAY-${trade.id.slice(-8)}`,
+                  amount_naira: trade.naira_amount
+                });
+              }
+            } else {
+              // Wait for escrow funding
+              setTimeout(monitorTradeStatus, 3000);
+            }
+          }
+        } else if (tradeRequest.status === 'rejected') {
+          setTradeStatus('cancelled');
+          toast({
+            title: "Trade Rejected",
+            description: "The merchant declined your trade request",
+            variant: "destructive"
           });
-        }, 3000);
-      } else if (trade.status === 'cancelled') {
-        toast({
-          title: "Trade Cancelled",
-          description: "The merchant declined your trade request",
-          variant: "destructive"
-        });
-        navigate('/buy-crypto');
+          setTimeout(() => navigate('/buy-sell'), 3000);
+        }
       }
     } catch (error) {
       console.error('Error monitoring trade:', error);
@@ -139,22 +166,90 @@ const BuyCryptoPaymentStep2 = () => {
   };
 
   const handleMarkAsPaid = async () => {
+    if (!paymentProof) {
+      toast({
+        title: "Upload Required",
+        description: "Please upload proof of payment first",
+        variant: "destructive"
+      });
+      return;
+    }
+
     try {
-      const { error } = await supabase
-        .from('trades')
-        .update({ 
-          status: 'payment_sent',
-          payment_proof_url: paymentProof ? 'uploaded' : null 
-        })
-        .eq('id', tradeId);
+      // Upload payment proof
+      const fileExt = paymentProof.name.split('.').pop();
+      const fileName = `${user.id}/payment-proof-${Date.now()}.${fileExt}`;
+      
+      const { data, error } = await supabase.storage
+        .from('profiles')
+        .upload(fileName, paymentProof);
 
       if (error) throw error;
 
-      navigate('/buy-crypto-payment-step3', {
-        state: { tradeId, coinType, cryptoAmount, walletAddress }
+      const { data: urlData } = supabase.storage
+        .from('profiles')
+        .getPublicUrl(fileName);
+
+      // Get the trade record first
+      const { data: trade, error: tradeError } = await supabase
+        .from('trades')
+        .select('*')
+        .eq('trade_request_id', tradeId)
+        .single();
+
+      if (tradeError || !trade) {
+        throw new Error('Trade not found');
+      }
+
+      // Update trade with payment proof
+      const { error: updateError } = await supabase
+        .from('trades')
+        .update({
+          status: 'payment_sent',
+          payment_proof_url: urlData.publicUrl
+        })
+        .eq('id', trade.id);
+
+      if (updateError) throw updateError;
+
+      // Notify merchant about payment proof
+      await supabase
+        .from('notifications')
+        .insert({
+          user_id: selectedMerchant.user_id,
+          type: 'payment_proof_uploaded',
+          title: 'Payment Proof Uploaded',
+          message: `${user.display_name || 'User'} has uploaded payment proof for trade ${trade.id.slice(-8)}`,
+          data: {
+            trade_id: trade.id,
+            payment_proof_url: urlData.publicUrl
+          }
+        });
+
+      toast({
+        title: "Payment Confirmed!",
+        description: "Your payment proof has been uploaded. Waiting for merchant confirmation.",
       });
+
+      // Navigate to step 3
+      navigate('/buy-crypto-payment-step3', {
+        state: {
+          tradeId: trade.id,
+          coinType,
+          cryptoAmount,
+          cashAmount,
+          selectedMerchant,
+          walletAddress
+        }
+      });
+
     } catch (error) {
-      console.error('Error updating trade:', error);
+      console.error('Error uploading payment proof:', error);
+      toast({
+        title: "Upload Failed",
+        description: "Failed to upload payment proof. Please try again.",
+        variant: "destructive"
+      });
     }
   };
 
