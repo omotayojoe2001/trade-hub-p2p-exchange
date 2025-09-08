@@ -59,11 +59,11 @@ export class FireblocksEscrowService {
       // ensure vault exists
       const { data: trade } = await supabase
         .from('trades')
-        .select('escrow_vault_id, escrow_address, coin_type')
+        .select('escrow_address, crypto_type')
         .eq('id', tradeId)
         .single();
-      if (!trade?.escrow_vault_id || !trade?.escrow_address) {
-        await this.createEscrowVault(tradeId, trade?.coin_type || 'BTC');
+      if (!trade?.escrow_address) {
+        await this.createEscrowVault(tradeId, trade?.crypto_type || 'BTC');
       }
 
       const result = await this.checkEscrowBalance(tradeId);

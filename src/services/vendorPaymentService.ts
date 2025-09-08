@@ -86,7 +86,12 @@ class VendorPaymentService {
 
       return {
         ...orderData,
-        user_profile: profileData
+        user_profile: {
+          id: profileData.user_id,
+          display_name: profileData.display_name || 'User',
+          phone_number: profileData.phone_number || '',
+          created_at: profileData.created_at || new Date().toISOString()
+        }
       };
     } catch (error: any) {
       console.error('Error fetching cash order with user details:', error);
@@ -296,84 +301,23 @@ class VendorPaymentService {
         console.warn('Error fetching profiles:', profilesError);
       }
 
-      // Combine orders with profiles
-      return cashOrders.map(order => ({
-        ...order,
-        user_profile: profiles?.find(profile => profile.user_id === order.user_id)
-      }));
+      // Combine orders with profiles and fix type structure
+      return cashOrders.map(order => {
+        const profile = profiles?.find(profile => profile.user_id === order.user_id);
+        return {
+          ...order,
+          user_profile: {
+            id: profile?.user_id || order.user_id,
+            display_name: profile?.display_name || 'User',
+            phone_number: profile?.phone_number || '',
+            created_at: profile?.created_at || new Date().toISOString()
+          }
+        };
+      });
 
     } catch (error: any) {
       console.error('Error fetching vendor cash orders:', error);
       return [];
-    }
-  }
-
-  // Get all cash orders for a vendor (for transactions page)
-  async getVendorCashOrders(vendorUserId: string): Promise<any[]> {
-    try {
-      // First get the vendor's jobs
-      const { data: vendorJobs, error: jobsError } = await supabase
-        .from('vendor_jobs')
-        .select(`
-          id,
-          cash_order_id,
-          verification_code,
-          created_at,
-          completed_at,
-          status,
-          vendor:vendor_id (
-            user_id
-          )
-        `)
-        .eq('vendor.user_id', vendorUserId);
-
-      if (jobsError) throw jobsError;
-
-      if (!vendorJobs || vendorJobs.length === 0) {
-        return [];
-      }
-
-      // Get cash orders for these jobs
-      const cashOrderIds = vendorJobs.map(job => job.cash_order_id).filter(Boolean);
-      
-      if (cashOrderIds.length === 0) {
-        return [];
-      }
-
-      const { data: cashOrders, error: ordersError } = await supabase
-        .from('cash_order_tracking')
-        .select('*')
-        .in('id', cashOrderIds)
-        .order('created_at', { ascending: false });
-
-      if (ordersError) throw ordersError;
-
-      // Get user profiles for all orders
-      const userIds = [...new Set(cashOrders.map(order => order.user_id))];
-      const { data: profiles, error: profilesError } = await supabase
-        .from('profiles')
-        .select('user_id, display_name, phone_number')
-        .in('user_id', userIds);
-
-      if (profilesError) {
-        console.warn('Error fetching profiles:', profilesError);
-      }
-
-      // Combine the data
-      const combinedData = cashOrders.map(order => {
-        const vendorJob = vendorJobs.find(job => job.cash_order_id === order.id);
-        const userProfile = profiles?.find(profile => profile.user_id === order.user_id);
-        return {
-          ...order,
-          vendor_job: vendorJob,
-          user_profile: userProfile
-        };
-      });
-
-      return combinedData || [];
-    } catch (error: any) {
-      console.error('Error fetching vendor cash orders:', error);
-      throw new Error(error.message || 'Failed to fetch vendor cash orders');
     }
   }
 }

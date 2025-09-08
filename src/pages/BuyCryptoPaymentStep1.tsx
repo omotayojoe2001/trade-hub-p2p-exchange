@@ -97,7 +97,7 @@ const BuyCryptoPaymentStep1 = () => {
           user_id: selectedMerchant.user_id,
           type: 'trade_request',
           title: 'New Buy Crypto Request',
-          message: `${user.display_name || 'A user'} wants to buy ${cryptoAmount} ${coinType} for ₦${nairaAmount.toLocaleString()}`,
+          message: `${user.user_metadata?.display_name || user.email || 'A user'} wants to buy ${cryptoAmount} ${coinType} for ₦${nairaAmount.toLocaleString()}`,
           data: {
             trade_request_id: tradeRequest.id,
             trade_type: 'buy',

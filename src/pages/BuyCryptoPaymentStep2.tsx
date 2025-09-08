@@ -219,7 +219,7 @@ const BuyCryptoPaymentStep2 = () => {
           user_id: selectedMerchant.user_id,
           type: 'payment_proof_uploaded',
           title: 'Payment Proof Uploaded',
-          message: `${user.display_name || 'User'} has uploaded payment proof for trade ${trade.id.slice(-8)}`,
+          message: `${user.user_metadata?.display_name || user.email || 'User'} has uploaded payment proof for trade ${trade.id.slice(-8)}`,
           data: {
             trade_id: trade.id,
             payment_proof_url: urlData.publicUrl

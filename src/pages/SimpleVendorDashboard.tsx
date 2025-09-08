@@ -317,7 +317,7 @@ const SimpleVendorDashboard = () => {
                         <Button
                           onClick={() => {
                             // Navigate to detailed payment confirmation screen
-                            navigate(`/vendor/payment-confirmation/${job.cash_order_id || job.id}`);
+                            navigate(`/vendor/payment-confirmation/${job.id}`);
                           }}
                           disabled={processingJobId === job.id}
                           className="w-full bg-green-600 hover:bg-green-700"
@@ -335,7 +335,7 @@ const SimpleVendorDashboard = () => {
                         <Button
                           onClick={() => {
                             // Navigate to detailed payment confirmation screen for completion
-                            navigate(`/vendor/payment-confirmation/${job.cash_order_id || job.id}`);
+                            navigate(`/vendor/payment-confirmation/${job.id}`);
                           }}
                           disabled={processingJobId === job.id}
                           className="w-full bg-purple-600 hover:bg-purple-700"
