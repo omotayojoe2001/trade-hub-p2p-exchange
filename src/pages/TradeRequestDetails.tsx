@@ -73,7 +73,7 @@ const TradeRequestDetails = () => {
     if (isProcessing) return;
 
     // Disallow accepting if already taken
-    const canAccept = request && ['pending','open'].includes((request.status || 'pending') as string);
+    const canAccept = request && ['open'].includes((request.status || 'open') as string);
     if (!canAccept) {
       toast({
         title: "Unavailable",

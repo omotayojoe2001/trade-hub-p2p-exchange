@@ -976,11 +976,13 @@ export type Database = {
           crypto_type: string
           expires_at: string | null
           id: string
+          merchant_id: string | null
           payment_method: string
           rate: number
           status: string | null
           trade_type: string
           user_id: string
+          wallet_address: string | null
         }
         Insert: {
           amount_crypto: number
@@ -989,11 +991,13 @@ export type Database = {
           crypto_type: string
           expires_at?: string | null
           id?: string
+          merchant_id?: string | null
           payment_method: string
           rate: number
           status?: string | null
           trade_type: string
           user_id: string
+          wallet_address?: string | null
         }
         Update: {
           amount_crypto?: number
@@ -1002,11 +1006,13 @@ export type Database = {
           crypto_type?: string
           expires_at?: string | null
           id?: string
+          merchant_id?: string | null
           payment_method?: string
           rate?: number
           status?: string | null
           trade_type?: string
           user_id?: string
+          wallet_address?: string | null
         }
         Relationships: []
       }
@@ -1029,6 +1035,7 @@ export type Database = {
           dispute_reason: string | null
           escrow_address: string | null
           escrow_status: string | null
+          escrow_vault_id: string | null
           expires_at: string | null
           id: string
           last_action_timestamp: string | null
@@ -1040,6 +1047,7 @@ export type Database = {
           platform_fee_amount: number | null
           platform_fee_percentage: number | null
           rate: number
+          receiver_wallet_address: string | null
           seller_id: string
           status: string
           trade_data: Json | null
@@ -1067,6 +1075,7 @@ export type Database = {
           dispute_reason?: string | null
           escrow_address?: string | null
           escrow_status?: string | null
+          escrow_vault_id?: string | null
           expires_at?: string | null
           id?: string
           last_action_timestamp?: string | null
@@ -1078,6 +1087,7 @@ export type Database = {
           platform_fee_amount?: number | null
           platform_fee_percentage?: number | null
           rate: number
+          receiver_wallet_address?: string | null
           seller_id: string
           status?: string
           trade_data?: Json | null
@@ -1105,6 +1115,7 @@ export type Database = {
           dispute_reason?: string | null
           escrow_address?: string | null
           escrow_status?: string | null
+          escrow_vault_id?: string | null
           expires_at?: string | null
           id?: string
           last_action_timestamp?: string | null
@@ -1116,6 +1127,7 @@ export type Database = {
           platform_fee_amount?: number | null
           platform_fee_percentage?: number | null
           rate?: number
+          receiver_wallet_address?: string | null
           seller_id?: string
           status?: string
           trade_data?: Json | null

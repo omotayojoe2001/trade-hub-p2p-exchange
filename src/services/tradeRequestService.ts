@@ -47,7 +47,7 @@ export const tradeRequestService = {
           amount_fiat: data.naira_amount,
           rate: data.rate,
           payment_method: data.payment_method,
-          status: 'pending',
+          status: 'open',
           expires_at: expiresAt.toISOString()
         })
         .select()
