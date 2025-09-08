@@ -96,7 +96,7 @@ const TradeRequestDetails = () => {
       });
 
       // Go to escrow flow so Fireblocks vault/wallet is front-and-center
-      navigate(`/escrow-flow/${trade.id}`, { state: { tradeId: trade.id, request, trade } });
+      navigate(`/escrow-flow`, { state: { tradeId: trade.id, request, trade, amount: request.amount, mode: 'trade_accepted' } });
 
     } catch (error) {
       console.error('Error accepting trade:', error);
