@@ -117,8 +117,8 @@ const TradeRequests = () => {
 
       toast({ title: "Trade Accepted", description: "You have successfully accepted this trade request.", duration: 3000 });
 
-      // Navigate to review/details after accept
-      navigate('/trade-request-details', { state: { request: { ...request, status: 'accepted' } } });
+      // Navigate to the trade instead of trade request details since it's already accepted
+      navigate('/messages');
     } catch (error: any) {
       console.error('Error accepting trade:', error);
       toast({ title: "Error", description: error.message || "Failed to accept trade. Please try again.", variant: "destructive", duration: 3000 });
