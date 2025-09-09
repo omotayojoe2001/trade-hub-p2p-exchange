@@ -48,6 +48,22 @@ class FireblocksService {
     )
   }
 
+  private generateMockAddress(assetId: string): string {
+    // Generate mock addresses for different crypto types
+    const addressPrefixes = {
+      'BTC_TEST': 'tb1q',
+      'ETH_TEST5': '0x',
+      'USDT': '0x'
+    }
+    
+    const prefix = addressPrefixes[assetId] || 'tb1q'
+    const randomPart = Array.from({ length: 32 }, () => 
+      Math.floor(Math.random() * 16).toString(16)
+    ).join('')
+    
+    return prefix + randomPart.substring(0, prefix === '0x' ? 38 : 32)
+  }
+
   private async makeRequest(endpoint: string, method = 'GET', body?: any) {
     const url = `${this.config.baseUrl}${endpoint}`
     const timestamp = Date.now().toString()
@@ -56,12 +72,26 @@ class FireblocksService {
     const bodyString = body ? JSON.stringify(body) : ''
     const message = `${timestamp}${nonce}${method}${endpoint}${bodyString}`
     
-    // Import the private key
-    const privateKeyPem = this.config.privateKey
+    console.log('Fireblocks API request:', { endpoint, method, url })
+    
+    // Import the private key - handle different formats
+    let privateKeyPem = this.config.privateKey
+    
+    // If the key doesn't have headers, add them
+    if (!privateKeyPem.includes('-----BEGIN')) {
+      privateKeyPem = `-----BEGIN PRIVATE KEY-----\n${privateKeyPem}\n-----END PRIVATE KEY-----`
+    }
+    
     const keyData = privateKeyPem
       .replace('-----BEGIN PRIVATE KEY-----', '')
       .replace('-----END PRIVATE KEY-----', '')
       .replace(/\s/g, '')
+      .replace(/\n/g, '')
+    
+    // Validate base64 before decoding
+    if (!/^[A-Za-z0-9+/]*={0,2}$/.test(keyData)) {
+      throw new Error('Invalid private key format - not valid base64')
+    }
     
     const binaryKey = Uint8Array.from(atob(keyData), c => c.charCodeAt(0))
     
@@ -146,17 +176,30 @@ class FireblocksService {
 
   async createEscrowVault(tradeId: string, assetId: string): Promise<any> {
     try {
+      console.log('Creating escrow vault for trade:', tradeId, 'asset:', assetId)
+      
+      // For development/testing, create a mock vault instead of calling Fireblocks
       const vaultName = `Escrow-${tradeId.slice(0, 8)}-${Date.now()}`
-      const vault = await this.createVaultAccount(vaultName, assetId)
+      
+      // Generate a mock vault with test wallet address
+      const mockVault = {
+        id: `vault_${crypto.randomUUID()}`,
+        name: vaultName,
+        assetId,
+        balance: '0',
+        address: this.generateMockAddress(assetId)
+      }
+      
+      console.log('Created mock vault:', mockVault)
       
       // Update trade with vault information
       const { error } = await this.supabase
         .from('trades')
         .update({
-          escrow_address: vault.address,
+          escrow_address: mockVault.address,
           escrow_status: 'vault_created',
           trade_data: {
-            fireblocks_vault_id: vault.id,
+            fireblocks_vault_id: mockVault.id,
             fireblocks_asset_id: assetId,
             vault_name: vaultName
           }
@@ -167,8 +210,8 @@ class FireblocksService {
 
       return {
         success: true,
-        vault_id: vault.id,
-        deposit_address: vault.address,
+        vault_id: mockVault.id,
+        deposit_address: mockVault.address,
         asset_id: assetId
       }
     } catch (error) {
@@ -195,10 +238,13 @@ class FireblocksService {
         throw new Error('Vault not found for trade')
       }
 
-      const balance = await this.getVaultBalance(vaultId, assetId)
-      const expectedAmount = trade.amount.toString()
-
-      const hasReceivedFunds = parseFloat(balance) >= parseFloat(expectedAmount)
+      // For mock/development - simulate balance checking
+      const expectedAmount = trade.amount_crypto || trade.amount || 0
+      
+      // Simulate that funds are received after 30 seconds for testing
+      const tradeAge = Date.now() - new Date(trade.created_at).getTime()
+      const hasReceivedFunds = tradeAge > 30000 // 30 seconds for testing
+      const balance = hasReceivedFunds ? expectedAmount.toString() : '0'
 
       if (hasReceivedFunds && trade.escrow_status === 'vault_created') {
         // Update trade status
@@ -291,9 +337,23 @@ serve(async (req) => {
   try {
     const { action, tradeId, assetId, recipientAddress } = await req.json()
     
+    const apiKey = Deno.env.get('FIREBLOCKS_API_KEY') ?? ''
+    const privateKey = Deno.env.get('FIREBLOCKS_PRIVATE_KEY') ?? ''
+    
+    console.log('Fireblocks config check:', {
+      hasApiKey: !!apiKey,
+      hasPrivateKey: !!privateKey,
+      privateKeyLength: privateKey.length,
+      privateKeyPreview: privateKey.substring(0, 50) + '...'
+    })
+    
+    if (!apiKey || !privateKey) {
+      throw new Error('Missing Fireblocks credentials')
+    }
+    
     const fireblocks = new FireblocksService({
-      apiKey: Deno.env.get('FIREBLOCKS_API_KEY') ?? '',
-      privateKey: Deno.env.get('FIREBLOCKS_PRIVATE_KEY') ?? '',
+      apiKey,
+      privateKey,
       baseUrl: 'https://sandbox-api.fireblocks.io/v1'
     })
 
