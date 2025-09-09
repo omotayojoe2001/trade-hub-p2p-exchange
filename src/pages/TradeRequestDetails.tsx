@@ -156,12 +156,12 @@ const TradeRequestDetails = () => {
     );
   }
 
-  // Determine trade direction and what each party gets/sends
-  const isUserBuyingCrypto = request.type === 'buy'; // User wants crypto, merchant sends crypto
-  const userGets = isUserBuyingCrypto ? `${request.amount} ${request.coin}` : `₦${request.nairaAmount}`;
-  const userSends = isUserBuyingCrypto ? `₦${request.nairaAmount}` : `${request.amount} ${request.coin}`;
-  const merchantGets = isUserBuyingCrypto ? `₦${request.nairaAmount}` : `${request.amount} ${request.coin}`;
-  const merchantSends = isUserBuyingCrypto ? `${request.amount} ${request.coin}` : `₦${request.nairaAmount}`;
+  // Determine trade direction based on trade_type (buy = user wants to buy crypto)
+  const isUserBuyingCrypto = request.trade_type === 'buy'; // User wants to buy crypto from merchant
+  const userGets = isUserBuyingCrypto ? `${request.amount_crypto} ${request.crypto_type}` : `₦${request.amount_fiat}`;
+  const userSends = isUserBuyingCrypto ? `₦${request.amount_fiat}` : `${request.amount_crypto} ${request.crypto_type}`;
+  const merchantGets = isUserBuyingCrypto ? `₦${request.amount_fiat}` : `${request.amount_crypto} ${request.crypto_type}`;
+  const merchantSends = isUserBuyingCrypto ? `${request.amount_crypto} ${request.crypto_type}` : `₦${request.amount_fiat}`;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -217,7 +217,7 @@ const TradeRequestDetails = () => {
                 </div>
                 <div className="flex items-center">
                   {isUserBuyingCrypto ? (
-                    <CryptoIcon symbol={request.coin} size={24} className="mr-2" />
+                    <CryptoIcon symbol={request.crypto_type} size={24} className="mr-2" />
                   ) : (
                     <Banknote size={24} className="text-green-600 mr-2" />
                   )}
@@ -241,7 +241,7 @@ const TradeRequestDetails = () => {
                   {isUserBuyingCrypto ? (
                     <Banknote size={24} className="text-blue-600 mr-2" />
                   ) : (
-                    <CryptoIcon symbol={request.coin} size={24} className="mr-2" />
+                    <CryptoIcon symbol={request.crypto_type} size={24} className="mr-2" />
                   )}
                   <span className="text-lg font-bold text-blue-800">{userSends}</span>
                 </div>
@@ -280,16 +280,16 @@ const TradeRequestDetails = () => {
             <h3 className="font-semibold text-gray-900 mb-3">Trade Details</h3>
             <div className="space-y-3">
               <div className="flex justify-between">
-                <span className="text-gray-600">Amount</span>
-                <span className="font-semibold text-gray-900">{request.amount} {request.coin}</span>
+                <span className="text-gray-600">Crypto Amount</span>
+                <span className="font-semibold text-gray-900">{request.amount_crypto} {request.crypto_type}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">Rate</span>
-                <span className="font-semibold text-gray-900">{request.rate}</span>
+                <span className="font-semibold text-gray-900">₦{request.rate}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-600">Total Value</span>
-                <span className="font-semibold text-gray-900">₦{request.nairaAmount}</span>
+                <span className="text-gray-600">Fiat Amount</span>
+                <span className="font-semibold text-gray-900">₦{request.amount_fiat}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">User</span>

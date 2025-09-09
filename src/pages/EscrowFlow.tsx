@@ -1,54 +1,35 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, MoreVertical } from 'lucide-react';
+import { ArrowLeft, MoreVertical, Shield, Copy, CheckCircle, Clock, AlertTriangle } from 'lucide-react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useEscrowFlowManager } from '@/components/escrow/EscrowFlowManager';
-import { EscrowStatusDisplay } from '@/components/escrow/EscrowStatusDisplay';
 import { ReceiptGenerator } from '@/components/escrow/ReceiptGenerator';
-import { CurrencySelector } from '@/components/CurrencySelector';
-import { WalletAddressInput } from '@/components/WalletAddressInput';
 import { useCryptoPayments } from '@/hooks/useCryptoPayments';
-import AmountInput from '@/components/sell-crypto/AmountInput';
-
-interface MerchantSelection {
-  type: 'auto' | 'manual';
-  selectedMerchant?: {
-    id: string;
-    name: string;
-    rating: number;
-    completedTrades: number;
-  };
-}
+import { useToast } from '@/hooks/use-toast';
 
 const EscrowFlow = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { amount: initialAmount, mode } = (location.state as any) || {};
+  const { toast } = useToast();
+  const { tradeId, trade, request, amount: initialAmount, mode } = (location.state as any) || {};
   
-  // Step management
+  // Step management - based on actual escrow flow requirements
   const [currentStep, setCurrentStep] = useState<number>(1);
-  const [transactionId, setTransactionId] = useState<string>('');
+  const [transactionId, setTransactionId] = useState<string>(tradeId || 'mock-transaction-id');
   
-  // Step 1: Transaction Type & Amount
-  const [selectedCrypto, setSelectedCrypto] = useState<string>('BTC');
-  const [amount, setAmount] = useState<string>(initialAmount || '');
-  const [currentRate, setCurrentRate] = useState<number>(1755000);
+  // Step 1: Escrow vault creation and crypto deposit instruction
+  const [escrowAddress, setEscrowAddress] = useState<string>('');
+  const [showQRCode, setShowQRCode] = useState<boolean>(false);
   
-  // Step 2: Wallet Address (for buyers)
-  const [walletAddress, setWalletAddress] = useState<string>('');
+  // Step 2: Payment confirmation and bank details display (only after crypto deposited)
+  const [showBankDetails, setShowBankDetails] = useState<boolean>(false);
+  const [bankDetails, setBankDetails] = useState<any>(null);
   
-  // Step 3: Merchant Selection
-  const [merchantSelection, setMerchantSelection] = useState<MerchantSelection>({ type: 'auto' });
-  
-  // Step 4: Escrow Status
-  const [escrowStatus, setEscrowStatus] = useState<'pending' | 'vault_created' | 'crypto_received' | 'cash_sent' | 'completed' | 'disputed'>('pending');
-  const [timeRemaining, setTimeRemaining] = useState<number>(30 * 60); // 30 minutes
-  
-  // Step 5: Receipt
+  // Step 3: Completion and receipt
   const [receiptData, setReceiptData] = useState<any>(null);
   
-  const { getPaymentAddress, generateQRCode } = useCryptoPayments();
+  const { generateQRCode } = useCryptoPayments();
 
   const {
     transaction,
@@ -57,90 +38,79 @@ const EscrowFlow = () => {
     isMonitoring,
     setReceiverWalletAddress
   } = useEscrowFlowManager({
-    transactionId: transactionId || 'mock-transaction-id',
+    transactionId,
     onStatusChange: (status) => {
-      setEscrowStatus(status as any);
+      handleStatusUpdate(status);
     }
   });
 
-  // Live rate simulation
+  // Extract trade details from passed data
+  const tradeAmount = trade?.amount_crypto || request?.amount_crypto || initialAmount || 0;
+  const tradeCurrency = trade?.crypto_type || request?.crypto_type || 'BTC';
+  const fiatAmount = trade?.amount_fiat || request?.amount_fiat || 0;
+  const buyerWalletAddress = trade?.receiver_wallet_address || '';
+
   useEffect(() => {
-    const interval = setInterval(() => {
-      const variation = (Math.random() - 0.5) * 10000;
-      setCurrentRate(prev => Math.max(1745000, Math.min(1765000, prev + variation)));
-    }, 3000);
-    return () => clearInterval(interval);
-  }, []);
-
-  // Timer countdown
-  useEffect(() => {
-    if (currentStep === 4 && timeRemaining > 0) {
-      const interval = setInterval(() => {
-        setTimeRemaining(prev => Math.max(0, prev - 1));
-      }, 1000);
-      return () => clearInterval(interval);
+    // Set the buyer's wallet address for crypto release
+    if (buyerWalletAddress) {
+      setReceiverWalletAddress(buyerWalletAddress);
     }
-  }, [currentStep, timeRemaining]);
-
-  const calculateNairaValue = () => {
-    const a = parseFloat(amount || '0');
-    if (isNaN(a)) return 0;
-    return a * currentRate;
-  };
-
-  const handleStepForward = () => {
-    if (currentStep === 1) {
-      // Generate transaction ID and move to wallet address
-      const newTransactionId = `ESC-${Date.now()}`;
-      setTransactionId(newTransactionId);
-      setCurrentStep(2);
-    } else if (currentStep === 2) {
-      // Move to merchant selection
-      setCurrentStep(3);
-    } else if (currentStep === 3) {
-      // Move to escrow monitoring
-      setCurrentStep(4);
-      startEscrowProcess();
-    }
-  };
-
-  const startEscrowProcess = () => {
-    // Simulate escrow process with Fireblocks
-    setTimeout(() => {
-      setEscrowStatus('crypto_received');
-    }, 5000);
-  };
-
-  const handleCashConfirmed = () => {
-    setEscrowStatus('completed');
     
-    // Generate receipt data
+    // Get mock bank details (in production, fetch from merchant profile)
+    setBankDetails({
+      accountName: 'John Merchant',
+      accountNumber: '1234567890',
+      bankName: 'First Bank Nigeria',
+      bankCode: '011'
+    });
+  }, [buyerWalletAddress]);
+
+  const handleStatusUpdate = (status: string) => {
+    switch (status) {
+      case 'vault_created':
+        setCurrentStep(1);
+        setShowQRCode(true);
+        break;
+      case 'crypto_received':
+        setCurrentStep(2);
+        setShowBankDetails(true);
+        toast({
+          title: "Crypto Received!",
+          description: "Crypto deposited to escrow. Buyer can now send cash payment.",
+        });
+        break;
+      case 'completed':
+        setCurrentStep(3);
+        generateReceiptData();
+        break;
+    }
+  };
+
+  const handleCashReceived = async () => {
+    await confirmCashReceived();
+  };
+
+  const generateReceiptData = () => {
     const receipt = {
       transactionId,
-      amount: parseFloat(amount),
-      coin: selectedCrypto,
-      escrowAddress: transaction?.escrowAddress || '',
-      receiverBankDetails: {
-        accountNumber: '1234567890',
-        bankName: 'First Bank Nigeria',
-        accountName: 'No Account'
-      },
+      amount: tradeAmount,
+      coin: tradeCurrency,
+      fiatAmount,
+      escrowAddress: transaction?.escrowAddress || escrowAddress,
+      receiverBankDetails: bankDetails,
+      buyerWalletAddress,
       completedAt: new Date(),
       txHash: transaction?.txHash || '',
-      walletAddress: walletAddress
     };
     
     setReceiptData(receipt);
-    setCurrentStep(5);
   };
 
-  const handleLocalDispute = () => {
-    setEscrowStatus('disputed');
-    navigate('/dispute', { 
-      state: { 
-        transactionId,
-        type: 'escrow_dispute'
-      }
+  const copyToClipboard = (text: string, label: string) => {
+    navigator.clipboard.writeText(text);
+    toast({
+      title: "Copied!",
+      description: `${label} copied to clipboard`,
     });
   };
 
@@ -150,196 +120,173 @@ const EscrowFlow = () => {
         return (
           <div className="space-y-6">
             <Card className="p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Step 1: Transaction Details</h2>
-              
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Select Cryptocurrency
-                  </label>
-                  <CurrencySelector 
-                    value={selectedCrypto}
-                    onValueChange={setSelectedCrypto}
-                    className="w-full"
-                  />
-                </div>
-                
-                <AmountInput
-                  amount={amount}
-                  onAmountChange={setAmount}
-                  currentRate={currentRate}
-                  calculateNairaValue={calculateNairaValue}
-                />
+              <div className="text-center mb-6">
+                <Shield size={48} className="text-blue-600 mx-auto mb-4" />
+                <h2 className="text-xl font-semibold text-gray-900 mb-2">
+                  Fireblocks Escrow Vault Created
+                </h2>
+                <p className="text-gray-600">
+                  Send {tradeAmount} {tradeCurrency} to the secure escrow address below
+                </p>
               </div>
+
+              {transaction?.escrowAddress && (
+                <div className="space-y-4">
+                  {/* QR Code */}
+                  <div className="bg-gray-50 p-4 rounded-lg text-center">
+                    <img 
+                      src={generateQRCode(transaction.escrowAddress, tradeAmount)} 
+                      alt="Escrow QR Code" 
+                      className="w-40 h-40 mx-auto mb-3"
+                    />
+                    <p className="text-sm text-gray-600">
+                      Scan to send {tradeAmount} {tradeCurrency}
+                    </p>
+                  </div>
+
+                  {/* Escrow Address */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700">
+                      Fireblocks Escrow Address:
+                    </label>
+                    <div className="flex items-center space-x-2">
+                      <div className="flex-1 p-3 bg-gray-100 rounded font-mono text-sm break-all">
+                        {transaction.escrowAddress}
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => copyToClipboard(transaction.escrowAddress!, 'Escrow address')}
+                      >
+                        <Copy size={16} />
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* Amount */}
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <p className="text-sm text-blue-800">
+                      <strong>Amount to send:</strong> {tradeAmount} {tradeCurrency}
+                    </p>
+                    <p className="text-sm text-blue-600 mt-1">
+                      Make sure to send exactly this amount to the escrow address
+                    </p>
+                  </div>
+
+                  {/* Vault ID */}
+                  {transaction.vaultId && (
+                    <div className="text-sm text-gray-600">
+                      <p>Vault ID: <span className="font-mono text-xs">{transaction.vaultId}</span></p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {!transaction?.escrowAddress && (
+                <div className="text-center py-8">
+                  <Clock size={32} className="text-gray-400 mx-auto mb-2" />
+                  <p className="text-gray-500">Creating escrow vault...</p>
+                </div>
+              )}
             </Card>
 
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <h3 className="font-medium text-blue-900 mb-2">Fireblocks Escrow Protection</h3>
-              <ul className="text-sm text-blue-800 space-y-1">
-                <li>• Your crypto is held securely in institutional-grade vaults</li>
-                <li>• Multi-signature security and compliance</li>
-                <li>• Automatic release after cash confirmation</li>
-                <li>• Enterprise-level dispute resolution</li>
-              </ul>
-            </div>
-
-            <Button 
-              onClick={handleStepForward}
-              disabled={!amount || parseFloat(amount) <= 0}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white"
-            >
-              Continue to Wallet Address
-            </Button>
+            <Card className="p-4 bg-yellow-50 border-yellow-200">
+              <div className="flex items-start space-x-3">
+                <AlertTriangle size={20} className="text-yellow-600 mt-0.5" />
+                <div>
+                  <h4 className="font-medium text-yellow-800">Important Instructions</h4>
+                  <ul className="text-sm text-yellow-700 mt-2 space-y-1">
+                    <li>• Send crypto only to the address above</li>
+                    <li>• Once confirmed, buyer will receive bank details for cash payment</li>
+                    <li>• Do not send from exchange accounts - use personal wallet</li>
+                    <li>• Transaction is monitored in real-time by Fireblocks</li>
+                  </ul>
+                </div>
+              </div>
+            </Card>
           </div>
         );
 
       case 2:
         return (
           <div className="space-y-6">
-            <WalletAddressInput
-              cryptoType={selectedCrypto}
-              onAddressSet={(address) => {
-                setWalletAddress(address);
-                setReceiverWalletAddress(address);
-              }}
-              required={true}
-            />
-
-            <Button 
-              onClick={handleStepForward}
-              disabled={!walletAddress}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white"
-            >
-              Continue to Merchant Selection
-            </Button>
-          </div>
-        );
-
-      case 3:
-        return (
-          <div className="space-y-6">
             <Card className="p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Step 3: Choose Merchant</h2>
-              
-              <div className="space-y-4">
-                <div 
-                  className={`border-2 rounded-lg p-4 cursor-pointer transition-colors ${
-                    merchantSelection.type === 'auto' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'
-                  }`}
-                  onClick={() => setMerchantSelection({ type: 'auto' })}
-                >
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="font-medium text-gray-900">Auto Merchant Match</h3>
-                      <p className="text-sm text-gray-600">Platform finds the best merchant for you</p>
-                    </div>
-                    <div className="w-4 h-4 rounded-full border-2 border-blue-500 flex items-center justify-center">
-                      {merchantSelection.type === 'auto' && <div className="w-2 h-2 bg-blue-500 rounded-full" />}
-                    </div>
-                  </div>
-                </div>
-
-                <div 
-                  className={`border-2 rounded-lg p-4 cursor-pointer transition-colors ${
-                    merchantSelection.type === 'manual' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'
-                  }`}
-                  onClick={() => setMerchantSelection({ type: 'manual' })}
-                >
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="font-medium text-gray-900">Manual Selection</h3>
-                      <p className="text-sm text-gray-600">Choose from a list of available merchants</p>
-                    </div>
-                    <div className="w-4 h-4 rounded-full border-2 border-blue-500 flex items-center justify-center">
-                      {merchantSelection.type === 'manual' && <div className="w-2 h-2 bg-blue-500 rounded-full" />}
-                    </div>
-                  </div>
-                </div>
+              <div className="text-center mb-6">
+                <CheckCircle size={48} className="text-green-600 mx-auto mb-4" />
+                <h2 className="text-xl font-semibold text-gray-900 mb-2">
+                  Crypto Received in Escrow!
+                </h2>
+                <p className="text-gray-600">
+                  Buyer has been notified to send ₦{fiatAmount} to your bank account
+                </p>
               </div>
 
-              {merchantSelection.type === 'manual' && (
-                <div className="mt-4 space-y-2">
-                  <h4 className="font-medium text-gray-900">Available Merchants</h4>
-                  <div className="border rounded-lg p-3 bg-gray-50">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="font-medium">MercyPay</p>
-                        <p className="text-sm text-gray-600">★★★★☆ 4.8 • 127 trades</p>
+              {bankDetails && (
+                <div className="space-y-4">
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                    <h3 className="font-medium text-green-800 mb-3">Your Bank Details (shown to buyer):</h3>
+                    <div className="space-y-2">
+                      <div className="flex justify-between">
+                        <span className="text-green-700">Account Name:</span>
+                        <span className="font-medium text-green-900">{bankDetails.accountName}</span>
                       </div>
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => setMerchantSelection({ 
-                          type: 'manual', 
-                          selectedMerchant: { id: '1', name: 'MercyPay', rating: 4.8, completedTrades: 127 }
-                        })}
-                      >
-                        Select
-                      </Button>
+                      <div className="flex justify-between">
+                        <span className="text-green-700">Account Number:</span>
+                        <span className="font-medium text-green-900">{bankDetails.accountNumber}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-green-700">Bank Name:</span>
+                        <span className="font-medium text-green-900">{bankDetails.bankName}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-green-700">Amount Expected:</span>
+                        <span className="font-medium text-green-900">₦{fiatAmount}</span>
+                      </div>
                     </div>
                   </div>
                 </div>
               )}
             </Card>
 
-            <Button 
-              onClick={handleStepForward}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white"
-            >
-              Start Escrow Process
-            </Button>
-          </div>
-        );
-
-      case 4:
-        return (
-          <div className="space-y-6">
-            <Card className="p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Step 4: Escrow in Progress</h2>
+            <Card className="p-4 border-orange-200 bg-orange-50">
+              <h4 className="font-medium text-orange-800 mb-2">Waiting for Cash Payment</h4>
+              <p className="text-sm text-orange-700 mb-4">
+                Once you receive the cash payment in your bank account, click the button below to release the crypto from escrow.
+              </p>
               
-              <EscrowStatusDisplay
-                status={escrowStatus}
-                amount={parseFloat(amount)}
-                coin={selectedCrypto}
-                escrowAddress={transaction?.escrowAddress || ''}
-                timeRemaining={timeRemaining}
-                onConfirmCash={handleCashConfirmed}
-                onDispute={handleLocalDispute}
-              />
+              <Button
+                onClick={handleCashReceived}
+                className="w-full bg-green-600 hover:bg-green-700 text-white"
+              >
+                I Have Received the Payment
+              </Button>
             </Card>
 
-            {(escrowStatus === 'pending' || escrowStatus === 'vault_created') && transaction?.escrowAddress && (
-              <Card className="p-4">
-                <h4 className="font-medium text-gray-900 mb-3">Send Crypto to Fireblocks Escrow</h4>
-                <div className="space-y-3">
-                  <div className="bg-gray-50 p-3 rounded text-center">
-                    <img 
-                      src={generateQRCode(transaction.escrowAddress, parseFloat(amount))} 
-                      alt="Escrow QR Code" 
-                      className="w-32 h-32 mx-auto mb-2"
-                    />
-                    <p className="text-xs text-gray-600">Scan to send {amount} {selectedCrypto}</p>
-                  </div>
-                  <div className="text-sm">
-                    <p className="text-gray-600">Fireblocks Vault Address:</p>
-                    <p className="font-mono break-all bg-gray-100 p-2 rounded">{transaction.escrowAddress}</p>
-                  </div>
-                  {transaction.vaultId && (
-                    <div className="text-sm">
-                      <p className="text-gray-600">Vault ID:</p>
-                      <p className="font-mono text-xs text-gray-500">{transaction.vaultId}</p>
-                    </div>
-                  )}
-                </div>
-              </Card>
-            )}
+            <Card className="p-4">
+              <h4 className="font-medium text-gray-800 mb-2">Having Issues?</h4>
+              <Button
+                onClick={escrowHandleDispute}
+                variant="outline"
+                className="w-full border-red-300 text-red-600 hover:bg-red-50"
+              >
+                Report Dispute
+              </Button>
+            </Card>
           </div>
         );
 
-      case 5:
+      case 3:
         return (
           <div className="space-y-6">
-            <h2 className="text-lg font-semibold text-gray-900 text-center">Transaction Completed!</h2>
+            <div className="text-center">
+              <CheckCircle size={64} className="text-green-600 mx-auto mb-4" />
+              <h2 className="text-2xl font-semibold text-gray-900 mb-2">
+                Transaction Completed!
+              </h2>
+              <p className="text-gray-600">
+                Crypto has been successfully released from escrow
+              </p>
+            </div>
             
             {receiptData && (
               <ReceiptGenerator 
@@ -358,10 +305,10 @@ const EscrowFlow = () => {
                 View My Trades
               </Button>
               <Button 
-                onClick={() => navigate('/buy-sell')}
+                onClick={() => navigate('/trade-requests')}
                 className="w-full bg-blue-600 hover:bg-blue-700 text-white"
               >
-                New Trade
+                New Requests
               </Button>
             </div>
           </div>
@@ -377,10 +324,13 @@ const EscrowFlow = () => {
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-gray-100">
         <div className="flex items-center">
-          <Link to="/buy-sell">
+          <Link to="/trade-requests">
             <ArrowLeft size={24} className="text-gray-700 mr-4" />
           </Link>
-          <h1 className="text-lg font-semibold text-gray-900">Fireblocks Escrow</h1>
+          <div>
+            <h1 className="text-lg font-semibold text-gray-900">Fireblocks Escrow</h1>
+            <p className="text-sm text-gray-500">Secure crypto transaction</p>
+          </div>
         </div>
         <MoreVertical size={24} className="text-gray-700" />
       </div>
@@ -388,14 +338,14 @@ const EscrowFlow = () => {
       {/* Progress Bar */}
       <div className="p-4 bg-gray-50">
         <div className="flex items-center">
-          {[1, 2, 3, 4, 5].map((step) => (
+          {[1, 2, 3].map((step) => (
             <React.Fragment key={step}>
               <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
                 currentStep >= step ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-600'
               }`}>
                 {currentStep > step ? '✓' : step}
               </div>
-              {step < 5 && (
+              {step < 3 && (
                 <div className={`flex-1 h-0.5 mx-2 ${
                   currentStep > step ? 'bg-blue-500' : 'bg-gray-200'
                 }`} />
@@ -404,10 +354,8 @@ const EscrowFlow = () => {
           ))}
         </div>
         <div className="flex justify-between text-xs text-gray-600 mt-2">
-          <span>Details</span>
-          <span>Wallet</span>
-          <span>Merchant</span>
-          <span>Escrow</span>
+          <span>Crypto Deposit</span>
+          <span>Cash Payment</span>
           <span>Complete</span>
         </div>
       </div>
