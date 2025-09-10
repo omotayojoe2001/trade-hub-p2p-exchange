@@ -21,7 +21,7 @@ import BuySell from "./pages/BuySell";
 import Settings from "./pages/Settings";
 import Notifications from "./pages/Notifications";
 import Premium from "./pages/Premium";
-import MerchantSelection from "./pages/MerchantSelection";
+
 import MerchantList from "./pages/MerchantList";
 import SelectCoin from "./pages/SelectCoin";
 import MyTrades from "./pages/MyTrades";
@@ -268,7 +268,7 @@ const AppContent = () => {
             <Route path="/buy-crypto-success" element={<BuyCryptoSuccess />} />
             <Route path="/buy-crypto-cancel" element={<BuyCryptoCancel />} />
             <Route path="/buy-crypto-dispute" element={<BuyCryptoDispute />} />
-            <Route path="/merchant-selection" element={<MerchantSelection />} />
+
         <Route path="/merchant-matching-choice" element={<MerchantMatchingChoice />} />
         <Route path="/premium-merchant-choice" element={<PremiumMerchantChoice />} />
         <Route path="/incoming-trade-requests" element={<IncomingTradeRequests />} />

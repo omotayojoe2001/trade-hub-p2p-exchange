@@ -144,7 +144,7 @@ const BuyCryptoPaymentStep1 = () => {
           <CardContent className="p-6 text-center">
             <AlertCircle className="w-12 h-12 text-destructive mx-auto mb-4" />
             <p className="text-muted-foreground mb-4">Missing trade information</p>
-            <Button onClick={() => navigate('/buy-crypto')}>
+            <Button onClick={() => navigate('/buy-sell')}>
               Start Over
             </Button>
           </CardContent>

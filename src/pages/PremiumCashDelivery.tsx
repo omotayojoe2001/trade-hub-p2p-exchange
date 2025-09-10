@@ -120,7 +120,7 @@ const PremiumCashDelivery = () => {
     return (
       <div className="min-h-screen bg-gray-50">
         <div className="flex items-center p-4 bg-white border-b border-gray-200">
-          <button onClick={() => navigate('/profile')} className="mr-3">
+          <button onClick={() => navigate('/profile-settings')} className="mr-3">
             <ArrowLeft size={20} className="text-gray-600" />
           </button>
           <h1 className="text-lg font-semibold text-gray-900">Request Submitted</h1>

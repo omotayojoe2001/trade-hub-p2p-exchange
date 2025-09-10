@@ -38,13 +38,14 @@ const BuyCryptoMatch = () => {
   };
 
   const handleContinue = () => {
-    // Navigate directly to payment step 1 - NO old searching page
-    navigate("/buy-crypto-payment-step1", { 
+    // Navigate to escrow flow when merchant accepts trade
+    navigate("/escrow-flow", { 
       state: { 
         amount, 
         nairaAmount, 
         selectedMerchant: location.state?.selectedMerchant,
-        coinType: location.state?.coinType || 'BTC'
+        coinType: location.state?.coinType || 'BTC',
+        userRole: 'buyer' // Buyer who wants crypto
       } 
     });
   };
@@ -105,9 +106,32 @@ const BuyCryptoMatch = () => {
         </Card>
 
         <Card>
-          <CardContent className="p-8 text-center">
-            <div className="text-muted-foreground">
-              No merchants available at this time. Please try again later.
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Avatar className="w-8 h-8">
+                <AvatarFallback>MP</AvatarFallback>
+              </Avatar>
+              <div>
+                <p className="font-semibold">MercyPay</p>
+                <div className="flex items-center gap-1">
+                  <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+                  <span className="text-xs text-muted-foreground">4.8 • 127 trades</span>
+                </div>
+              </div>
+              <Badge variant="secondary" className="ml-auto">Verified</Badge>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground mb-4">
+              Merchant has accepted your trade request. Crypto will be secured in Fireblocks escrow.
+            </p>
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+              <p className="text-sm text-blue-800 font-medium">Next Steps:</p>
+              <ul className="text-sm text-blue-700 mt-1 space-y-1">
+                <li>• Merchant will deposit crypto to secure escrow</li>
+                <li>• You'll receive bank details for payment</li>
+                <li>• Crypto released after payment confirmation</li>
+              </ul>
             </div>
           </CardContent>
         </Card>
@@ -139,7 +163,7 @@ const BuyCryptoMatch = () => {
             Cancel Trade
           </Button>
           <Button onClick={handleContinue}>
-            Continue
+            Start Escrow Process
           </Button>
         </div>
       </div>

@@ -7,6 +7,7 @@ import CryptoIcon from '@/components/CryptoIcon';
 import { useToast } from '@/hooks/use-toast';
 import { tradeRequestService } from '@/services/tradeRequestService';
 import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
 
 const TradeRequestDetails = () => {
   const navigate = useNavigate();
@@ -27,7 +28,24 @@ const TradeRequestDetails = () => {
         const id = initialRequest?.id;
         if (!id) return;
         const latest = await tradeRequestService.getTradeRequestById(id);
-        if (latest) setRequest(latest);
+        if (latest) {
+          console.log('Trade request data:', latest);
+          
+          // Try to fetch user display name using RPC
+          const userId = latest.user_id || latest.buyer_id || latest.created_by;
+          if (userId) {
+            const { data: displayName } = await supabase
+              .rpc('get_user_display_name', { user_uuid: userId });
+            
+            console.log('User display name:', displayName);
+            
+            if (displayName) {
+              latest.user_name = displayName;
+            }
+          }
+          
+          setRequest(latest);
+        }
       } catch (e) {
         // ignore; fallback to initialRequest
       }
@@ -158,10 +176,21 @@ const TradeRequestDetails = () => {
 
   // Determine trade direction based on trade_type (buy = user wants to buy crypto)
   const isUserBuyingCrypto = request.trade_type === 'buy'; // User wants to buy crypto from merchant
-  const userGets = isUserBuyingCrypto ? `${request.amount_crypto} ${request.crypto_type}` : `₦${request.amount_fiat}`;
-  const userSends = isUserBuyingCrypto ? `₦${request.amount_fiat}` : `${request.amount_crypto} ${request.crypto_type}`;
-  const merchantGets = isUserBuyingCrypto ? `₦${request.amount_fiat}` : `${request.amount_crypto} ${request.crypto_type}`;
-  const merchantSends = isUserBuyingCrypto ? `${request.amount_crypto} ${request.crypto_type}` : `₦${request.amount_fiat}`;
+  const cryptoAmount = parseFloat(request.amount_crypto || request.amount || 0);
+  const fiatAmount = parseFloat(request.amount_fiat || request.naira_amount || 0);
+  const cryptoType = request.crypto_type || request.coin_type || 'BTC';
+  const rate = parseFloat(request.rate || 0);
+  
+  // Format crypto amount to avoid scientific notation
+  const formatCryptoAmount = (amount: number) => {
+    if (amount >= 1) return amount.toString();
+    return amount.toFixed(8).replace(/\.?0+$/, '');
+  };
+  
+  const userGets = isUserBuyingCrypto ? `${formatCryptoAmount(cryptoAmount)} ${cryptoType}` : `₦${fiatAmount?.toLocaleString()}`;
+  const userSends = isUserBuyingCrypto ? `₦${fiatAmount?.toLocaleString()}` : `${formatCryptoAmount(cryptoAmount)} ${cryptoType}`;
+  const merchantGets = isUserBuyingCrypto ? `₦${fiatAmount?.toLocaleString()}` : `${formatCryptoAmount(cryptoAmount)} ${cryptoType}`;
+  const merchantSends = isUserBuyingCrypto ? `${formatCryptoAmount(cryptoAmount)} ${cryptoType}` : `₦${fiatAmount?.toLocaleString()}`;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -217,7 +246,7 @@ const TradeRequestDetails = () => {
                 </div>
                 <div className="flex items-center">
                   {isUserBuyingCrypto ? (
-                    <CryptoIcon symbol={request.crypto_type} size={24} className="mr-2" />
+                    <CryptoIcon symbol={cryptoType} size={24} className="mr-2" />
                   ) : (
                     <Banknote size={24} className="text-green-600 mr-2" />
                   )}
@@ -241,7 +270,7 @@ const TradeRequestDetails = () => {
                   {isUserBuyingCrypto ? (
                     <Banknote size={24} className="text-blue-600 mr-2" />
                   ) : (
-                    <CryptoIcon symbol={request.crypto_type} size={24} className="mr-2" />
+                    <CryptoIcon symbol={cryptoType} size={24} className="mr-2" />
                   )}
                   <span className="text-lg font-bold text-blue-800">{userSends}</span>
                 </div>
@@ -281,19 +310,19 @@ const TradeRequestDetails = () => {
             <div className="space-y-3">
               <div className="flex justify-between">
                 <span className="text-gray-600">Crypto Amount</span>
-                <span className="font-semibold text-gray-900">{request.amount_crypto} {request.crypto_type}</span>
+                <span className="font-semibold text-gray-900">{formatCryptoAmount(cryptoAmount)} {cryptoType}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">Rate</span>
-                <span className="font-semibold text-gray-900">₦{request.rate}</span>
+                <span className="font-semibold text-gray-900">₦{rate?.toLocaleString()}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">Fiat Amount</span>
-                <span className="font-semibold text-gray-900">₦{request.amount_fiat}</span>
+                <span className="font-semibold text-gray-900">₦{fiatAmount?.toLocaleString()}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">User</span>
-                <span className="font-semibold text-gray-900">{request.userName || 'Anonymous'}</span>
+                <span className="font-semibold text-gray-900">{request.user_name || request.userName || 'Anonymous'}</span>
               </div>
             </div>
           </CardContent>

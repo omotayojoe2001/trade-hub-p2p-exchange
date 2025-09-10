@@ -105,7 +105,7 @@ const CreditsPurchase = () => {
 
       // Show success message and redirect
       alert('Credit purchase request submitted! Your credits will be added once payment is confirmed.');
-      navigate('/profile');
+      navigate('/profile-settings');
 
     } catch (error: any) {
       setError(error.message || 'Failed to purchase credits');

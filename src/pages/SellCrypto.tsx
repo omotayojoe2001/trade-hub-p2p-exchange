@@ -79,9 +79,9 @@ const SellCrypto = () => {
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-gray-100">
         <div className="flex items-center">
-          <Link to="/merchant-selection">
+          <button onClick={() => navigate(-1)}>
             <ArrowLeft size={24} className="text-gray-700 mr-4" />
-          </Link>
+          </button>
           <h1 className="text-lg font-semibold text-gray-900">Sell Crypto</h1>
         </div>
         <MoreVertical size={24} className="text-gray-700" />

@@ -156,7 +156,7 @@ const VendorLogin = () => {
                   Need vendor access?
                 </p>
                 <button
-                  onClick={() => navigate('/contact')}
+                  onClick={() => navigate('/help-support')}
                   className="text-blue-600 hover:text-blue-700 text-sm font-medium"
                 >
                   Contact Administrator

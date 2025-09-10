@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowLeft, Bell, Filter, MapPin, Clock, Star, Loader2 } from 'lucide-react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import BottomNavigation from '@/components/BottomNavigation';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -183,9 +183,9 @@ const MerchantList = () => {
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-gray-100">
         <div className="flex items-center">
-          <Link to="/merchant-selection" className="mr-4">
+          <button onClick={() => navigate(-1)} className="mr-4">
             <ArrowLeft size={24} className="text-gray-600" />
-          </Link>
+          </button>
           <h1 className="text-lg font-semibold text-gray-800">Merchant List</h1>
         </div>
         <div className="flex items-center space-x-3">

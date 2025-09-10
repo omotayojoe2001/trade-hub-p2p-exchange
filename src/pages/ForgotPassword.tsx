@@ -28,7 +28,7 @@ const ForgotPassword = () => {
             <p className="text-muted-foreground mb-6">
               We've sent a password reset link to {email}
             </p>
-            <Button onClick={() => navigate("/login")} className="w-full">
+            <Button onClick={() => navigate("/auth")} className="w-full">
               Back to Login
             </Button>
           </CardContent>
@@ -44,7 +44,7 @@ const ForgotPassword = () => {
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => navigate("/login")}
+            onClick={() => navigate("/auth")}
             className="absolute left-4 top-4"
           >
             <ArrowLeft className="w-5 h-5" />
@@ -73,7 +73,7 @@ const ForgotPassword = () => {
           </Button>
           
           <div className="text-center">
-            <Button variant="link" onClick={() => navigate("/login")}>
+            <Button variant="link" onClick={() => navigate("/auth")}>
               Back to Login
             </Button>
           </div>

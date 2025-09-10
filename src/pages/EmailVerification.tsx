@@ -71,7 +71,7 @@ const EmailVerification = () => {
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => navigate("/signup")}
+            onClick={() => navigate("/auth")}
             className="absolute left-4 top-4"
           >
             <ArrowLeft className="w-5 h-5" />

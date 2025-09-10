@@ -19,7 +19,7 @@ const ResetPassword = () => {
     }
     // TODO: Implement password reset logic
     console.log("Password reset with:", password);
-    navigate("/login");
+    navigate("/auth");
   };
 
   return (

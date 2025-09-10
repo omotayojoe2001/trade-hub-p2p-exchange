@@ -201,7 +201,7 @@ Thank you for using Central Exchange!
                   </Button>
                   
                   <Button
-                    onClick={() => navigate('/sell-crypto')}
+                    onClick={() => navigate('/buy-sell')}
                     className="w-full"
                   >
                     Sell More Crypto

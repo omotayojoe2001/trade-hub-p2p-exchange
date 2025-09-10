@@ -119,7 +119,7 @@ const PremiumSettings = () => {
 
   const handleLogout = () => {
     signOut();
-    navigate('/login');
+    navigate('/auth');
   };
 
   const handleDeleteAccount = () => {

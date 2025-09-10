@@ -83,14 +83,16 @@ const SelectCoin = () => {
 
   const handleCoinSelect = (coinId: string) => {
     setSelectedCoin(coinId);
-    // Route to merchant matching choice (auto vs manual)
+    const selectedCoinData = coins.find(c => c.id === coinId);
+    
+    // Route to merchant matching choice (auto vs manual) for both buy and sell flows
     navigate('/merchant-matching-choice', {
       state: {
         selectedCoin: coinId,
-        coinData: coins.find(c => c.id === coinId),
+        coinData: selectedCoinData,
         mode: mode,
         type: mode,
-        coinType: coins.find(c => c.id === coinId)?.symbol || 'BTC'
+        coinType: selectedCoinData?.symbol || 'BTC'
       }
     });
   };

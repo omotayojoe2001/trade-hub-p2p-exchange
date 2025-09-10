@@ -25,17 +25,17 @@ const PersistentQuoteCode = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Check if user is premium (not vendor)
+    // Check if user is premium
     const checkUserRole = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         const { data: profile } = await supabase
           .from('profiles')
-          .select('role')
+          .select('is_premium')
           .eq('user_id', user.id)
           .single();
         
-        setUserRole(profile?.role || 'user');
+        setUserRole(profile?.is_premium ? 'premium' : 'regular');
       }
     };
 
@@ -43,8 +43,8 @@ const PersistentQuoteCode = () => {
   }, []);
 
   useEffect(() => {
-    // Only show for premium users, not vendors
-    if (userRole === 'vendor') {
+    // Only show for premium users
+    if (userRole !== 'premium') {
       return;
     }
 
@@ -147,8 +147,8 @@ const PersistentQuoteCode = () => {
     }
   };
 
-  // Don't show for vendors
-  if (userRole === 'vendor' || !isVisible || activeCodes.length === 0) {
+  // Only show for premium users with active codes
+  if (userRole !== 'premium' || !isVisible || activeCodes.length === 0) {
     return null;
   }
 

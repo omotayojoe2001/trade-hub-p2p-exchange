@@ -21,7 +21,7 @@ const SellCryptoCompleted: React.FC = () => {
 
   useEffect(() => {
     if (!user || !tradeId) {
-      navigate('/sell-crypto');
+      navigate('/buy-sell');
       return;
     }
 
@@ -251,7 +251,7 @@ const SellCryptoCompleted: React.FC = () => {
           </Button>
 
           <Button
-            onClick={() => navigate('/sell-crypto')}
+            onClick={() => navigate('/buy-sell')}
             className="w-full bg-blue-600 hover:bg-blue-700 text-white"
           >
             Sell More Crypto

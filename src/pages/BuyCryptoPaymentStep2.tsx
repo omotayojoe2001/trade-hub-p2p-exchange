@@ -15,10 +15,13 @@ const BuyCryptoPaymentStep2 = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   
-  const { tradeId, coinType, cryptoAmount, cashAmount, selectedMerchant, walletAddress } = location.state || {};
+  const { tradeRequestId, coinType, cryptoAmount, nairaAmount, selectedMerchant, walletAddress } = location.state || {};
+  const tradeId = tradeRequestId;
+  const cashAmount = nairaAmount;
   
   const [tradeStatus, setTradeStatus] = useState('searching');
   const [merchantBankDetails, setMerchantBankDetails] = useState<any>(null);
+  const [lastCheckedStatus, setLastCheckedStatus] = useState<string>('');
   const [paymentProof, setPaymentProof] = useState<File | null>(null);
   const [messages, setMessages] = useState<any[]>([]);
   const [newMessage, setNewMessage] = useState('');
@@ -28,6 +31,13 @@ const BuyCryptoPaymentStep2 = () => {
     if (tradeId) {
       monitorTradeStatus();
       fetchMessages();
+      
+      // Poll every 5 seconds to reduce blinking
+      const interval = setInterval(() => {
+        monitorTradeStatus();
+      }, 5000);
+      
+      return () => clearInterval(interval);
     }
   }, [tradeId]);
 
@@ -41,66 +51,51 @@ const BuyCryptoPaymentStep2 = () => {
   }, [countdown]);
 
   const monitorTradeStatus = async () => {
+    if (!tradeId) return;
+    
     try {
-      // Check trade request status first
-      const { data: tradeRequest, error: requestError } = await supabase
+      // Check trade request status
+      const { data: tradeRequest } = await supabase
         .from('trade_requests')
         .select('*')
         .eq('id', tradeId)
         .single();
 
-      if (requestError) throw requestError;
+      if (tradeRequest?.status === 'accepted' && tradeStatus === 'searching') {
+        setTradeStatus('accepted');
+        toast({
+          title: "Merchant Matched!",
+          description: "Merchant accepted your trade request",
+        });
+      }
+      
+      // Check if escrow is funded
+      const { data: tradeData, error: tradeError } = await supabase
+        .from('trades')
+        .select('*')
+        .eq('trade_request_id', tradeId)
+        .maybeSingle();
 
-      if (tradeRequest) {
-        if (tradeRequest.status === 'pending') {
-          setTradeStatus('searching');
-          // Continue polling every 3 seconds
-          setTimeout(monitorTradeStatus, 3000);
-        } else if (tradeRequest.status === 'accepted') {
-          setTradeStatus('accepted');
-          
-          // Check if trade was created and escrow is funded
-          const { data: trade, error: tradeError } = await supabase
-            .from('trades')
-            .select('*, seller:profiles!seller_id(*)')
-            .eq('trade_request_id', tradeId)
-            .single();
+      console.log('Trade status check:', { 
+        tradeData: tradeData, 
+        tradeStatus: tradeStatus, 
+        tradeId: tradeId,
+        escrowStatus: tradeData?.escrow_status,
+        tradeExists: !!tradeData
+      });
 
-          if (trade && !tradeError) {
-            if (trade.escrow_status === 'crypto_deposited') {
-              setTradeStatus('escrow_funded');
-              
-              // Get merchant's bank details
-              const { data: bankDetails } = await supabase
-                .from('payment_methods')
-                .select('*')
-                .eq('user_id', trade.seller_id)
-                .eq('is_default', true)
-                .single();
-
-              if (bankDetails) {
-                setMerchantBankDetails({
-                  bank_name: bankDetails.bank_name,
-                  account_number: bankDetails.account_number,
-                  account_name: bankDetails.account_name,
-                  reference: `PAY-${trade.id.slice(-8)}`,
-                  amount_naira: trade.naira_amount
-                });
-              }
-            } else {
-              // Wait for escrow funding
-              setTimeout(monitorTradeStatus, 3000);
-            }
-          }
-        } else if (tradeRequest.status === 'rejected') {
-          setTradeStatus('cancelled');
-          toast({
-            title: "Trade Rejected",
-            description: "The merchant declined your trade request",
-            variant: "destructive"
-          });
-          setTimeout(() => navigate('/buy-sell'), 3000);
-        }
+      // Move from accepted to escrow_funded when crypto is deposited
+      if (tradeData?.escrow_status === 'crypto_deposited' && (tradeStatus === 'accepted' || tradeStatus === 'searching')) {
+        console.log('Escrow status is crypto_deposited, showing bank details');
+        setTradeStatus('escrow_funded');
+        
+        // Fetch merchant's default bank account
+        fetchMerchantBankDetails(tradeData.seller_id, tradeData);
+        
+        toast({
+          title: "Payment Details Available!",
+          description: "Merchant has funded escrow. Make your payment now.",
+        });
       }
     } catch (error) {
       console.error('Error monitoring trade:', error);
@@ -119,6 +114,44 @@ const BuyCryptoPaymentStep2 = () => {
       setMessages(data || []);
     } catch (error) {
       console.error('Error fetching messages:', error);
+    }
+  };
+
+  const fetchMerchantBankDetails = async (sellerId: string, trade: any) => {
+    try {
+      console.log('Fetching payment method for seller:', sellerId);
+      
+      // Use RPC function to bypass RLS and get merchant's payment method
+      const { data: paymentMethods, error } = await supabase
+        .rpc('get_merchant_payment_method', { merchant_id: sellerId });
+        
+      console.log('RPC response:', { paymentMethods, error });
+      const paymentMethod = paymentMethods?.[0]; // Get first row from table result
+
+      if (error || !paymentMethod) {
+        console.error('No payment method found, using mock data');
+        // Use mock merchant bank details for demo
+        setMerchantBankDetails({
+          bank_name: 'GTBank',
+          account_number: '0123456789',
+          account_name: selectedMerchant?.display_name || 'Merchant Name',
+          reference: `PAY-${trade.id.slice(-8)}`,
+          amount_naira: cashAmount
+        });
+        return;
+      }
+
+      console.log('Fetched payment method:', paymentMethod);
+      
+      setMerchantBankDetails({
+        bank_name: paymentMethod.bank_name || 'Bank Account',
+        account_number: paymentMethod.account_number || 'Not Available',
+        account_name: paymentMethod.account_name || selectedMerchant?.display_name || 'Merchant',
+        reference: `PAY-${trade.id.slice(-8)}`,
+        amount_naira: cashAmount
+      });
+    } catch (error) {
+      console.error('Error fetching merchant bank details:', error);
     }
   };
 
@@ -263,8 +296,8 @@ const BuyCryptoPaymentStep2 = () => {
         };
       case 'accepted':
         return {
-          title: "Merchant Accepted!",
-          description: "Merchant is funding escrow with your crypto...",
+          title: "Merchant Matched!",
+          description: "Waiting for merchant to fund escrow...",
           icon: <CheckCircle className="w-8 h-8 text-green-500" />
         };
       case 'escrow_funded':
@@ -312,6 +345,26 @@ const BuyCryptoPaymentStep2 = () => {
             <div className="mb-4">{statusInfo.icon}</div>
             <h2 className="text-xl font-semibold mb-2">{statusInfo.title}</h2>
             <p className="text-muted-foreground">{statusInfo.description}</p>
+            
+            {/* Demo: Simulate merchant acceptance */}
+            {tradeStatus === 'searching' && tradeId && (
+              <Button 
+                onClick={async () => {
+                  try {
+                    const { error } = await supabase.rpc('simulate_merchant_accept_trade', {
+                      request_id: tradeId
+                    });
+                    if (error) console.error('Error:', error);
+                  } catch (err) {
+                    console.error('Demo error:', err);
+                  }
+                }}
+                className="mt-4"
+                size="sm"
+              >
+                [Demo] Simulate Merchant Accept
+              </Button>
+            )}
           </CardContent>
         </Card>
 

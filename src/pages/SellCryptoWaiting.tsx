@@ -26,7 +26,7 @@ const SellCryptoWaiting: React.FC = () => {
 
   useEffect(() => {
     if (!user || !tradeId) {
-      navigate('/sell-crypto');
+      navigate('/buy-sell');
       return;
     }
 

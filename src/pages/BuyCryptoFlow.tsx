@@ -52,13 +52,15 @@ const BuyCryptoFlow = () => {
   const handleContinue = () => {
     if (!cryptoAmount || parseFloat(cryptoAmount) <= 0) return;
     
-    navigate('/buy-crypto-merchant-selection', { 
+    // Route to merchant matching choice for consistent flow
+    navigate('/merchant-matching-choice', { 
       state: { 
         nairaAmount: parseFloat(nairaAmount), 
-        cryptoAmount: parseFloat(cryptoAmount),
+        amount: parseFloat(cryptoAmount),
         selectedCoin,
         coinData: coin,
-        tradeType: 'buy'
+        coinType: coin.symbol,
+        mode: 'buy'
       } 
     });
   };

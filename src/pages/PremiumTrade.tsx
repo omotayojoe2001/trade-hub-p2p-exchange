@@ -67,7 +67,7 @@ const PremiumTrade = () => {
       title: 'Buy Crypto',
       description: 'Send Naira (cash/transfer) → Get crypto instantly',
       icon: <TrendingUp size={32} className="text-green-600" />,
-      action: () => navigate('/enhanced-buy-crypto'),
+      action: () => navigate('/select-coin', { state: { mode: 'buy' } }),
       features: ['Instant delivery', 'Best rates', 'Priority matching']
     },
     {

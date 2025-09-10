@@ -65,7 +65,7 @@ const SellCryptoPaymentStep2 = () => {
           description: "The merchant declined your trade request",
           variant: "destructive"
         });
-        navigate('/sell-crypto');
+        navigate('/buy-sell');
       }
     } catch (error) {
       console.error('Error monitoring trade:', error);

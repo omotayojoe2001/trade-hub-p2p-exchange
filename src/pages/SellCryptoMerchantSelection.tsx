@@ -48,7 +48,7 @@ const SellCryptoMerchantSelection: React.FC = () => {
         description: "Please complete the sell crypto form first.",
         variant: "destructive"
       });
-      navigate('/sell-crypto');
+      navigate('/buy-sell');
       return;
     }
 

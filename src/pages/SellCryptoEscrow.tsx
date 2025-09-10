@@ -27,7 +27,7 @@ const SellCryptoEscrow: React.FC = () => {
 
   useEffect(() => {
     if (!user || !tradeRequestId) {
-      navigate('/sell-crypto');
+      navigate('/buy-sell');
       return;
     }
 
