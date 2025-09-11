@@ -22,8 +22,8 @@ const CryptoIcon: React.FC<CryptoIconProps> = ({ symbol, size = 24, className = 
   // Normalize symbol to lowercase for the icon library
   const normalizedSymbol = symbol.toString().toLowerCase();
   
-  // Use CDN for crypto icons in production
-  const iconPath = `https://cryptologos.cc/logos/${normalizedSymbol}-${normalizedSymbol}-logo.svg`;
+  // Use correct CDN for crypto icons
+  const iconPath = `https://cdn.jsdelivr.net/gh/spothq/cryptocurrency-icons@master/svg/color/${normalizedSymbol}.svg`;
   
   return (
     <img
