@@ -11,10 +11,10 @@ const CryptoIcon: React.FC<CryptoIconProps> = ({ symbol, size = 24, className = 
   if (!symbol || symbol === 'undefined' || symbol.trim() === '') {
     return (
       <div
-        className={`bg-gray-200 rounded-full flex items-center justify-center ${className}`}
+        className={`bg-orange-100 rounded-full flex items-center justify-center ${className}`}
         style={{ width: size, height: size }}
       >
-        <span className="text-gray-500 text-xs font-bold">₿</span>
+        <span className="text-orange-600 text-xs font-bold">₿</span>
       </div>
     );
   }
@@ -22,8 +22,8 @@ const CryptoIcon: React.FC<CryptoIconProps> = ({ symbol, size = 24, className = 
   // Normalize symbol to lowercase for the icon library
   const normalizedSymbol = symbol.toString().toLowerCase();
   
-  // Use the local package files
-  const iconPath = `/node_modules/cryptocurrency-icons/svg/color/${normalizedSymbol}.svg`;
+  // Use CDN for crypto icons in production
+  const iconPath = `https://cryptologos.cc/logos/${normalizedSymbol}-${normalizedSymbol}-logo.svg`;
   
   return (
     <img
@@ -33,9 +33,14 @@ const CryptoIcon: React.FC<CryptoIconProps> = ({ symbol, size = 24, className = 
       height={size}
       className={className}
       onError={(e) => {
-        // Fallback to a generic crypto icon if the specific one fails to load
+        // Fallback to emoji if CDN fails
         const target = e.target as HTMLImageElement;
-        target.src = '/node_modules/cryptocurrency-icons/svg/color/generic.svg';
+        const fallbackDiv = document.createElement('div');
+        fallbackDiv.className = `bg-orange-100 rounded-full flex items-center justify-center ${className}`;
+        fallbackDiv.style.width = `${size}px`;
+        fallbackDiv.style.height = `${size}px`;
+        fallbackDiv.innerHTML = `<span class="text-orange-600 text-xs font-bold">₿</span>`;
+        target.parentNode?.replaceChild(fallbackDiv, target);
       }}
     />
   );
