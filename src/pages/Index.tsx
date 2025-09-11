@@ -30,8 +30,44 @@ const Index = () => {
   const [loadingTrades, setLoadingTrades] = useState(false);
   const { toast } = useToast();
   const [selectedCoinFilter, setSelectedCoinFilter] = useState('All');
+  const [totalUsers, setTotalUsers] = useState(0);
+  const [unreadNotifications, setUnreadNotifications] = useState(0);
 
   const navigate = useNavigate();
+
+  // Fetch actual user count
+  const fetchUserCount = async () => {
+    try {
+      const { count, error } = await supabase
+        .from('profiles')
+        .select('*', { count: 'exact', head: true });
+      
+      if (!error && count !== null) {
+        setTotalUsers(count);
+      }
+    } catch (error) {
+      console.error('Error fetching user count:', error);
+    }
+  };
+
+  // Fetch unread notifications
+  const fetchUnreadNotifications = async () => {
+    if (!user) return;
+    
+    try {
+      const { count, error } = await supabase
+        .from('notifications')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user.id)
+        .eq('read', false);
+      
+      if (!error && count !== null) {
+        setUnreadNotifications(count);
+      }
+    } catch (error) {
+      console.error('Error fetching notifications:', error);
+    }
+  };
 
   // Fetch recent trades
   const fetchRecentTrades = async () => {
@@ -46,7 +82,7 @@ const Index = () => {
         .select('*')
         .or(`buyer_id.eq.${user.id},seller_id.eq.${user.id}`)
         .order('created_at', { ascending: false })
-        .limit(10);
+        .limit(3);
 
       if (error) {
         console.error('Error fetching recent trades:', error);
@@ -60,7 +96,7 @@ const Index = () => {
         .eq('user_id', user.id)
         .in('status', ['open', 'accepted', 'pending'])
         .order('created_at', { ascending: false })
-        .limit(10);
+        .limit(3);
 
       if (requestsError) {
         console.error('Error fetching trade requests:', requestsError);
@@ -107,8 +143,10 @@ const Index = () => {
   };
 
   useEffect(() => {
+    fetchUserCount();
     if (user) {
       fetchRecentTrades();
+      fetchUnreadNotifications();
     }
   }, [user]);
 
@@ -149,18 +187,13 @@ const Index = () => {
   const userInitials = displayName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
   const profilePicture = profile?.profile_picture_url;
 
-  // Mock data that changes based on time filter
+  // Real data that shows actual user count
   const getStatsData = () => {
-    switch (selectedTimeFilter) {
-      case 'Today':
-        return { traders: '3,247', rate: '₦1,650', volume: '₦5.2M' };
-      case 'This Week':
-        return { traders: '18,591', rate: '₦1,648', volume: '₦32.8M' };
-      case 'This Month':
-        return { traders: '67,423', rate: '₦1,652', volume: '₦156.3M' };
-      default:
-        return { traders: '3,247', rate: '₦1,650', volume: '₦5.2M' };
-    }
+    return { 
+      traders: totalUsers.toLocaleString(), 
+      rate: '₦1,650', 
+      volume: '₦5.2M' 
+    };
   };
 
   const statsData = getStatsData();
@@ -215,8 +248,11 @@ const Index = () => {
           </div>
         </div>
         <div className="flex items-center space-x-3">
-          <Link to="/notifications">
+          <Link to="/notifications" className="relative">
             <Bell size={24} className="text-gray-600 dark:text-gray-400" />
+            {unreadNotifications > 0 && (
+              <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full"></div>
+            )}
           </Link>
           <ThemeToggle />
         </div>

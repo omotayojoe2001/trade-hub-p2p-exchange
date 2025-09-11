@@ -34,12 +34,24 @@ const MyTrades = () => {
   const [trades, setTrades] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Fetch real trades from database
+  // Fetch real trades from database and cleanup expired requests
   useEffect(() => {
     if (user) {
+      cleanupExpiredRequests();
       fetchUserTrades();
     }
   }, [user]);
+
+  const cleanupExpiredRequests = async () => {
+    try {
+      // Auto-expire old trade requests
+      await supabase.rpc('auto_expire_trade_requests');
+      // Auto-expire escrow trades where cash payment wasn't made
+      await supabase.rpc('auto_expire_escrow_trades');
+    } catch (error) {
+      console.error('Error cleaning up expired requests:', error);
+    }
+  };
 
   // Set up real-time subscriptions for trade updates
   useEffect(() => {
@@ -102,11 +114,12 @@ const MyTrades = () => {
         return;
       }
 
-      // Also fetch trade requests where user is the requester
+      // Also fetch trade requests where user is the requester (exclude expired)
       const { data: tradeRequestsData, error: requestsError } = await supabase
         .from('trade_requests')
         .select('*')
         .eq('user_id', user.id)
+        .gte('expires_at', new Date().toISOString()) // Only non-expired
         .order('created_at', { ascending: false });
 
       if (requestsError) {
@@ -136,33 +149,44 @@ const MyTrades = () => {
                      startDateTime: new Date(trade.created_at), // Add full datetime
             date: new Date(trade.created_at),
             avatar: 'T',
-            category: trade.status === 'completed' ? 'completed' : trade.status === 'cancelled' ? 'cancelled' : 'ongoing',
+            category: tradeStatus === 'completed' ? 'completed' : (tradeStatus === 'cancelled' || trade.status === 'cancelled' || trade.status === 'failed') ? 'cancelled' : 'ongoing',
+            canUserCancel: canUserCancel(trade, user.id),
+            cryptoSenderId: trade.crypto_sender_id,
+            cashSenderId: trade.cash_sender_id,
+            escrowExpiresAt: trade.escrow_expires_at ? new Date(trade.escrow_expires_at) : null,
+            paymentProofUploaded: !!trade.payment_proof_uploaded_at,
+            paymentProofUrl: trade.payment_proof_url,
+            paymentHash: trade.payment_hash,
+            isDisputed: trade.status === 'disputed',
             awaitingUserAction: awaitingAction,
             actionRequired: getActionRequired(trade, user.id),
             tradeData: trade
           };
         }),
-        // Format pending trade requests
-        ...(tradeRequestsData || []).map(request => ({
-          id: request.id,
-          type: request.trade_type,
-          coin: request.crypto_type,
-          amount: `₦${request.amount_fiat?.toLocaleString() || '0'}`,
-          coinAmount: `≈ ${request.amount_crypto || 0} ${request.crypto_type}`,
-          nairaAmount: request.amount_fiat || 0,
-          merchant: request.status === 'cancelled' ? 'Cancelled' : 'Waiting for merchant...',
-          rating: 0,
-          status: request.status === 'cancelled' ? 'cancelled' : 'waiting_merchant',
-          progress: request.status === 'cancelled' ? 0 : 10,
-           startTime: new Date(request.created_at).toLocaleDateString(),
-           startDateTime: new Date(request.created_at), // Add full datetime
-          date: new Date(request.created_at),
-          avatar: request.status === 'cancelled' ? 'X' : 'W',
-          category: request.status === 'cancelled' ? 'cancelled' : 'ongoing',
-          isTradeRequest: true,
-          awaitingUserAction: false,
-          tradeData: request
-        }))
+        // Format pending trade requests (only non-expired)
+        ...(tradeRequestsData || []).map(request => {
+          const requestStatus = getTradeRequestStatus(request.status);
+          return {
+            id: request.id,
+            type: request.trade_type,
+            coin: request.crypto_type,
+            amount: `₦${request.amount_fiat?.toLocaleString() || '0'}`,
+            coinAmount: `≈ ${request.amount_crypto || 0} ${request.crypto_type}`,
+            nairaAmount: request.amount_fiat || 0,
+            merchant: requestStatus === 'cancelled' ? 'Cancelled' : 'Waiting for merchant...',
+            rating: 0,
+            status: requestStatus,
+            progress: requestStatus === 'cancelled' ? 100 : 10,
+            startTime: new Date(request.created_at).toLocaleDateString(),
+            startDateTime: new Date(request.created_at),
+            date: new Date(request.created_at),
+            avatar: requestStatus === 'cancelled' ? 'X' : 'W',
+            category: requestStatus === 'cancelled' ? 'cancelled' : 'ongoing',
+            isTradeRequest: true,
+            awaitingUserAction: false,
+            tradeData: request
+          };
+        })
       ];
 
       setTrades(formattedTrades);
@@ -182,27 +206,66 @@ const MyTrades = () => {
   const getTradeStatus = (status: string, escrowStatus?: string) => {
     if (status === 'completed') return 'completed';
     if (status === 'cancelled') return 'cancelled';
+    if (status === 'failed') return 'cancelled';
+    if (status === 'disputed') return 'disputed';
     if (escrowStatus === 'crypto_received') return 'waiting_payment';
+    if (escrowStatus === 'payment_proof_uploaded') return 'awaiting_confirmation';
     if (escrowStatus === 'cash_received') return 'confirming';
     return 'in_progress';
   };
 
   const getTradeProgress = (status: string, escrowStatus?: string) => {
     if (status === 'completed') return 100;
-    if (status === 'cancelled') return 0;
+    if (status === 'cancelled' || status === 'failed') return 100;
     if (escrowStatus === 'crypto_received') return 50;
     if (escrowStatus === 'cash_received') return 80;
     return 25;
   };
 
+  const getTradeRequestStatus = (status: string) => {
+    if (status === 'cancelled' || status === 'expired') return 'cancelled';
+    if (status === 'accepted') return 'in_progress';
+    return 'waiting_merchant';
+  };
+
+  const canUserCancel = (trade: any, userId: string) => {
+    if (trade.status === 'completed' || trade.status === 'cancelled' || trade.status === 'disputed') return false;
+    
+    // Once payment proof is uploaded, no one can cancel - only confirm or dispute
+    if (trade.escrow_status === 'payment_proof_uploaded') return false;
+    
+    // If crypto is in escrow, crypto sender cannot cancel
+    if (trade.escrow_status === 'crypto_received') {
+      return trade.crypto_sender_id !== userId;
+    }
+    
+    return true; // Before escrow, anyone can cancel
+  };
+
+  const getCryptoSenderId = (trade: any) => {
+    // In buy crypto: merchant sends crypto
+    // In sell crypto: seller sends crypto
+    return trade.trade_type === 'buy' ? trade.seller_id : trade.buyer_id;
+  };
+
+  const getCashSenderId = (trade: any) => {
+    // In buy crypto: buyer sends cash
+    // In sell crypto: merchant sends cash
+    return trade.trade_type === 'buy' ? trade.buyer_id : trade.seller_id;
+  };
+
   const needsUserAction = (trade: any, userId: string) => {
     if (trade.status === 'completed' || trade.status === 'cancelled') return false;
 
-    // Check if user needs to upload payment proof
-    if (trade.buyer_id === userId && trade.escrow_status === 'pending') return true;
+    // Cash sender needs to upload payment proof
+    if (trade.escrow_status === 'crypto_received' && trade.cash_sender_id === userId) {
+      return true;
+    }
 
-    // Check if user needs to confirm receipt
-    if (trade.seller_id === userId && trade.escrow_status === 'cash_received') return true;
+    // Crypto sender needs to confirm payment received or dispute
+    if (trade.escrow_status === 'payment_proof_uploaded' && trade.crypto_sender_id === userId) {
+      return true;
+    }
 
     return false;
   };
@@ -210,12 +273,14 @@ const MyTrades = () => {
   const getActionRequired = (trade: any, userId: string) => {
     if (trade.status === 'completed' || trade.status === 'cancelled') return null;
 
-    if (trade.buyer_id === userId && trade.escrow_status === 'pending') {
-      return 'Upload Payment Proof';
+    // Cash sender needs to upload payment proof
+    if (trade.escrow_status === 'crypto_received' && trade.cash_sender_id === userId) {
+      return 'Upload Payment Proof (30 min)';
     }
 
-    if (trade.seller_id === userId && trade.escrow_status === 'cash_received') {
-      return 'Confirm Receipt';
+    // Crypto sender needs to confirm or dispute
+    if (trade.escrow_status === 'payment_proof_uploaded' && trade.crypto_sender_id === userId) {
+      return 'Confirm Payment Received';
     }
 
     return null;
@@ -276,11 +341,24 @@ const MyTrades = () => {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'waiting_payment':
-      case 'waiting_confirmation':
         return (
-          <div className="flex items-center bg-brand/10 text-brand px-3 py-1 rounded-full text-sm font-medium">
-            <div className="w-2 h-2 bg-brand rounded-full mr-2"></div>
-            {status === 'waiting_payment' ? 'Waiting for Payment' : 'Waiting for Confirmation'}
+          <div className="flex items-center bg-orange-100 text-orange-700 px-3 py-1 rounded-full text-sm font-medium">
+            <div className="w-2 h-2 bg-orange-500 rounded-full mr-2"></div>
+            Waiting for Payment
+          </div>
+        );
+      case 'awaiting_confirmation':
+        return (
+          <div className="flex items-center bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm font-medium">
+            <div className="w-2 h-2 bg-blue-500 rounded-full mr-2"></div>
+            Awaiting Confirmation
+          </div>
+        );
+      case 'disputed':
+        return (
+          <div className="flex items-center bg-red-100 text-red-700 px-3 py-1 rounded-full text-sm font-medium">
+            <div className="w-2 h-2 bg-red-500 rounded-full mr-2"></div>
+            Disputed
           </div>
         );
       case 'completed':
@@ -305,8 +383,11 @@ const MyTrades = () => {
   const getProgressColor = (status: string) => {
     switch (status) {
       case 'waiting_payment':
-      case 'waiting_confirmation':
-        return 'bg-brand';
+        return 'bg-orange-500';
+      case 'awaiting_confirmation':
+        return 'bg-blue-500';
+      case 'disputed':
+        return 'bg-red-500';
       case 'completed':
         return 'bg-success';
       case 'cancelled':
@@ -316,7 +397,7 @@ const MyTrades = () => {
     }
   };
 
-  const handleConfirmPayment = (tradeId: number) => {
+  const handleOpenConfirmDialog = (tradeId: number) => {
     setSelectedTradeId(tradeId.toString());
     setShowConfirmDialog(true);
   };
@@ -325,6 +406,16 @@ const MyTrades = () => {
     try {
       const trade = trades.find(t => t.id === tradeId);
       if (!trade) return;
+
+      // Check if user can cancel
+      if (!trade.canUserCancel) {
+        toast({
+          title: "Cannot Cancel",
+          description: "This trade cannot be cancelled at this stage.",
+          variant: "destructive"
+        });
+        return;
+      }
 
       // Update trade status to cancelled in Supabase
       const tableName = trade.tradeData ? 'trades' : 'trade_requests';
@@ -341,7 +432,6 @@ const MyTrades = () => {
         duration: 3000,
       });
 
-      // Refresh trades data to reflect the change
       fetchUserTrades();
     } catch (error) {
       console.error('Error cancelling trade:', error);
@@ -350,6 +440,84 @@ const MyTrades = () => {
         description: "Failed to cancel trade. Please try again.",
         variant: "destructive",
         duration: 3000,
+      });
+    }
+  };
+
+  const handleUploadPaymentProof = async (tradeId: string, proofUrl?: string, paymentHash?: string) => {
+    try {
+      const { data, error } = await supabase.rpc('upload_payment_proof', {
+        trade_id_param: tradeId,
+        user_id_param: user?.id,
+        proof_url_param: proofUrl,
+        payment_hash_param: paymentHash
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Payment Proof Uploaded",
+        description: "Waiting for crypto sender to confirm payment received.",
+      });
+
+      fetchUserTrades();
+    } catch (error: any) {
+      console.error('Error uploading payment proof:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to upload payment proof.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleConfirmPayment = async (tradeId: string) => {
+    try {
+      const { data, error } = await supabase.rpc('confirm_payment_received', {
+        trade_id_param: tradeId,
+        user_id_param: user?.id
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Trade Completed!",
+        description: "Crypto has been released to the buyer.",
+      });
+
+      fetchUserTrades();
+    } catch (error: any) {
+      console.error('Error confirming payment:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to confirm payment.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleDisputePayment = async (tradeId: string, reason: string) => {
+    try {
+      const { data, error } = await supabase.rpc('dispute_payment', {
+        trade_id_param: tradeId,
+        user_id_param: user?.id,
+        dispute_reason_param: reason
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Dispute Created",
+        description: "Support team will review this dispute within 24 hours.",
+      });
+
+      fetchUserTrades();
+    } catch (error: any) {
+      console.error('Error creating dispute:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to create dispute.",
+        variant: "destructive"
       });
     }
   };
@@ -632,13 +800,21 @@ const MyTrades = () => {
                 </div>
                 <div className="text-right">
                   <TradeTimeDisplay date={trade.startDateTime || trade.date} />
-                  {/* Show countdown for incomplete trades */}
-                  {trade.awaitingUserAction && trade.status === 'waiting_confirmation' && (
-                    <TradeCountdown
-                      startTime={new Date(trade.date)}
-                      duration={30}
-                      className="mt-1"
-                    />
+                  {/* Show countdown for payment proof upload */}
+                  {trade.escrowExpiresAt && trade.cashSenderId === user?.id && !trade.paymentProofUploaded && (
+                    <div className="mt-1 text-right">
+                      <TradeCountdown
+                        startTime={new Date(trade.date)}
+                        duration={30}
+                        className="text-xs text-orange-600 font-medium"
+                      />
+                    </div>
+                  )}
+                  {/* Show payment proof status */}
+                  {trade.paymentProofUploaded && (
+                    <div className="mt-1 text-right">
+                      <span className="text-xs text-blue-600 font-medium">Proof Uploaded</span>
+                    </div>
                   )}
                 </div>
               </div>
@@ -707,17 +883,47 @@ const MyTrades = () => {
                 </div>
               )}
 
-              {/* Action Buttons for Incomplete Trades */}
-              {trade.awaitingUserAction && trade.actionRequired && (
+              {/* Action Buttons for Cash Sender - Upload Payment Proof */}
+              {trade.awaitingUserAction && trade.cashSenderId === user?.id && trade.escrowExpiresAt && (
                 <div className="flex gap-2 mt-3">
                   <Button
                     onClick={(e) => {
                       e.stopPropagation();
-                      handleTradeClick(trade.id);
+                      // Navigate to payment proof upload page
+                      navigate(`/upload-payment-proof/${trade.id}`);
                     }}
-                    className="flex-1 bg-brand hover:bg-brand/90 text-white py-2 rounded-lg text-sm font-medium shadow-sm hover:shadow-md transition-all"
+                    className="flex-1 bg-orange-500 hover:bg-orange-600 text-white py-2 rounded-lg text-sm font-medium"
                   >
-                    {trade.actionRequired}
+                    Upload Payment Proof
+                  </Button>
+                </div>
+              )}
+
+              {/* Action Buttons for Crypto Sender - Confirm or Dispute */}
+              {trade.awaitingUserAction && trade.cryptoSenderId === user?.id && trade.paymentProofUploaded && (
+                <div className="flex gap-2 mt-3">
+                  <Button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleConfirmPayment(trade.id);
+                    }}
+                    className="flex-1 bg-green-500 hover:bg-green-600 text-white py-2 rounded-lg text-sm font-medium"
+                  >
+                    Confirm Payment Received
+                  </Button>
+                  <Button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      const reason = prompt('Why are you disputing this payment?');
+                      if (reason) {
+                        handleDisputePayment(trade.id, reason);
+                      }
+                    }}
+                    variant="destructive"
+                    size="sm"
+                    className="px-3"
+                  >
+                    Dispute
                   </Button>
                 </div>
               )}
@@ -728,7 +934,7 @@ const MyTrades = () => {
                   <Button
                     onClick={(e) => {
                       e.stopPropagation();
-                      handleConfirmPayment(trade.id);
+                      handleOpenConfirmDialog(trade.id);
                     }}
                     className="flex-1 bg-success hover:bg-success/90 text-white py-2 rounded-lg text-sm font-medium shadow-sm hover:shadow-md transition-all"
                   >
@@ -748,8 +954,8 @@ const MyTrades = () => {
                 </div>
               )}
 
-              {/* Delete Button for Ongoing Trades */}
-              {(trade.status === 'waiting_payment' || trade.status === 'pending') && (
+              {/* Cancel Button - Only show if user can cancel */}
+              {trade.canUserCancel && (trade.status === 'waiting_payment' || trade.status === 'pending' || trade.status === 'in_progress') && (
                 <Button
                   onClick={(e) => {
                     e.stopPropagation();
@@ -761,6 +967,59 @@ const MyTrades = () => {
                 >
                   Cancel Trade
                 </Button>
+              )}
+              
+              {/* Show countdown for cash sender when crypto is in escrow */}
+              {trade.escrowExpiresAt && trade.cashSenderId === user?.id && !trade.paymentProofUploaded && (
+                <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-yellow-800">Upload Proof Deadline:</span>
+                    <TradeCountdown
+                      startTime={new Date(trade.date)}
+                      duration={30}
+                      onExpire={() => {
+                        toast({
+                          title: "Trade Expired",
+                          description: "Crypto returned to sender - no payment proof uploaded",
+                          variant: "destructive"
+                        });
+                        fetchUserTrades();
+                      }}
+                      className="text-yellow-800 font-bold"
+                    />
+                  </div>
+                  <p className="text-xs text-yellow-600 mt-1">
+                    Upload payment proof before countdown ends
+                  </p>
+                </div>
+              )}
+
+              {/* Show payment proof uploaded status */}
+              {trade.paymentProofUploaded && (
+                <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-blue-800">Payment Proof Uploaded</span>
+                    <span className="text-xs text-blue-600">Waiting for confirmation</span>
+                  </div>
+                  {trade.cryptoSenderId === user?.id && (
+                    <p className="text-xs text-blue-600 mt-1">
+                      Review payment proof and confirm if you received payment
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {/* Show dispute status */}
+              {trade.isDisputed && (
+                <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-red-800">Payment Disputed</span>
+                    <span className="text-xs text-red-600">Under Review</span>
+                  </div>
+                  <p className="text-xs text-red-600 mt-1">
+                    Support team is reviewing this dispute
+                  </p>
+                </div>
               )}
             </div>
           ))

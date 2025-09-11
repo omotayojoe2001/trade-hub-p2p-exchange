@@ -17,7 +17,14 @@ const SellCryptoCompleted: React.FC = () => {
   
   // Get trade data from location state
   const sellData = location.state || {};
-  const { amount, nairaAmount, cryptoType = 'USDT', tradeId, merchantName } = sellData;
+  const { tradeRequestId, coinType = 'USDT', cryptoAmount, netAmount, selectedMerchant } = sellData;
+  
+  // Use the correct variable names from the sell crypto flow
+  const amount = cryptoAmount;
+  const nairaAmount = `₦${netAmount?.toLocaleString() || '0'}`;
+  const cryptoType = coinType;
+  const tradeId = tradeRequestId;
+  const merchantName = selectedMerchant?.display_name || 'Merchant';
 
   useEffect(() => {
     if (!user || !tradeId) {
@@ -177,7 +184,7 @@ const SellCryptoCompleted: React.FC = () => {
             </div>
             <div className="flex justify-between">
               <span className="text-gray-600">Rate:</span>
-              <span className="font-semibold">₦{Math.round(parseFloat(nairaAmount.replace(/[^0-9.-]+/g, "")) / parseFloat(amount)).toLocaleString()}/{cryptoType}</span>
+              <span className="font-semibold">₦{Math.round((netAmount || 0) / parseFloat(amount || '1')).toLocaleString()}/{cryptoType}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-600">Status:</span>

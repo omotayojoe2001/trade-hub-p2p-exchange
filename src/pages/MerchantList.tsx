@@ -14,6 +14,7 @@ import { merchantTradeService } from '@/services/merchantTradeService';
 const MerchantList = () => {
   const [sortBy, setSortBy] = useState('best-rate');
   const [merchants, setMerchants] = useState<MerchantProfile[]>([]);
+  const [filteredMerchants, setFilteredMerchants] = useState<MerchantProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
@@ -32,6 +33,7 @@ const MerchantList = () => {
         // Refresh merchant list excluding current user
         const updatedMerchants = await merchantService.getMerchants(user.id);
         setMerchants(updatedMerchants);
+        setFilteredMerchants(updatedMerchants);
       });
 
       return () => {
@@ -57,6 +59,7 @@ const MerchantList = () => {
 
       console.log('Found merchants:', merchantsData.length);
       setMerchants(merchantsData);
+      setFilteredMerchants(merchantsData);
 
       if (merchantsData.length === 0) {
         toast({
@@ -154,6 +157,27 @@ const MerchantList = () => {
     return name.split(' ').map(word => word[0]).join('').toUpperCase().slice(0, 2);
   };
 
+  // Apply filters when sortBy changes
+  useEffect(() => {
+    let sorted = [...merchants];
+    
+    switch (sortBy) {
+      case 'best-rate':
+        sorted = sorted.sort((a, b) => a.rating - b.rating); // Lower rates first
+        break;
+      case 'fastest':
+        sorted = sorted.sort((a, b) => a.avg_response_time_minutes - b.avg_response_time_minutes);
+        break;
+      case 'highest-rated':
+        sorted = sorted.sort((a, b) => b.rating - a.rating);
+        break;
+      default:
+        break;
+    }
+    
+    setFilteredMerchants(sorted);
+  }, [sortBy, merchants]);
+
   if (loading) {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center">
@@ -241,7 +265,7 @@ const MerchantList = () => {
 
       {/* Merchant List */}
       <div className="p-4 space-y-4 pb-20">
-        {merchants.length === 0 ? (
+        {filteredMerchants.length === 0 ? (
           <div className="text-center py-12">
             <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <MapPin className="h-8 w-8 text-gray-400" />
@@ -255,7 +279,7 @@ const MerchantList = () => {
             </Button>
           </div>
         ) : (
-          merchants.map((merchant) => (
+          filteredMerchants.map((merchant) => (
             <Card key={merchant.id} className="p-4 bg-white border border-gray-200 rounded-xl hover:shadow-md transition-shadow">
               {/* Merchant Header */}
               <div className="flex items-center justify-between mb-4">

@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { Bell, CheckCircle, DollarSign, Shield, AlertTriangle } from 'lucide-react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Bell, CheckCircle, DollarSign, Shield, AlertTriangle, Filter } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import BottomNavigation from '@/components/BottomNavigation';
@@ -23,6 +24,9 @@ const Notifications = () => {
   const { user } = useAuth();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
+  const [typeFilter, setTypeFilter] = useState<string>('all');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [priorityFilter, setPriorityFilter] = useState<string>('all');
 
   useEffect(() => {
     const loadNotifications = async () => {
@@ -130,7 +134,33 @@ const Notifications = () => {
     }
   };
 
+  // Filter notifications based on selected filters
+  const filteredNotifications = useMemo(() => {
+    return notifications.filter(notification => {
+      // Type filter
+      if (typeFilter !== 'all' && notification.type !== typeFilter) {
+        return false;
+      }
+      
+      // Status filter
+      if (statusFilter === 'unread' && notification.read) {
+        return false;
+      }
+      if (statusFilter === 'read' && !notification.read) {
+        return false;
+      }
+      
+      // Priority filter
+      if (priorityFilter !== 'all' && notification.priority !== priorityFilter) {
+        return false;
+      }
+      
+      return true;
+    });
+  }, [notifications, typeFilter, statusFilter, priorityFilter]);
+
   const unreadCount = notifications.filter(n => !n.read).length;
+  const totalCount = notifications.length;
 
   if (loading) {
     return (
@@ -152,12 +182,13 @@ const Notifications = () => {
     <div className="min-h-screen bg-gray-50 pb-20">
       {/* Header */}
       <div className="bg-white border-b border-gray-200 px-4 py-4">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between mb-4">
           <div>
             <h1 className="text-xl font-semibold text-gray-900">Notifications</h1>
-            {unreadCount > 0 && (
-              <p className="text-sm text-gray-600">{unreadCount} unread messages</p>
-            )}
+            <p className="text-sm text-gray-600">
+              {filteredNotifications.length} of {totalCount} notifications
+              {unreadCount > 0 && ` • ${unreadCount} unread`}
+            </p>
           </div>
           {unreadCount > 0 && (
             <Button 
@@ -169,10 +200,69 @@ const Notifications = () => {
             </Button>
           )}
         </div>
+        
+        {/* Filters */}
+        <div className="flex gap-3 overflow-x-auto pb-1">
+          <Select value={typeFilter} onValueChange={setTypeFilter}>
+            <SelectTrigger className="w-40 bg-white">
+              <div className="flex items-center gap-2">
+                <Filter size={14} />
+                <SelectValue placeholder="Type" />
+              </div>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Types</SelectItem>
+              <SelectItem value="trade_request">Trade Requests</SelectItem>
+              <SelectItem value="payment_received">Payments</SelectItem>
+              <SelectItem value="system">System</SelectItem>
+              <SelectItem value="security">Security</SelectItem>
+              <SelectItem value="premium">Premium</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-32 bg-white">
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All</SelectItem>
+              <SelectItem value="unread">Unread</SelectItem>
+              <SelectItem value="read">Read</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <Select value={priorityFilter} onValueChange={setPriorityFilter}>
+            <SelectTrigger className="w-32 bg-white">
+              <SelectValue placeholder="Priority" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All</SelectItem>
+              <SelectItem value="high">High</SelectItem>
+              <SelectItem value="medium">Medium</SelectItem>
+              <SelectItem value="low">Low</SelectItem>
+            </SelectContent>
+          </Select>
+
+          {(typeFilter !== 'all' || statusFilter !== 'all' || priorityFilter !== 'all') && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setTypeFilter('all');
+                setStatusFilter('all');
+                setPriorityFilter('all');
+              }}
+              className="text-gray-600 hover:text-gray-900"
+            >
+              Clear
+            </Button>
+          )}
+        </div>
       </div>
 
       <div className="p-4 space-y-4">
-        {notifications.length === 0 ? (
+        {filteredNotifications.length === 0 ? (
+          notifications.length === 0 ? (
           <Card>
             <CardContent className="text-center py-12">
               <Bell className="w-12 h-12 mx-auto text-gray-400 mb-4" />
@@ -180,8 +270,27 @@ const Notifications = () => {
               <p className="text-gray-600">You're all caught up! New notifications will appear here.</p>
             </CardContent>
           </Card>
+          ) : (
+            <Card>
+              <CardContent className="text-center py-12">
+                <Filter className="w-12 h-12 mx-auto text-gray-400 mb-4" />
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">No matching notifications</h3>
+                <p className="text-gray-600 mb-4">Try adjusting your filters to see more results.</p>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setTypeFilter('all');
+                    setStatusFilter('all');
+                    setPriorityFilter('all');
+                  }}
+                >
+                  Clear Filters
+                </Button>
+              </CardContent>
+            </Card>
+          )
         ) : (
-          notifications.map((notification) => (
+          filteredNotifications.map((notification) => (
             <Card 
               key={notification.id} 
               className={`cursor-pointer transition-all ${

@@ -22,10 +22,10 @@ const SellCryptoWaiting: React.FC = () => {
 
   // Get trade data from location state
   const sellData = location.state || {};
-  const { amount, nairaAmount, cryptoType = 'USDT', tradeId, merchantName } = sellData;
+  const { tradeRequestId, coinType, cryptoAmount, netAmount, selectedAccount, selectedMerchant } = sellData;
 
   useEffect(() => {
-    if (!user || !tradeId) {
+    if (!user || !tradeRequestId) {
       navigate('/buy-sell');
       return;
     }
@@ -37,22 +37,24 @@ const SellCryptoWaiting: React.FC = () => {
       setTimeElapsed(prev => prev + 1);
     }, 1000);
 
-    // Set up real-time subscription for trade updates
+    // Set up real-time subscription for trade request updates
     const channel = supabase
-      .channel('trade-updates')
+      .channel('trade-request-updates')
       .on('postgres_changes', {
         event: 'UPDATE',
         schema: 'public',
-        table: 'trades',
-        filter: `id=eq.${tradeId}`
+        table: 'trade_requests',
+        filter: `id=eq.${tradeRequestId}`
       }, (payload) => {
         const updatedTrade = payload.new;
+        console.log('Real-time update:', updatedTrade);
+        setTrade(updatedTrade);
+        
         if (updatedTrade.status === 'payment_sent') {
           toast({
             title: "Payment Sent!",
             description: "The merchant has sent your cash payment. Please check your bank account.",
           });
-          setTrade(updatedTrade);
         }
       })
       .subscribe();
@@ -61,17 +63,18 @@ const SellCryptoWaiting: React.FC = () => {
       clearInterval(timer);
       supabase.removeChannel(channel);
     };
-  }, [user, tradeId]);
+  }, [user, tradeRequestId]);
 
   const fetchTradeData = async () => {
     try {
       const { data: tradeData, error } = await supabase
-        .from('trades')
+        .from('trade_requests')
         .select('*')
-        .eq('id', tradeId)
+        .eq('id', tradeRequestId)
         .single();
 
       if (error) throw error;
+      console.log('Trade data fetched:', tradeData);
       setTrade(tradeData);
     } catch (error) {
       console.error('Error fetching trade data:', error);
@@ -88,31 +91,31 @@ const SellCryptoWaiting: React.FC = () => {
     try {
       setConfirming(true);
 
-      // Update trade status to payment received
+      // Update trade request status to payment received
       const { error } = await supabase
-        .from('trades')
+        .from('trade_requests')
         .update({ 
-          status: 'payment_received',
-          cash_payment_confirmed_at: new Date().toISOString()
+          status: 'completed'
         })
-        .eq('id', tradeId);
+        .eq('id', tradeRequestId);
 
       if (error) throw error;
 
       setPaymentReceived(true);
 
-      // Notify merchant that payment has been confirmed
+      // Notify merchant that payment has been confirmed and crypto is being released
       await supabase
         .from('notifications')
         .insert({
-          user_id: trade.buyer_id, // merchant
-          type: 'trade_update',
-          title: 'Payment Confirmed',
-          message: `Customer has confirmed receipt of ${nairaAmount}. Crypto will be released.`,
+          user_id: selectedMerchant.user_id,
+          type: 'trade_completed',
+          title: 'Trade Completed - Crypto Released',
+          message: `Customer confirmed receipt of ₦${netAmount?.toLocaleString()}. ${cryptoAmount} ${coinType} has been released to your wallet address.`,
           data: {
-            trade_id: tradeId,
-            amount_crypto: amount,
-            crypto_type: cryptoType
+            trade_request_id: tradeRequestId,
+            amount_crypto: cryptoAmount,
+            crypto_type: coinType,
+            amount_fiat: netAmount
           }
         });
 
@@ -124,8 +127,11 @@ const SellCryptoWaiting: React.FC = () => {
       // Navigate to completion page
       navigate('/sell-crypto-completed', {
         state: {
-          ...sellData,
-          tradeId
+          tradeRequestId,
+          coinType,
+          cryptoAmount,
+          netAmount,
+          selectedMerchant
         }
       });
 
@@ -144,8 +150,11 @@ const SellCryptoWaiting: React.FC = () => {
   const handleDispute = () => {
     navigate('/sell-crypto-dispute', {
       state: {
-        ...sellData,
-        tradeId
+        tradeRequestId,
+        coinType,
+        cryptoAmount,
+        netAmount,
+        selectedMerchant
       }
     });
   };
@@ -208,15 +217,19 @@ const SellCryptoWaiting: React.FC = () => {
           <CardContent className="space-y-3">
             <div className="flex justify-between">
               <span className="text-gray-600">Merchant:</span>
-              <span className="font-semibold">{merchantName}</span>
+              <span className="font-semibold">{selectedMerchant?.display_name}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-600">Selling:</span>
-              <span className="font-semibold">{amount} {cryptoType}</span>
+              <span className="font-semibold">{cryptoAmount} {coinType}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-600">Receiving:</span>
-              <span className="font-semibold text-green-600">{nairaAmount}</span>
+              <span className="font-semibold text-green-600">₦{netAmount?.toLocaleString()}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-600">Bank Account:</span>
+              <span className="font-semibold">{selectedAccount?.bank_name}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-600">Time elapsed:</span>
@@ -235,7 +248,7 @@ const SellCryptoWaiting: React.FC = () => {
           </CardHeader>
           <CardContent className="space-y-3 text-yellow-800">
             <p className="text-sm">
-              The merchant has been notified to send {nairaAmount} to your bank account.
+              The merchant has been notified to send ₦{netAmount?.toLocaleString()} to your {selectedAccount?.bank_name} account.
             </p>
             <p className="text-sm">
               Once you receive the payment in your bank account, click "Confirm Payment Received" below.
@@ -315,7 +328,7 @@ const SellCryptoWaiting: React.FC = () => {
               <div>
                 <p className="text-sm font-semibold text-gray-900">Your crypto is secure</p>
                 <p className="text-xs text-gray-600 mt-1">
-                  Your {amount} {cryptoType} is safely held in escrow and will only be released after you confirm payment receipt.
+                  Your {cryptoAmount} {coinType} is safely held in escrow and will only be released after you confirm payment receipt.
                 </p>
               </div>
             </div>

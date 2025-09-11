@@ -192,17 +192,12 @@ class FireblocksService {
       
       console.log('Created mock vault:', mockVault)
       
-      // Update trade with vault information
+      // Update trade_requests with vault information
       const { error } = await this.supabase
-        .from('trades')
+        .from('trade_requests')
         .update({
           escrow_address: mockVault.address,
-          escrow_status: 'vault_created',
-          trade_data: {
-            fireblocks_vault_id: mockVault.id,
-            fireblocks_asset_id: assetId,
-            vault_name: vaultName
-          }
+          vault_id: mockVault.id
         })
         .eq('id', tradeId)
 
@@ -223,36 +218,34 @@ class FireblocksService {
   async checkEscrowBalance(tradeId: string): Promise<any> {
     try {
       const { data: trade, error } = await this.supabase
-        .from('trades')
+        .from('trade_requests')
         .select('*')
         .eq('id', tradeId)
         .single()
 
       if (error) throw error
 
-      const tradeData = trade.trade_data || {}
-      const vaultId = tradeData.fireblocks_vault_id
-      const assetId = tradeData.fireblocks_asset_id
+      const vaultId = trade.vault_id
+      const assetId = trade.crypto_type
 
       if (!vaultId || !assetId) {
         throw new Error('Vault not found for trade')
       }
 
       // For mock/development - simulate balance checking
-      const expectedAmount = trade.amount_crypto || trade.amount || 0
+      const expectedAmount = trade.amount_crypto || 0
       
       // Simulate that funds are received after 30 seconds for testing
       const tradeAge = Date.now() - new Date(trade.created_at).getTime()
       const hasReceivedFunds = tradeAge > 30000 // 30 seconds for testing
       const balance = hasReceivedFunds ? expectedAmount.toString() : '0'
 
-      if (hasReceivedFunds && trade.escrow_status === 'vault_created') {
+      if (hasReceivedFunds && trade.status === 'crypto_deposited') {
         // Update trade status
         await this.supabase
-          .from('trades')
+          .from('trade_requests')
           .update({
-            escrow_status: 'crypto_received',
-            status: 'pending_cash'
+            status: 'crypto_received'
           })
           .eq('id', tradeId)
       }
@@ -273,16 +266,15 @@ class FireblocksService {
   async releaseFunds(tradeId: string, recipientAddress: string): Promise<any> {
     try {
       const { data: trade, error } = await this.supabase
-        .from('trades')
+        .from('trade_requests')
         .select('*')
         .eq('id', tradeId)
         .single()
 
       if (error) throw error
 
-      const tradeData = trade.trade_data || {}
-      const vaultId = tradeData.fireblocks_vault_id
-      const assetId = tradeData.fireblocks_asset_id
+      const vaultId = trade.vault_id
+      const assetId = trade.crypto_type
 
       if (!vaultId || !assetId) {
         throw new Error('Vault not found for trade')
@@ -300,7 +292,7 @@ class FireblocksService {
             address: recipientAddress
           }
         },
-        amount: trade.amount.toString(),
+        amount: trade.amount_crypto.toString(),
         note: `Escrow release for trade ${tradeId}`
       }
 
@@ -308,12 +300,9 @@ class FireblocksService {
 
       // Update trade status
       await this.supabase
-        .from('trades')
+        .from('trade_requests')
         .update({
-          escrow_status: 'funds_released',
-          status: 'completed',
-          transaction_hash: transferResult.id,
-          completed_at: new Date().toISOString()
+          status: 'completed'
         })
         .eq('id', tradeId)
 

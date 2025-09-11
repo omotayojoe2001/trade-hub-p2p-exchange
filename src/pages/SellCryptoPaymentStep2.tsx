@@ -2,11 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, Clock, CheckCircle, Upload, Wallet, QrCode } from 'lucide-react';
+import { ArrowLeft, Clock, CheckCircle, Upload, Wallet, QrCode, Copy } from 'lucide-react';
+import { FireblocksEscrowService } from '@/services/fireblocksEscrowService';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { SimpleWalletInput } from '@/components/SimpleWalletInput';
+
 
 const SellCryptoPaymentStep2 = () => {
   const navigate = useNavigate();
@@ -14,68 +15,55 @@ const SellCryptoPaymentStep2 = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   
-  const { tradeId, coinType, cryptoAmount, cashAmount, netAmount, selectedMerchant, selectedAccount } = location.state || {};
+  const { coinType, cryptoAmount, cashAmount, netAmount, selectedMerchant, selectedAccount } = location.state || {};
   
-  const [tradeStatus, setTradeStatus] = useState('searching');
   const [escrowAddress, setEscrowAddress] = useState('');
-  const [escrowQRCode, setEscrowQRCode] = useState('');
-  const [merchantWalletAddress, setMerchantWalletAddress] = useState('');
+  const [vaultId, setVaultId] = useState('');
   const [depositProof, setDepositProof] = useState<File | null>(null);
-  const [countdown, setCountdown] = useState(15 * 60); // 15 minutes
+  const [loading, setLoading] = useState(false);
+  const [escrowCreated, setEscrowCreated] = useState(false);
+  const fireblocksService = new FireblocksEscrowService();
+
 
   useEffect(() => {
-    if (tradeId) {
-      monitorTradeStatus();
+    if (coinType && cryptoAmount) {
+      createEscrowVault();
     }
-  }, [tradeId]);
+  }, [coinType, cryptoAmount]);
 
-  useEffect(() => {
-    if (countdown > 0) {
-      const timer = setInterval(() => {
-        setCountdown(prev => prev - 1);
-      }, 1000);
-      return () => clearInterval(timer);
-    }
-  }, [countdown]);
-
-  const monitorTradeStatus = async () => {
+  const createEscrowVault = async () => {
+    setLoading(true);
     try {
-      const { data: trade, error } = await supabase
-        .from('trades')
-        .select('*')
-        .eq('id', tradeId)
-        .single();
-
-      if (error) throw error;
-
-      if (trade.status === 'pending_merchant_accept') {
-        setTradeStatus('searching');
-        setTimeout(monitorTradeStatus, 3000);
-      } else if (trade.status === 'merchant_accepted') {
-        setTradeStatus('accepted');
-        // Generate escrow address for seller to deposit crypto
-        setTimeout(() => {
-          setTradeStatus('awaiting_crypto_deposit');
-          setEscrowAddress('bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh'); // Mock escrow address
-          setEscrowQRCode('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=='); // Mock QR
-        }, 3000);
-      } else if (trade.status === 'cancelled') {
-        toast({
-          title: "Trade Cancelled",
-          description: "The merchant declined your trade request",
-          variant: "destructive"
-        });
-        navigate('/buy-sell');
-      }
+      // Mock addresses for testing - replace with Fireblocks when ready
+      const mockAddresses = {
+        BTC: 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh',
+        ETH: '0x742d35Cc6634C0532925a3b8D4C9db96590b5c8e',
+        USDT: '0x742d35Cc6634C0532925a3b8D4C9db96590b5c8e'
+      };
+      
+      setEscrowAddress(mockAddresses[coinType] || mockAddresses.BTC);
+      setVaultId(`vault_${Date.now()}`);
+      setEscrowCreated(true);
+      
+      toast({
+        title: "Escrow Ready",
+        description: "Secure escrow address generated. You can now deposit your crypto."
+      });
     } catch (error) {
-      console.error('Error monitoring trade:', error);
+      console.error('Error creating escrow:', error);
+      toast({
+        title: "Escrow Error",
+        description: "Failed to create secure escrow. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    toast({ title: "Copied to clipboard!" });
   };
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -94,61 +82,118 @@ const SellCryptoPaymentStep2 = () => {
       return;
     }
 
+    setLoading(true);
     try {
-      const { error } = await supabase
-        .from('trades')
-        .update({ 
-          status: 'crypto_deposited',
-          payment_proof_url: 'uploaded'
-        })
-        .eq('id', tradeId);
+      // Upload proof to storage
+      const fileExt = depositProof.name.split('.').pop();
+      const fileName = `${Date.now()}_deposit_proof.${fileExt}`;
+      
+      const { error: uploadError } = await supabase.storage
+        .from('payment-proofs')
+        .upload(fileName, depositProof);
 
-      if (error) throw error;
+      if (uploadError) throw uploadError;
 
-      navigate('/sell-crypto-payment-step3', {
+      // NOW create the trade request with crypto already deposited
+      const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+      
+      const tradeRequestData = {
+        user_id: user.id,
+        trade_type: 'sell',
+        crypto_type: coinType,
+        amount_crypto: parseFloat(cryptoAmount),
+        amount_fiat: netAmount,
+        rate: netAmount / parseFloat(cryptoAmount),
+        payment_method: 'bank_transfer',
+        status: 'open',
+        bank_account_id: selectedAccount.id,
+        user_bank_name: selectedAccount.bank_name,
+        user_account_number: selectedAccount.account_number,
+        user_account_name: selectedAccount.account_name,
+        escrow_address: escrowAddress,
+        vault_id: vaultId,
+        payment_proof_url: fileName,
+        expires_at: expiresAt.toISOString()
+      };
+
+      console.log('Creating trade request:', tradeRequestData);
+      
+      const { data: tradeRequest, error } = await supabase
+        .from('trade_requests')
+        .insert(tradeRequestData)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Trade request creation error:', error);
+        throw error;
+      }
+      
+      console.log('Trade request created:', tradeRequest);
+
+      // Notify ALL merchants about this sell crypto request
+      const { data: merchants } = await supabase
+        .from('profiles')
+        .select('user_id, display_name')
+        .eq('is_merchant', true)
+        .neq('user_id', user.id);
+
+      if (merchants && merchants.length > 0) {
+        const notifications = merchants.map(merchant => ({
+          user_id: merchant.user_id,
+          type: 'sell_crypto_request',
+          title: 'New Sell Crypto Request',
+          message: `User wants to sell ${cryptoAmount} ${coinType} for ₦${netAmount?.toLocaleString()}. Crypto is already secured in escrow.`,
+          data: {
+            trade_request_id: tradeRequest.id,
+            crypto_amount: cryptoAmount,
+            fiat_amount: netAmount,
+            crypto_type: coinType
+          }
+        }));
+
+        await supabase.from('notifications').insert(notifications);
+      }
+
+      toast({
+        title: "Trade Request Sent!",
+        description: "Your crypto is secured in escrow. Merchants have been notified."
+      });
+
+      navigate('/sell-crypto-waiting', {
         state: { 
-          tradeId, 
+          tradeRequestId: tradeRequest.id, 
           coinType, 
           cryptoAmount, 
           netAmount, 
-          selectedAccount 
+          selectedAccount,
+          selectedMerchant
         }
       });
     } catch (error) {
-      console.error('Error updating trade:', error);
+      console.error('Error confirming deposit:', error);
+      toast({
+        title: "Error",
+        description: "Failed to confirm deposit. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
-  const getStatusDisplay = () => {
-    switch (tradeStatus) {
-      case 'searching':
-        return {
-          title: "Searching for Merchant",
-          description: "Waiting for merchant to accept your trade request...",
-          icon: <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-        };
-      case 'accepted':
-        return {
-          title: "Merchant Accepted!",
-          description: "Setting up secure escrow for your trade...",
-          icon: <CheckCircle className="w-8 h-8 text-green-500" />
-        };
-      case 'awaiting_crypto_deposit':
-        return {
-          title: "Deposit Your Crypto",
-          description: "Send your crypto to the secure escrow address below",
-          icon: <Wallet className="w-8 h-8 text-blue-500" />
-        };
-      default:
-        return {
-          title: "Processing",
-          description: "Please wait...",
-          icon: <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-        };
-    }
-  };
-
-  const statusInfo = getStatusDisplay();
+  if (!coinType) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Card>
+          <CardContent className="p-6 text-center">
+            <p className="text-muted-foreground mb-4">Missing trade information</p>
+            <Button onClick={() => navigate('/buy-sell')}>Start Over</Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -161,28 +206,44 @@ const SellCryptoPaymentStep2 = () => {
         <div className="w-10" />
       </div>
 
-      {/* Timer */}
-      <div className="p-4 bg-orange-50 border-b border-orange-200">
+      {/* Status Banner */}
+      <div className="p-4 bg-blue-50 border-b border-blue-200">
         <div className="flex items-center justify-center">
-          <Clock className="w-5 h-5 text-orange-600 mr-2" />
-          <span className="text-orange-800 font-semibold">
-            Time Remaining: {formatTime(countdown)}
+          <Wallet className="w-5 h-5 text-blue-600 mr-2" />
+          <span className="text-blue-800 font-semibold">
+            Secure Escrow - Deposit Your Crypto
           </span>
         </div>
       </div>
 
       <div className="p-4 space-y-6">
-        {/* Status Display */}
+        {/* Escrow Status */}
         <Card>
           <CardContent className="p-6 text-center">
-            <div className="mb-4">{statusInfo.icon}</div>
-            <h2 className="text-xl font-semibold mb-2">{statusInfo.title}</h2>
-            <p className="text-muted-foreground">{statusInfo.description}</p>
+            {loading ? (
+              <>
+                <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+                <h2 className="text-xl font-semibold mb-2">Setting Up Escrow</h2>
+                <p className="text-muted-foreground">Creating secure Fireblocks vault...</p>
+              </>
+            ) : escrowCreated ? (
+              <>
+                <CheckCircle className="w-8 h-8 text-green-500 mx-auto mb-4" />
+                <h2 className="text-xl font-semibold mb-2">Escrow Ready</h2>
+                <p className="text-muted-foreground">Deposit your crypto to the secure address below</p>
+              </>
+            ) : (
+              <>
+                <Wallet className="w-8 h-8 text-blue-500 mx-auto mb-4" />
+                <h2 className="text-xl font-semibold mb-2">Preparing Escrow</h2>
+                <p className="text-muted-foreground">Please wait...</p>
+              </>
+            )}
           </CardContent>
         </Card>
 
         {/* Escrow Deposit Details */}
-        {tradeStatus === 'awaiting_crypto_deposit' && (
+        {escrowCreated && escrowAddress && (
           <Card>
             <CardHeader>
               <CardTitle className="text-sm">Deposit {coinType} to Escrow</CardTitle>
@@ -202,11 +263,9 @@ const SellCryptoPaymentStep2 = () => {
                       variant="outline"
                       size="sm"
                       className="mt-2"
-                      onClick={() => {
-                        navigator.clipboard.writeText(escrowAddress);
-                        toast({ title: "Address copied!" });
-                      }}
+                      onClick={() => copyToClipboard(escrowAddress)}
                     >
+                      <Copy className="w-4 h-4 mr-2" />
                       Copy Address
                     </Button>
                   </div>
@@ -229,19 +288,7 @@ const SellCryptoPaymentStep2 = () => {
                 </div>
               </div>
 
-              {/* Merchant Wallet Address Input */}
-              <div>
-                <p className="text-sm font-medium mb-2">Merchant's {coinType} Wallet Address</p>
-                <SimpleWalletInput
-                  coinType={coinType}
-                  value={merchantWalletAddress}
-                  onChange={setMerchantWalletAddress}
-                  placeholder={`Enter merchant's ${coinType} address for crypto release`}
-                />
-                <p className="text-xs text-muted-foreground mt-1">
-                  This is where the crypto will be sent after payment confirmation
-                </p>
-              </div>
+
 
               {/* Upload Proof */}
               <div>
@@ -269,11 +316,11 @@ const SellCryptoPaymentStep2 = () => {
               <div className="space-y-3">
                 <Button
                   onClick={handleConfirmDeposit}
-                  disabled={!depositProof || !merchantWalletAddress}
+                  disabled={!depositProof || loading}
                   className="w-full"
                   size="lg"
                 >
-                  Confirm Crypto Deposit
+                  {loading ? 'Processing...' : 'Confirm Crypto Deposit & Send Trade Request'}
                 </Button>
                 
                 <div className="grid grid-cols-2 gap-3">

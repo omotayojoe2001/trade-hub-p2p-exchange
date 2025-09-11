@@ -22,8 +22,24 @@ const BuyCryptoPaymentStep1 = () => {
   const [walletAddress, setWalletAddress] = useState('');
   // Removed bank account logic - not needed for Buy Crypto
   const [loading, setLoading] = useState(false);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
-  // Removed fetchUserBankAccounts - not needed for Buy Crypto
+  // Navigation confirmation for active trade
+  useEffect(() => {
+    if (cryptoAmount || walletAddress) {
+      setHasUnsavedChanges(true);
+    }
+
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (hasUnsavedChanges) {
+        e.preventDefault();
+        e.returnValue = 'You have an active trade request. Are you sure you want to leave?';
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [cryptoAmount, walletAddress, hasUnsavedChanges]);
 
   const getMerchantRate = () => {
     if (!selectedMerchant) return 0;
@@ -70,7 +86,9 @@ const BuyCryptoPaymentStep1 = () => {
       const rate = getMerchantRate();
       const nairaAmount = parseFloat(cryptoAmount) * rate;
 
-      // Create trade request for buy crypto flow
+      // Create trade request for buy crypto flow with 10-minute expiry
+      const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes from now
+      
       const { data: tradeRequest, error: tradeError } = await supabase
         .from('trade_requests')
         .insert({
@@ -82,8 +100,9 @@ const BuyCryptoPaymentStep1 = () => {
           amount_fiat: nairaAmount,
           rate: rate,
           payment_method: 'bank_transfer',
-          status: 'pending',
-          wallet_address: walletAddress
+          status: 'open',
+          wallet_address: walletAddress,
+          expires_at: expiresAt.toISOString()
         })
         .select()
         .single();
@@ -109,7 +128,7 @@ const BuyCryptoPaymentStep1 = () => {
 
       toast({
         title: "Trade Request Sent!",
-        description: `Your trade request for ${cryptoAmount} ${coinType} has been sent to ${selectedMerchant.display_name}. They have 15 minutes to respond.`,
+        description: `Your trade request for ${cryptoAmount} ${coinType} has been sent to ${selectedMerchant.display_name}. They have 10 minutes to respond.`,
       });
 
       // Navigate to step 2 with trade details
@@ -157,7 +176,16 @@ const BuyCryptoPaymentStep1 = () => {
     <div className="min-h-screen bg-gradient-to-br from-primary/5 to-secondary/10">
       {/* Header */}
       <div className="sticky top-0 bg-card/95 backdrop-blur-sm border-b p-4 flex items-center justify-between shadow-sm">
-        <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="hover:bg-white/80">
+        <Button variant="ghost" size="icon" onClick={() => {
+          if (hasUnsavedChanges) {
+            const confirmed = window.confirm('You have an active trade request. Are you sure you want to cancel?');
+            if (confirmed) {
+              navigate(-1);
+            }
+          } else {
+            navigate(-1);
+          }
+        }} className="hover:bg-white/80">
           <ArrowLeft className="w-5 h-5" />
         </Button>
         <div className="text-center">

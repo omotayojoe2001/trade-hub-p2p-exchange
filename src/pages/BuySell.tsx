@@ -54,12 +54,13 @@ const BuySell = () => {
     try {
       setLoadingRequests(true);
 
-      // Fetch recent open trade requests (excluding current user's requests)
+      // Fetch trade requests meant for current user as merchant
       const { data: requests, error } = await supabase
         .from('trade_requests')
         .select('*')
         .eq('status', 'open')
-        .neq('user_id', user.id)
+        .eq('merchant_id', user.id)
+        .gte('expires_at', new Date().toISOString()) // Only non-expired
         .order('created_at', { ascending: false })
         .limit(2);
 

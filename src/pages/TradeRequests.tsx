@@ -33,19 +33,24 @@ const TradeRequests = () => {
         setLoading(true);
         setError(null);
 
-        // Get real trade requests from Supabase
-        let requests = [];
-        try {
-          requests = await tradeRequestService.getTradeRequests();
-        } catch (serviceError) {
-          console.error('Failed to load trade requests:', serviceError);
+        // Get trade requests available to current user as merchant
+        const { data: requests, error: requestError } = await supabase
+          .from('trade_requests')
+          .select('*')
+          .in('status', ['open', 'crypto_deposited']) // Include sell crypto requests
+          .neq('user_id', user.id) // Exclude own requests
+          .gte('expires_at', new Date().toISOString())
+          .order('created_at', { ascending: false });
+          
+        if (requestError) {
+          console.error('Failed to load trade requests:', requestError);
           setError('Failed to load trade requests. Please try again.');
           setLoading(false);
           return;
         }
 
         // Transform the data to match our UI format
-        const transformedRequests = requests.map((request: any) => {
+        const transformedRequests = (requests || []).map((request: any) => {
           const timeLeft = calculateTimeLeft(request.expires_at || new Date(Date.now() + 3600000).toISOString());
 
           return {
@@ -60,7 +65,7 @@ const TradeRequests = () => {
             paymentMethods: ['Bank Transfer'],
             type: request.trade_type || 'buy',
             direction: request.trade_type === 'sell'
-              ? 'User wants to sell crypto to you'
+              ? `User wants to sell ${request.crypto_type} (crypto already in escrow)`
               : 'User wants to buy crypto from you',
             status: request.status,
             created_at: request.created_at
@@ -101,6 +106,39 @@ const TradeRequests = () => {
 
   const getUserDisplayName = (userId: string): string => {
     return `User ${userId.slice(-4)}`;
+  };
+
+  const handleDeclineRequest = async (requestId: string) => {
+    try {
+      // First assign merchant, then decline
+      const { error: assignError } = await supabase
+        .from('trade_requests')
+        .update({ merchant_id: user.id })
+        .eq('id', requestId);
+
+      if (assignError) throw assignError;
+
+      const { error } = await supabase
+        .from('trade_requests')
+        .update({ status: 'rejected' })
+        .eq('id', requestId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Trade Declined",
+        description: "You have declined this trade request"
+      });
+
+      // Refresh the list
+      window.location.reload();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: "Failed to decline trade request",
+        variant: "destructive"
+      });
+    }
   };
 
   const handleAcceptTrade = async (requestId: string) => {
@@ -291,21 +329,27 @@ const TradeRequests = () => {
                   </div>
 
                   {/* Actions */}
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-2">
+                    <Button 
+                      className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 text-sm"
+                      onClick={() => {
+                        if (request.type === 'sell') {
+                          navigate('/sell-crypto-trade-request-details', { state: { tradeRequestId: request.id } });
+                        } else {
+                          navigate('/trade-request-details', { state: { request } });
+                        }
+                      }}
+                    >
+                      {request.type === 'sell' ? 'Accept & Send Cash' : 'Review'}
+                    </Button>
+                    
                     <Button 
                       variant="outline"
-                      className="w-full py-2 text-sm"
-                      onClick={() => navigate('/trade-request-details', { state: { request } })}
+                      className="w-full border-red-300 text-red-600 hover:bg-red-50 py-2 text-sm"
+                      onClick={() => handleDeclineRequest(request.id)}
                     >
-                      Review
+                      Decline
                     </Button>
-                  <Button 
-                    className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 text-sm"
-                      onClick={() => handleAcceptTrade(request.id)}
-                      disabled={!['pending','open'].includes((request as any).status || 'pending')}
-                  >
-                      Accept
-                  </Button>
                   </div>
                 </CardContent>
               </Card>

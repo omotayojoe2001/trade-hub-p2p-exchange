@@ -21,10 +21,28 @@ const SellCryptoPaymentStep1 = () => {
   const [userBankAccounts, setUserBankAccounts] = useState<any[]>([]);
   const [selectedAccount, setSelectedAccount] = useState<any>(null);
   const [loading, setLoading] = useState(false);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
   useEffect(() => {
     fetchUserBankAccounts();
   }, [user]);
+
+  // Navigation confirmation for active trade
+  useEffect(() => {
+    if (cryptoAmount || selectedAccount) {
+      setHasUnsavedChanges(true);
+    }
+
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (hasUnsavedChanges) {
+        e.preventDefault();
+        e.returnValue = 'You have an active trade request. Are you sure you want to leave?';
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [cryptoAmount, selectedAccount, hasUnsavedChanges]);
 
   const fetchUserBankAccounts = async () => {
     if (!user) return;
@@ -76,7 +94,7 @@ const SellCryptoPaymentStep1 = () => {
     return calculateCashAmount() - calculatePlatformFee();
   };
 
-  const handleSendTradeRequest = async () => {
+  const handleContinueToEscrow = () => {
     if (!cryptoAmount || !selectedAccount) {
       toast({
         title: "Missing Information",
@@ -86,52 +104,17 @@ const SellCryptoPaymentStep1 = () => {
       return;
     }
 
-    setLoading(true);
-    try {
-      const tradeData = {
-        seller_id: user.id,
-        buyer_id: selectedMerchant.user_id,
-        coin_type: coinType,
-        amount: parseFloat(cryptoAmount),
-        naira_amount: calculateCashAmount(),
-        rate: getMerchantRate(),
-        platform_fee_amount: calculatePlatformFee(),
-        net_amount: calculateNetAmount(),
-        status: 'pending',
-        trade_type: 'sell',
-        payment_method: 'bank_transfer'
-      };
-
-      const { data, error } = await supabase
-        .from('trades')
-        .insert(tradeData)
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      navigate('/sell-crypto-payment-step2', {
-        state: {
-          tradeId: data.id,
-          coinType,
-          cryptoAmount,
-          cashAmount: calculateCashAmount(),
-          netAmount: calculateNetAmount(),
-          selectedMerchant,
-          selectedAccount
-        }
-      });
-
-    } catch (error) {
-      console.error('Error creating trade:', error);
-      toast({
-        title: "Error",
-        description: "Failed to send trade request",
-        variant: "destructive"
-      });
-    } finally {
-      setLoading(false);
-    }
+    // Just navigate to step 2 - no trade request sent yet
+    navigate('/sell-crypto-payment-step2', {
+      state: {
+        coinType,
+        cryptoAmount,
+        cashAmount: calculateCashAmount(),
+        netAmount: calculateNetAmount(),
+        selectedMerchant,
+        selectedAccount
+      }
+    });
   };
 
   const handleAccountSelect = (account: any) => {
@@ -158,10 +141,22 @@ const SellCryptoPaymentStep1 = () => {
     <div className="min-h-screen bg-gradient-to-br from-primary/5 to-secondary/10">
       {/* Header */}
       <div className="sticky top-0 bg-background border-b p-4 flex items-center justify-between">
-        <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
+        <Button variant="ghost" size="icon" onClick={() => {
+          if (hasUnsavedChanges) {
+            const confirmed = window.confirm('You have unsaved changes. Are you sure you want to go back?');
+            if (confirmed) {
+              navigate(-1);
+            }
+          } else {
+            navigate(-1);
+          }
+        }}>
           <ArrowLeft className="w-5 h-5" />
         </Button>
-        <h1 className="text-lg font-semibold">Sell {coinType} - Step 1</h1>
+        <div className="text-center">
+          <h1 className="text-lg font-bold">Sell {coinType}</h1>
+          <p className="text-xs text-muted-foreground">Step 1 of 3 - Trade Setup</p>
+        </div>
         <div className="w-10" />
       </div>
 
@@ -190,7 +185,10 @@ const SellCryptoPaymentStep1 = () => {
         {/* Amount Input */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-sm">Amount to Sell</CardTitle>
+            <CardTitle className="text-sm">How Much {coinType} Do You Want to Sell?</CardTitle>
+            <p className="text-xs text-muted-foreground">
+              Enter the amount of {coinType} you want to convert to Naira.
+            </p>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
@@ -217,9 +215,9 @@ const SellCryptoPaymentStep1 = () => {
         {/* Bank Account Selection */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-sm">Receive Payment To</CardTitle>
+            <CardTitle className="text-sm">Where Should Merchant Send Your Cash?</CardTitle>
             <p className="text-xs text-muted-foreground">
-              Regular users can use 1 account. Premium users can use multiple accounts.
+              Select the bank account where you want to receive your Naira payment.
             </p>
           </CardHeader>
           <CardContent>
@@ -252,7 +250,16 @@ const SellCryptoPaymentStep1 = () => {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => navigate('/payment-methods')}
+                  onClick={() => {
+                    // Store current state for return navigation
+                    sessionStorage.setItem('sellCryptoState', JSON.stringify({
+                      coinType,
+                      selectedMerchant,
+                      cryptoAmount,
+                      returnPath: '/sell-crypto-payment-step1'
+                    }));
+                    navigate('/payment-methods');
+                  }}
                   className="w-full mt-2"
                 >
                   <Building2 className="w-4 h-4 mr-2" />
@@ -265,7 +272,16 @@ const SellCryptoPaymentStep1 = () => {
                 <p className="text-muted-foreground text-sm mb-3">No bank account found</p>
                 <Button 
                   variant="outline" 
-                  onClick={() => navigate('/payment-methods')}
+                  onClick={() => {
+                    // Store current state for return navigation
+                    sessionStorage.setItem('sellCryptoState', JSON.stringify({
+                      coinType,
+                      selectedMerchant,
+                      cryptoAmount,
+                      returnPath: '/sell-crypto-payment-step1'
+                    }));
+                    navigate('/payment-methods');
+                  }}
                 >
                   Add Your First Bank Account
                 </Button>
@@ -309,15 +325,32 @@ const SellCryptoPaymentStep1 = () => {
           </Card>
         )}
 
-        {/* Send Trade Request Button */}
+        {/* Continue Button */}
         <Button
-          onClick={handleSendTradeRequest}
-          disabled={!cryptoAmount || !selectedAccount || loading}
-          className="w-full"
+          onClick={handleContinueToEscrow}
+          disabled={!cryptoAmount || !selectedAccount}
+          className="w-full bg-gradient-to-r from-primary to-primary-foreground hover:from-primary/90 hover:to-primary-foreground/90 text-white font-semibold py-6 text-lg shadow-lg hover:shadow-xl transition-all duration-300"
           size="lg"
         >
-          {loading ? 'Sending Request...' : 'Send Trade Request'}
+          Continue to Escrow
         </Button>
+        
+        {/* Information Banner */}
+        <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+          <div className="flex items-start">
+            <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center mr-3 mt-0.5">
+              <AlertCircle size={16} className="text-white" />
+            </div>
+            <div className="flex-1">
+              <p className="text-blue-800 text-sm font-medium mb-1">
+                Next: Send Crypto to Escrow
+              </p>
+              <p className="text-blue-700 text-xs">
+                You'll get a secure Fireblocks address to send your {coinType}. Only after your crypto is confirmed will the merchant be notified to send cash.
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

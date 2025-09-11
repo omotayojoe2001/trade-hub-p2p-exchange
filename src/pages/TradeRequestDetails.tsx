@@ -33,14 +33,20 @@ const TradeRequestDetails = () => {
           
           // Try to fetch user display name using RPC
           const userId = latest.user_id || latest.buyer_id || latest.created_by;
+          console.log('Trying to fetch name for userId:', userId);
+          
           if (userId) {
-            const { data: displayName } = await supabase
-              .rpc('get_user_display_name', { user_uuid: userId });
-            
-            console.log('User display name:', displayName);
-            
-            if (displayName) {
-              latest.user_name = displayName;
+            try {
+              const { data: displayName, error } = await supabase
+                .rpc('get_user_display_name', { user_uuid: userId });
+              
+              console.log('RPC response:', { displayName, error });
+              
+              if (displayName && displayName !== 'Anonymous') {
+                latest.user_name = displayName;
+              }
+            } catch (err) {
+              console.error('Error fetching user name:', err);
             }
           }
           

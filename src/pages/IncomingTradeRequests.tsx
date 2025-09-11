@@ -44,11 +44,11 @@ const IncomingTradeRequests = () => {
     try {
       setLoading(true);
       
-      // Get all open trade requests excluding current user's requests
+      // Get all available trade requests excluding current user's requests
       const { data: requests, error } = await supabase
         .from('trade_requests')
         .select('*')
-        .eq('status', 'open')
+        .in('status', ['open', 'accepted', 'crypto_deposited'])
         .neq('user_id', user?.id)
         .gt('expires_at', new Date().toISOString())
         .order('created_at', { ascending: false });
@@ -101,21 +101,56 @@ const IncomingTradeRequests = () => {
   const handleAcceptRequest = async (requestId: string) => {
     if (!user?.id) return;
     
+    const request = tradeRequests.find(r => r.id === requestId);
+    if (!request) return;
+    
     try {
       setProcessing(requestId);
       
-      await tradeRequestService.acceptTradeRequest(requestId, user.id);
+      // Update trade request status to accepted
+      const { error } = await supabase
+        .from('trade_requests')
+        .update({ 
+          status: 'accepted',
+          merchant_id: user.id,
+          accepted_at: new Date().toISOString()
+        })
+        .eq('id', requestId);
+
+      if (error) throw error;
+      
+      // Notify the user that their request was accepted
+      await supabase
+        .from('notifications')
+        .insert({
+          user_id: request.user_id,
+          type: 'trade_accepted',
+          title: 'Trade Request Accepted',
+          message: `Your ${request.trade_type} request for ${request.amount} ${request.coin_type} has been accepted. ${request.trade_type === 'sell' ? 'The merchant will send cash to your bank account after you deposit crypto to escrow.' : 'Please proceed with payment.'}`,
+          data: {
+            trade_request_id: requestId,
+            merchant_id: user.id
+          }
+        });
       
       toast({
         title: "Trade Request Accepted",
-        description: "You have successfully accepted the trade request"
+        description: `You accepted a ${request.trade_type} request for ${request.amount} ${request.coin_type}`
       });
       
       // Refresh the list
       loadTradeRequests();
       
-      // Navigate to trade details or chat
-      navigate('/messages');
+      // Navigate based on trade type
+      if (request.trade_type === 'sell') {
+        // For sell requests, navigate to specialized sell crypto trade details
+        navigate('/sell-crypto-trade-request-details', {
+          state: { tradeRequestId: requestId }
+        });
+      } else {
+        // For buy requests, navigate to payment flow
+        navigate('/messages');
+      }
       
     } catch (error: any) {
       console.error('Error accepting trade request:', error);
@@ -132,10 +167,35 @@ const IncomingTradeRequests = () => {
   const handleDeclineRequest = async (requestId: string) => {
     if (!user?.id) return;
     
+    const request = tradeRequests.find(r => r.id === requestId);
+    if (!request) return;
+    
     try {
       setProcessing(requestId);
       
-      await tradeRequestService.declineTradeRequest(requestId, user.id);
+      // Update trade request status to rejected
+      const { error } = await supabase
+        .from('trade_requests')
+        .update({ 
+          status: 'rejected',
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', requestId);
+
+      if (error) throw error;
+      
+      // Notify the user that their request was declined
+      await supabase
+        .from('notifications')
+        .insert({
+          user_id: request.user_id,
+          type: 'trade_rejected',
+          title: 'Trade Request Declined',
+          message: `Your ${request.trade_type} request for ${request.amount} ${request.coin_type} was declined. You can try with another merchant.`,
+          data: {
+            trade_request_id: requestId
+          }
+        });
       
       toast({
         title: "Trade Request Declined",

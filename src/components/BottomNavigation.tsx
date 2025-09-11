@@ -89,14 +89,7 @@ const BottomNavigation = () => {
     { path: '/settings', icon: Settings, label: 'Settings' }
   ];
 
-  // Add merchant-specific items if user is a merchant
-  if (isMerchant) {
-    navItems.splice(4, 0, {
-      path: '/merchant-trade-requests',
-      icon: Bell,
-      label: 'Requests'
-    });
-  }
+
 
   return (
     <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border px-4 py-3 z-50">

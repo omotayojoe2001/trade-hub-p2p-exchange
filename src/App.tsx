@@ -33,7 +33,7 @@ import SellCryptoPaymentStep1 from "./pages/SellCryptoPaymentStep1";
 import SellCryptoPaymentStep2 from "./pages/SellCryptoPaymentStep2";
 import SellCryptoPaymentStep3 from "./pages/SellCryptoPaymentStep3";
 import TradeStatus from "./pages/TradeStatus";
-import MerchantTradeRequests from "./pages/MerchantTradeRequests";
+
 import TradeDetails from "./pages/TradeDetails";
 import SellCrypto from "./pages/SellCrypto";
 import SellCryptoMerchantSelection from "./pages/SellCryptoMerchantSelection";
@@ -124,6 +124,7 @@ import MerchantMatchingChoice from "./pages/MerchantMatchingChoice";
 import PremiumMerchantChoice from "./pages/PremiumMerchantChoice";
 import IncomingTradeRequests from "./pages/IncomingTradeRequests";
 import TradeRequestNotifications from "./pages/TradeRequestNotifications";
+import SellCryptoTradeRequestDetails from "./pages/SellCryptoTradeRequestDetails";
 import ManageSubscription from "./pages/ManageSubscription";
 import AutoMerchantMatch from "./pages/AutoMerchantMatch";
 import VendorLogin from "./pages/VendorLogin";
@@ -145,6 +146,8 @@ import { ThankYouPage } from "./pages/ThankYouPage";
 // Removed SupabaseTest - not needed
 
 import CryptoNews from "./pages/CryptoNews";
+import NewsDetail from "./pages/NewsDetail";
+import UploadPaymentProof from "./pages/UploadPaymentProof";
 import React from 'react';
 
 const queryClient = new QueryClient();
@@ -273,12 +276,15 @@ const AppContent = () => {
         <Route path="/premium-merchant-choice" element={<PremiumMerchantChoice />} />
         <Route path="/incoming-trade-requests" element={<IncomingTradeRequests />} />
         <Route path="/trade-notifications" element={<TradeRequestNotifications />} />
+        <Route path="/sell-crypto-trade-request-details" element={<SellCryptoTradeRequestDetails />} />
             <Route path="/auto-merchant-match" element={<AutoMerchantMatch />} />
             <Route path="/merchant-list" element={<MerchantList />} />
             <Route path="/manage-subscription" element={<ManageSubscription />} />
             <Route path="/select-coin" element={<SelectCoin />} />
             <Route path="/my-trades" element={<MyTrades />} />
             <Route path="/news" element={<CryptoNews />} />
+            <Route path="/news/:id" element={<NewsDetail />} />
+          <Route path="/upload-payment-proof/:tradeId" element={<UploadPaymentProof />} />
 
             <Route path="/buy-crypto-payment-step1" element={<BuyCryptoPaymentStep1 />} />
             <Route path="/buy-crypto-payment-step2" element={<BuyCryptoPaymentStep2 />} />
@@ -287,7 +293,7 @@ const AppContent = () => {
             <Route path="/sell-crypto-payment-step2" element={<SellCryptoPaymentStep2 />} />
             <Route path="/sell-crypto-payment-step3" element={<SellCryptoPaymentStep3 />} />
             <Route path="/trade-status" element={<TradeStatus />} />
-            <Route path="/merchant-trade-requests" element={<MerchantTradeRequests />} />
+
             <Route path="/trade-details/:tradeId" element={<TradeDetails />} />
             <Route path="/sell-crypto" element={<SellCrypto />} />
             <Route path="/sell-crypto-merchant-selection" element={<SellCryptoMerchantSelection />} />

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Plus, CreditCard, Building, Star, Edit2, Trash2, Shield, Check, Loader2, AlertCircle } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
@@ -25,6 +25,7 @@ interface BankAccount {
 
 const PaymentMethods = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [isAddingBank, setIsAddingBank] = useState(false);
   const [editingAccount, setEditingAccount] = useState<BankAccount | null>(null);
   const [availableBanks, setAvailableBanks] = useState<Bank[]>([]);
@@ -32,6 +33,7 @@ const PaymentMethods = () => {
   const [accountVerified, setAccountVerified] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [returnPath, setReturnPath] = useState<string | null>(null);
   const { toast } = useToast();
 
   const [bankData, setBankData] = useState({
@@ -48,6 +50,13 @@ const PaymentMethods = () => {
     if (user) {
       loadBankAccounts();
       loadBanks();
+    }
+    
+    // Check if user came from sell crypto flow
+    const savedState = sessionStorage.getItem('sellCryptoState');
+    if (savedState) {
+      const state = JSON.parse(savedState);
+      setReturnPath(state.returnPath);
     }
   }, [user]);
 
@@ -231,6 +240,17 @@ const PaymentMethods = () => {
       await loadBankAccounts();
       resetBankForm();
       setIsAddingBank(false);
+      
+      // If user came from sell crypto flow, navigate back
+      if (returnPath) {
+        const savedState = sessionStorage.getItem('sellCryptoState');
+        if (savedState) {
+          const state = JSON.parse(savedState);
+          sessionStorage.removeItem('sellCryptoState');
+          navigate(returnPath, { state });
+          return;
+        }
+      }
     } catch (error) {
       console.error('Error saving bank account:', error);
       toast({
@@ -378,9 +398,23 @@ const PaymentMethods = () => {
       <div className="bg-white border-b border-gray-200 px-4 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center">
-            <Link to="/settings" className="mr-3">
+            <button 
+              onClick={() => {
+                if (returnPath) {
+                  const savedState = sessionStorage.getItem('sellCryptoState');
+                  if (savedState) {
+                    const state = JSON.parse(savedState);
+                    sessionStorage.removeItem('sellCryptoState');
+                    navigate(returnPath, { state });
+                    return;
+                  }
+                }
+                navigate('/settings');
+              }}
+              className="mr-3"
+            >
               <ArrowLeft size={24} className="text-gray-600" />
-            </Link>
+            </button>
             <h1 className="text-xl font-semibold text-gray-900">Payment Methods</h1>
           </div>
           <Dialog>
