@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useCryptoPayments } from '@/hooks/useCryptoPayments';
 import { useBlockchainAPI } from '@/hooks/useBlockchainAPI';
 import { useToast } from '@/hooks/use-toast';
-import { FireblocksEscrowService } from '@/services/fireblocksEscrowService';
+import { bitgoEscrow } from '@/services/bitgoEscrow';
 
 interface EscrowTransaction {
   id: string;
@@ -39,7 +39,7 @@ export const useEscrowFlowManager = ({
   const { verifyTransaction } = useBlockchainAPI();
   const { toast } = useToast();
   const navigate = useNavigate();
-  const fireblocksService = new FireblocksEscrowService();
+  // BitGo escrow service is imported as singleton
 
   useEffect(() => {
     // Initialize or load transaction from backend
@@ -54,37 +54,33 @@ export const useEscrowFlowManager = ({
 
   const initializeTransaction = async () => {
     try {
-      // Create Fireblocks escrow vault
-      const result = await fireblocksService.createEscrowVault(transactionId, 'BTC');
+      // Create BitGo escrow address
+      const escrowAddress = await bitgoEscrow.generateEscrowAddress(transactionId, 'BTC');
       
-      if (result.success) {
-        // Create real escrow transaction - remove mock data
-        const transaction: EscrowTransaction = {
-          id: transactionId,
-          amount: 0,
-          coin: 'bitcoin',
-          network: 'mainnet',
-          escrowAddress: result.deposit_address!,
-          vaultId: result.vault_id,
-          receiverBankDetails: {
-            accountNumber: '',
-            bankName: '',
-            accountName: ''
-          },
-          receiverWalletAddress: '',
-          status: 'vault_created',
-          createdAt: new Date()
-        };
-        
-        setTransaction(transaction);
-        
-        toast({
-          title: "Escrow Vault Created",
-          description: "Fireblocks vault created successfully for secure escrow",
-        });
-      } else {
-        throw new Error(result.error || 'Failed to create vault');
-      }
+      // Create real escrow transaction
+      const transaction: EscrowTransaction = {
+        id: transactionId,
+        amount: 0,
+        coin: 'bitcoin',
+        network: 'testnet',
+        escrowAddress,
+        vaultId: transactionId,
+        receiverBankDetails: {
+          accountNumber: '',
+          bankName: '',
+          accountName: ''
+        },
+        receiverWalletAddress: '',
+        status: 'vault_created',
+        createdAt: new Date()
+      };
+      
+      setTransaction(transaction);
+      
+      toast({
+        title: "Escrow Address Created",
+        description: "BitGo escrow address created successfully",
+      });
     } catch (error) {
       console.error('Error initializing transaction:', error);
       toast({
@@ -98,14 +94,27 @@ export const useEscrowFlowManager = ({
   const startCryptoMonitoring = () => {
     setIsMonitoring(true);
     
-    // Use Fireblocks monitoring
-    fireblocksService.monitorEscrowStatus(transactionId, (status) => {
-      if (status.has_received_funds) {
-        updateTransactionStatus('crypto_received');
-        setIsMonitoring(false);
-        notifyCashSender();
+    // Use BitGo monitoring (simplified for now)
+    const checkDeposit = async () => {
+      if (!transaction?.escrowAddress) return;
+      
+      try {
+        const depositStatus = await bitgoEscrow.checkDeposit(transaction.escrowAddress);
+        if (depositStatus.confirmed) {
+          updateTransactionStatus('crypto_received');
+          setIsMonitoring(false);
+          notifyCashSender();
+        }
+      } catch (error) {
+        console.error('Error checking deposit:', error);
       }
-    });
+    };
+    
+    // Check every 30 seconds
+    const interval = setInterval(checkDeposit, 30000);
+    
+    // Cleanup on unmount
+    return () => clearInterval(interval);
   };
 
   const updateTransactionStatus = (status: EscrowTransaction['status'], txHash?: string) => {
@@ -165,19 +174,17 @@ export const useEscrowFlowManager = ({
     }
 
     try {
-      const result = await fireblocksService.releaseFunds(
+      const txid = await bitgoEscrow.releaseFunds(
         transactionId, 
-        transaction.receiverWalletAddress
+        transaction.receiverWalletAddress,
+        transaction.amount,
+        'BTC'
       );
       
-      if (result.success) {
-        toast({
-          title: "Crypto Released",
-          description: "Crypto has been released from escrow to the recipient",
-        });
-      } else {
-        throw new Error(result.error || 'Failed to release funds');
-      }
+      toast({
+        title: "Crypto Released",
+        description: `Crypto released from escrow. TX: ${txid}`,
+      });
     } catch (error) {
       console.error('Error releasing crypto:', error);
       toast({

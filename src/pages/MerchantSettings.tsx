@@ -49,7 +49,7 @@ const MerchantSettings = () => {
 
   const [settings, setSettings] = useState<MerchantSettings>({
     merchant_type: 'manual',
-    supported_coins: ['BTC', 'USDT'],
+    supported_coins: ['BTC', 'USDT', 'ETH', 'DOGE', 'ADA', 'BNB', 'XRP', 'SOL', 'MATIC', 'DOT'],
     supported_currencies: ['NGN', 'USD'],
     exchange_rates: {
       BTC: { buy_rate: null, sell_rate: null },
@@ -176,7 +176,7 @@ const MerchantSettings = () => {
     }
   };
 
-  const availableCoins = ['BTC', 'USDT'];
+  const availableCoins = ['BTC', 'USDT', 'ETH', 'DOGE', 'ADA', 'BNB', 'XRP', 'SOL', 'MATIC', 'DOT'];
   const availableCurrencies = ['NGN', 'USD'];
   const availablePaymentMethods = ['bank_transfer', 'paypal'];
   const availableCountries = ['Nigeria', 'Kenya', 'South Africa', 'Ghana', 'Uganda', 'Rwanda', 'Tanzania', 'Ethiopia'];
@@ -237,6 +237,15 @@ const MerchantSettings = () => {
           onConflict: 'user_id',
           ignoreDuplicates: false
         });
+        
+      // Update global profile with response time
+      await supabase
+        .from('profiles')
+        .update({ 
+          avg_response_time_minutes: settings.avg_response_time_minutes,
+          is_merchant: true
+        })
+        .eq('user_id', user.id);
 
       if (error) {
         if (error.code === '42P01') {
@@ -286,49 +295,18 @@ const MerchantSettings = () => {
       </div>
 
       <div className="p-4 space-y-6">
-        {/* Merchant Type */}
-        <Card className="p-4">
-          <div className="flex items-center mb-4">
-            <Shield size={20} className="text-blue-600 mr-2" />
-            <h2 className="text-lg font-semibold text-gray-900">Merchant Type</h2>
-          </div>
-          
-          <div className="grid grid-cols-2 gap-4">
-            <button
-              onClick={() => setSettings(prev => ({ ...prev, merchant_type: 'manual' }))}
-              className={`p-4 rounded-lg border-2 transition-all ${
-                settings.merchant_type === 'manual' 
-                  ? 'border-blue-500 bg-blue-50' 
-                  : 'border-gray-200 hover:border-gray-300'
-              }`}
-            >
-              <div className="text-center">
-                <h3 className="font-semibold">Manual Trading</h3>
-                <p className="text-sm text-gray-600">Review each trade manually</p>
-              </div>
-            </button>
 
-            <button
-              onClick={() => setSettings(prev => ({ ...prev, merchant_type: 'auto' }))}
-              className={`p-4 rounded-lg border-2 transition-all ${
-                settings.merchant_type === 'auto' 
-                  ? 'border-green-500 bg-green-50' 
-                  : 'border-gray-200 hover:border-gray-300'
-              }`}
-            >
-              <div className="text-center">
-                <h3 className="font-semibold">Auto Trading</h3>
-                <p className="text-sm text-gray-600">Accept trades automatically</p>
-              </div>
-            </button>
-          </div>
-        </Card>
 
         {/* Supported Coins */}
         <Card className="p-4">
           <div className="flex items-center mb-4">
             <Coins size={20} className="text-orange-600 mr-2" />
             <h2 className="text-lg font-semibold text-gray-900">Supported Cryptocurrencies</h2>
+          </div>
+          
+          <div className="bg-orange-50 p-3 rounded-lg mb-4">
+            <p className="text-sm text-orange-600 mb-1">⚠️ Only selected cryptocurrencies will show you to traders</p>
+            <p className="text-xs text-orange-500">If you only select BTC, you won't appear for USDT trades</p>
           </div>
           
           <div className="grid grid-cols-2 gap-3">
@@ -545,41 +523,39 @@ const MerchantSettings = () => {
         </Card>
 
         {/* Auto Trading Settings */}
-        {settings.merchant_type === 'auto' && (
-          <Card className="p-4">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Auto Trading Settings</h2>
-            
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label>Auto Accept Trades</Label>
-                  <p className="text-sm text-gray-600">Automatically accept new trade requests</p>
-                </div>
-                <Switch
-                  checked={settings.auto_accept_trades}
-                  onCheckedChange={(checked) => setSettings(prev => ({ 
-                    ...prev, 
-                    auto_accept_trades: checked 
-                  }))}
-                />
+        <Card className="p-4">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">Auto Trading Settings</h2>
+          
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <Label>Auto Accept Trades</Label>
+                <p className="text-sm text-gray-600">Automatically accept new trade requests</p>
               </div>
-
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label>Auto Release Escrow</Label>
-                  <p className="text-sm text-gray-600">Automatically release crypto when payment confirmed</p>
-                </div>
-                <Switch
-                  checked={settings.auto_release_escrow}
-                  onCheckedChange={(checked) => setSettings(prev => ({ 
-                    ...prev, 
-                    auto_release_escrow: checked 
-                  }))}
-                />
-              </div>
+              <Switch
+                checked={settings.auto_accept_trades}
+                onCheckedChange={(checked) => setSettings(prev => ({ 
+                  ...prev, 
+                  auto_accept_trades: checked 
+                }))}
+              />
             </div>
-          </Card>
-        )}
+
+            <div className="flex items-center justify-between">
+              <div>
+                <Label>Auto Release Escrow</Label>
+                <p className="text-sm text-gray-600">Automatically release crypto when payment confirmed</p>
+              </div>
+              <Switch
+                checked={settings.auto_release_escrow}
+                onCheckedChange={(checked) => setSettings(prev => ({ 
+                  ...prev, 
+                  auto_release_escrow: checked 
+                }))}
+              />
+            </div>
+          </div>
+        </Card>
 
         {/* Business Hours */}
         <Card className="p-4">

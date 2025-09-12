@@ -16,6 +16,7 @@ const Auth = () => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [fullName, setFullName] = useState('');
+  const [referralCode, setReferralCode] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -38,6 +39,15 @@ const Auth = () => {
       }
     };
     checkSession();
+    
+    // Check for referral code from localStorage or set default
+    const storedReferralCode = localStorage.getItem('referral_code');
+    if (storedReferralCode) {
+      setReferralCode(storedReferralCode);
+      setIsLogin(false); // Switch to signup mode
+    } else {
+      setReferralCode('centralexchange');
+    }
   }, [navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -133,20 +143,65 @@ const Auth = () => {
         return;
       }
 
-      if (data.user && !data.session) {
-        // Email confirmation required
-        setMessage('Please check your email for a confirmation link to complete your registration.');
-        toast({
-          title: "Account created!",
-          description: "Please check your email to confirm your account.",
-        });
-      } else if (data.user && data.session) {
-        // Auto-confirmed (if email confirmation is disabled)
-        toast({
-          title: "Account created!",
-          description: "Welcome to Central Exchange!",
-        });
-        navigate('/home');
+      if (data.user) {
+        // Create profile and handle referral
+        try {
+          // Create profile first
+          await supabase.from('profiles').insert({
+            user_id: data.user.id,
+            email: data.user.email,
+            display_name: fullName
+          });
+          
+          // Handle referral if provided
+          if (referralCode && referralCode !== 'centralexchange') {
+            console.log('Processing referral code:', referralCode);
+            
+            const { data: referrerProfiles } = await supabase
+              .from('profiles')
+              .select('user_id, email, display_name')
+              .not('user_id', 'eq', data.user.id);
+            
+            console.log('Found profiles:', referrerProfiles);
+            
+            const referrer = referrerProfiles?.find(profile => {
+              const emailPrefix = profile.email?.split('@')[0]?.toLowerCase();
+              const displayName = profile.display_name?.toLowerCase().replace(/[^a-z0-9]/g, '');
+              const code = referralCode.toLowerCase();
+              console.log('Checking:', { emailPrefix, displayName, code });
+              return emailPrefix === code || displayName === code;
+            });
+            
+            console.log('Found referrer:', referrer);
+            
+            if (referrer) {
+              const { error: updateError } = await supabase
+                .from('profiles')
+                .update({ referred_by: referrer.user_id })
+                .eq('user_id', data.user.id);
+              
+              console.log('Referral update result:', updateError);
+            }
+          }
+        } catch (error) {
+          console.log('Profile creation failed:', error);
+        }
+        
+        if (!data.session) {
+          // Email confirmation required
+          setMessage('Please check your email for a confirmation link to complete your registration.');
+          toast({
+            title: "Account created!",
+            description: "Please check your email to confirm your account.",
+          });
+        } else {
+          // Auto-confirmed
+          toast({
+            title: "Account created!",
+            description: "Welcome to Central Exchange!",
+          });
+          navigate('/home');
+        }
       }
     } catch (err) {
       setError('An unexpected error occurred');
@@ -382,6 +437,20 @@ const Auth = () => {
                 {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
             </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="referralCode" className="text-sm font-medium text-gray-700">
+              Referral Code (Optional)
+            </Label>
+            <Input
+              id="referralCode"
+              type="text"
+              value={referralCode}
+              onChange={(e) => setReferralCode(e.target.value)}
+              className="h-12 bg-white border border-gray-300 rounded-lg px-4"
+              placeholder="Enter referral code"
+            />
           </div>
 
           <Button

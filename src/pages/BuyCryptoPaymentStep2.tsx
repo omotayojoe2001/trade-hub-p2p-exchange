@@ -32,14 +32,16 @@ const BuyCryptoPaymentStep2 = () => {
       monitorTradeStatus();
       fetchMessages();
       
-      // Poll every 5 seconds to reduce blinking
+      // Poll every 10 seconds and only when needed
       const interval = setInterval(() => {
-        monitorTradeStatus();
-      }, 5000);
+        if (tradeStatus === 'searching' || tradeStatus === 'accepted') {
+          monitorTradeStatus();
+        }
+      }, 10000);
       
       return () => clearInterval(interval);
     }
-  }, [tradeId]);
+  }, [tradeId, tradeStatus]);
 
   useEffect(() => {
     if (countdown > 0) {
@@ -76,16 +78,8 @@ const BuyCryptoPaymentStep2 = () => {
         .eq('trade_request_id', tradeId)
         .maybeSingle();
 
-      console.log('Trade status check:', { 
-        tradeData: tradeData, 
-        tradeStatus: tradeStatus, 
-        tradeId: tradeId,
-        escrowStatus: tradeData?.escrow_status,
-        tradeExists: !!tradeData
-      });
-
-      // Move from accepted to escrow_funded when crypto is deposited
-      if (tradeData?.escrow_status === 'crypto_deposited' && (tradeStatus === 'accepted' || tradeStatus === 'searching')) {
+      // Only update if status actually changed to prevent blinking
+      if (tradeData?.escrow_status === 'crypto_deposited' && tradeStatus !== 'escrow_funded') {
         console.log('Escrow status is crypto_deposited, showing bank details');
         setTradeStatus('escrow_funded');
         

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, MoreVertical, Shield, Copy, CheckCircle, Clock, AlertTriangle, Upload, CreditCard } from 'lucide-react';
+import { ArrowLeft, MoreVertical, Shield, Copy, CheckCircle, Clock, AlertTriangle, Upload, CreditCard, X } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -39,6 +39,7 @@ const EscrowFlow = () => {
   const [receiptData, setReceiptData] = useState<any>(null);
   const [userRole, setUserRole] = useState<'merchant' | 'buyer'>('merchant'); // Determine user role
   const [systemConfirmedCrypto, setSystemConfirmedCrypto] = useState<boolean>(false);
+  const [showConfirmDialog, setShowConfirmDialog] = useState<boolean>(false);
   
   const { generateQRCode } = useCryptoPayments();
 
@@ -225,9 +226,94 @@ const EscrowFlow = () => {
     setCurrentStep(3); // Move to waiting for merchant confirmation
   };
 
-  const handleCashReceived = async () => {
-    await confirmCashReceived();
-    setCurrentStep(4); // Move to completion
+  const handleCashReceived = () => {
+    setShowConfirmDialog(true);
+  };
+  
+  const confirmRelease = async () => {
+    setShowConfirmDialog(false);
+    
+    try {
+      // Update trade status to completed in database
+      console.log('Looking for trade with transactionId:', transactionId);
+      
+      // Try multiple ways to find the trade
+      let trade = null;
+      let fetchError = null;
+      
+      // First try by trade ID directly
+      const { data: tradeById, error: error1 } = await supabase
+        .from('trades')
+        .select('*')
+        .eq('id', transactionId)
+        .maybeSingle();
+        
+      if (tradeById) {
+        trade = tradeById;
+      } else {
+        // Try by trade_request_id
+        const { data: tradeByRequestId, error: error2 } = await supabase
+          .from('trades')
+          .select('*')
+          .eq('trade_request_id', transactionId)
+          .maybeSingle();
+        trade = tradeByRequestId;
+        fetchError = error2;
+      }
+      
+      console.log('Found trade:', trade);
+        
+      if (fetchError) {
+        console.error('Error fetching trade:', fetchError);
+        throw fetchError;
+      }
+        
+      if (!trade) {
+        console.error('No trade found for transaction ID:', transactionId);
+        
+        // List all trades to debug
+        const { data: allTrades } = await supabase
+          .from('trades')
+          .select('id, trade_request_id, status')
+          .limit(10);
+        console.log('Available trades:', allTrades);
+        
+        throw new Error('Trade not found');
+      }
+      
+      console.log('Updating trade status to completed for trade:', trade.id);
+      
+      const { error: updateError } = await supabase
+        .from('trades')
+        .update({ 
+          status: 'completed',
+          transaction_hash: `bitgo-${Date.now()}`,
+          completed_at: new Date().toISOString()
+        })
+        .eq('id', trade.id);
+        
+      if (updateError) {
+        console.error('Error updating trade status:', updateError);
+        throw updateError;
+      }
+      
+      console.log('Trade status updated to completed successfully');
+      
+      toast({
+        title: "Trade Completed!",
+        description: "Crypto has been released from escrow.",
+      });
+      
+      await confirmCashReceived();
+      setCurrentStep(4); // Move to completion
+    } catch (error) {
+      console.error('Error confirming release:', error);
+      toast({
+        title: "Error",
+        description: "Failed to complete trade. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
 
   const generateReceiptData = () => {
@@ -261,6 +347,11 @@ const EscrowFlow = () => {
       const { data: paymentMethods, error } = await supabase
         .rpc('get_merchant_payment_method', { merchant_id: user.id });
         
+      if (error) {
+        console.error('RPC error:', error);
+        throw error;
+      }
+        
       const paymentMethod = paymentMethods?.[0];
       
       if (paymentMethod) {
@@ -281,6 +372,13 @@ const EscrowFlow = () => {
       }
     } catch (error) {
       console.error('Error fetching merchant bank details:', error);
+      // Set fallback details on error
+      setBankDetails({
+        accountName: user.user_metadata?.display_name || 'Merchant',
+        accountNumber: 'Error loading',
+        bankName: 'Please try again',
+        bankCode: '000'
+      });
     }
   };
 
@@ -298,7 +396,7 @@ const EscrowFlow = () => {
                 <p className="text-gray-600">
                   {userRole === 'merchant' 
                     ? `Send ${tradeAmount} ${tradeCurrency} to the secure escrow address below`
-                    : 'Merchant is depositing crypto into secure Fireblocks escrow'
+                    : 'Merchant is depositing crypto into secure BitGo escrow'
                   }
                 </p>
               </div>
@@ -320,7 +418,7 @@ const EscrowFlow = () => {
                   {/* Escrow Address */}
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-gray-700">
-                      Fireblocks Escrow Address:
+                      BitGo Escrow Address:
                     </label>
                     <div className="flex items-center space-x-2">
                       <div className="flex-1 p-3 bg-gray-100 rounded font-mono text-sm break-all">
@@ -409,7 +507,7 @@ const EscrowFlow = () => {
                     <p className="text-sm text-blue-800">What's happening:</p>
                     <ul className="text-sm text-blue-700 mt-1 space-y-1">
                       <li>• Merchant is sending {tradeAmount} {tradeCurrency} to escrow</li>
-                      <li>• Fireblocks will verify the deposit</li>
+                      <li>• BitGo will verify the deposit</li>
                       <li>• You'll get bank details once confirmed</li>
                     </ul>
                   </div>
@@ -435,14 +533,14 @@ const EscrowFlow = () => {
                         <li>• Send crypto only to the address above</li>
                         <li>• Once confirmed, buyer will receive bank details for cash payment</li>
                         <li>• Do not send from exchange accounts - use personal wallet</li>
-                        <li>• Transaction is monitored in real-time by Fireblocks</li>
+                        <li>• Transaction is monitored in real-time by BitGo</li>
                       </>
                     ) : (
                       <>
                         <li>• Crypto is being secured in institutional-grade escrow</li>
                         <li>• You will receive bank details once crypto is confirmed</li>
                         <li>• Your payment will be protected until trade completion</li>
-                        <li>• Fireblocks provides enterprise-level security</li>
+                        <li>• BitGo provides enterprise-level security</li>
                       </>
                     )}
                   </ul>
@@ -543,7 +641,7 @@ const EscrowFlow = () => {
                 <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
                   <p className="text-sm text-orange-800 font-medium">Waiting for System Confirmation</p>
                   <p className="text-sm text-orange-700 mt-1">
-                    Bank details will be shown once Fireblocks confirms crypto deposit.
+                    Bank details will be shown once BitGo confirms crypto deposit.
                   </p>
                 </div>
               )}
@@ -659,17 +757,31 @@ const EscrowFlow = () => {
 
             <div className="grid grid-cols-2 gap-3">
               <Button 
-                onClick={() => navigate('/my-trades')}
-                variant="outline"
-                className="w-full"
+                onClick={() => navigate('/trade-completed', {
+                  state: {
+                    tradeId: transactionId,
+                    date: new Date().toLocaleString(),
+                    amountSold: tradeAmount,
+                    coin: tradeCurrency,
+                    rate: `₦${Math.round(fiatAmount / tradeAmount).toLocaleString()}/${tradeCurrency}`,
+                    totalReceived: `₦${fiatAmount.toLocaleString()}`,
+                    platformFee: `₦${Math.round(fiatAmount * 0.005).toLocaleString()}`,
+                    netAmount: `₦${Math.round(fiatAmount * 0.995).toLocaleString()}`,
+                    merchant: bankDetails?.accountName || 'Merchant',
+                    bankAccount: `${bankDetails?.bankName} • • • • ${bankDetails?.accountNumber?.slice(-4)}`,
+                    status: 'completed'
+                  }
+                })}
+                className="w-full bg-green-600 hover:bg-green-700 text-white"
               >
-                View My Trades
+                View Receipt
               </Button>
               <Button 
                 onClick={() => navigate('/trade-requests')}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                variant="outline"
+                className="w-full"
               >
-                New Requests
+                New Trade
               </Button>
             </div>
           </div>
@@ -689,7 +801,7 @@ const EscrowFlow = () => {
             <ArrowLeft size={24} className="text-gray-700 mr-4" />
           </button>
           <div>
-            <h1 className="text-lg font-semibold text-gray-900">Fireblocks Escrow</h1>
+            <h1 className="text-lg font-semibold text-gray-900">BitGo Escrow</h1>
             <p className="text-sm text-gray-500">Secure crypto transaction</p>
           </div>
         </div>
@@ -726,6 +838,48 @@ const EscrowFlow = () => {
       <div className="p-4">
         {renderStepContent()}
       </div>
+      
+      {/* Confirmation Dialog */}
+      {showConfirmDialog && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md mx-4">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-red-600">⚠️ Confirm Escrow Release</h3>
+              <Button variant="ghost" size="sm" onClick={() => setShowConfirmDialog(false)}>
+                <X size={16} />
+              </Button>
+            </div>
+            <div className="space-y-4">
+              <p className="text-gray-700">
+                This will release <strong>{tradeAmount} {tradeCurrency}</strong> from escrow to the buyer's wallet.
+              </p>
+              <div className="bg-yellow-50 border border-yellow-200 rounded p-3">
+                <p className="text-sm text-yellow-800">
+                  <strong>Are you sure you have received the payment?</strong>
+                </p>
+                <p className="text-xs text-yellow-700 mt-1">
+                  This action cannot be undone once confirmed.
+                </p>
+              </div>
+              <div className="flex space-x-3">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setShowConfirmDialog(false)}
+                  className="flex-1"
+                >
+                  Cancel
+                </Button>
+                <Button 
+                  onClick={confirmRelease}
+                  className="flex-1 bg-red-600 hover:bg-red-700 text-white"
+                >
+                  Yes, Release Crypto
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

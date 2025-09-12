@@ -168,3 +168,17 @@ All colors MUST be HSL.
     @apply bg-background text-foreground font-sans antialiased;
   }
 }
+
+/* Global font size reduction */
+@layer utilities {
+  .text-xs { font-size: 0.625rem; }
+  .text-sm { font-size: 0.75rem; }
+  .text-base { font-size: 0.875rem; }
+  .text-lg { font-size: 1rem; }
+  .text-xl { font-size: 1.125rem; }
+  .text-2xl { font-size: 1.375rem; }
+  .text-3xl { font-size: 1.75rem; }
+  .text-4xl { font-size: 2.125rem; }
+  .text-5xl { font-size: 2.875rem; }
+  .text-6xl { font-size: 3.75rem; }
+}

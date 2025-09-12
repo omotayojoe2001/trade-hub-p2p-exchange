@@ -3,7 +3,6 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowLeft, Clock, CheckCircle, Upload, Wallet, QrCode, Copy } from 'lucide-react';
-import { FireblocksEscrowService } from '@/services/fireblocksEscrowService';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -22,7 +21,6 @@ const SellCryptoPaymentStep2 = () => {
   const [depositProof, setDepositProof] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [escrowCreated, setEscrowCreated] = useState(false);
-  const fireblocksService = new FireblocksEscrowService();
 
 
   useEffect(() => {
@@ -34,20 +32,17 @@ const SellCryptoPaymentStep2 = () => {
   const createEscrowVault = async () => {
     setLoading(true);
     try {
-      // Mock addresses for testing - replace with Fireblocks when ready
-      const mockAddresses = {
-        BTC: 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh',
-        ETH: '0x742d35Cc6634C0532925a3b8D4C9db96590b5c8e',
-        USDT: '0x742d35Cc6634C0532925a3b8D4C9db96590b5c8e'
-      };
+      const { bitgoEscrow } = await import('@/services/bitgoEscrow');
+      const tradeId = `trade_${Date.now()}`;
+      const address = await bitgoEscrow.generateEscrowAddress(tradeId, coinType as 'BTC' | 'ETH' | 'USDT');
       
-      setEscrowAddress(mockAddresses[coinType] || mockAddresses.BTC);
-      setVaultId(`vault_${Date.now()}`);
+      setEscrowAddress(address);
+      setVaultId(tradeId);
       setEscrowCreated(true);
       
       toast({
         title: "Escrow Ready",
-        description: "Secure escrow address generated. You can now deposit your crypto."
+        description: "Secure BitGo escrow address generated. You can now deposit your crypto."
       });
     } catch (error) {
       console.error('Error creating escrow:', error);
@@ -224,7 +219,7 @@ const SellCryptoPaymentStep2 = () => {
               <>
                 <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
                 <h2 className="text-xl font-semibold mb-2">Setting Up Escrow</h2>
-                <p className="text-muted-foreground">Creating secure Fireblocks vault...</p>
+                <p className="text-muted-foreground">Creating secure BitGo escrow...</p>
               </>
             ) : escrowCreated ? (
               <>
@@ -273,9 +268,11 @@ const SellCryptoPaymentStep2 = () => {
                   <div>
                     <p className="text-sm font-medium mb-2">QR Code</p>
                     <div className="flex justify-center">
-                      <div className="w-32 h-32 bg-white border rounded p-2">
-                        <QrCode className="w-full h-full text-muted-foreground" />
-                      </div>
+                      <img 
+                        src={`https://api.qrserver.com/v1/create-qr-code/?size=128x128&data=${escrowAddress}`}
+                        alt="QR Code"
+                        className="w-32 h-32 border rounded"
+                      />
                     </div>
                   </div>
 

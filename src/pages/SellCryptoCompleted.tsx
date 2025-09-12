@@ -90,25 +90,128 @@ const SellCryptoCompleted: React.FC = () => {
   };
 
   const generateReceipt = () => {
-    const receiptData = {
-      type: 'Crypto Sale',
-      trade_id: tradeId,
-      date: new Date().toLocaleDateString(),
-      time: new Date().toLocaleTimeString(),
-      seller: 'You',
-      buyer: merchantName,
-      crypto_sold: `${amount} ${cryptoType}`,
-      cash_received: nairaAmount,
-      escrow_used: 'Yes',
-      status: 'Completed'
-    };
+    const receiptHtml = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Sell Crypto Receipt - Central Exchange</title>
+        <style>
+            body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; padding: 30px; background: #f8f9fa; }
+            .receipt { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+            .header { text-align: center; border-bottom: 3px solid #2563eb; padding-bottom: 20px; margin-bottom: 30px; }
+            .header h1 { color: #2563eb; margin: 0; font-size: 28px; }
+            .header p { color: #6b7280; margin: 5px 0 0 0; }
+            .section { margin: 25px 0; }
+            .section-title { font-size: 18px; font-weight: bold; color: #374151; margin-bottom: 15px; padding-bottom: 8px; border-bottom: 2px solid #e5e7eb; }
+            .row { display: flex; justify-content: space-between; margin: 12px 0; padding: 10px 0; }
+            .row:not(:last-child) { border-bottom: 1px solid #f3f4f6; }
+            .label { font-weight: 600; color: #4b5563; }
+            .value { font-weight: 500; color: #111827; }
+            .success { color: #059669; font-weight: bold; font-size: 18px; }
+            .total-row { background: #f0f9ff; padding: 15px; border-radius: 8px; margin: 20px 0; }
+            .footer { text-align: center; margin-top: 40px; padding-top: 20px; border-top: 2px solid #e5e7eb; color: #6b7280; }
+            .status-badge { background: #dcfce7; color: #166534; padding: 6px 12px; border-radius: 20px; font-size: 14px; font-weight: 600; }
+        </style>
+    </head>
+    <body>
+        <div class="receipt">
+            <div class="header">
+                <h1>Sell Crypto Receipt</h1>
+                <p>Central Exchange P2P Platform</p>
+                <div style="margin-top: 15px;">
+                    <span class="status-badge">✓ COMPLETED</span>
+                </div>
+            </div>
+            
+            <div class="section">
+                <div class="section-title">Transaction Details</div>
+                <div class="row">
+                    <span class="label">Transaction ID:</span>
+                    <span class="value" style="font-family: monospace;">${tradeId}</span>
+                </div>
+                <div class="row">
+                    <span class="label">Date & Time:</span>
+                    <span class="value">${new Date().toLocaleString()}</span>
+                </div>
+                <div class="row">
+                    <span class="label">Trade Type:</span>
+                    <span class="value">Sell Crypto</span>
+                </div>
+            </div>
+            
+            <div class="section">
+                <div class="section-title">Trade Summary</div>
+                <div class="row">
+                    <span class="label">Amount Sold:</span>
+                    <span class="value">${amount} ${cryptoType}</span>
+                </div>
+                <div class="row">
+                    <span class="label">Exchange Rate:</span>
+                    <span class="value">₦${Math.round((netAmount || 0) / parseFloat(amount || '1')).toLocaleString()}/${cryptoType}</span>
+                </div>
+                <div class="row">
+                    <span class="label">Gross Amount:</span>
+                    <span class="value">${nairaAmount}</span>
+                </div>
+                <div class="row">
+                    <span class="label">Platform Fee (0.5%):</span>
+                    <span class="value">₦${Math.round((netAmount || 0) * 0.005).toLocaleString()}</span>
+                </div>
+                <div class="total-row">
+                    <div class="row" style="margin: 0; padding: 0; border: none;">
+                        <span class="label" style="font-size: 18px;">Net Amount Received:</span>
+                        <span class="success">${nairaAmount}</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="section">
+                <div class="section-title">Merchant Information</div>
+                <div class="row">
+                    <span class="label">Merchant:</span>
+                    <span class="value">${merchantName}</span>
+                </div>
+                <div class="row">
+                    <span class="label">Payment Method:</span>
+                    <span class="value">Bank Transfer</span>
+                </div>
+            </div>
+            
+            <div class="section">
+                <div class="section-title">Security Information</div>
+                <div class="row">
+                    <span class="label">Escrow Status:</span>
+                    <span class="value" style="color: #059669;">✓ Funds Released</span>
+                </div>
+                <div class="row">
+                    <span class="label">Payment Verified:</span>
+                    <span class="value" style="color: #059669;">✓ Confirmed</span>
+                </div>
+            </div>
+            
+            <div class="footer">
+                <p><strong>Thank you for using Central Exchange!</strong></p>
+                <p>This receipt serves as proof of your completed transaction.</p>
+                <p style="font-size: 12px; margin-top: 20px;">Generated on ${new Date().toLocaleString()}</p>
+            </div>
+        </div>
+    </body>
+    </html>
+    `;
 
-    // Store receipt in localStorage for download
-    localStorage.setItem('sell_crypto_receipt', JSON.stringify(receiptData));
-    
+    const blob = new Blob([receiptHtml], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `sell-receipt-${tradeId}.html`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
     toast({
-      title: "Receipt Generated",
-      description: "Trade receipt has been saved to your device.",
+      title: "Receipt Downloaded",
+      description: "Professional receipt saved as HTML file.",
     });
   };
 

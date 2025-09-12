@@ -148,6 +148,7 @@ import { ThankYouPage } from "./pages/ThankYouPage";
 import CryptoNews from "./pages/CryptoNews";
 import NewsDetail from "./pages/NewsDetail";
 import UploadPaymentProof from "./pages/UploadPaymentProof";
+import ReferralLanding from "./pages/ReferralLanding";
 import React from 'react';
 
 const queryClient = new QueryClient();
@@ -406,6 +407,9 @@ const AppContent = () => {
           </VendorAuthGuard>
         } />
         {/* Removed demo/test routes - not needed */}
+            {/* Referral Route */}
+            <Route path="/refer/:userId" element={<ReferralLanding />} />
+            
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

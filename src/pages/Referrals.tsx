@@ -46,7 +46,26 @@ const Referrals = () => {
     return 'https://tradehub.com'; // fallback
   };
 
-  const referralLink = user ? `${getWebsiteUrl()}/refer/${user.id}` : "";
+  // Generate name-based referral code from user's display name or email
+  const generateUserReferralCode = () => {
+    if (!user) return '';
+    
+    // Try to get display name first, then email
+    const displayName = user.user_metadata?.display_name || user.user_metadata?.full_name;
+    if (displayName) {
+      return displayName.toLowerCase().replace(/[^a-z0-9]/g, '');
+    }
+    
+    // Use email without @ and domain
+    if (user.email) {
+      return user.email.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '');
+    }
+    
+    return 'user';
+  };
+  
+  const referralCode = generateUserReferralCode();
+  const referralLink = user ? `${getWebsiteUrl()}/refer/${referralCode}` : "";
 
   // Load referral data from Supabase
   useEffect(() => {
@@ -186,11 +205,11 @@ const Referrals = () => {
           <div className="space-y-2 mb-4">
             <div className="flex justify-between">
               <span className="text-sm text-gray-500">Total Earnings</span>
-              <span className="text-xl font-bold text-gray-900">₦184,300</span>
+              <span className="text-xl font-bold text-gray-900">₦{referralStats.totalEarnings.toLocaleString()}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-sm text-gray-500">This Month</span>
-              <span className="text-lg font-semibold text-green-600">₦22,100</span>
+              <span className="text-sm text-gray-500">Pending Earnings</span>
+              <span className="text-lg font-semibold text-green-600">₦{referralStats.pendingEarnings.toLocaleString()}</span>
             </div>
           </div>
 

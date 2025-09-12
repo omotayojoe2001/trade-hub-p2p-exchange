@@ -123,7 +123,7 @@ const BuyCryptoMatch = () => {
           </CardHeader>
           <CardContent>
             <p className="text-sm text-muted-foreground mb-4">
-              Merchant has accepted your trade request. Crypto will be secured in Fireblocks escrow.
+              Merchant has accepted your trade request. Crypto will be secured in BitGo escrow.
             </p>
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
               <p className="text-sm text-blue-800 font-medium">Next Steps:</p>

@@ -17,6 +17,7 @@ const BuyCryptoPaymentStep3 = () => {
   
   const [tradeStatus, setTradeStatus] = useState('confirming_payment');
   const [txHash, setTxHash] = useState('');
+  const [tradeData, setTradeData] = useState(null);
 
   useEffect(() => {
     if (tradeId) {
@@ -26,40 +27,56 @@ const BuyCryptoPaymentStep3 = () => {
 
   const monitorTradeCompletion = async () => {
     try {
-      const { data: trade, error } = await supabase
+      console.log('Monitoring trade completion for tradeId:', tradeId);
+      
+      // Try multiple ways to find the trade
+      let trade = null;
+      
+      // First try by trade ID directly
+      const { data: tradeById } = await supabase
         .from('trades')
         .select('*')
         .eq('id', tradeId)
-        .single();
+        .maybeSingle();
+        
+      if (tradeById) {
+        trade = tradeById;
+      } else {
+        // Try by trade_request_id
+        const { data: tradeByRequestId } = await supabase
+          .from('trades')
+          .select('*')
+          .eq('trade_request_id', tradeId)
+          .maybeSingle();
+        trade = tradeByRequestId;
+      }
+      
+      console.log('Found trade:', trade);
 
-      if (error) throw error;
-
-      if (trade.status === 'payment_sent') {
-        setTradeStatus('confirming_payment');
-        // Simulate merchant confirming payment
-        setTimeout(() => {
-          setTradeStatus('releasing_crypto');
-          // Simulate crypto release
-          setTimeout(() => {
-            setTradeStatus('completed');
-            setTxHash('0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef');
-            
-            // Update trade status in database
-            supabase
-              .from('trades')
-              .update({ 
-                status: 'completed',
-                transaction_hash: '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef',
-                completed_at: new Date().toISOString()
-              })
-              .eq('id', tradeId);
-          }, 3000);
-        }, 5000);
+      if (trade) {
+        setTradeData(trade); // Store full trade data
+        if (trade.status === 'payment_sent') {
+          setTradeStatus('confirming_payment');
+        } else if (trade.status === 'completed') {
+          console.log('Trade completed, updating UI');
+          setTradeStatus('completed');
+          setTxHash(trade.transaction_hash || 'completed');
+        }
+      } else {
+        console.log('No trade found for ID:', tradeId);
       }
     } catch (error) {
       console.error('Error monitoring trade:', error);
     }
   };
+  
+  // Poll for status updates every 5 seconds
+  useEffect(() => {
+    if (tradeId && tradeStatus === 'confirming_payment') {
+      const interval = setInterval(monitorTradeCompletion, 5000);
+      return () => clearInterval(interval);
+    }
+  }, [tradeId, tradeStatus, monitorTradeCompletion]);
 
   const getStatusDisplay = () => {
     switch (tradeStatus) {
@@ -95,37 +112,98 @@ const BuyCryptoPaymentStep3 = () => {
   };
 
   const generateReceipt = () => {
-    const receiptData = {
-      tradeId,
-      coinType,
-      amount: cryptoAmount,
-      walletAddress,
-      txHash,
-      completedAt: new Date().toISOString(),
-      status: 'completed'
-    };
+    if (!tradeData) {
+      toast({
+        title: "Error",
+        description: "Trade data not available for receipt",
+        variant: "destructive"
+      });
+      return;
+    }
     
-    const receiptText = `
-CENTRAL EXCHANGE RECEIPT
-========================
-Trade ID: ${tradeId}
-Cryptocurrency: ${coinType}
-Amount: ${cryptoAmount} ${coinType}
-Wallet Address: ${walletAddress}
-Transaction Hash: ${txHash}
-Completed: ${new Date().toLocaleString()}
-Status: Completed
-========================
-Thank you for using Central Exchange!
+    const receiptHtml = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Trade Receipt</title>
+        <style>
+            body { font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; }
+            .header { text-align: center; border-bottom: 2px solid #333; padding-bottom: 20px; margin-bottom: 20px; }
+            .row { display: flex; justify-content: space-between; margin: 10px 0; padding: 8px 0; border-bottom: 1px solid #eee; }
+            .label { font-weight: bold; }
+            .success { color: #22c55e; font-weight: bold; }
+        </style>
+    </head>
+    <body>
+        <div class="header">
+            <h1>Trade Receipt</h1>
+            <p>Central Exchange P2P Platform</p>
+        </div>
+        
+        <div class="row">
+            <span class="label">Trade ID:</span>
+            <span>${tradeData.id}</span>
+        </div>
+        
+        <div class="row">
+            <span class="label">Amount:</span>
+            <span>${tradeData.amount_crypto} ${tradeData.crypto_type}</span>
+        </div>
+        
+        <div class="row">
+            <span class="label">Rate:</span>
+            <span>₦${(tradeData.naira_amount / tradeData.amount_crypto).toLocaleString()}</span>
+        </div>
+        
+        <div class="row">
+            <span class="label">Total Paid:</span>
+            <span>₦${tradeData.naira_amount?.toLocaleString()}</span>
+        </div>
+        
+        <div class="row">
+            <span class="label">Platform Fee:</span>
+            <span>₦${tradeData.platform_fee_amount || 0}</span>
+        </div>
+        
+        <div class="row">
+            <span class="label">Wallet Address:</span>
+            <span style="font-family: monospace; font-size: 12px;">${walletAddress || 'N/A'}</span>
+        </div>
+        
+        <div class="row">
+            <span class="label">Transaction Hash:</span>
+            <span style="font-family: monospace; font-size: 12px;">${txHash || 'Pending'}</span>
+        </div>
+        
+        <div class="row">
+            <span class="label">Date:</span>
+            <span>${new Date(tradeData.created_at).toLocaleString()}</span>
+        </div>
+        
+        <div class="row">
+            <span class="label">Status:</span>
+            <span class="success">Completed</span>
+        </div>
+        
+        <div style="text-align: center; margin-top: 30px; color: #666;">
+            <p>Thank you for using Central Exchange!</p>
+        </div>
+    </body>
+    </html>
     `;
     
-    const blob = new Blob([receiptText], { type: 'text/plain' });
+    const blob = new Blob([receiptHtml], { type: 'text/html' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `receipt-${tradeId}.txt`;
+    link.download = `receipt-${tradeData.id}.html`;
     link.click();
     URL.revokeObjectURL(url);
+    
+    toast({
+      title: "Receipt Downloaded",
+      description: "Receipt saved as HTML file"
+    });
   };
 
   const statusInfo = getStatusDisplay();
@@ -151,8 +229,20 @@ Thank you for using Central Exchange!
                 <div className="p-4 bg-green-50 rounded-lg border border-green-200">
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between">
+                      <span className="text-muted-foreground">Trade ID:</span>
+                      <span className="font-mono text-xs">{tradeData?.id?.slice(0, 8)}...</span>
+                    </div>
+                    <div className="flex justify-between">
                       <span className="text-muted-foreground">Amount:</span>
-                      <span className="font-semibold">{cryptoAmount} {coinType}</span>
+                      <span className="font-semibold">{tradeData?.amount_crypto} {tradeData?.crypto_type}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Total Paid:</span>
+                      <span className="font-semibold">₦{tradeData?.naira_amount?.toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Rate:</span>
+                      <span className="font-semibold">₦{tradeData ? (tradeData.naira_amount / tradeData.amount_crypto).toLocaleString() : 'N/A'}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Wallet:</span>
@@ -176,10 +266,24 @@ Thank you for using Central Exchange!
                   </Button>
                   
                   <Button
-                    onClick={() => navigate('/crypto-wallet')}
+                    onClick={() => navigate('/trade-completed', {
+                      state: {
+                        tradeId: tradeData?.id || tradeId,
+                        date: tradeData?.created_at ? new Date(tradeData.created_at).toLocaleString() : new Date().toLocaleString(),
+                        amountSold: `${tradeData?.amount_crypto || cryptoAmount}`,
+                        coin: tradeData?.crypto_type || coinType,
+                        rate: tradeData ? `₦${Math.round(tradeData.naira_amount / tradeData.amount_crypto).toLocaleString()}/${tradeData.crypto_type}` : 'N/A',
+                        totalReceived: tradeData ? `₦${tradeData.naira_amount?.toLocaleString()}` : 'N/A',
+                        platformFee: tradeData ? `₦${(tradeData.platform_fee_amount || Math.round(tradeData.naira_amount * 0.005)).toLocaleString()}` : 'N/A',
+                        netAmount: tradeData ? `₦${Math.round((tradeData.naira_amount || 0) * 0.995).toLocaleString()}` : 'N/A',
+                        merchant: 'Platform Purchase',
+                        bankAccount: 'Direct Purchase',
+                        status: 'completed'
+                      }
+                    })}
                     className="w-full"
                   >
-                    View Wallet
+                    View Receipt
                   </Button>
                   
                   <Button
