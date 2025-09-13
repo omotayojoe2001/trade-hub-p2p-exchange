@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useRef } from 'react';
+import React, { useMemo, useState, useRef, useEffect } from 'react';
 import { ArrowLeft, Crown, Wallet, QrCode, Copy, CheckCircle, Bitcoin, Gem, Coins, Upload, FileText, Image } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -7,31 +7,19 @@ import PremiumBottomNavigation from '@/components/premium/PremiumBottomNavigatio
 import QRCodeLib from 'qrcode';
 import { useToast } from '@/hooks/use-toast';
 import { usePremium } from '@/hooks/usePremium';
+import { PREMIUM_CONFIG } from '@/constants/premium';
+import { cryptoService } from '@/services/cryptoService';
 
 const COINS = [
   { id: 'bitcoin', symbol: 'BTC', name: 'Bitcoin', icon: Bitcoin },
   { id: 'ethereum', symbol: 'ETH', name: 'Ethereum', icon: Gem },
-  { id: 'tether', symbol: 'USDT', name: 'Tether (USDT)', icon: Coins },
 ] as const;
 
 type CoinId = typeof COINS[number]['id'];
 
-const WALLET_MAP: Record<CoinId, { address: string; network: string[] }> = {
-  bitcoin: {
-    address: 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh',
-    network: ['Bitcoin (BTC)'],
-  },
-  ethereum: {
-    address: '0x3c6B2c3Ff6f9D4C2B0b7a82AeF5E21b2F7b12345',
-    network: ['Ethereum (ERC20)'],
-  },
-  tether: {
-    address: 'TR29C9t6NQkqjU9h3Zg5q3XyQjv9D6dVx1',
-    network: ['TRON (TRC20)', 'Ethereum (ERC20)'],
-  },
-};
+// Real BitGo addresses will be generated dynamically
 
-const PREMIUM_PRICE_USD = 99.99;
+
 
 const PremiumPayment: React.FC = () => {
   const navigate = useNavigate();
@@ -41,25 +29,60 @@ const PremiumPayment: React.FC = () => {
 
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [selectedCoin, setSelectedCoin] = useState<CoinId>('bitcoin');
-  const [selectedNetwork, setSelectedNetwork] = useState<string>(WALLET_MAP.bitcoin.network[0]);
+  const [walletAddress, setWalletAddress] = useState<string>('');
   const [qrDataUrl, setQrDataUrl] = useState<string>('');
   const [copied, setCopied] = useState(false);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [proofUploaded, setProofUploaded] = useState(false);
+  const [loadingAddress, setLoadingAddress] = useState(false);
 
-  const usdPrices: Record<CoinId, number> = {
-    bitcoin: 65000,
-    ethereum: 3400,
-    tether: 1,
-  };
+  const [usdPrices, setUsdPrices] = useState<Record<CoinId, number>>(PREMIUM_CONFIG.CRYPTO_PRICES);
 
   const amountInCoin = useMemo(() => {
     const price = usdPrices[selectedCoin] || 1;
-    return (PREMIUM_PRICE_USD / price).toFixed(8);
+    return (PREMIUM_CONFIG.PRICE_USD / price).toFixed(8);
   }, [selectedCoin]);
 
-  const walletInfo = WALLET_MAP[selectedCoin];
+  // Generate BitGo address when coin is selected
+  useEffect(() => {
+    loadCryptoPrices();
+  }, []);
+
+  useEffect(() => {
+    if (selectedCoin) {
+      generateBitGoAddress();
+    }
+  }, [selectedCoin]);
+
+  const loadCryptoPrices = async () => {
+    try {
+      const prices = await cryptoService.getCryptoPrices();
+      setUsdPrices(prices);
+    } catch (error) {
+      console.error('Error loading crypto prices:', error);
+    }
+  };
+
+  const generateBitGoAddress = async () => {
+    setLoadingAddress(true);
+    try {
+      const { bitgoEscrow } = await import('@/services/bitgoEscrow');
+      const premiumId = `premium_${Date.now()}`;
+      const coinType = selectedCoin === 'bitcoin' ? 'BTC' : 'ETH';
+      const address = await bitgoEscrow.generateEscrowAddress(premiumId, coinType as 'BTC' | 'ETH');
+      setWalletAddress(address);
+    } catch (error) {
+      console.error('Error generating BitGo address:', error);
+      toast({
+        title: "Address Generation Failed",
+        description: "Failed to generate wallet address. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setLoadingAddress(false);
+    }
+  };
 
   const generateQR = async (text: string) => {
     try {
@@ -82,17 +105,17 @@ const PremiumPayment: React.FC = () => {
     const file = e.target.files?.[0];
     if (file) {
       // Validate file size (5MB max)
-      if (file.size > 5 * 1024 * 1024) {
+      if (file.size > PREMIUM_CONFIG.MAX_FILE_SIZE_MB * 1024 * 1024) {
         toast({
           title: "File too large",
-          description: "Please select a file smaller than 5MB",
+          description: `Please select a file smaller than ${PREMIUM_CONFIG.MAX_FILE_SIZE_MB}MB`,
           variant: "destructive"
         });
         return;
       }
 
       // Validate file type
-      const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'application/pdf'];
+      const allowedTypes = PREMIUM_CONFIG.ALLOWED_FILE_TYPES;
       if (!allowedTypes.includes(file.type)) {
         toast({
           title: "Invalid file type",
@@ -160,19 +183,16 @@ const PremiumPayment: React.FC = () => {
               </div>
               <Crown size={28} className="text-yellow-300" />
             </div>
-            <div className="text-3xl font-bold">${PREMIUM_PRICE_USD}</div>
+            <div className="text-3xl font-bold">${PREMIUM_CONFIG.PRICE_USD}</div>
           </Card>
 
           <Card className="p-4">
             <h3 className="font-semibold text-gray-900 mb-3">Select Coin</h3>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 gap-3">
               {COINS.map((coin) => (
                 <button
                   key={coin.id}
-                  onClick={() => {
-                    setSelectedCoin(coin.id);
-                    setSelectedNetwork(WALLET_MAP[coin.id].network[0]);
-                  }}
+                  onClick={() => setSelectedCoin(coin.id)}
                   className={`border rounded-lg p-3 text-center ${
                     selectedCoin === coin.id ? 'border-purple-500 bg-purple-50' : 'border-gray-200'
                   }`}
@@ -208,15 +228,7 @@ const PremiumPayment: React.FC = () => {
             <div className="space-y-3">
               <div className="flex justify-between text-sm">
                 <span className="text-gray-600">Network</span>
-                <div className="flex space-x-2">
-                  {walletInfo.network.map(n => (
-                    <button
-                      key={n}
-                      onClick={() => setSelectedNetwork(n)}
-                      className={`px-2 py-1 rounded border text-xs ${selectedNetwork===n ? 'border-purple-500 text-purple-600' : 'border-gray-200 text-gray-600'}`}
-                    >{n}</button>
-                  ))}
-                </div>
+                <span className="font-semibold">{selectedCoin === 'bitcoin' ? 'Bitcoin Testnet' : 'Ethereum Testnet'}</span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-gray-600">Amount</span>
@@ -225,18 +237,31 @@ const PremiumPayment: React.FC = () => {
               <div className="pt-2 border-t text-sm">
                 <div className="flex items-center justify-between">
                   <span className="text-gray-600">Wallet Address</span>
-                  <button onClick={() => handleCopy(walletInfo.address)} className="text-blue-600 hover:underline flex items-center text-xs">
-                    <Copy size={14} className="mr-1" /> {copied ? 'Copied' : 'Copy'}
-                  </button>
+                  {walletAddress && (
+                    <button onClick={() => handleCopy(walletAddress)} className="text-blue-600 hover:underline flex items-center text-xs">
+                      <Copy size={14} className="mr-1" /> {copied ? 'Copied' : 'Copy'}
+                    </button>
+                  )}
                 </div>
-                <p className="font-mono break-all text-gray-900 mt-1">{walletInfo.address}</p>
+                {loadingAddress ? (
+                  <div className="flex items-center justify-center py-4">
+                    <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mr-2"></div>
+                    <span className="text-gray-600">Generating address...</span>
+                  </div>
+                ) : walletAddress ? (
+                  <p className="font-mono break-all text-gray-900 mt-1">{walletAddress}</p>
+                ) : (
+                  <p className="text-red-600 mt-1">Failed to generate address</p>
+                )}
               </div>
-              <div className="flex flex-col items-center pt-2">
-                <button onClick={() => generateQR(walletInfo.address)} className="text-sm text-blue-600 hover:underline flex items-center">
-                  <QrCode size={16} className="mr-1" /> Generate QR
-                </button>
-                {qrDataUrl && <img src={qrDataUrl} alt="Wallet QR" className="w-40 h-40 mt-2" loading="lazy" />}
-              </div>
+              {walletAddress && (
+                <div className="flex flex-col items-center pt-2">
+                  <button onClick={() => generateQR(walletAddress)} className="text-sm text-blue-600 hover:underline flex items-center">
+                    <QrCode size={16} className="mr-1" /> Generate QR
+                  </button>
+                  {qrDataUrl && <img src={qrDataUrl} alt="Wallet QR" className="w-40 h-40 mt-2" loading="lazy" />}
+                </div>
+              )}
             </div>
           </Card>
 
@@ -246,7 +271,7 @@ const PremiumPayment: React.FC = () => {
               <div>
                 <h4 className="font-medium text-gray-900">Instructions</h4>
                 <ul className="list-disc pl-5 text-sm text-gray-600 mt-2 space-y-1">
-                  <li>Send exactly {amountInCoin} {COINS.find(c=>c.id===selectedCoin)?.symbol} on {selectedNetwork}.</li>
+                  <li>Send exactly {amountInCoin} {COINS.find(c=>c.id===selectedCoin)?.symbol} to the address above.</li>
                   <li>Include network fees on top; do not underpay.</li>
                   <li>After sending, tap "I have paid" to continue.</li>
                 </ul>
@@ -271,7 +296,7 @@ const PremiumPayment: React.FC = () => {
               >
                 <Upload size={24} className="text-gray-400 mx-auto mb-2" />
                 <p className="text-gray-600 mb-1">Tap to upload payment proof</p>
-                <p className="text-sm text-gray-500">PNG, JPG or PDF (Max 5MB)</p>
+                <p className="text-sm text-gray-500">PNG, JPG or PDF (Max {PREMIUM_CONFIG.MAX_FILE_SIZE_MB}MB)</p>
                 <input
                   ref={fileInputRef}
                   type="file"
@@ -344,7 +369,13 @@ const PremiumPayment: React.FC = () => {
             <div className="mt-4 space-y-2">
               <Button
                 className="w-full bg-green-600 hover:bg-green-700 text-white"
-                onClick={goSuccess}
+                onClick={() => {
+                  toast({ 
+                    title: "Payment Submitted", 
+                    description: "We're monitoring for your payment. Premium access will be granted automatically once confirmed." 
+                  });
+                  navigate('/premium-pending');
+                }}
                 disabled={!proofUploaded}
               >
                 {proofUploaded ? "Complete Payment" : "Upload proof to continue"}
@@ -371,7 +402,8 @@ const PremiumPayment: React.FC = () => {
         </div>
       )}
 
-      <PremiumBottomNavigation />
+      {/* Only show premium navigation after payment is completed */}
+      {step === 3 && <PremiumBottomNavigation />}
     </div>
   );
 };

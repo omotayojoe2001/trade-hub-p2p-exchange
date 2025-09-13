@@ -9,6 +9,8 @@ import { supabase } from '@/integrations/supabase/client';
 import PremiumBottomNavigation from '@/components/premium/PremiumBottomNavigation';
 import { useUserSetup } from '@/hooks/useUserSetup';
 import { Switch } from "@headlessui/react";
+import { PREMIUM_CONFIG } from '@/constants/premium';
+import { cryptoService, CoinPrice } from '@/services/cryptoService';
 
 const PremiumDashboard = () => {
   const navigate = useNavigate();
@@ -16,10 +18,12 @@ const PremiumDashboard = () => {
   const { isSetupComplete, isSettingUp } = useUserSetup();
   const [creditsBalance, setCreditsBalance] = useState(0);
   const [profile, setProfile] = useState<any>(null);
+  const [trendingCoins, setTrendingCoins] = useState<CoinPrice[]>([]);
 
   useEffect(() => {
     loadCreditsBalance();
     loadProfile();
+    loadTrendingCoins();
   }, [user]);
 
   const loadCreditsBalance = async () => {
@@ -83,40 +87,14 @@ const PremiumDashboard = () => {
     premiumSince: 'Recently'
   });
 
-  const trendingCoins = [
-    {
-      name: 'Bitcoin',
-      symbol: 'BTC',
-      price: '$97,234.50',
-      change: '+2.45%',
-      changeType: 'positive',
-      icon: '₿'
-    },
-    {
-      name: 'Ethereum',
-      symbol: 'ETH',
-      price: '$3,456.78',
-      change: '+1.23%',
-      changeType: 'positive',
-      icon: 'Ξ'
-    },
-    {
-      name: 'USDT',
-      symbol: 'USDT',
-      price: '$1.00',
-      change: '+0.01%',
-      changeType: 'positive',
-      icon: '₮'
-    },
-    {
-      name: 'BNB',
-      symbol: 'BNB',
-      price: '$692.45',
-      change: '-0.87%',
-      changeType: 'negative',
-      icon: 'B'
+  const loadTrendingCoins = async () => {
+    try {
+      const coins = await cryptoService.getTrendingCoins();
+      setTrendingCoins(coins);
+    } catch (error) {
+      console.error('Error loading trending coins:', error);
     }
-  ];
+  };
 
   const coreFeatures = [
     {
@@ -151,20 +129,12 @@ const PremiumDashboard = () => {
 
   const premiumQuickActions = [
     {
-      icon: <Truck size={20} className="text-yellow-600" />,
-      title: 'Cash Delivery',
-      description: 'Get cash delivered to your doorstep',
-      action: () => navigate('/premium-trade'),
-      premium: true
-    },
-    {
       icon: <RefreshCw size={20} className="text-green-600" />,
       title: 'Send Naira, Get USD',
       description: 'Send Naira and receive USD instantly',
       action: () => navigate('/send-naira-get-usd'),
       premium: true
     },
-
     {
       icon: <DollarSign size={20} className="text-blue-600" />,
       title: 'Sell for Cash',
@@ -300,33 +270,7 @@ const PremiumDashboard = () => {
           </div>
         </Card>
 
-        {/* Core Features */}
-        <Card className="p-4 mb-6 bg-white border-yellow-200">
-          <h3 className="font-semibold text-gray-900 mb-4 flex items-center">
-            <Star size={20} className="text-gray-600 mr-2" />
-            Core Features (Premium Enhanced)
-          </h3>
-          <div className="grid grid-cols-2 gap-3">
-            {coreFeatures.map((feature, index) => (
-              <button
-                key={index}
-                onClick={feature.action}
-                className="p-3 bg-gray-50 rounded-lg border border-gray-200 hover:border-yellow-300 hover:bg-yellow-50 transition-colors text-left"
-              >
-                <div className="flex items-center mb-2">
-                  {feature.icon}
-                  <Crown size={12} className="text-yellow-500 ml-auto" />
-                </div>
-                <h4 className="font-medium text-sm text-gray-900 mb-1">
-                  {feature.title}
-                </h4>
-                <p className="text-xs text-gray-600">
-                  {feature.description}
-                </p>
-              </button>
-            ))}
-          </div>
-        </Card>
+
 
         {/* Premium Quick Actions */}
         <Card className="p-4 mb-6 bg-gradient-to-r from-purple-50 to-indigo-50 border-purple-200">
@@ -370,21 +314,21 @@ const PremiumDashboard = () => {
           </div>
           <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
             <div className="text-center mb-4">
-              <div className="text-2xl font-bold text-gray-900 mb-1">2%</div>
+              <div className="text-2xl font-bold text-gray-900 mb-1">{PREMIUM_CONFIG.REFERRAL_PERCENTAGE}%</div>
               <div className="text-sm text-gray-600">Lifetime earnings from every successful trade</div>
               <div className="text-xs text-gray-500 mt-1">Your referrals make</div>
             </div>
             <div className="grid grid-cols-3 gap-4 mb-4 text-center">
               <div>
-                <div className="text-lg font-bold text-gray-900">12</div>
+                <div className="text-lg font-bold text-gray-900">{profile?.referrals_count || 0}</div>
                 <div className="text-xs text-gray-500">Referred</div>
               </div>
               <div>
-                <div className="text-lg font-bold text-gray-900">8</div>
+                <div className="text-lg font-bold text-gray-900">{profile?.active_referrals || 0}</div>
                 <div className="text-xs text-gray-500">Active</div>
               </div>
               <div>
-                <div className="text-lg font-bold text-gray-900">₦127,500</div>
+                <div className="text-lg font-bold text-gray-900">₦{(profile?.referral_earnings || 0).toLocaleString()}</div>
                 <div className="text-xs text-gray-500">Lifetime Earned</div>
               </div>
             </div>
@@ -439,7 +383,12 @@ const PremiumDashboard = () => {
             </div>
             <div className="flex justify-between">
               <span className="text-gray-600">Next billing:</span>
-              <span className="font-medium">Dec 15, 2025</span>
+              <span className="font-medium">
+                {profile?.premium_expires_at 
+                  ? new Date(profile.premium_expires_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+                  : 'N/A'
+                }
+              </span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-600">Status:</span>

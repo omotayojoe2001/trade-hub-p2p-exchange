@@ -76,6 +76,7 @@ import BuyCryptoMerchantSelection from "./pages/BuyCryptoMerchantSelection";
 // Removed BuyCryptoSearching - not needed
 import MerchantDashboard from "./pages/MerchantDashboard";
 import PremiumPayment from "./pages/PremiumPayment";
+import PremiumPending from "./pages/PremiumPending";
 import PremiumDashboard from "./pages/PremiumDashboard";
 // Removed NotificationsDemo - not needed
 import PremiumSell from "./pages/PremiumSell";
@@ -313,6 +314,7 @@ const AppContent = () => {
             <Route path="/buy-crypto-flow" element={<BuyCryptoFlow />} />
             <Route path="/merchant-dashboard" element={<MerchantDashboard />} />
             <Route path="/premium-payment" element={<PremiumPayment />} />
+            <Route path="/premium-pending" element={<PremiumPending />} />
             <Route path="/premium-dashboard" element={<PremiumDashboard />} />
             <Route path="/premium/sell" element={<PremiumSell />} />
             <Route path="/premium/cash-delivery" element={<CashDeliveryDetails />} />

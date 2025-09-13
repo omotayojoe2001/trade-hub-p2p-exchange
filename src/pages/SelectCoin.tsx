@@ -11,7 +11,7 @@ const SelectCoin = () => {
   const [selectedCoin, setSelectedCoin] = useState<string | null>(null);
   const navigate = useNavigate();
   const location = useLocation();
-  const { mode = 'sell' } = location.state || {}; // Default to sell mode
+  const { mode = 'sell', isPremium = false } = location.state || {}; // Default to sell mode
 
   const coins = [
     {
@@ -92,7 +92,8 @@ const SelectCoin = () => {
         coinData: selectedCoinData,
         mode: mode,
         type: mode,
-        coinType: selectedCoinData?.symbol || 'BTC'
+        coinType: selectedCoinData?.symbol || 'BTC',
+        isPremium: isPremium
       }
     });
   };
@@ -104,16 +105,17 @@ const SelectCoin = () => {
         mode: mode,
         type: mode,
         coinType: 'BTC', // Default for auto-match
-        autoMatch: true
+        autoMatch: true,
+        isPremium: isPremium
       }
     });
   };
 
   const handleBrowseSellers = () => {
     if (mode === 'buy') {
-      navigate('/merchant-list', { state: { type: 'buy' } });
+      navigate('/merchant-list', { state: { type: 'buy', isPremium: isPremium } });
     } else {
-      navigate('/merchant-list', { state: { type: 'sell' } });
+      navigate('/merchant-list', { state: { type: 'sell', isPremium: isPremium } });
     }
   };
 
@@ -135,9 +137,9 @@ const SelectCoin = () => {
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-gray-100">
         <div className="flex items-center">
-          <Link to="/buy-sell" className="mr-4">
+          <button onClick={() => navigate(isPremium ? '/premium-trade' : '/buy-sell')} className="mr-4">
             <ArrowLeft size={24} className="text-gray-700" />
-          </Link>
+          </button>
           <div>
             <h1 className="text-xl font-semibold text-gray-900">Select Coin</h1>
             <p className="text-sm text-gray-500">

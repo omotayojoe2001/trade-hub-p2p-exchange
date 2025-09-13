@@ -1,7 +1,7 @@
 import { supabase } from '@/integrations/supabase/client';
 
 const BITGO_BASE_URL = 'https://app.bitgo-test.com/api/v2';
-const BITGO_ACCESS_TOKEN = 'v2x9b4dd2eefa8f942b007abd3d45a89efc5bf01cbb2fd822545b90e00eae004e52';
+const BITGO_ACCESS_TOKEN = 'v2x534d125c94f2c8e142c81d56cf28064772b15b51f75772292ef610a860db53b6';
 
 interface EscrowAddress {
   address: string;
@@ -21,6 +21,12 @@ const ESCROW_WALLETS: BitGoWallet = {
   BTC: '68c3107e4e3a88eabbaa707336d8245f', // TBTC testnet
   ETH: '68c3152aa55fc893636939a9eaf44484', // HTETH testnet  
   USDT: '68c3152aa55fc893636939a9eaf44484' // Use ETH wallet for USDT tokens
+};
+
+// CORS headers for direct API calls
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
 class BitGoEscrowService {
@@ -47,6 +53,27 @@ class BitGoEscrowService {
     return response.json();
   }
 
+  async testWalletAccess(coin: 'BTC' | 'ETH'): Promise<void> {
+    try {
+      // First test if token is valid at all
+      console.log('Testing token validity...');
+      const userResponse = await this.makeRequest('/user/me');
+      console.log('User info:', userResponse);
+      
+      // Then test wallet access
+      const walletId = ESCROW_WALLETS[coin];
+      const coinType = coin === 'BTC' ? 'tbtc' : 'hteth';
+      
+      console.log('Testing wallet access:', { coin, walletId, coinType });
+      const walletResponse = await this.makeRequest(`/${coinType}/wallet/${walletId}`);
+      console.log('Wallet info:', walletResponse);
+      
+    } catch (error) {
+      console.error('Access test failed:', error);
+      throw error;
+    }
+  }
+
   async generateEscrowAddress(tradeId: string, coin: 'BTC' | 'ETH' | 'USDT'): Promise<string> {
     try {
       console.log('Calling Edge Function with:', { tradeId, coin });
@@ -60,10 +87,31 @@ class BitGoEscrowService {
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
       
-      return data?.address || 'mock-address-fallback';
+      return data?.address;
     } catch (error) {
-      console.error('Error generating escrow address:', error);
-      throw error;
+      console.error('Edge Function failed, trying direct API call:', error);
+      
+      // Test wallet access first
+      await this.testWalletAccess(coin as 'BTC' | 'ETH');
+      
+      // Try direct API call as fallback
+      const walletId = ESCROW_WALLETS[coin];
+      const coinType = coin === 'BTC' ? 'tbtc' : 'hteth';
+      
+      const response = await this.makeRequest(`/${coinType}/wallet/${walletId}/address`, 'POST', {
+        label: `escrow-${tradeId}`
+      });
+      
+      // Store in database
+      await supabase.from('escrow_addresses').insert({
+        trade_id: tradeId,
+        coin,
+        address: response.address,
+        wallet_id: walletId,
+        status: 'pending'
+      });
+      
+      return response.address;
     }
   }
 

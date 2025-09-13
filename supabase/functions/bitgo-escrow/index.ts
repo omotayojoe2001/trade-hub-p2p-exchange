@@ -22,16 +22,26 @@ serve(async (req) => {
   );
 
   try {
-    const { tradeId, coin } = await req.json();
+    const requestBody = await req.json();
+    const { tradeId, coin, action, toAddress, amount } = requestBody;
     
-    console.log('BitGo request:', { tradeId, coin });
+    console.log('BitGo request:', { tradeId, coin, action });
     console.log('Environment check:', {
       hasToken: !!BITGO_ACCESS_TOKEN,
       hasBtcWallet: !!BTC_WALLET_ID,
-      hasEthWallet: !!ETH_WALLET_ID
+      hasEthWallet: !!ETH_WALLET_ID,
+      tokenValue: BITGO_ACCESS_TOKEN?.slice(0, 10) + '...',
+      btcWalletValue: BTC_WALLET_ID,
+      ethWalletValue: ETH_WALLET_ID
     });
     
-    const { action, toAddress, amount } = await req.json();
+    if (!BITGO_ACCESS_TOKEN) {
+      throw new Error('BITGO_ACCESS_TOKEN environment variable not set');
+    }
+    
+    if (!BTC_WALLET_ID || !ETH_WALLET_ID) {
+      throw new Error('BitGo wallet IDs not configured');
+    }
     
     if (action === 'release') {
       // Release funds
@@ -86,7 +96,12 @@ serve(async (req) => {
     
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('BitGo API error:', errorText);
+      console.error('BitGo API error:', {
+        status: response.status,
+        statusText: response.statusText,
+        errorText,
+        url: response.url
+      });
       throw new Error(`BitGo API error: ${response.status} - ${errorText}`);
     }
     

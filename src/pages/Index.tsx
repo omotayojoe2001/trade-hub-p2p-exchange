@@ -155,11 +155,9 @@ const Index = () => {
       navigate('/auth');
     } else if (user && profile && !profile.profile_completed) {
       navigate('/profile-setup');
-    } else if (user && profile && profile.profile_completed && isPremium) {
-      // Redirect premium users to premium dashboard
-      navigate('/premium-dashboard');
     }
-  }, [user, profile, loading, isPremium, navigate]);
+    // Removed premium redirect - let users stay on home page
+  }, [user, profile, loading, navigate]);
 
   if (loading) {
     return (

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Crown, TrendingUp, TrendingDown, RefreshCw, ArrowRight, Truck, CreditCard, MapPin, FileText, Clock, Star } from 'lucide-react';
+import { Crown, TrendingUp, TrendingDown, RefreshCw, ArrowRight, Truck, CreditCard, MapPin, FileText, Clock, Star, DollarSign } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { useNavigate } from 'react-router-dom';
@@ -67,15 +67,15 @@ const PremiumTrade = () => {
       title: 'Buy Crypto',
       description: 'Send Naira (cash/transfer) → Get crypto instantly',
       icon: <TrendingUp size={32} className="text-green-600" />,
-      action: () => navigate('/select-coin', { state: { mode: 'buy' } }),
+      action: () => navigate('/select-coin', { state: { mode: 'buy', isPremium: true } }),
       features: ['Instant delivery', 'Best rates', 'Priority matching']
     },
     {
       id: 'sell-crypto',
       title: 'Sell Crypto',
       description: 'Send crypto → Get cash',
-      icon: <TrendingDown size={32} className="text-blue-600" />,
-      action: () => navigate('/sell-for-cash'),
+      icon: <DollarSign size={32} className="text-blue-600" />,
+      action: () => navigate('/premium/sell'),
       features: ['Bank Transfer (default)', 'Cash Pickup (premium)', 'Cash Delivery (premium)']
     },
     {
