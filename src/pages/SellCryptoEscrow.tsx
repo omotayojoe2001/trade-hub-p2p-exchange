@@ -38,9 +38,8 @@ const SellCryptoEscrow: React.FC = () => {
     try {
       setLoading(true);
 
-      // Wait for merchant to accept the trade request
-      // For now, we'll simulate escrow creation
-      const escrowAddr = generateEscrowAddress(cryptoType);
+      // Generate real BitGo escrow address with amount validation
+      const escrowAddr = await generateEscrowAddress(cryptoType);
       setEscrowAddress(escrowAddr);
 
       // Create the trade record
@@ -86,20 +85,21 @@ const SellCryptoEscrow: React.FC = () => {
     }
   };
 
-  const generateEscrowAddress = (crypto: string): string => {
-    // Generate a realistic-looking escrow address based on crypto type
-    const prefixes = {
-      BTC: '3',
-      ETH: '0x',
-      USDT: '0x', // USDT on Ethereum
-    };
-    
-    const prefix = prefixes[crypto as keyof typeof prefixes] || '0x';
-    const randomHex = Array.from({length: crypto === 'BTC' ? 32 : 38}, () => 
-      Math.floor(Math.random() * 16).toString(16)
-    ).join('');
-    
-    return prefix + randomHex;
+  const generateEscrowAddress = async (crypto: string): Promise<string> => {
+    try {
+      const { bitgoEscrow } = await import('@/services/bitgoEscrow');
+      const tradeId = `trade_${Date.now()}`;
+      const coinType = crypto === 'BTC' ? 'BTC' : crypto === 'ETH' ? 'ETH' : 'USDT';
+      const expectedAmountInSatoshis = crypto === 'BTC' 
+        ? Math.round(parseFloat(amount) * 100000000) // BTC to satoshis
+        : Math.round(parseFloat(amount) * 1000000000000000000); // ETH/USDT to wei
+      
+      const address = await bitgoEscrow.generateEscrowAddress(tradeId, coinType as 'BTC' | 'ETH' | 'USDT', expectedAmountInSatoshis);
+      return address;
+    } catch (error) {
+      console.error('Error generating real escrow address:', error);
+      throw new Error('Failed to generate secure escrow address');
+    }
   };
 
   const copyToClipboard = (text: string) => {
@@ -304,25 +304,14 @@ const SellCryptoEscrow: React.FC = () => {
 
         {/* Action Buttons */}
         <div className="space-y-3">
-          <Button
-            onClick={handleCryptoDeposited}
-            disabled={confirming || cryptoDeposited}
-            className="w-full bg-green-600 hover:bg-green-700 text-white py-3"
-          >
-            {confirming ? (
-              <div className="flex items-center">
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-                Confirming...
-              </div>
-            ) : cryptoDeposited ? (
-              <div className="flex items-center">
-                <CheckCircle2 className="mr-2" size={16} />
-                Deposit Confirmed
-              </div>
-            ) : (
-              "I have deposited the crypto"
-            )}
-          </Button>
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-center">
+            <Shield className="mx-auto mb-2 text-blue-600" size={24} />
+            <p className="text-sm text-blue-800 font-medium">Automatic Verification</p>
+            <p className="text-xs text-blue-600 mt-1">
+              Your deposit will be automatically verified once the blockchain transaction is confirmed.
+              No manual confirmation needed.
+            </p>
+          </div>
 
           <Button
             variant="outline"

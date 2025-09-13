@@ -23,7 +23,7 @@ serve(async (req) => {
 
   try {
     const requestBody = await req.json();
-    const { tradeId, coin, action, toAddress, amount } = requestBody;
+    const { tradeId, coin, action, toAddress, amount, expectedAmount } = requestBody;
     
     console.log('BitGo request:', { tradeId, coin, action });
     console.log('Environment check:', {
@@ -113,7 +113,8 @@ serve(async (req) => {
       coin,
       address: data.address,
       wallet_id: walletId,
-      status: 'pending'
+      status: 'pending',
+      expected_amount: expectedAmount
     });
     
     return new Response(JSON.stringify({ address: data.address }), {

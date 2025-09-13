@@ -120,7 +120,7 @@ const PremiumCashDelivery = () => {
     return (
       <div className="min-h-screen bg-gray-50">
         <div className="flex items-center p-4 bg-white border-b border-gray-200">
-          <button onClick={() => navigate('/profile-settings')} className="mr-3">
+          <button onClick={() => navigate('/premium-trade')} className="mr-3">
             <ArrowLeft size={20} className="text-gray-600" />
           </button>
           <h1 className="text-lg font-semibold text-gray-900">Request Submitted</h1>
@@ -177,7 +177,7 @@ const PremiumCashDelivery = () => {
             </Card>
 
             <Button
-              onClick={() => navigate('/my-trades')}
+              onClick={() => navigate('/premium-trades')}
               className="w-full h-12 bg-blue-600 hover:bg-blue-700"
             >
               View My Trades
@@ -254,7 +254,7 @@ const PremiumCashDelivery = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="flex items-center p-4 bg-white border-b border-gray-200">
-        <button onClick={() => navigate(-1)} className="mr-3">
+        <button onClick={() => navigate('/premium-trade')} className="mr-3">
           <ArrowLeft size={20} className="text-gray-600" />
         </button>
         <h1 className="text-lg font-semibold text-gray-900">Cash Service</h1>

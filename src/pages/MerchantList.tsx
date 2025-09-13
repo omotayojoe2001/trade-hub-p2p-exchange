@@ -207,7 +207,7 @@ const MerchantList = () => {
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-gray-100">
         <div className="flex items-center">
-          <button onClick={() => navigate(-1)} className="mr-4">
+          <button onClick={() => navigate('/merchant-matching-choice', { state: location.state })} className="mr-4">
             <ArrowLeft size={24} className="text-gray-600" />
           </button>
           <h1 className="text-lg font-semibold text-gray-800">Merchant List</h1>

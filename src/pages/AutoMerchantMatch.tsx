@@ -153,7 +153,7 @@ const AutoMerchantMatch = () => {
     return (
       <div className="min-h-screen bg-gray-50">
         <div className="flex items-center p-4 bg-white border-b border-gray-200">
-          <button onClick={() => navigate(-1)} className="mr-3">
+          <button onClick={() => navigate('/merchant-matching-choice', { state: location.state })} className="mr-3">
             <ArrowLeft size={20} className="text-gray-600" />
           </button>
           <h1 className="text-lg font-semibold text-gray-900">No Merchants Available</h1>
@@ -186,7 +186,7 @@ const AutoMerchantMatch = () => {
     return (
       <div className="min-h-screen bg-gray-50">
         <div className="flex items-center p-4 bg-white border-b border-gray-200">
-          <button onClick={() => navigate(-1)} className="mr-3">
+          <button onClick={() => navigate('/merchant-matching-choice', { state: location.state })} className="mr-3">
             <ArrowLeft size={20} className="text-gray-600" />
           </button>
           <h1 className="text-lg font-semibold text-gray-900">Finding Best Merchant</h1>
@@ -227,7 +227,7 @@ const AutoMerchantMatch = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="flex items-center p-4 bg-white border-b border-gray-200">
-        <button onClick={() => navigate(-1)} className="mr-3">
+        <button onClick={() => navigate('/merchant-matching-choice', { state: location.state })} className="mr-3">
           <ArrowLeft size={20} className="text-gray-600" />
         </button>
         <h1 className="text-lg font-semibold text-gray-900">Merchant Matched!</h1>

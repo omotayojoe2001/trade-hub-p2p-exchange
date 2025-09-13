@@ -535,15 +535,7 @@ export const realTimeTradeRequestService = {
 
     const { data, error } = await supabase
       .from('trade_requests')
-      .select(`
-        *,
-        user_profiles!trade_requests_user_id_fkey (
-          full_name,
-          rating,
-          trade_count,
-          verification_level
-        )
-      `)
+      .select('*')
       .eq('status', 'open')
       .neq('user_id', user.id)
       .gt('expires_at', new Date().toISOString())

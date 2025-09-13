@@ -70,7 +70,10 @@ const PremiumPayment: React.FC = () => {
       const { bitgoEscrow } = await import('@/services/bitgoEscrow');
       const premiumId = `premium_${Date.now()}`;
       const coinType = selectedCoin === 'bitcoin' ? 'BTC' : 'ETH';
-      const address = await bitgoEscrow.generateEscrowAddress(premiumId, coinType as 'BTC' | 'ETH');
+      const expectedAmountInSatoshis = selectedCoin === 'bitcoin' 
+        ? Math.round(parseFloat(amountInCoin) * 100000000) // BTC to satoshis
+        : Math.round(parseFloat(amountInCoin) * 1000000000000000000); // ETH to wei
+      const address = await bitgoEscrow.generateEscrowAddress(premiumId, coinType as 'BTC' | 'ETH', expectedAmountInSatoshis);
       setWalletAddress(address);
     } catch (error) {
       console.error('Error generating BitGo address:', error);

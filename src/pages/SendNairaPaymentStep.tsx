@@ -263,7 +263,7 @@ const SendNairaPaymentStep = () => {
     <div className="min-h-screen bg-gray-50 pb-20">
       {/* Header */}
       <div className="flex items-center p-4 bg-white border-b border-gray-200">
-        <button onClick={() => navigate(-1)} className="mr-3">
+        <button onClick={() => navigate('/send-naira-get-usd')} className="mr-3">
           <ArrowLeft size={20} className="text-gray-600" />
         </button>
         <h1 className="text-lg font-semibold text-gray-900">Complete Payment</h1>
@@ -479,7 +479,7 @@ const SendNairaPaymentStep = () => {
           </Button>
           
           <Button
-            onClick={() => navigate(-1)}
+            onClick={() => navigate('/send-naira-get-usd')}
             variant="outline"
             className="w-full h-12"
           >

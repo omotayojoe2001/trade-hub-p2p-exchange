@@ -158,7 +158,7 @@ const SendNairaGetUSD = () => {
       <div className="bg-white border-b border-gray-200 px-4 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center">
-            <Link to={isPremium ? "/premium-trade" : "/buy-sell"} className="mr-4">
+            <Link to="/premium-trade" className="mr-4">
               <ArrowLeft size={24} className="text-gray-600" />
             </Link>
             <div>

@@ -54,15 +54,29 @@ serve(async (req) => {
             if (parts.length >= 2) {
               const userId = parts[1];
               
-              await supabase
-                .from('profiles')
-                .update({
-                  is_premium: true,
-                  premium_expires_at: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString()
-                })
-                .eq('user_id', userId);
+              // Validate payment amount
+              const expectedAmount = escrowRecord.expected_amount;
+              const receivedAmount = value;
+              const tolerance = expectedAmount * 0.01; // 1% tolerance for network fees
+              
+              if (receivedAmount >= (expectedAmount - tolerance)) {
+                await supabase
+                  .from('profiles')
+                  .update({
+                    is_premium: true,
+                    premium_expires_at: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString()
+                  })
+                  .eq('user_id', userId);
 
-              console.log('Premium granted to user:', userId);
+                console.log('Premium granted to user:', userId, 'Amount validated:', receivedAmount, 'Expected:', expectedAmount);
+              } else {
+                console.log('Payment amount insufficient:', receivedAmount, 'Expected:', expectedAmount);
+                
+                await supabase
+                  .from('escrow_addresses')
+                  .update({ status: 'insufficient_amount' })
+                  .eq('id', escrowRecord.id);
+              }
             }
           }
         }

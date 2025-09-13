@@ -2,14 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, Clock, CheckCircle, Copy, Upload, MessageSquare } from 'lucide-react';
+import { ArrowLeft, Clock, CheckCircle, Copy, Upload, MessageSquare, Crown } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import PremiumBottomNavigation from '@/components/premium/PremiumBottomNavigation';
 
-const BuyCryptoPaymentStep2 = () => {
+const PremiumBuyCryptoPaymentStep2 = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuth();
@@ -21,23 +22,21 @@ const BuyCryptoPaymentStep2 = () => {
   
   const [tradeStatus, setTradeStatus] = useState('searching');
   const [merchantBankDetails, setMerchantBankDetails] = useState<any>(null);
-  const [lastCheckedStatus, setLastCheckedStatus] = useState<string>('');
   const [paymentProof, setPaymentProof] = useState<File | null>(null);
   const [messages, setMessages] = useState<any[]>([]);
   const [newMessage, setNewMessage] = useState('');
-  const [countdown, setCountdown] = useState(15 * 60); // 15 minutes
+  const [countdown, setCountdown] = useState(15 * 60); // 15 minutes for premium
 
   useEffect(() => {
     if (tradeId) {
       monitorTradeStatus();
       fetchMessages();
       
-      // Poll every 10 seconds and only when needed
       const interval = setInterval(() => {
         if (tradeStatus === 'searching' || tradeStatus === 'accepted') {
           monitorTradeStatus();
         }
-      }, 10000);
+      }, 8000); // Faster polling for premium
       
       return () => clearInterval(interval);
     }
@@ -56,7 +55,6 @@ const BuyCryptoPaymentStep2 = () => {
     if (!tradeId) return;
     
     try {
-      // Check trade request status
       const { data: tradeRequest } = await supabase
         .from('trade_requests')
         .select('*')
@@ -66,33 +64,28 @@ const BuyCryptoPaymentStep2 = () => {
       if (tradeRequest?.status === 'accepted' && tradeStatus === 'searching') {
         setTradeStatus('accepted');
         toast({
-          title: "Merchant Matched!",
-          description: "Merchant accepted your trade request",
+          title: "Premium Merchant Matched!",
+          description: "Premium merchant accepted your trade request",
         });
       }
       
-      // Check if escrow is funded
-      const { data: tradeData, error: tradeError } = await supabase
+      const { data: tradeData } = await supabase
         .from('trades')
         .select('*')
         .eq('trade_request_id', tradeId)
         .maybeSingle();
 
-      // Only update if status actually changed to prevent blinking
       if (tradeData?.escrow_status === 'crypto_deposited' && tradeStatus !== 'escrow_funded') {
-        console.log('Escrow status is crypto_deposited, showing bank details');
         setTradeStatus('escrow_funded');
-        
-        // Fetch merchant's default bank account
         fetchMerchantBankDetails(tradeData.seller_id, tradeData);
         
         toast({
-          title: "Payment Details Available!",
-          description: "Merchant has funded escrow. Make your payment now.",
+          title: "Premium Payment Details Available!",
+          description: "Premium merchant has funded escrow. Make your payment now.",
         });
       }
     } catch (error) {
-      console.error('Error monitoring trade:', error);
+      console.error('Error monitoring premium trade:', error);
     }
   };
 
@@ -113,39 +106,31 @@ const BuyCryptoPaymentStep2 = () => {
 
   const fetchMerchantBankDetails = async (sellerId: string, trade: any) => {
     try {
-      console.log('Fetching payment method for seller:', sellerId);
-      
-      // Use RPC function to bypass RLS and get merchant's payment method
       const { data: paymentMethods, error } = await supabase
         .rpc('get_merchant_payment_method', { merchant_id: sellerId });
         
-      console.log('RPC response:', { paymentMethods, error });
-      const paymentMethod = paymentMethods?.[0]; // Get first row from table result
+      const paymentMethod = paymentMethods?.[0];
 
       if (error || !paymentMethod) {
-        console.error('No payment method found, using mock data');
-        // Use mock merchant bank details for demo
         setMerchantBankDetails({
-          bank_name: 'GTBank',
+          bank_name: 'Premium Bank',
           account_number: '0123456789',
-          account_name: selectedMerchant?.display_name || 'Merchant Name',
-          reference: `PAY-${trade.id.slice(-8)}`,
+          account_name: selectedMerchant?.display_name || 'Premium Merchant',
+          reference: `PREMIUM-${trade.id.slice(-8)}`,
           amount_naira: cashAmount
         });
         return;
       }
 
-      console.log('Fetched payment method:', paymentMethod);
-      
       setMerchantBankDetails({
-        bank_name: paymentMethod.bank_name || 'Bank Account',
+        bank_name: paymentMethod.bank_name || 'Premium Bank Account',
         account_number: paymentMethod.account_number || 'Not Available',
-        account_name: paymentMethod.account_name || selectedMerchant?.display_name || 'Merchant',
-        reference: `PAY-${trade.id.slice(-8)}`,
+        account_name: paymentMethod.account_name || selectedMerchant?.display_name || 'Premium Merchant',
+        reference: `PREMIUM-${trade.id.slice(-8)}`,
         amount_naira: cashAmount
       });
     } catch (error) {
-      console.error('Error fetching merchant bank details:', error);
+      console.error('Error fetching premium merchant bank details:', error);
     }
   };
 
@@ -203,9 +188,8 @@ const BuyCryptoPaymentStep2 = () => {
     }
 
     try {
-      // Upload payment proof
       const fileExt = paymentProof.name.split('.').pop();
-      const fileName = `${user.id}/payment-proof-${Date.now()}.${fileExt}`;
+      const fileName = `${user.id}/premium-payment-proof-${Date.now()}.${fileExt}`;
       
       const { data, error } = await supabase.storage
         .from('profiles')
@@ -217,7 +201,6 @@ const BuyCryptoPaymentStep2 = () => {
         .from('profiles')
         .getPublicUrl(fileName);
 
-      // Get the trade record first
       const { data: trade, error: tradeError } = await supabase
         .from('trades')
         .select('*')
@@ -225,10 +208,9 @@ const BuyCryptoPaymentStep2 = () => {
         .single();
 
       if (tradeError || !trade) {
-        throw new Error('Trade not found');
+        throw new Error('Premium trade not found');
       }
 
-      // Update trade with payment proof
       const { error: updateError } = await supabase
         .from('trades')
         .update({
@@ -239,42 +221,41 @@ const BuyCryptoPaymentStep2 = () => {
 
       if (updateError) throw updateError;
 
-      // Notify merchant about payment proof
       await supabase
         .from('notifications')
         .insert({
           user_id: selectedMerchant.user_id,
-          type: 'payment_proof_uploaded',
-          title: 'Payment Proof Uploaded',
-          message: `${user.user_metadata?.display_name || user.email || 'User'} has uploaded payment proof for trade ${trade.id.slice(-8)}`,
+          type: 'premium_payment_proof_uploaded',
+          title: 'Premium Payment Proof Uploaded',
+          message: `${user.user_metadata?.display_name || user.email || 'Premium user'} has uploaded payment proof for premium trade ${trade.id.slice(-8)}`,
           data: {
             trade_id: trade.id,
-            payment_proof_url: urlData.publicUrl
+            payment_proof_url: urlData.publicUrl,
+            is_premium: true
           }
         });
 
       toast({
-        title: "Payment Confirmed!",
-        description: "Your payment proof has been uploaded. Waiting for merchant confirmation.",
+        title: "Premium Payment Confirmed!",
+        description: "Your premium payment proof has been uploaded. Premium merchants confirm within 5 minutes.",
       });
 
-      // Navigate to step 3
-      navigate('/buy-crypto-payment-step3', {
+      navigate('/premium-buy-crypto-payment-step3', {
         state: {
           tradeId: trade.id,
           coinType,
           cryptoAmount,
           cashAmount,
           selectedMerchant,
-
+          walletAddress
         }
       });
 
     } catch (error) {
-      console.error('Error uploading payment proof:', error);
+      console.error('Error uploading premium payment proof:', error);
       toast({
         title: "Upload Failed",
-        description: "Failed to upload payment proof. Please try again.",
+        description: "Failed to upload premium payment proof. Please try again.",
         variant: "destructive"
       });
     }
@@ -284,27 +265,27 @@ const BuyCryptoPaymentStep2 = () => {
     switch (tradeStatus) {
       case 'searching':
         return {
-          title: "Searching for Merchant",
-          description: "Waiting for merchant to accept your trade request...",
-          icon: <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+          title: "Finding Premium Merchant",
+          description: "Waiting for premium merchant to accept your trade request...",
+          icon: <div className="w-8 h-8 border-4 border-yellow-600 border-t-transparent rounded-full animate-spin" />
         };
       case 'accepted':
         return {
-          title: "Merchant Matched!",
-          description: "Waiting for merchant to fund escrow...",
+          title: "Premium Merchant Matched!",
+          description: "Waiting for premium merchant to fund escrow...",
           icon: <CheckCircle className="w-8 h-8 text-green-500" />
         };
       case 'escrow_funded':
         return {
-          title: "Escrow Funded",
-          description: "Merchant has deposited crypto. You can now make payment.",
-          icon: <CheckCircle className="w-8 h-8 text-blue-500" />
+          title: "Premium Escrow Funded",
+          description: "Premium merchant has deposited crypto. You can now make payment.",
+          icon: <CheckCircle className="w-8 h-8 text-yellow-600" />
         };
       default:
         return {
-          title: "Processing",
+          title: "Processing Premium Trade",
           description: "Please wait...",
-          icon: <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+          icon: <div className="w-8 h-8 border-4 border-yellow-600 border-t-transparent rounded-full animate-spin" />
         };
     }
   };
@@ -312,35 +293,44 @@ const BuyCryptoPaymentStep2 = () => {
   const statusInfo = getStatusDisplay();
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gradient-to-br from-yellow-50 to-orange-50 pb-20">
       {/* Header */}
-      <div className="sticky top-0 bg-background border-b p-4 flex items-center justify-between">
-        <Button variant="ghost" size="icon" onClick={() => navigate('/buy-crypto-payment-step1', { state: location.state })}>
-          <ArrowLeft className="w-5 h-5" />
+      <div className="sticky top-0 bg-white/95 backdrop-blur-sm border-b border-yellow-200 p-4 flex items-center justify-between">
+        <Button variant="ghost" size="icon" onClick={() => navigate('/premium-buy-crypto-payment-step1', { state: location.state })}>
+          <ArrowLeft className="w-5 h-5 text-yellow-700" />
         </Button>
-        <h1 className="text-lg font-semibold">Buy {coinType} - Step 2</h1>
-        <div className="w-10" />
+        <div className="flex items-center space-x-2">
+          <Crown size={16} className="text-yellow-600" />
+          <h1 className="text-lg font-semibold text-yellow-900">Premium Buy {coinType} - Step 2</h1>
+        </div>
+        <div className="bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-xs font-medium flex items-center">
+          <Crown size={10} className="mr-1" />
+          Premium
+        </div>
       </div>
 
       {/* Timer */}
-      <div className="p-4 bg-orange-50 border-b border-orange-200">
+      <div className="p-4 bg-gradient-to-r from-orange-100 to-yellow-100 border-b border-orange-200">
         <div className="flex items-center justify-center">
           <Clock className="w-5 h-5 text-orange-600 mr-2" />
+          <Crown size={14} className="text-orange-600 mr-2" />
           <span className="text-orange-800 font-semibold">
-            Time Remaining: {formatTime(countdown)}
+            Premium Time Remaining: {formatTime(countdown)}
           </span>
         </div>
       </div>
 
       <div className="p-4 space-y-6">
         {/* Status Display */}
-        <Card>
+        <Card className="bg-white/90 border-yellow-200">
           <CardContent className="p-6 text-center">
             <div className="mb-4">{statusInfo.icon}</div>
-            <h2 className="text-xl font-semibold mb-2">{statusInfo.title}</h2>
-            <p className="text-muted-foreground">{statusInfo.description}</p>
+            <div className="flex items-center justify-center space-x-2 mb-2">
+              <Crown size={18} className="text-yellow-600" />
+              <h2 className="text-xl font-semibold text-yellow-900">{statusInfo.title}</h2>
+            </div>
+            <p className="text-yellow-700">{statusInfo.description}</p>
             
-            {/* Demo: Simulate merchant acceptance */}
             {tradeStatus === 'searching' && tradeId && (
               <Button 
                 onClick={async () => {
@@ -353,31 +343,35 @@ const BuyCryptoPaymentStep2 = () => {
                     console.error('Demo error:', err);
                   }
                 }}
-                className="mt-4"
+                className="mt-4 bg-gradient-to-r from-yellow-600 to-yellow-700"
                 size="sm"
               >
-                [Demo] Simulate Merchant Accept
+                <Crown size={14} className="mr-1" />
+                [Demo] Simulate Premium Accept
               </Button>
             )}
           </CardContent>
         </Card>
 
-        {/* Bank Details (shown when escrow is funded) */}
+        {/* Bank Details */}
         {tradeStatus === 'escrow_funded' && merchantBankDetails && (
-          <Card>
+          <Card className="bg-white/90 border-yellow-200">
             <CardHeader>
-              <CardTitle className="text-sm">Make Payment To</CardTitle>
-              <p className="text-xs text-muted-foreground">
-                The merchant has deposited {cryptoAmount} {coinType} into escrow
+              <CardTitle className="text-sm flex items-center">
+                <Crown size={16} className="mr-2 text-yellow-600" />
+                Make Premium Payment To
+              </CardTitle>
+              <p className="text-xs text-yellow-700">
+                The premium merchant has deposited {cryptoAmount} {coinType} into secure escrow
               </p>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="p-4 bg-green-50 rounded-lg border border-green-200">
+              <div className="p-4 bg-gradient-to-r from-green-50 to-yellow-50 rounded-lg border border-green-200">
                 <div className="space-y-3">
                   <div className="flex justify-between items-center">
-                    <span className="text-sm text-muted-foreground">Bank Name</span>
+                    <span className="text-sm text-yellow-700">Bank Name</span>
                     <div className="flex items-center gap-2">
-                      <span className="font-medium">{merchantBankDetails.bank_name}</span>
+                      <span className="font-medium text-yellow-900">{merchantBankDetails.bank_name}</span>
                       <Button
                         variant="ghost"
                         size="sm"
@@ -389,9 +383,9 @@ const BuyCryptoPaymentStep2 = () => {
                   </div>
                   
                   <div className="flex justify-between items-center">
-                    <span className="text-sm text-muted-foreground">Account Number</span>
+                    <span className="text-sm text-yellow-700">Account Number</span>
                     <div className="flex items-center gap-2">
-                      <span className="font-medium">{merchantBankDetails.account_number}</span>
+                      <span className="font-medium text-yellow-900">{merchantBankDetails.account_number}</span>
                       <Button
                         variant="ghost"
                         size="sm"
@@ -403,9 +397,9 @@ const BuyCryptoPaymentStep2 = () => {
                   </div>
                   
                   <div className="flex justify-between items-center">
-                    <span className="text-sm text-muted-foreground">Account Name</span>
+                    <span className="text-sm text-yellow-700">Account Name</span>
                     <div className="flex items-center gap-2">
-                      <span className="font-medium">{merchantBankDetails.account_name}</span>
+                      <span className="font-medium text-yellow-900">{merchantBankDetails.account_name}</span>
                       <Button
                         variant="ghost"
                         size="sm"
@@ -417,14 +411,14 @@ const BuyCryptoPaymentStep2 = () => {
                   </div>
                   
                   <div className="flex justify-between items-center">
-                    <span className="text-sm text-muted-foreground">Amount</span>
-                    <span className="font-semibold text-lg text-primary">₦{cashAmount?.toLocaleString()}</span>
+                    <span className="text-sm text-yellow-700">Amount</span>
+                    <span className="font-semibold text-lg text-yellow-800">₦{cashAmount?.toLocaleString()}</span>
                   </div>
                   
                   <div className="flex justify-between items-center">
-                    <span className="text-sm text-muted-foreground">Reference</span>
+                    <span className="text-sm text-yellow-700">Reference</span>
                     <div className="flex items-center gap-2">
-                      <span className="font-medium">{merchantBankDetails.reference}</span>
+                      <span className="font-medium text-yellow-900">{merchantBankDetails.reference}</span>
                       <Button
                         variant="ghost"
                         size="sm"
@@ -439,8 +433,11 @@ const BuyCryptoPaymentStep2 = () => {
 
               {/* Upload Proof */}
               <div>
-                <label className="text-sm font-medium mb-2 block">Upload Payment Proof</label>
-                <div className="border-2 border-dashed border-border rounded-lg p-4">
+                <label className="text-sm font-medium mb-2 block flex items-center">
+                  <Crown size={14} className="mr-1 text-yellow-600" />
+                  Upload Premium Payment Proof
+                </label>
+                <div className="border-2 border-dashed border-yellow-300 rounded-lg p-4 bg-yellow-50">
                   <input
                     type="file"
                     accept="image/*"
@@ -450,9 +447,9 @@ const BuyCryptoPaymentStep2 = () => {
                   />
                   <label htmlFor="payment-proof" className="cursor-pointer">
                     <div className="text-center">
-                      <Upload className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
-                      <p className="text-sm text-muted-foreground">
-                        {paymentProof ? paymentProof.name : 'Tap to upload payment screenshot'}
+                      <Upload className="w-8 h-8 text-yellow-600 mx-auto mb-2" />
+                      <p className="text-sm text-yellow-700">
+                        {paymentProof ? paymentProof.name : 'Tap to upload premium payment screenshot'}
                       </p>
                     </div>
                   </label>
@@ -464,20 +461,12 @@ const BuyCryptoPaymentStep2 = () => {
                 <Button
                   onClick={handleMarkAsPaid}
                   disabled={!paymentProof}
-                  className="w-full"
+                  className="w-full bg-gradient-to-r from-yellow-600 to-yellow-700 hover:from-yellow-700 hover:to-yellow-800"
                   size="lg"
                 >
-                  I Have Paid
+                  <Crown size={16} className="mr-2" />
+                  I Have Made Premium Payment
                 </Button>
-                
-                <div className="grid grid-cols-2 gap-3">
-                  <Button variant="outline" size="sm">
-                    Send Reminder
-                  </Button>
-                  <Button variant="outline" size="sm">
-                    Cancel Trade
-                  </Button>
-                </div>
               </div>
             </CardContent>
           </Card>
@@ -485,26 +474,27 @@ const BuyCryptoPaymentStep2 = () => {
 
         {/* Chat Section */}
         {tradeStatus === 'escrow_funded' && (
-          <Card>
+          <Card className="bg-white/90 border-yellow-200">
             <CardHeader>
               <CardTitle className="text-sm flex items-center gap-2">
-                <MessageSquare className="w-4 h-4" />
-                Chat with {selectedMerchant?.display_name}
+                <MessageSquare className="w-4 h-4 text-yellow-600" />
+                <Crown size={14} className="text-yellow-600" />
+                Premium Chat with {selectedMerchant?.display_name}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="h-32 border rounded p-3 overflow-y-auto bg-muted/50">
+              <div className="h-32 border border-yellow-200 rounded p-3 overflow-y-auto bg-yellow-50/50">
                 {messages.length > 0 ? (
                   messages.map((message) => (
                     <div key={message.id} className="mb-2">
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-xs text-yellow-600">
                         {message.sender_id === user.id ? 'You' : selectedMerchant?.display_name}
                       </p>
-                      <p className="text-sm">{message.content}</p>
+                      <p className="text-sm text-yellow-900">{message.content}</p>
                     </div>
                   ))
                 ) : (
-                  <p className="text-sm text-muted-foreground text-center">No messages yet</p>
+                  <p className="text-sm text-yellow-600 text-center">No premium messages yet</p>
                 )}
               </div>
               
@@ -512,10 +502,11 @@ const BuyCryptoPaymentStep2 = () => {
                 <Textarea
                   value={newMessage}
                   onChange={(e) => setNewMessage(e.target.value)}
-                  placeholder="Type a message..."
+                  placeholder="Type a premium message..."
                   rows={2}
+                  className="border-yellow-200 focus:border-yellow-400"
                 />
-                <Button onClick={handleSendMessage} size="sm">
+                <Button onClick={handleSendMessage} size="sm" className="bg-gradient-to-r from-yellow-600 to-yellow-700">
                   Send
                 </Button>
               </div>
@@ -523,8 +514,10 @@ const BuyCryptoPaymentStep2 = () => {
           </Card>
         )}
       </div>
+
+      <PremiumBottomNavigation />
     </div>
   );
 };
 
-export default BuyCryptoPaymentStep2;
+export default PremiumBuyCryptoPaymentStep2;

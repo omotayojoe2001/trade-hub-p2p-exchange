@@ -142,6 +142,15 @@ import VendorCashOrderDetails from "./pages/VendorCashOrderDetails";
 import VendorPaymentConfirmation from "./pages/VendorPaymentConfirmation";
 import VendorTransactions from "./pages/VendorTransactions";
 import PersistentQuoteCode from "./components/premium/PersistentQuoteCode";
+
+// Premium Buy Flow Pages
+import PremiumSelectCoin from "./pages/PremiumSelectCoin";
+import PremiumMerchantMatchingChoice from "./pages/PremiumMerchantMatchingChoice";
+import PremiumAutoMerchantMatch from "./pages/PremiumAutoMerchantMatch";
+import PremiumMerchantList from "./pages/PremiumMerchantList";
+import PremiumBuyCryptoPaymentStep1 from "./pages/PremiumBuyCryptoPaymentStep1";
+import PremiumBuyCryptoPaymentStep2 from "./pages/PremiumBuyCryptoPaymentStep2";
+import PremiumBuyCryptoPaymentStep3 from "./pages/PremiumBuyCryptoPaymentStep3";
 // Removed BlogDetail - not needed
 import { ThankYouPage } from "./pages/ThankYouPage";
 // Removed SupabaseTest - not needed
@@ -392,6 +401,15 @@ const AppContent = () => {
 
         {/* Credits Routes */}
         <Route path="/credits/purchase" element={<CreditsPurchase />} />
+
+        {/* Premium Buy Flow Routes */}
+        <Route path="/premium-select-coin" element={<PremiumSelectCoin />} />
+        <Route path="/premium-merchant-matching-choice" element={<PremiumMerchantMatchingChoice />} />
+        <Route path="/premium-auto-merchant-match" element={<PremiumAutoMerchantMatch />} />
+        <Route path="/premium-merchant-list" element={<PremiumMerchantList />} />
+        <Route path="/premium-buy-crypto-payment-step1" element={<PremiumBuyCryptoPaymentStep1 />} />
+        <Route path="/premium-buy-crypto-payment-step2" element={<PremiumBuyCryptoPaymentStep2 />} />
+        <Route path="/premium-buy-crypto-payment-step3" element={<PremiumBuyCryptoPaymentStep3 />} />
 
         {/* Premium Cash Services */}
         <Route path="/premium/cash-service" element={<PremiumCashDelivery />} />

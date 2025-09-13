@@ -21,7 +21,7 @@ const PremiumSell: React.FC = () => {
     <div className="min-h-screen bg-white pb-20">
       <div className="flex items-center justify-between p-4 border-b border-gray-100">
         <div className="flex items-center">
-          <button onClick={() => navigate('/premium-dashboard')} className="mr-3">
+          <button onClick={() => navigate('/premium-trade')} className="mr-3">
             <ArrowLeft size={20} className="text-gray-700" />
           </button>
           <h1 className="text-lg font-semibold text-gray-900">Sell Crypto (Premium)</h1>

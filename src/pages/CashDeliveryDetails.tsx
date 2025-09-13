@@ -27,7 +27,7 @@ const CashDeliveryDetails: React.FC = () => {
   return (
     <div className="min-h-screen bg-white pb-20">
       <div className="flex items-center p-4 border-b border-gray-200">
-        <button onClick={() => navigate(-1)} className="mr-3">
+        <button onClick={() => navigate('/premium-trade')} className="mr-3">
           <ArrowLeft size={20} className="text-gray-600" />
         </button>
         <div className="flex items-center space-x-2">

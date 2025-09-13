@@ -74,12 +74,12 @@ class BitGoEscrowService {
     }
   }
 
-  async generateEscrowAddress(tradeId: string, coin: 'BTC' | 'ETH' | 'USDT'): Promise<string> {
+  async generateEscrowAddress(tradeId: string, coin: 'BTC' | 'ETH' | 'USDT', expectedAmount?: number): Promise<string> {
     try {
-      console.log('Calling Edge Function with:', { tradeId, coin });
+      console.log('Calling Edge Function with:', { tradeId, coin, expectedAmount });
       
       const { data, error } = await supabase.functions.invoke('bitgo-escrow', {
-        body: { tradeId, coin }
+        body: { tradeId, coin, expectedAmount }
       });
       
       console.log('Edge Function response:', { data, error });
@@ -102,13 +102,14 @@ class BitGoEscrowService {
         label: `escrow-${tradeId}`
       });
       
-      // Store in database
+      // Store in database with expected amount
       await supabase.from('escrow_addresses').insert({
         trade_id: tradeId,
         coin,
         address: response.address,
         wallet_id: walletId,
-        status: 'pending'
+        status: 'pending',
+        expected_amount: expectedAmount
       });
       
       return response.address;

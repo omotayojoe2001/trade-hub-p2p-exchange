@@ -25,14 +25,14 @@ const PremiumTrade = () => {
         // Transform for display
         const transformedRequests = requests.slice(0, 2).map((request: any) => ({
           id: request.id,
-          userName: request.user_profiles?.full_name || 'Anonymous User',
-          rating: request.user_profiles?.rating || 5.0,
-          coin: request.coin_type,
-          amount: request.amount.toString(),
-          rate: `₦${request.rate.toLocaleString()}/${request.coin_type}`,
+          userName: 'Anonymous User',
+          rating: 5.0,
+          coin: request.crypto_type || 'BTC',
+          amount: request.amount_crypto?.toString() || '0',
+          rate: `₦${request.rate?.toLocaleString() || '0'}/${request.crypto_type || 'BTC'}`,
           timeLeft: calculateTimeLeft(request.expires_at),
           type: request.trade_type,
-          isPremium: request.user_profiles?.verification_level === 'premium',
+          isPremium: false,
           originalRequest: request
         }));
 
@@ -67,7 +67,7 @@ const PremiumTrade = () => {
       title: 'Buy Crypto',
       description: 'Send Naira (cash/transfer) → Get crypto instantly',
       icon: <TrendingUp size={32} className="text-green-600" />,
-      action: () => navigate('/select-coin', { state: { mode: 'buy', isPremium: true } }),
+      action: () => navigate('/premium-select-coin', { state: { mode: 'buy' } }),
       features: ['Instant delivery', 'Best rates', 'Priority matching']
     },
     {
@@ -76,7 +76,7 @@ const PremiumTrade = () => {
       description: 'Send crypto → Get cash',
       icon: <DollarSign size={32} className="text-blue-600" />,
       action: () => navigate('/premium/sell'),
-      features: ['Bank Transfer (default)', 'Cash Pickup (premium)', 'Cash Delivery (premium)']
+      features: ['Cash Pickup (premium)', 'Cash Delivery (premium)']
     },
     {
       id: 'naira-to-usd',
