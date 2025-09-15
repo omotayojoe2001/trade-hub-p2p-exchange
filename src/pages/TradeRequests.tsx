@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Search, Filter, Clock, TrendingUp, ArrowUpDown, Banknote, Coins, Loader2 } from 'lucide-react';
+import { ArrowLeft, Search, Filter, Clock, TrendingUp, ArrowUpDown, Banknote, Coins, Loader2, Crown } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -52,6 +52,7 @@ const TradeRequests = () => {
         // Transform the data to match our UI format
         const transformedRequests = (requests || []).map((request: any) => {
           const timeLeft = calculateTimeLeft(request.expires_at || new Date(Date.now() + 3600000).toISOString());
+          const isPremiumCashDelivery = request.payment_method === 'premium_cash_delivery';
 
           return {
             id: request.id,
@@ -59,16 +60,25 @@ const TradeRequests = () => {
             rating: 4.5 + Math.random() * 0.5, // Random rating between 4.5-5.0
             coin: request.crypto_type,
             amount: request.amount_crypto?.toString() || '0',
-            rate: `₦${request.rate?.toLocaleString() || 0}/${request.crypto_type}`,
-            nairaAmount: `₦${(request.amount_fiat || request.amount_crypto * request.rate || 0).toLocaleString()}`,
+            rate: isPremiumCashDelivery 
+              ? `$${request.rate?.toLocaleString() || 0}/${request.crypto_type}` 
+              : `₦${request.rate?.toLocaleString() || 0}/${request.crypto_type}`,
+            nairaAmount: isPremiumCashDelivery 
+              ? `$${(request.amount_fiat || 0).toLocaleString()} USD Cash`
+              : `₦${(request.amount_fiat || request.amount_crypto * request.rate || 0).toLocaleString()}`,
             timeLeft,
-            paymentMethods: ['Bank Transfer'],
+            paymentMethods: isPremiumCashDelivery ? ['Premium Cash Delivery'] : ['Bank Transfer'],
             type: request.trade_type || 'buy',
-            direction: request.trade_type === 'sell'
-              ? `User wants to sell ${request.crypto_type} (crypto already in escrow)`
-              : 'User wants to buy crypto from you',
+            direction: isPremiumCashDelivery
+              ? `Premium user wants ${request.crypto_type} delivered as USD cash (crypto in escrow)`
+              : request.trade_type === 'sell'
+                ? `User wants to sell ${request.crypto_type} (crypto already in escrow)`
+                : 'User wants to buy crypto from you',
             status: request.status,
-            created_at: request.created_at
+            created_at: request.created_at,
+            isPremium: isPremiumCashDelivery,
+            deliveryAreas: request.delivery_areas,
+            deliveryAddress: request.delivery_address
           };
         });
 
@@ -279,11 +289,17 @@ const TradeRequests = () => {
                   </div>
 
                   {/* Trade Direction */}
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+                  <div className={`${request.isPremium ? 'bg-yellow-50 border-yellow-200' : 'bg-blue-50 border-blue-200'} border rounded-lg p-3 mb-4`}>
                     <div className="flex items-center mb-2">
-                      <ArrowUpDown size={16} className="text-blue-600 mr-2" />
-                      <span className="font-semibold text-blue-800 text-sm">{request.direction}</span>
+                      {request.isPremium && <Crown size={16} className="text-yellow-600 mr-2" />}
+                      <ArrowUpDown size={16} className={`${request.isPremium ? 'text-yellow-600' : 'text-blue-600'} mr-2`} />
+                      <span className={`font-semibold ${request.isPremium ? 'text-yellow-800' : 'text-blue-800'} text-sm`}>{request.direction}</span>
                     </div>
+                    {request.isPremium && request.deliveryAreas && (
+                      <div className="text-xs text-yellow-700">
+                        Delivery Areas: {request.deliveryAreas.join(', ')}
+                      </div>
+                    )}
                   </div>
 
                   {/* Trade Details */}
@@ -310,37 +326,56 @@ const TradeRequests = () => {
                   </div>
 
                   {/* Action Required */}
-                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4">
-                    <div className="flex items-center justify-between">
+                  {!request.isPremium && (
+                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center">
+                          {isUserBuyingCrypto ? (
+                            <Coins size={16} className="text-yellow-600 mr-2" />
+                          ) : (
+                            <Banknote size={16} className="text-yellow-600 mr-2" />
+                          )}
+                          <span className="text-sm font-semibold text-yellow-800">
+                            You need to: {merchantAction}
+                          </span>
+                        </div>
+                      </div>
+                      <p className="text-xs text-yellow-700 mt-1">
+                        User will: {userAction}
+                      </p>
+                    </div>
+                  )}
+                  
+                  {/* Premium Action Required */}
+                  {request.isPremium && (
+                    <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-4">
                       <div className="flex items-center">
-                        {isUserBuyingCrypto ? (
-                          <Coins size={16} className="text-yellow-600 mr-2" />
-                        ) : (
-                          <Banknote size={16} className="text-yellow-600 mr-2" />
-                        )}
-                        <span className="text-sm font-semibold text-yellow-800">
-                          You need to: {merchantAction}
+                        <Crown size={16} className="text-green-600 mr-2" />
+                        <span className="text-sm font-semibold text-green-800">
+                          Send Naira to vendor → Vendor delivers USD cash
                         </span>
                       </div>
+                      <p className="text-xs text-green-700 mt-1">
+                        Crypto is already secured in escrow
+                      </p>
                     </div>
-                    <p className="text-xs text-yellow-700 mt-1">
-                      User will: {userAction}
-                    </p>
-                  </div>
+                  )}
 
                   {/* Actions */}
                   <div className="space-y-2">
                     <Button 
-                      className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 text-sm"
+                      className={`w-full ${request.isPremium ? 'bg-yellow-600 hover:bg-yellow-700' : 'bg-blue-600 hover:bg-blue-700'} text-white py-2 text-sm`}
                       onClick={() => {
-                        if (request.type === 'sell') {
+                        if (request.isPremium) {
+                          navigate(`/vendor-bank-details/${request.id}`);
+                        } else if (request.type === 'sell') {
                           navigate('/sell-crypto-trade-request-details', { state: { tradeRequestId: request.id } });
                         } else {
                           navigate('/trade-request-details', { state: { request } });
                         }
                       }}
                     >
-                      {request.type === 'sell' ? 'Accept & Send Cash' : 'Review'}
+                      {request.isPremium ? 'Accept Premium Request' : request.type === 'sell' ? 'Accept & Send Cash' : 'Review'}
                     </Button>
                     
                     <Button 

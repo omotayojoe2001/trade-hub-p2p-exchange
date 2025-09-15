@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Crown, DollarSign, MapPin, Phone, Clock, Truck, Key } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -8,13 +8,77 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { usePremium } from '@/hooks/usePremium';
 import PremiumBottomNavigation from '@/components/premium/PremiumBottomNavigation';
+import { AddressContactSelector } from '@/components/AddressContactSelector';
+import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
 
 const SendNairaGetUSD = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { isPremium } = usePremium();
+  const { user } = useAuth();
   
   const [step, setStep] = useState(1);
+  const [prefilledAddress, setPrefilledAddress] = useState(null);
+  const [prefilledContact, setPrefilledContact] = useState(null);
+
+  const loadPrefilledData = async () => {
+    try {
+      // Load default address
+      const { data: addresses } = await supabase
+        .from('user_addresses')
+        .select('*')
+        .eq('user_id', user?.id)
+        .order('created_at', { ascending: false })
+        .limit(1);
+      
+      if (addresses && addresses.length > 0) {
+        setPrefilledAddress(addresses[0]);
+      }
+
+      // Load default contact
+      const { data: contacts } = await supabase
+        .from('user_contacts')
+        .select('*')
+        .eq('user_id', user?.id)
+        .order('created_at', { ascending: false })
+        .limit(1);
+      
+      if (contacts && contacts.length > 0) {
+        setPrefilledContact(contacts[0]);
+      }
+    } catch (error) {
+      console.error('Error loading prefilled data:', error);
+    }
+  };
+
+  useEffect(() => {
+    if (user && isPremium) {
+      loadPrefilledData();
+    }
+  }, [user, isPremium]);
+
+  useEffect(() => {
+    // Auto-fill form fields when prefilled data loads (like Google saved cards)
+    if (prefilledAddress) {
+      setFormData(prev => ({
+        ...prev,
+        deliveryAddress: {
+          street: prefilledAddress.street,
+          city: prefilledAddress.city,
+          state: prefilledAddress.state,
+          landmark: prefilledAddress.landmark || ''
+        }
+      }));
+    }
+    if (prefilledContact) {
+      setFormData(prev => ({
+        ...prev,
+        phoneNumber: prefilledContact.phone_number,
+        whatsappNumber: prefilledContact.whatsapp_number
+      }));
+    }
+  }, [prefilledAddress, prefilledContact]);
   const [formData, setFormData] = useState({
     nairaAmount: '',
     deliveryMethod: '', // 'pickup' or 'delivery'
@@ -41,14 +105,6 @@ const SendNairaGetUSD = () => {
     { value: 'surulere', label: 'Surulere', address: 'Adeniran Ogunsanya Street', fee: 2000 },
     { value: 'mainland', label: 'Lagos Mainland', address: 'Herbert Macaulay Way', fee: 2000 },
     { value: 'abuja_central', label: 'Abuja Central', address: 'Wuse 2 District', fee: 3000 }
-  ];
-
-  const deliveryZones = [
-    { zone: 'Lagos Island', fee: 5000, time: '2-4 hours' },
-    { zone: 'Lagos Mainland', fee: 7000, time: '3-5 hours' },
-    { zone: 'Lekki/Ajah', fee: 8000, time: '3-6 hours' },
-    { zone: 'Abuja FCT', fee: 10000, time: '4-8 hours' },
-    { zone: 'Other States', fee: 15000, time: '6-12 hours' }
   ];
 
   const timeSlots = [
@@ -110,7 +166,6 @@ const SendNairaGetUSD = () => {
   };
 
   const handleConfirmOrder = () => {
-    // Navigate to payment step instead of directly to thank you page
     navigate('/send-naira-payment', {
       state: {
         orderData: {
@@ -170,7 +225,7 @@ const SendNairaGetUSD = () => {
             </div>
           </div>
           {isPremium && (
-            <div className="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-xs font-medium flex items-center">
+            <div className="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-xs font-medium flex items-center">
               <Crown size={12} className="mr-1" />
               Premium
             </div>
@@ -182,19 +237,6 @@ const SendNairaGetUSD = () => {
         {/* Step 1: Amount and Delivery Method */}
         {step === 1 && (
           <>
-            {/* Premium Feature Notice */}
-            {isPremium && (
-              <Card className="p-4 bg-gradient-to-r from-yellow-100 to-amber-100 border-yellow-200">
-                <div className="flex items-center space-x-3">
-                  <Crown size={24} className="text-yellow-600" />
-                  <div>
-                    <h3 className="font-semibold text-yellow-900">Premium USD Conversion Service</h3>
-                    <p className="text-sm text-yellow-700">Convert your Naira to USD cash with premium rates and service</p>
-                  </div>
-                </div>
-              </Card>
-            )}
-
             {/* Naira Amount Input */}
             <Card className="p-4 bg-white border-gray-200">
               <h3 className="font-semibold text-gray-900 mb-3">Amount to Convert (Naira)</h3>
@@ -203,19 +245,18 @@ const SendNairaGetUSD = () => {
                 placeholder="Enter amount in Naira"
                 value={formData.nairaAmount}
                 onChange={(e) => handleInputChange('nairaAmount', e.target.value)}
-                className={isPremium ? 'border-yellow-200 focus:border-yellow-400' : ''}
               />
               {formData.nairaAmount && (
-                <div className={`mt-3 p-3 rounded-lg ${isPremium ? 'bg-yellow-50 border border-yellow-200' : 'bg-blue-50 border border-blue-200'}`}>
+                <div className="mt-3 p-3 rounded-lg bg-blue-50 border border-blue-200">
                   <div className="flex items-center justify-between mb-2">
-                    <span className={isPremium ? 'text-yellow-700' : 'text-blue-700'}>Exchange Rate:</span>
-                    <span className={`font-medium ${isPremium ? 'text-yellow-900' : 'text-blue-900'}`}>
+                    <span className="text-blue-700">Exchange Rate:</span>
+                    <span className="font-medium text-blue-900">
                       $1 = ₦{currentUSDRate.toLocaleString()}
                     </span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className={isPremium ? 'text-yellow-700' : 'text-blue-700'}>You will receive:</span>
-                    <span className={`font-bold ${isPremium ? 'text-yellow-900' : 'text-blue-900'}`}>
+                    <span className="text-blue-700">You will receive:</span>
+                    <span className="font-bold text-blue-900">
                       ${calculateUSDAmount()} USD
                     </span>
                   </div>
@@ -231,15 +272,13 @@ const SendNairaGetUSD = () => {
                   onClick={() => handleInputChange('deliveryMethod', 'pickup')}
                   className={`w-full p-4 rounded-lg border-2 transition-colors text-left ${
                     formData.deliveryMethod === 'pickup'
-                      ? isPremium
-                        ? 'border-yellow-500 bg-yellow-50'
-                        : 'border-blue-500 bg-blue-50'
+                      ? 'border-blue-500 bg-blue-50'
                       : 'border-gray-200 bg-gray-50'
                   }`}
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-3">
-                      <MapPin size={20} className={isPremium ? 'text-yellow-600' : 'text-blue-600'} />
+                      <MapPin size={20} className="text-blue-600" />
                       <div>
                         <div className="font-medium text-gray-900">Cash Pickup</div>
                         <div className="text-sm text-gray-600">Collect USD cash at designated location</div>
@@ -256,15 +295,13 @@ const SendNairaGetUSD = () => {
                   onClick={() => handleInputChange('deliveryMethod', 'delivery')}
                   className={`w-full p-4 rounded-lg border-2 transition-colors text-left ${
                     formData.deliveryMethod === 'delivery'
-                      ? isPremium
-                        ? 'border-yellow-500 bg-yellow-50'
-                        : 'border-blue-500 bg-blue-50'
+                      ? 'border-blue-500 bg-blue-50'
                       : 'border-gray-200 bg-gray-50'
                   }`}
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-3">
-                      <Truck size={20} className={isPremium ? 'text-yellow-600' : 'text-blue-600'} />
+                      <Truck size={20} className="text-blue-600" />
                       <div>
                         <div className="font-medium text-gray-900">Cash Delivery</div>
                         <div className="text-sm text-gray-600">USD cash delivered to your address</div>
@@ -282,13 +319,8 @@ const SendNairaGetUSD = () => {
             <Button
               onClick={() => setStep(2)}
               disabled={!isStep1Valid()}
-              className={`w-full h-12 ${
-                isPremium
-                  ? 'bg-yellow-600 hover:bg-yellow-700'
-                  : 'bg-blue-600 hover:bg-blue-700'
-              } text-white`}
+              className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white"
             >
-              {isPremium && <Crown size={16} className="mr-2" />}
               Continue
             </Button>
           </>
@@ -311,9 +343,7 @@ const SendNairaGetUSD = () => {
                       onClick={() => handleInputChange('pickupLocation', location.value)}
                       className={`w-full p-3 rounded-lg border-2 transition-colors text-left ${
                         formData.pickupLocation === location.value
-                          ? isPremium
-                            ? 'border-yellow-500 bg-yellow-50'
-                            : 'border-blue-500 bg-blue-50'
+                          ? 'border-blue-500 bg-blue-50'
                           : 'border-gray-200 bg-gray-50'
                       }`}
                     >
@@ -328,12 +358,25 @@ const SendNairaGetUSD = () => {
                   ))}
                 </div>
               </Card>
-            ) : (
-              <Card className="p-4 bg-white border-gray-200">
+            ) : null}
+
+            {/* Delivery Address for delivery method */}
+            {formData.deliveryMethod === 'delivery' && (
+              <Card className="p-4">
                 <h3 className="font-semibold text-gray-900 mb-3 flex items-center">
                   <MapPin size={20} className="mr-2 text-gray-600" />
                   Delivery Address
                 </h3>
+                
+                {prefilledAddress && (
+                  <div className="mb-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                    <p className="text-xs text-blue-600 font-medium flex items-center">
+                      <MapPin size={12} className="mr-1" />
+                      Auto-filled from your profile
+                    </p>
+                  </div>
+                )}
+                
                 <div className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Street Address *</label>
@@ -341,7 +384,6 @@ const SendNairaGetUSD = () => {
                       placeholder="House number and street name"
                       value={formData.deliveryAddress.street}
                       onChange={(e) => handleInputChange('deliveryAddress.street', e.target.value)}
-                      className={isPremium ? 'border-yellow-200 focus:border-yellow-400' : ''}
                     />
                   </div>
                   <div className="grid grid-cols-2 gap-4">
@@ -351,7 +393,6 @@ const SendNairaGetUSD = () => {
                         placeholder="e.g., Lagos"
                         value={formData.deliveryAddress.city}
                         onChange={(e) => handleInputChange('deliveryAddress.city', e.target.value)}
-                        className={isPremium ? 'border-yellow-200 focus:border-yellow-400' : ''}
                       />
                     </div>
                     <div>
@@ -360,7 +401,6 @@ const SendNairaGetUSD = () => {
                         placeholder="e.g., Lagos State"
                         value={formData.deliveryAddress.state}
                         onChange={(e) => handleInputChange('deliveryAddress.state', e.target.value)}
-                        className={isPremium ? 'border-yellow-200 focus:border-yellow-400' : ''}
                       />
                     </div>
                   </div>
@@ -370,7 +410,6 @@ const SendNairaGetUSD = () => {
                       placeholder="Nearby landmark for easy location"
                       value={formData.deliveryAddress.landmark}
                       onChange={(e) => handleInputChange('deliveryAddress.landmark', e.target.value)}
-                      className={isPremium ? 'border-yellow-200 focus:border-yellow-400' : ''}
                     />
                   </div>
                 </div>
@@ -378,11 +417,21 @@ const SendNairaGetUSD = () => {
             )}
 
             {/* Contact Information */}
-            <Card className="p-4 bg-white border-gray-200">
+            <Card className="p-4">
               <h3 className="font-semibold text-gray-900 mb-3 flex items-center">
                 <Phone size={20} className="mr-2 text-gray-600" />
                 Contact Information
               </h3>
+              
+              {prefilledContact && (
+                <div className="mb-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                  <p className="text-xs text-blue-600 font-medium flex items-center">
+                    <Phone size={12} className="mr-1" />
+                    Auto-filled from your profile
+                  </p>
+                </div>
+              )}
+              
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number *</label>
@@ -391,7 +440,6 @@ const SendNairaGetUSD = () => {
                     placeholder="+234 802 123 4567"
                     value={formData.phoneNumber}
                     onChange={(e) => handleInputChange('phoneNumber', e.target.value)}
-                    className={isPremium ? 'border-yellow-200 focus:border-yellow-400' : ''}
                   />
                 </div>
                 <div>
@@ -401,7 +449,6 @@ const SendNairaGetUSD = () => {
                     placeholder="+234 802 123 4567"
                     value={formData.whatsappNumber}
                     onChange={(e) => handleInputChange('whatsappNumber', e.target.value)}
-                    className={isPremium ? 'border-yellow-200 focus:border-yellow-400' : ''}
                   />
                 </div>
               </div>
@@ -421,7 +468,6 @@ const SendNairaGetUSD = () => {
                     min={new Date().toISOString().split('T')[0]}
                     value={formData.preferredDate}
                     onChange={(e) => handleInputChange('preferredDate', e.target.value)}
-                    className={isPremium ? 'border-yellow-200 focus:border-yellow-400' : ''}
                   />
                 </div>
                 <div>
@@ -434,9 +480,7 @@ const SendNairaGetUSD = () => {
                         disabled={!slot.available}
                         className={`p-3 rounded-lg border-2 transition-colors text-left ${
                           formData.preferredTime === slot.value
-                            ? isPremium
-                              ? 'border-yellow-500 bg-yellow-50'
-                              : 'border-blue-500 bg-blue-50'
+                            ? 'border-blue-500 bg-blue-50'
                             : slot.available 
                               ? 'border-gray-200 bg-gray-50'
                               : 'border-gray-100 bg-gray-100 opacity-50 cursor-not-allowed'
@@ -458,7 +502,7 @@ const SendNairaGetUSD = () => {
                 placeholder="Special instructions, gate codes, or any other information"
                 value={formData.additionalNotes}
                 onChange={(e) => handleInputChange('additionalNotes', e.target.value)}
-                className={`min-h-[80px] ${isPremium ? 'border-yellow-200 focus:border-yellow-400' : ''}`}
+                className="min-h-[80px]"
               />
             </Card>
 
@@ -494,13 +538,8 @@ const SendNairaGetUSD = () => {
               <Button
                 onClick={handleConfirmOrder}
                 disabled={!isStep2Valid()}
-                className={`flex-1 h-12 ${
-                  isPremium
-                    ? 'bg-yellow-600 hover:bg-yellow-700'
-                    : 'bg-blue-600 hover:bg-blue-700'
-                } text-white`}
+                className="flex-1 h-12 bg-blue-600 hover:bg-blue-700 text-white"
               >
-                {isPremium && <Crown size={16} className="mr-2" />}
                 Proceed to Payment
               </Button>
             </div>

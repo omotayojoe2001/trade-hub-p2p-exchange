@@ -293,28 +293,28 @@ const PremiumBuyCryptoPaymentStep2 = () => {
   const statusInfo = getStatusDisplay();
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-yellow-50 to-orange-50 pb-20">
+    <div className="min-h-screen bg-background pb-20">
       {/* Header */}
-      <div className="sticky top-0 bg-white/95 backdrop-blur-sm border-b border-yellow-200 p-4 flex items-center justify-between">
+      <div className="sticky top-0 bg-background/95 backdrop-blur-sm border-b p-4 flex items-center justify-between">
         <Button variant="ghost" size="icon" onClick={() => navigate('/premium-buy-crypto-payment-step1', { state: location.state })}>
-          <ArrowLeft className="w-5 h-5 text-yellow-700" />
+          <ArrowLeft className="w-5 h-5" />
         </Button>
         <div className="flex items-center space-x-2">
-          <Crown size={16} className="text-yellow-600" />
-          <h1 className="text-lg font-semibold text-yellow-900">Premium Buy {coinType} - Step 2</h1>
+          <Crown size={16} className="text-muted-foreground" />
+          <h1 className="text-lg font-semibold">Premium Buy {coinType} - Step 2</h1>
         </div>
-        <div className="bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-xs font-medium flex items-center">
+        <div className="bg-muted text-muted-foreground px-2 py-1 rounded-full text-xs font-medium flex items-center">
           <Crown size={10} className="mr-1" />
           Premium
         </div>
       </div>
 
       {/* Timer */}
-      <div className="p-4 bg-gradient-to-r from-orange-100 to-yellow-100 border-b border-orange-200">
+      <div className="p-4 bg-muted border-b">
         <div className="flex items-center justify-center">
-          <Clock className="w-5 h-5 text-orange-600 mr-2" />
-          <Crown size={14} className="text-orange-600 mr-2" />
-          <span className="text-orange-800 font-semibold">
+          <Clock className="w-5 h-5 text-muted-foreground mr-2" />
+          <Crown size={14} className="text-muted-foreground mr-2" />
+          <span className="font-semibold">
             Premium Time Remaining: {formatTime(countdown)}
           </span>
         </div>
@@ -322,7 +322,7 @@ const PremiumBuyCryptoPaymentStep2 = () => {
 
       <div className="p-4 space-y-6">
         {/* Status Display */}
-        <Card className="bg-white/90 border-yellow-200">
+        <Card>
           <CardContent className="p-6 text-center">
             <div className="mb-4">{statusInfo.icon}</div>
             <div className="flex items-center justify-center space-x-2 mb-2">
@@ -355,7 +355,7 @@ const PremiumBuyCryptoPaymentStep2 = () => {
 
         {/* Bank Details */}
         {tradeStatus === 'escrow_funded' && merchantBankDetails && (
-          <Card className="bg-white/90 border-yellow-200">
+          <Card>
             <CardHeader>
               <CardTitle className="text-sm flex items-center">
                 <Crown size={16} className="mr-2 text-yellow-600" />
@@ -366,12 +366,12 @@ const PremiumBuyCryptoPaymentStep2 = () => {
               </p>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="p-4 bg-gradient-to-r from-green-50 to-yellow-50 rounded-lg border border-green-200">
+              <div className="p-4 bg-muted rounded-lg">
                 <div className="space-y-3">
                   <div className="flex justify-between items-center">
-                    <span className="text-sm text-yellow-700">Bank Name</span>
+                    <span className="text-sm text-muted-foreground">Bank Name</span>
                     <div className="flex items-center gap-2">
-                      <span className="font-medium text-yellow-900">{merchantBankDetails.bank_name}</span>
+                      <span className="font-medium">{merchantBankDetails.bank_name}</span>
                       <Button
                         variant="ghost"
                         size="sm"
@@ -383,9 +383,9 @@ const PremiumBuyCryptoPaymentStep2 = () => {
                   </div>
                   
                   <div className="flex justify-between items-center">
-                    <span className="text-sm text-yellow-700">Account Number</span>
+                    <span className="text-sm text-muted-foreground">Account Number</span>
                     <div className="flex items-center gap-2">
-                      <span className="font-medium text-yellow-900">{merchantBankDetails.account_number}</span>
+                      <span className="font-medium">{merchantBankDetails.account_number}</span>
                       <Button
                         variant="ghost"
                         size="sm"
@@ -397,9 +397,9 @@ const PremiumBuyCryptoPaymentStep2 = () => {
                   </div>
                   
                   <div className="flex justify-between items-center">
-                    <span className="text-sm text-yellow-700">Account Name</span>
+                    <span className="text-sm text-muted-foreground">Account Name</span>
                     <div className="flex items-center gap-2">
-                      <span className="font-medium text-yellow-900">{merchantBankDetails.account_name}</span>
+                      <span className="font-medium">{merchantBankDetails.account_name}</span>
                       <Button
                         variant="ghost"
                         size="sm"
@@ -411,14 +411,14 @@ const PremiumBuyCryptoPaymentStep2 = () => {
                   </div>
                   
                   <div className="flex justify-between items-center">
-                    <span className="text-sm text-yellow-700">Amount</span>
-                    <span className="font-semibold text-lg text-yellow-800">₦{cashAmount?.toLocaleString()}</span>
+                    <span className="text-sm text-muted-foreground">Amount</span>
+                    <span className="font-semibold text-lg text-primary">₦{cashAmount?.toLocaleString()}</span>
                   </div>
                   
                   <div className="flex justify-between items-center">
-                    <span className="text-sm text-yellow-700">Reference</span>
+                    <span className="text-sm text-muted-foreground">Reference</span>
                     <div className="flex items-center gap-2">
-                      <span className="font-medium text-yellow-900">{merchantBankDetails.reference}</span>
+                      <span className="font-medium">{merchantBankDetails.reference}</span>
                       <Button
                         variant="ghost"
                         size="sm"
@@ -437,7 +437,7 @@ const PremiumBuyCryptoPaymentStep2 = () => {
                   <Crown size={14} className="mr-1 text-yellow-600" />
                   Upload Premium Payment Proof
                 </label>
-                <div className="border-2 border-dashed border-yellow-300 rounded-lg p-4 bg-yellow-50">
+                <div className="border-2 border-dashed border-muted rounded-lg p-4 bg-muted/50">
                   <input
                     type="file"
                     accept="image/*"
@@ -447,8 +447,8 @@ const PremiumBuyCryptoPaymentStep2 = () => {
                   />
                   <label htmlFor="payment-proof" className="cursor-pointer">
                     <div className="text-center">
-                      <Upload className="w-8 h-8 text-yellow-600 mx-auto mb-2" />
-                      <p className="text-sm text-yellow-700">
+                      <Upload className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
+                      <p className="text-sm text-muted-foreground">
                         {paymentProof ? paymentProof.name : 'Tap to upload premium payment screenshot'}
                       </p>
                     </div>
@@ -461,7 +461,7 @@ const PremiumBuyCryptoPaymentStep2 = () => {
                 <Button
                   onClick={handleMarkAsPaid}
                   disabled={!paymentProof}
-                  className="w-full bg-gradient-to-r from-yellow-600 to-yellow-700 hover:from-yellow-700 hover:to-yellow-800"
+                  className="w-full bg-primary hover:bg-primary/90"
                   size="lg"
                 >
                   <Crown size={16} className="mr-2" />
@@ -474,7 +474,7 @@ const PremiumBuyCryptoPaymentStep2 = () => {
 
         {/* Chat Section */}
         {tradeStatus === 'escrow_funded' && (
-          <Card className="bg-white/90 border-yellow-200">
+          <Card>
             <CardHeader>
               <CardTitle className="text-sm flex items-center gap-2">
                 <MessageSquare className="w-4 h-4 text-yellow-600" />

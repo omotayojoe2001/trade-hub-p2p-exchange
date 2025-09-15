@@ -64,9 +64,10 @@ class VendorPaymentService {
           )
         `)
         .eq('id', orderId)
-        .single();
+        .maybeSingle();
 
       if (orderError) throw orderError;
+      if (!orderData) throw new Error('Order not found');
 
       // Get user profile details
       const { data: profileData, error: profileError } = await supabase

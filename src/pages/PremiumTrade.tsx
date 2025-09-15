@@ -75,7 +75,7 @@ const PremiumTrade = () => {
       title: 'Sell Crypto',
       description: 'Send crypto → Get cash',
       icon: <DollarSign size={32} className="text-blue-600" />,
-      action: () => navigate('/premium/sell'),
+      action: () => navigate('/premium-sell'),
       features: ['Cash Pickup (premium)', 'Cash Delivery (premium)']
     },
     {

@@ -41,6 +41,17 @@ const VendorPaymentConfirmation = () => {
     try {
       setLoading(true);
       
+      // First check if order exists
+      const { data: orderExists, error: checkError } = await supabase
+        .from('cash_order_tracking')
+        .select('id')
+        .eq('id', orderId!)
+        .maybeSingle();
+      
+      if (checkError || !orderExists) {
+        throw new Error('Order not found or you do not have access to this order');
+      }
+      
       const orderData = await vendorPaymentService.getCashOrderWithUserDetails(orderId!);
       setOrderDetails(orderData);
       

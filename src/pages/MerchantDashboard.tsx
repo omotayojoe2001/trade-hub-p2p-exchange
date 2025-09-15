@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowLeft, DollarSign, TrendingUp, Users, Shield, Clock, CheckCircle, AlertTriangle, Star } from 'lucide-react';
+import { ArrowLeft, DollarSign, TrendingUp, Users, Shield, Clock, CheckCircle, AlertTriangle, Star, Crown } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useNavigate } from 'react-router-dom';
@@ -108,11 +108,15 @@ const MerchantDashboard = () => {
         <div className="mb-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-3">Quick Actions</h3>
           <div className="grid grid-cols-2 gap-3">
+            <Button 
+              onClick={() => navigate('/premium-cash-delivery-requests')}
+              className="h-12 bg-yellow-600 hover:bg-yellow-700 text-white flex items-center justify-center"
+            >
+              <Crown size={16} className="mr-2" />
+              Premium Requests
+            </Button>
             <Button className="h-12 bg-blue-600 hover:bg-blue-700 text-white">
               Update Rates
-            </Button>
-            <Button variant="outline" className="h-12">
-              Set Availability
             </Button>
           </div>
         </div>

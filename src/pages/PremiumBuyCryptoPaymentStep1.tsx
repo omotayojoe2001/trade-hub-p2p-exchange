@@ -98,8 +98,7 @@ const PremiumBuyCryptoPaymentStep1 = () => {
           payment_method: 'bank_transfer',
           status: 'open',
           wallet_address: walletAddress,
-          expires_at: expiresAt.toISOString(),
-          is_premium: true
+          expires_at: expiresAt.toISOString()
         })
         .select()
         .single();
@@ -111,21 +110,20 @@ const PremiumBuyCryptoPaymentStep1 = () => {
         .insert({
           user_id: selectedMerchant.user_id,
           type: 'premium_trade_request',
-          title: 'New Premium Buy Crypto Request',
-          message: `${user.user_metadata?.display_name || user.email || 'A premium user'} wants to buy ${cryptoAmount} ${coinType} for ₦${nairaAmount.toLocaleString()}`,
+          title: 'New Buy Crypto Request',
+          message: `${user.user_metadata?.display_name || user.email || 'A user'} wants to buy ${cryptoAmount} ${coinType} for ₦${nairaAmount.toLocaleString()}`,
           data: {
             trade_request_id: tradeRequest.id,
             trade_type: 'buy',
             crypto_type: coinType,
             amount_crypto: parseFloat(cryptoAmount),
-            amount_fiat: nairaAmount,
-            is_premium: true
+            amount_fiat: nairaAmount
           }
         });
 
       toast({
-        title: "Premium Trade Request Sent!",
-        description: `Your premium trade request for ${cryptoAmount} ${coinType} has been sent. Premium merchants respond within 5 minutes.`,
+        title: "Trade Request Sent!",
+        description: `Your trade request for ${cryptoAmount} ${coinType} has been sent to ${selectedMerchant.display_name}. They have 15 minutes to respond.`,
       });
 
       navigate('/premium-buy-crypto-payment-step2', {
@@ -170,9 +168,9 @@ const PremiumBuyCryptoPaymentStep1 = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-yellow-50 to-orange-50 pb-20">
+    <div className="min-h-screen bg-background pb-20">
       {/* Header */}
-      <div className="sticky top-0 backdrop-blur-sm bg-white/95 border-b border-yellow-200 p-4 flex items-center justify-between shadow-sm">
+      <div className="sticky top-0 backdrop-blur-sm bg-background/95 border-b p-4 flex items-center justify-between shadow-sm">
         <Button variant="ghost" size="icon" onClick={() => {
           if (hasUnsavedChanges) {
             const confirmed = window.confirm('You have an active premium trade request. Are you sure you want to cancel?');
@@ -182,18 +180,17 @@ const PremiumBuyCryptoPaymentStep1 = () => {
           } else {
             navigate('/premium-merchant-list', { state: location.state });
           }
-        }} className="hover:bg-yellow-100">
-          <ArrowLeft className="w-5 h-5 text-yellow-700" />
+        }} className="hover:bg-white/80">
+          <ArrowLeft className="w-5 h-5" />
         </Button>
         <div className="text-center">
           <div className="flex items-center justify-center space-x-2">
-            <Crown size={16} className="text-yellow-600" />
-            <h1 className="text-lg font-bold text-yellow-900">Premium Buy {coinType}</h1>
-            <Crown size={16} className="text-yellow-600" />
+            <Crown size={16} className="text-muted-foreground" />
+            <h1 className="text-lg font-bold">Premium Buy {coinType}</h1>
           </div>
-          <p className="text-xs text-yellow-700">Premium Trading - Step 1 of 3</p>
+          <p className="text-xs text-muted-foreground">Premium Trading - Step 1 of 3</p>
         </div>
-        <div className="bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-xs font-medium flex items-center">
+        <div className="bg-muted text-muted-foreground px-2 py-1 rounded-full text-xs font-medium flex items-center">
           <Crown size={10} className="mr-1" />
           Premium
         </div>
@@ -201,34 +198,34 @@ const PremiumBuyCryptoPaymentStep1 = () => {
 
       <div className="p-4 space-y-6">
         {/* Selected Info */}
-        <Card className="bg-white/90 border-yellow-200">
+        <Card>
           <CardHeader>
             <CardTitle className="text-sm flex items-center">
-              <Crown size={16} className="mr-2 text-yellow-600" />
+              <Crown size={16} className="mr-2 text-muted-foreground" />
               Premium Trade Details
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
             <div className="flex justify-between">
-              <span className="text-yellow-700">Cryptocurrency:</span>
-              <span className="font-semibold text-yellow-900">{coinType}</span>
+              <span className="text-muted-foreground">Cryptocurrency:</span>
+              <span className="font-semibold">{coinType}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-yellow-700">Premium Merchant:</span>
-              <span className="font-semibold text-yellow-900">{selectedMerchant.display_name}</span>
+              <span className="text-muted-foreground">Premium Merchant:</span>
+              <span className="font-semibold">{selectedMerchant.display_name}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-yellow-700">Premium Rate:</span>
-              <span className="font-semibold text-yellow-900">₦{getMerchantRate().toLocaleString()}/{coinType}</span>
+              <span className="text-muted-foreground">Premium Rate:</span>
+              <span className="font-semibold">₦{getMerchantRate().toLocaleString()}/{coinType}</span>
             </div>
           </CardContent>
         </Card>
 
         {/* Amount Input */}
-        <Card className="bg-white/90 border-yellow-200">
+        <Card>
           <CardHeader>
             <CardTitle className="text-sm flex items-center">
-              <Crown size={16} className="mr-2 text-yellow-600" />
+              <Crown size={16} className="mr-2 text-muted-foreground" />
               Amount to Buy
             </CardTitle>
           </CardHeader>
@@ -242,25 +239,25 @@ const PremiumBuyCryptoPaymentStep1 = () => {
                 onChange={(e) => setCryptoAmount(e.target.value)}
                 placeholder={`Enter ${coinType} amount`}
                 step="0.00000001"
-                className="border-yellow-200 focus:border-yellow-400"
+                className=""
               />
             </div>
             
             {cryptoAmount && (
-              <div className="p-3 bg-gradient-to-r from-yellow-100 to-orange-100 rounded-lg border border-yellow-200">
-                <p className="text-sm text-yellow-700">You'll pay (Premium Rate)</p>
-                <p className="text-lg font-semibold text-yellow-900">₦{calculateCashAmount().toLocaleString()}</p>
+              <div className="p-3 bg-muted rounded-lg">
+                <p className="text-sm text-muted-foreground">You'll pay (Premium Rate)</p>
+                <p className="text-lg font-semibold">₦{calculateCashAmount().toLocaleString()}</p>
               </div>
             )}
           </CardContent>
         </Card>
 
         {/* Wallet Address */}
-        <Card className="bg-white/90 border-yellow-200">
+        <Card>
           <CardHeader>
             <CardTitle className="text-sm flex items-center gap-2">
-              <Wallet className="w-4 h-4 text-yellow-600" />
-              <Crown size={14} className="text-yellow-600" />
+              <Wallet className="w-4 h-4" />
+              <Crown size={14} className="text-muted-foreground" />
               Premium Wallet Address to Receive {coinType}
             </CardTitle>
           </CardHeader>
@@ -276,37 +273,37 @@ const PremiumBuyCryptoPaymentStep1 = () => {
 
         {/* Trade Summary */}
         {cryptoAmount && walletAddress && (
-          <Card className="bg-gradient-to-r from-yellow-100 to-orange-100 border-yellow-300">
+          <Card>
             <CardHeader>
               <CardTitle className="text-sm flex items-center">
-                <Crown size={16} className="mr-2 text-yellow-600" />
+                <Crown size={16} className="mr-2 text-muted-foreground" />
                 Premium Trade Summary
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="flex justify-between">
-                <span className="text-yellow-700">Crypto Amount:</span>
-                <span className="font-semibold text-yellow-900">{cryptoAmount} {coinType}</span>
+                <span className="text-muted-foreground">Crypto Amount:</span>
+                <span className="font-semibold">{cryptoAmount} {coinType}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-yellow-700">Base Amount:</span>
-                <span className="text-yellow-900">₦{calculateCashAmount().toLocaleString()}</span>
+                <span className="text-muted-foreground">Base Amount:</span>
+                <span>₦{calculateCashAmount().toLocaleString()}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-yellow-700">Premium Fee (2.5%):</span>
-                <span className="text-yellow-900">₦{calculatePlatformFee().toLocaleString()}</span>
+                <span className="text-muted-foreground">Premium Fee (2.5%):</span>
+                <span>₦{calculatePlatformFee().toLocaleString()}</span>
               </div>
-              <div className="border-t border-yellow-300 pt-2 flex justify-between">
-                <span className="font-semibold text-yellow-900">Total Amount:</span>
-                <span className="font-semibold text-yellow-800">₦{calculateTotalAmount().toLocaleString()}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-yellow-700">Premium Merchant:</span>
-                <span className="font-medium text-yellow-900">{selectedMerchant.display_name}</span>
+              <div className="border-t pt-2 flex justify-between">
+                <span className="font-semibold">Total Amount:</span>
+                <span className="font-semibold text-primary">₦{calculateTotalAmount().toLocaleString()}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-yellow-700">Network:</span>
-                <span className="font-medium text-yellow-900">{coinType} Mainnet</span>
+                <span className="text-muted-foreground">Premium Merchant:</span>
+                <span className="font-medium">{selectedMerchant.display_name}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Network:</span>
+                <span className="font-medium">{coinType} Mainnet</span>
               </div>
             </CardContent>
           </Card>
@@ -316,11 +313,11 @@ const PremiumBuyCryptoPaymentStep1 = () => {
         <Button
           onClick={handleSendTradeRequest}
           disabled={!cryptoAmount || !walletAddress || loading}
-          className="w-full font-semibold py-6 text-lg shadow-lg hover:shadow-xl transition-all duration-300 bg-gradient-to-r from-yellow-600 to-yellow-700 hover:from-yellow-700 hover:to-yellow-800 text-white"
+          className="w-full font-semibold py-6 text-lg shadow-lg hover:shadow-xl transition-all duration-300 bg-primary hover:bg-primary/90 text-primary-foreground"
           size="lg"
         >
           <Crown size={16} className="mr-2" />
-          {loading ? 'Sending Premium Request...' : 'Send Premium Trade Request'}
+          {loading ? 'Sending Request...' : 'Send Premium Trade Request'}
         </Button>
       </div>
       

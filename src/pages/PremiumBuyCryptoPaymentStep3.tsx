@@ -205,55 +205,54 @@ const PremiumBuyCryptoPaymentStep3 = () => {
   const statusInfo = getStatusDisplay();
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-yellow-50 to-orange-50 pb-20">
+    <div className="min-h-screen bg-background pb-20">
       {/* Header */}
-      <div className="sticky top-0 bg-white/95 backdrop-blur-sm border-b border-yellow-200 p-4 flex items-center justify-center">
+      <div className="sticky top-0 bg-background/95 backdrop-blur-sm border-b p-4 flex items-center justify-center">
         <div className="flex items-center space-x-2">
-          <Crown size={18} className="text-yellow-600" />
-          <h1 className="text-lg font-semibold text-yellow-900">Premium Buy {coinType} - Final Step</h1>
-          <Crown size={18} className="text-yellow-600" />
+          <Crown size={18} className="text-muted-foreground" />
+          <h1 className="text-lg font-semibold">Premium Buy {coinType} - Final Step</h1>
         </div>
       </div>
 
       <div className="p-4 flex items-center justify-center min-h-96">
-        <Card className="w-full max-w-md bg-white/90 border-yellow-200">
+        <Card className="w-full max-w-md">
           <CardContent className="p-8 text-center">
             <div className="mb-6">{statusInfo.icon}</div>
             <div className="flex items-center justify-center space-x-2 mb-2">
-              <Crown size={20} className="text-yellow-600" />
-              <h2 className="text-xl font-semibold text-yellow-900">{statusInfo.title}</h2>
+              <Crown size={20} className="text-muted-foreground" />
+              <h2 className="text-xl font-semibold">{statusInfo.title}</h2>
             </div>
-            <p className="text-yellow-700 mb-6">
+            <p className="text-muted-foreground mb-6">
               {statusInfo.description}
             </p>
             
             {tradeStatus === 'completed' && (
               <div className="space-y-4">
-                <div className="p-4 bg-gradient-to-r from-green-50 to-yellow-50 rounded-lg border border-green-200">
+                <div className="p-4 bg-muted rounded-lg">
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between">
-                      <span className="text-yellow-700">Premium Trade ID:</span>
-                      <span className="font-mono text-xs text-yellow-900">{tradeData?.id?.slice(0, 8)}...</span>
+                      <span className="text-muted-foreground">Premium Trade ID:</span>
+                      <span className="font-mono text-xs">{tradeData?.id?.slice(0, 8)}...</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-yellow-700">Amount:</span>
-                      <span className="font-semibold text-yellow-900">{tradeData?.amount_crypto} {tradeData?.crypto_type}</span>
+                      <span className="text-muted-foreground">Amount:</span>
+                      <span className="font-semibold">{tradeData?.amount_crypto} {tradeData?.crypto_type}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-yellow-700">Total Paid:</span>
-                      <span className="font-semibold text-yellow-900">₦{tradeData?.naira_amount?.toLocaleString()}</span>
+                      <span className="text-muted-foreground">Total Paid:</span>
+                      <span className="font-semibold">₦{tradeData?.naira_amount?.toLocaleString()}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-yellow-700">Premium Rate:</span>
-                      <span className="font-semibold text-yellow-900">₦{tradeData ? (tradeData.naira_amount / tradeData.amount_crypto).toLocaleString() : 'N/A'}</span>
+                      <span className="text-muted-foreground">Premium Rate:</span>
+                      <span className="font-semibold">₦{tradeData ? (tradeData.naira_amount / tradeData.amount_crypto).toLocaleString() : 'N/A'}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-yellow-700">Premium Wallet:</span>
-                      <span className="font-mono text-xs text-yellow-900">{walletAddress?.slice(0, 10)}...{walletAddress?.slice(-10)}</span>
+                      <span className="text-muted-foreground">Premium Wallet:</span>
+                      <span className="font-mono text-xs">{walletAddress?.slice(0, 10)}...{walletAddress?.slice(-10)}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-yellow-700">Tx Hash:</span>
-                      <span className="font-mono text-xs text-yellow-900">{txHash?.slice(0, 10)}...{txHash?.slice(-10)}</span>
+                      <span className="text-muted-foreground">Tx Hash:</span>
+                      <span className="font-mono text-xs">{txHash?.slice(0, 10)}...{txHash?.slice(-10)}</span>
                     </div>
                   </div>
                 </div>
@@ -262,7 +261,7 @@ const PremiumBuyCryptoPaymentStep3 = () => {
                   <Button
                     onClick={generateReceipt}
                     variant="outline"
-                    className="w-full border-yellow-300 text-yellow-700 hover:bg-yellow-50"
+                    className="w-full"
                   >
                     <Download className="w-4 h-4 mr-2" />
                     <Crown size={14} className="mr-1" />
@@ -286,7 +285,7 @@ const PremiumBuyCryptoPaymentStep3 = () => {
                         isPremium: true
                       }
                     })}
-                    className="w-full bg-gradient-to-r from-yellow-600 to-yellow-700 hover:from-yellow-700 hover:to-yellow-800"
+                    className="w-full bg-primary hover:bg-primary/90"
                   >
                     <Crown size={16} className="mr-2" />
                     View Premium Receipt

@@ -1,393 +1,398 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, MapPin, Package, CreditCard, AlertCircle, CheckCircle } from 'lucide-react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { ArrowLeft, Crown, MapPin, Phone, Plus, Calendar, Clock } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { creditsService } from '@/services/creditsService';
-import { vendorJobService } from '@/services/vendorJobService';
-import { tradeMatchingService } from '@/services/tradeMatchingService';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 
 const PremiumCashDelivery = () => {
-  const [deliveryType, setDeliveryType] = useState<'pickup' | 'delivery'>('delivery');
-  const [amount, setAmount] = useState('');
-  const [address, setAddress] = useState({
-    street: '',
-    city: '',
-    state: '',
-    phone: ''
-  });
-  const [creditsRequired, setCreditsRequired] = useState(0);
-  const [currentBalance, setCurrentBalance] = useState(0);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [step, setStep] = useState(1); // 1: Setup, 2: Confirmation, 3: Success
-  const [jobId, setJobId] = useState('');
-  
   const navigate = useNavigate();
-  const location = useLocation();
   const { user } = useAuth();
+  const [prefilledAddress, setPrefilledAddress] = useState(null);
+  const [prefilledContact, setPrefilledContact] = useState(null);
+  const [showAddNewAddress, setShowAddNewAddress] = useState(false);
+  const [showAddNewContact, setShowAddNewContact] = useState(false);
+  const [selectedAddress, setSelectedAddress] = useState(null);
+  const [selectedContact, setSelectedContact] = useState(null);
+  const [vendors, setVendors] = useState([]);
+  const [selectedAreas, setSelectedAreas] = useState([]);
+  const [showFallbackOptions, setShowFallbackOptions] = useState(false);
+  const [deliveryAddress, setDeliveryAddress] = useState('');
+  const [newContact, setNewContact] = useState({
+    phone_number: '',
+    whatsapp_number: '',
+    label: ''
+  });
+  const [selectedDate, setSelectedDate] = useState('');
+  const [selectedTime, setSelectedTime] = useState('');
+
+  const timeSlots = [
+    { value: 'morning', label: '9:00 AM - 12:00 PM' },
+    { value: 'afternoon', label: '12:00 PM - 4:00 PM' },
+    { value: 'evening', label: '4:00 PM - 7:00 PM' }
+  ];
 
   useEffect(() => {
-    loadUserCredits();
-  }, []);
+    loadPrefilledData();
+    loadVendors();
+  }, [user]);
 
-  useEffect(() => {
-    if (amount) {
-      calculateCredits();
-    }
-  }, [amount]);
-
-  const loadUserCredits = async () => {
-    if (!user?.id) return;
+  const loadVendors = async () => {
     try {
-      const balance = await creditsService.getCreditBalance(user.id);
-      setCurrentBalance(balance);
+      const { data } = await supabase
+        .from('vendors')
+        .select('*')
+        .eq('is_active', true)
+        .order('location');
+      
+      if (data) setVendors(data);
     } catch (error) {
-      console.error('Error loading credits:', error);
+      console.error('Error loading vendors:', error);
     }
   };
 
-  const calculateCredits = async () => {
-    if (!amount) return;
+  const loadPrefilledData = async () => {
+    if (!user) return;
     try {
-      const result = await creditsService.calculateCreditsRequired(parseFloat(amount));
-      setCreditsRequired(result.creditsRequired);
-    } catch (error) {
-      console.error('Error calculating credits:', error);
-    }
-  };
+      // Load user profile data
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
+      
+      if (profile) {
+        // Create address object from profile location
+        const addressFromProfile = {
+          id: 'profile-address',
+          street: profile.location || 'Address not provided',
+          city: 'Lagos', // Default city
+          state: 'Lagos State', // Default state
+          landmark: '',
+          label: 'Profile Address'
+        };
+        setPrefilledAddress(addressFromProfile);
+        setSelectedAddress(addressFromProfile);
+        
+        // Auto-fill delivery address from profile
+        if (profile.location) {
+          setDeliveryAddress(profile.location);
+        }
 
-  const handleSubmit = async () => {
-    if (!user?.id) {
-      setError('Please login to continue');
-      return;
-    }
-
-    if (!amount || parseFloat(amount) <= 0) {
-      setError('Please enter a valid amount');
-      return;
-    }
-
-    if (deliveryType === 'delivery' && (!address.street || !address.city)) {
-      setError('Please enter delivery address');
-      return;
-    }
-
-    if (currentBalance < creditsRequired) {
-      setError(`Insufficient credits. You need ${creditsRequired} credits but have ${currentBalance}.`);
-      return;
-    }
-
-    try {
-      setLoading(true);
-      setError('');
-
-      // Use the new trade matching service
-      const matchResult = await tradeMatchingService.createPremiumTradeRequest(
-        user.id,
-        parseFloat(amount),
-        deliveryType
-      );
-
-      if (matchResult.success) {
-        setJobId(matchResult.vendor_job_id || matchResult.trade_id);
-        console.log('Trade matching successful:', matchResult.message);
-      } else {
-        console.warn('Trade matching failed:', matchResult.message);
-        // Still proceed to show success - request is queued
-        setJobId('queued-' + Date.now());
+        // Create contact object from profile
+        const contactFromProfile = {
+          id: 'profile-contact',
+          phone_number: profile.phone_number || '',
+          whatsapp_number: profile.phone_number || '',
+          label: 'Profile Contact'
+        };
+        setPrefilledContact(contactFromProfile);
+        setSelectedContact(contactFromProfile);
       }
-
-      setStep(2); // Move to confirmation step
-
-    } catch (error: any) {
-      setError(error.message || 'Failed to create delivery request');
-    } finally {
-      setLoading(false);
+    } catch (error) {
+      console.error('Error loading prefilled data:', error);
     }
   };
 
-  const handleConfirmRequest = () => {
-    setStep(3); // Move to success step
+  const saveNewAddress = async () => {
+    if (!newAddress.street || !newAddress.city || !newAddress.state || !newAddress.label) return;
+
+    const { data, error } = await supabase
+      .from('user_addresses')
+      .insert({
+        user_id: user?.id,
+        ...newAddress
+      })
+      .select()
+      .single();
+
+    if (!error && data) {
+      setSelectedAddress(data);
+      setShowAddNewAddress(false);
+      setNewAddress({ street: '', city: '', state: '', landmark: '', label: '' });
+    }
   };
 
-  if (step === 3) {
-    return (
-      <div className="min-h-screen bg-gray-50">
-        <div className="flex items-center p-4 bg-white border-b border-gray-200">
-          <button onClick={() => navigate('/premium-trade')} className="mr-3">
-            <ArrowLeft size={20} className="text-gray-600" />
-          </button>
-          <h1 className="text-lg font-semibold text-gray-900">Request Submitted</h1>
-        </div>
+  const saveNewContact = async () => {
+    if (!newContact.phone_number || !newContact.whatsapp_number || !newContact.label) return;
 
-        <div className="p-4">
-          <Card className="border-green-200 bg-green-50">
-            <CardContent className="p-6 text-center">
-              <CheckCircle className="w-16 h-16 text-green-600 mx-auto mb-4" />
-              <h2 className="text-xl font-semibold text-green-900 mb-2">
-                Cash {deliveryType === 'pickup' ? 'Pickup' : 'Delivery'} Request Submitted!
-              </h2>
-              <p className="text-green-800 mb-4">
-                Your request for ${amount} has been sent to our delivery agent.
-              </p>
-              <div className="space-y-2 text-sm text-green-700">
-                <p>• Credits deducted: {creditsRequired}</p>
-                <p>• Remaining balance: {currentBalance - creditsRequired}</p>
-                <p>• Job ID: {jobId.slice(0, 8)}</p>
-              </div>
-            </CardContent>
-          </Card>
+    const { data, error } = await supabase
+      .from('user_contacts')
+      .insert({
+        user_id: user?.id,
+        ...newContact
+      })
+      .select()
+      .single();
 
-          <div className="mt-6 space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">What Happens Next?</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="flex items-start space-x-3">
-                  <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center text-sm font-semibold text-blue-600">1</div>
-                  <div>
-                    <p className="font-medium">Crypto Trade Matching</p>
-                    <p className="text-sm text-gray-600">We'll match you with a crypto buyer on our platform</p>
-                  </div>
-                </div>
-                <div className="flex items-start space-x-3">
-                  <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center text-sm font-semibold text-blue-600">2</div>
-                  <div>
-                    <p className="font-medium">Buyer Payment</p>
-                    <p className="text-sm text-gray-600">The buyer will pay Naira to our agent's account</p>
-                  </div>
-                </div>
-                <div className="flex items-start space-x-3">
-                  <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center text-sm font-semibold text-blue-600">3</div>
-                  <div>
-                    <p className="font-medium">Cash {deliveryType === 'pickup' ? 'Pickup' : 'Delivery'}</p>
-                    <p className="text-sm text-gray-600">
-                      Our agent will {deliveryType === 'pickup' ? 'meet you at the pickup location' : 'deliver cash to your address'}
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Button
-              onClick={() => navigate('/premium-trades')}
-              className="w-full h-12 bg-blue-600 hover:bg-blue-700"
-            >
-              View My Trades
-            </Button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (step === 2) {
-    return (
-      <div className="min-h-screen bg-gray-50">
-        <div className="flex items-center p-4 bg-white border-b border-gray-200">
-          <button onClick={() => setStep(1)} className="mr-3">
-            <ArrowLeft size={20} className="text-gray-600" />
-          </button>
-          <h1 className="text-lg font-semibold text-gray-900">Confirm Request</h1>
-        </div>
-
-        <div className="p-4">
-          <Card className="mb-6">
-            <CardHeader>
-              <CardTitle className="text-lg">Request Summary</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex justify-between">
-                <span>Service Type:</span>
-                <span className="font-medium">Cash {deliveryType === 'pickup' ? 'Pickup' : 'Delivery'}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Amount:</span>
-                <span className="font-medium">${amount}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Credits Required:</span>
-                <span className="font-medium text-red-600">{creditsRequired} credits</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Remaining Balance:</span>
-                <span className="font-medium">{currentBalance - creditsRequired} credits</span>
-              </div>
-              {deliveryType === 'delivery' && (
-                <div>
-                  <span>Delivery Address:</span>
-                  <p className="text-sm text-gray-600 mt-1">
-                    {address.street}, {address.city}, {address.state}
-                  </p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          <div className="space-y-3">
-            <Button
-              onClick={handleConfirmRequest}
-              className="w-full h-12 bg-green-600 hover:bg-green-700"
-            >
-              Confirm & Submit Request
-            </Button>
-            <Button
-              onClick={() => setStep(1)}
-              variant="outline"
-              className="w-full h-12"
-            >
-              Back to Edit
-            </Button>
-          </div>
-        </div>
-      </div>
-    );
-  }
+    if (!error && data) {
+      setSelectedContact(data);
+      setShowAddNewContact(false);
+      setNewContact({ phone_number: '', whatsapp_number: '', label: '' });
+    }
+  };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="flex items-center p-4 bg-white border-b border-gray-200">
-        <button onClick={() => navigate('/premium-trade')} className="mr-3">
-          <ArrowLeft size={20} className="text-gray-600" />
-        </button>
-        <h1 className="text-lg font-semibold text-gray-900">Cash Service</h1>
+    <div className="min-h-screen bg-gray-50 pb-20">
+      <div className="bg-white border-b px-4 py-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center">
+            <Link to="/premium-trade" className="mr-4">
+              <ArrowLeft size={24} className="text-gray-600" />
+            </Link>
+            <div>
+              <h1 className="text-xl font-semibold flex items-center">
+                <Crown size={20} className="mr-2 text-gray-600" />
+                Premium Cash Delivery
+              </h1>
+              <p className="text-gray-600 text-sm">Delivery to your address</p>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <div className="p-4">
-        {error && (
-          <Alert className="mb-4 border-red-200 bg-red-50">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription className="text-red-800">
-              {error}
-            </AlertDescription>
-          </Alert>
-        )}
-
-        {/* Credits Balance */}
-        <Card className="mb-6">
-          <CardContent className="p-4 text-center">
-            <div className="flex items-center justify-center space-x-2 mb-2">
-              <CreditCard className="w-5 h-5 text-blue-600" />
-              <span className="text-lg font-semibold text-blue-600">{currentBalance} Credits</span>
-            </div>
-            <p className="text-sm text-gray-600">Available Balance</p>
-          </CardContent>
-        </Card>
-
-        {/* Service Type Selection */}
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle className="text-lg">Select Service Type</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 gap-4">
+      <div className="p-4 space-y-6">
+        {/* Area Selection for Vendor Matching */}
+        <Card className="p-4">
+          <h3 className="font-semibold text-gray-900 mb-3 flex items-center">
+            <MapPin size={20} className="mr-2 text-gray-600" />
+            Select Closest Area(s)
+          </h3>
+          <p className="text-sm text-gray-600 mb-4">Choose the area(s) closest to your delivery address. This helps us assign the right vendor.</p>
+          
+          <div className="space-y-3">
+            {vendors.map((vendor) => (
               <button
-                onClick={() => setDeliveryType('delivery')}
-                className={`p-4 rounded-lg border-2 transition-all ${
-                  deliveryType === 'delivery'
+                key={vendor.id}
+                onClick={() => {
+                  const isSelected = selectedAreas.includes(vendor.location);
+                  if (isSelected) {
+                    setSelectedAreas(prev => prev.filter(area => area !== vendor.location));
+                  } else {
+                    setSelectedAreas(prev => [...prev, vendor.location]);
+                  }
+                }}
+                className={`w-full p-3 rounded-lg border-2 transition-colors text-left ${
+                  selectedAreas.includes(vendor.location)
                     ? 'border-blue-500 bg-blue-50'
-                    : 'border-gray-200 hover:border-gray-300'
+                    : 'border-gray-200 bg-gray-50'
                 }`}
               >
-                <MapPin className="w-8 h-8 mx-auto mb-2 text-green-600" />
-                <p className="font-medium">Cash Delivery</p>
-                <p className="text-xs text-gray-600">We deliver to you</p>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="font-medium text-gray-900">{vendor.location}</div>
+                    <div className="text-sm text-gray-600">{vendor.address}</div>
+                    <div className="text-xs text-gray-500 mt-1">
+                      {vendor.area_type === 'mainland' ? '🏢 Mainland' : '🏝️ Island'}
+                    </div>
+                  </div>
+                  {selectedAreas.includes(vendor.location) && (
+                    <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center">
+                      <span className="text-white text-xs">✓</span>
+                    </div>
+                  )}
+                </div>
               </button>
-              <button
-                onClick={() => setDeliveryType('pickup')}
-                className={`p-4 rounded-lg border-2 transition-all ${
-                  deliveryType === 'pickup'
-                    ? 'border-blue-500 bg-blue-50'
-                    : 'border-gray-200 hover:border-gray-300'
-                }`}
-              >
-                <Package className="w-8 h-8 mx-auto mb-2 text-blue-600" />
-                <p className="font-medium">Cash Pickup</p>
-                <p className="text-xs text-gray-600">You meet our agent</p>
-              </button>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Amount Input */}
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle className="text-lg">Enter Amount (USD)</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Input
-              type="number"
-              placeholder="Enter amount in USD"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              className="text-lg h-12"
-            />
-            {creditsRequired > 0 && (
-              <div className="mt-2 p-2 bg-blue-50 rounded">
-                <p className="text-sm text-blue-800">
-                  Credits required: <strong>{creditsRequired}</strong>
-                </p>
+            ))}
+            
+            {/* None of these option */}
+            <button
+              onClick={() => setShowFallbackOptions(!showFallbackOptions)}
+              className={`w-full p-3 rounded-lg border-2 transition-colors text-left ${
+                showFallbackOptions ? 'border-orange-500 bg-orange-50' : 'border-gray-200 bg-gray-50'
+              }`}
+            >
+              <div className="font-medium text-gray-900">None of these are close to me</div>
+              <div className="text-sm text-gray-600">Choose general area instead</div>
+            </button>
+            
+            {showFallbackOptions && (
+              <div className="ml-4 space-y-2">
+                <button
+                  onClick={() => {
+                    setSelectedAreas(['Ikeja', 'Yaba', 'Airport Road']);
+                    setShowFallbackOptions(false);
+                  }}
+                  className="w-full p-2 rounded border border-gray-300 text-left hover:bg-gray-50"
+                >
+                  <span className="font-medium">Lagos Mainland</span>
+                  <span className="text-sm text-gray-600 ml-2">(Ikeja, Yaba, Airport Road)</span>
+                </button>
+                <button
+                  onClick={() => {
+                    setSelectedAreas(['Lagos Island', 'Lekki', 'Ajah']);
+                    setShowFallbackOptions(false);
+                  }}
+                  className="w-full p-2 rounded border border-gray-300 text-left hover:bg-gray-50"
+                >
+                  <span className="font-medium">Lagos Island</span>
+                  <span className="text-sm text-gray-600 ml-2">(Lagos Island, Lekki, Ajah)</span>
+                </button>
               </div>
             )}
-          </CardContent>
+          </div>
         </Card>
 
-        {/* Address Input (for delivery) */}
-        {deliveryType === 'delivery' && (
-          <Card className="mb-6">
-            <CardHeader>
-              <CardTitle className="text-lg">Delivery Address</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <Input
-                placeholder="Street address"
-                value={address.street}
-                onChange={(e) => setAddress({...address, street: e.target.value})}
-              />
-              <div className="grid grid-cols-2 gap-4">
-                <Input
-                  placeholder="City"
-                  value={address.city}
-                  onChange={(e) => setAddress({...address, city: e.target.value})}
-                />
-                <Input
-                  placeholder="State"
-                  value={address.state}
-                  onChange={(e) => setAddress({...address, state: e.target.value})}
-                />
+        {/* Delivery Address Input */}
+        <Card className="p-4">
+          <h3 className="font-semibold text-gray-900 mb-3 flex items-center">
+            <MapPin size={20} className="mr-2 text-gray-600" />
+            Your Delivery Address
+          </h3>
+          
+          {prefilledAddress && (
+            <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+              <p className="text-xs text-blue-600 font-medium flex items-center mb-2">
+                <MapPin size={12} className="mr-1" />
+                Auto-filled from your profile
+              </p>
+              <div className="bg-white p-3 rounded border border-blue-100">
+                <p className="font-medium text-gray-900">{prefilledAddress.label}</p>
+                <p className="text-gray-700">{prefilledAddress.street}</p>
+                <p className="text-gray-700">{prefilledAddress.city}, {prefilledAddress.state}</p>
+                {prefilledAddress.landmark && (
+                  <p className="text-sm text-gray-500">Near: {prefilledAddress.landmark}</p>
+                )}
               </div>
+            </div>
+          )}
+
+          {!showAddNewAddress ? (
+            <Button
+              onClick={() => setShowAddNewAddress(true)}
+              variant="outline"
+              className="w-full"
+            >
+              <Plus size={16} className="mr-2" />
+              {prefilledAddress ? 'Use Different Address' : 'Add Delivery Address'}
+            </Button>
+          ) : (
+            <div className="space-y-3">
+              <Input
+                placeholder="Full delivery address"
+                value={deliveryAddress}
+                onChange={(e) => setDeliveryAddress(e.target.value)}
+              />
+              <div className="flex space-x-2">
+                <Button onClick={() => setShowAddNewAddress(false)} className="flex-1">Use This Address</Button>
+                <Button onClick={() => setShowAddNewAddress(false)} variant="outline">Cancel</Button>
+              </div>
+            </div>
+          )}
+        </Card>
+
+        {/* Contact Information */}
+        <Card className="p-4">
+          <h3 className="font-semibold text-gray-900 mb-3 flex items-center">
+            <Phone size={20} className="mr-2 text-gray-600" />
+            Contact Information
+          </h3>
+          
+          {prefilledContact && (
+            <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+              <p className="text-xs text-blue-600 font-medium flex items-center mb-2">
+                <Phone size={12} className="mr-1" />
+                Auto-filled from your profile
+              </p>
+              <div className="bg-white p-3 rounded border border-blue-100">
+                <p className="font-medium text-gray-900">{prefilledContact.label}</p>
+                <p className="text-sm text-gray-600">Phone: {prefilledContact.phone_number}</p>
+                <p className="text-sm text-gray-600">WhatsApp: {prefilledContact.whatsapp_number}</p>
+              </div>
+            </div>
+          )}
+
+          {!showAddNewContact ? (
+            <Button
+              onClick={() => setShowAddNewContact(true)}
+              variant="outline"
+              className="w-full"
+            >
+              <Plus size={16} className="mr-2" />
+              Add New Contact
+            </Button>
+          ) : (
+            <div className="space-y-3">
+              <Input
+                placeholder="Contact label (e.g., Personal, Work)"
+                value={newContact.label}
+                onChange={(e) => setNewContact(prev => ({ ...prev, label: e.target.value }))}
+              />
               <Input
                 placeholder="Phone number"
-                value={address.phone}
-                onChange={(e) => setAddress({...address, phone: e.target.value})}
+                value={newContact.phone_number}
+                onChange={(e) => setNewContact(prev => ({ ...prev, phone_number: e.target.value }))}
               />
-            </CardContent>
-          </Card>
-        )}
+              <Input
+                placeholder="WhatsApp number"
+                value={newContact.whatsapp_number}
+                onChange={(e) => setNewContact(prev => ({ ...prev, whatsapp_number: e.target.value }))}
+              />
+              <div className="flex space-x-2">
+                <Button onClick={saveNewContact} className="flex-1">Save Contact</Button>
+                <Button onClick={() => setShowAddNewContact(false)} variant="outline">Cancel</Button>
+              </div>
+            </div>
+          )}
+        </Card>
 
-        {/* Submit Button */}
+        {/* Date & Time Selection */}
+        <Card className="p-4">
+          <h3 className="font-semibold text-gray-900 mb-3 flex items-center">
+            <Calendar size={20} className="mr-2 text-gray-600" />
+            Delivery Date & Time
+          </h3>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Preferred Date *</label>
+              <Input
+                type="date"
+                min={new Date().toISOString().split('T')[0]}
+                value={selectedDate}
+                onChange={(e) => setSelectedDate(e.target.value)}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-3">Preferred Time *</label>
+              <div className="grid grid-cols-1 gap-3">
+                {timeSlots.map((slot) => (
+                  <button
+                    key={slot.value}
+                    onClick={() => setSelectedTime(slot.value)}
+                    className={`p-3 rounded-lg border-2 transition-colors text-left ${
+                      selectedTime === slot.value
+                        ? 'border-blue-500 bg-blue-50'
+                        : 'border-gray-200 bg-gray-50'
+                    }`}
+                  >
+                    <div className="flex items-center">
+                      <Clock size={16} className="mr-2 text-gray-600" />
+                      <span className="font-medium text-gray-900">{slot.label}</span>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </Card>
+
         <Button
-          onClick={handleSubmit}
-          disabled={loading || !amount || (deliveryType === 'delivery' && !address.street)}
-          className="w-full h-12 bg-blue-600 hover:bg-blue-700"
+          onClick={() => navigate('/premium-cash-delivery-payment', {
+            state: {
+              selectedAreas,
+              deliveryAddress,
+              selectedContact: selectedContact || prefilledContact,
+              selectedDate,
+              selectedTime
+            }
+          })}
+          disabled={selectedAreas.length === 0 || !deliveryAddress || !(selectedContact || prefilledContact) || !selectedDate || !selectedTime}
+          className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white"
         >
-          {loading ? 'Creating Request...' : `Request Cash ${deliveryType === 'pickup' ? 'Pickup' : 'Delivery'}`}
+          Continue to Payment
         </Button>
-
-        {/* Info */}
-        <div className="mt-4 p-4 bg-gray-100 rounded-lg">
-          <p className="text-sm text-gray-600">
-            <strong>How it works:</strong> You'll be matched with a crypto buyer. They pay our agent, 
-            and our agent delivers cash to you. Credits are deducted when the agent confirms payment.
-          </p>
-        </div>
       </div>
     </div>
   );

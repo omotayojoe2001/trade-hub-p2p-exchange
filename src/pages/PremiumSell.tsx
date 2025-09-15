@@ -68,9 +68,9 @@ const PremiumSell: React.FC = () => {
           onClick={() => {
             if (!method) return;
             if (method === 'delivery') {
-              navigate('/premium/cash-delivery', { state: { amount, nairaAmount: calculateNairaValue(), method } });
+              navigate('/premium-cash-delivery', { state: { amount, nairaAmount: calculateNairaValue(), method } });
             } else {
-              navigate('/premium/cash-pickup', { state: { amount, nairaAmount: calculateNairaValue(), method } });
+              navigate('/premium-cash-pickup', { state: { amount, nairaAmount: calculateNairaValue(), method } });
             }
           }}
         >

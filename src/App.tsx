@@ -134,6 +134,10 @@ import CreditsPurchase from "./pages/CreditsPurchase";
 import VendorAuthGuard from "./components/VendorAuthGuard";
 import VendorDashboard from "./components/VendorDashboard";
 import PremiumCashDelivery from "./pages/PremiumCashDelivery";
+import PremiumCashPickup from "./pages/PremiumCashPickup";
+import PremiumCashDeliveryPayment from "./pages/PremiumCashDeliveryPayment";
+import PremiumCashDeliveryWaiting from "./pages/PremiumCashDeliveryWaiting";
+import PremiumCashDeliveryRequests from "./pages/PremiumCashDeliveryRequests";
 import VendorBankDetails from "./pages/VendorBankDetails";
 import VendorProfile from "./pages/VendorProfile";
 import VendorMessages from "./pages/VendorMessages";
@@ -325,9 +329,12 @@ const AppContent = () => {
             <Route path="/premium-payment" element={<PremiumPayment />} />
             <Route path="/premium-pending" element={<PremiumPending />} />
             <Route path="/premium-dashboard" element={<PremiumDashboard />} />
-            <Route path="/premium/sell" element={<PremiumSell />} />
-            <Route path="/premium/cash-delivery" element={<CashDeliveryDetails />} />
-            <Route path="/premium/cash-pickup" element={<CashPickupDetails />} />
+            <Route path="/premium-sell" element={<PremiumSell />} />
+            <Route path="/premium-cash-pickup" element={<PremiumCashPickup />} />
+            <Route path="/premium-cash-delivery" element={<PremiumCashDelivery />} />
+            <Route path="/premium-cash-delivery-payment" element={<PremiumCashDeliveryPayment />} />
+            <Route path="/premium-cash-delivery-waiting" element={<PremiumCashDeliveryWaiting />} />
+            <Route path="/premium-cash-delivery-requests" element={<PremiumCashDeliveryRequests />} />
 
             <Route path="/sell-for-cash" element={<SellForCash />} />
 
@@ -411,8 +418,7 @@ const AppContent = () => {
         <Route path="/premium-buy-crypto-payment-step2" element={<PremiumBuyCryptoPaymentStep2 />} />
         <Route path="/premium-buy-crypto-payment-step3" element={<PremiumBuyCryptoPaymentStep3 />} />
 
-        {/* Premium Cash Services */}
-        <Route path="/premium/cash-service" element={<PremiumCashDelivery />} />
+        {/* Premium Cash Services - routes already defined above */}
         <Route path="/vendor-bank-details/:jobId?" element={<VendorBankDetails />} />
         <Route path="/send-naira-payment" element={<SendNairaPaymentStep />} />
         <Route path="/vendor/cash-order/:jobId" element={<VendorCashOrderDetails />} />

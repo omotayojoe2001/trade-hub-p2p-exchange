@@ -19,11 +19,13 @@ const PremiumDashboard = () => {
   const [creditsBalance, setCreditsBalance] = useState(0);
   const [profile, setProfile] = useState<any>(null);
   const [trendingCoins, setTrendingCoins] = useState<CoinPrice[]>([]);
+  const [activeOrders, setActiveOrders] = useState([]);
 
   useEffect(() => {
     loadCreditsBalance();
     loadProfile();
     loadTrendingCoins();
+    loadActiveOrders();
   }, [user]);
 
   const loadCreditsBalance = async () => {
@@ -93,6 +95,25 @@ const PremiumDashboard = () => {
       setTrendingCoins(coins);
     } catch (error) {
       console.error('Error loading trending coins:', error);
+    }
+  };
+
+  const loadActiveOrders = async () => {
+    if (!user?.id) return;
+    try {
+      const { data, error } = await supabase
+        .from('premium_cash_orders')
+        .select('*')
+        .eq('user_id', user.id)
+        .not('status', 'eq', 'completed')
+        .not('status', 'eq', 'cancelled')
+        .order('created_at', { ascending: false })
+        .limit(3);
+
+      if (error) throw error;
+      setActiveOrders(data || []);
+    } catch (error) {
+      console.error('Error loading active orders:', error);
     }
   };
 
@@ -271,6 +292,56 @@ const PremiumDashboard = () => {
         </Card>
 
 
+
+        {/* Active Cash Delivery Orders */}
+        {activeOrders.length > 0 && (
+          <Card className="p-4 mb-6 bg-gradient-to-r from-green-50 to-emerald-50 border-green-200">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-semibold text-gray-900 flex items-center">
+                <Truck size={20} className="text-green-600 mr-2" />
+                Active Cash Deliveries
+              </h3>
+              <div className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
+                {activeOrders.length} Active
+              </div>
+            </div>
+            <div className="space-y-3">
+              {activeOrders.map((order) => (
+                <button
+                  key={order.id}
+                  onClick={() => navigate('/premium-cash-delivery-waiting', { state: { orderId: order.id } })}
+                  className="w-full p-3 bg-white rounded-lg border border-green-100 hover:border-green-300 transition-colors text-left"
+                >
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="font-medium text-sm text-gray-900">
+                        ${order.naira_amount?.toLocaleString()} USD Cash
+                      </div>
+                      <div className="text-xs text-gray-500">
+                        {order.crypto_amount} {order.crypto_type} • {order.selected_areas?.join(', ')}
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className={`text-xs px-2 py-1 rounded-full ${
+                        order.status === 'awaiting_merchant' ? 'bg-blue-100 text-blue-800' :
+                        order.status === 'merchant_accepted' ? 'bg-green-100 text-green-800' :
+                        order.status === 'payment_sent' ? 'bg-green-100 text-green-800' :
+                        order.status === 'out_for_delivery' ? 'bg-blue-100 text-blue-800' :
+                        'bg-gray-100 text-gray-800'
+                      }`}>
+                        {order.status === 'awaiting_merchant' ? 'Finding Merchant' :
+                         order.status === 'merchant_accepted' ? 'Merchant Found' :
+                         order.status === 'payment_sent' ? 'Payment Sent' :
+                         order.status === 'out_for_delivery' ? 'Out for Delivery' :
+                         order.status}
+                      </div>
+                    </div>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </Card>
+        )}
 
         {/* Premium Quick Actions */}
         <Card className="p-4 mb-6 bg-gradient-to-r from-purple-50 to-indigo-50 border-purple-200">

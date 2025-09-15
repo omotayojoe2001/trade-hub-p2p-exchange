@@ -185,29 +185,29 @@ const PremiumMerchantList = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-yellow-50 to-orange-50 pb-20">
+    <div className="min-h-screen bg-gray-50 pb-20">
       {/* Header */}
-      <div className="flex items-center justify-between p-4 bg-white/90 backdrop-blur-sm border-b border-yellow-200">
+      <div className="flex items-center justify-between p-4 bg-white border-b border-gray-200">
         <div className="flex items-center">
           <button onClick={() => navigate('/premium-merchant-matching-choice', { state: location.state })} className="mr-4">
-            <ArrowLeft size={24} className="text-yellow-700" />
+            <ArrowLeft size={24} className="text-gray-600" />
           </button>
           <div className="flex items-center">
-            <Crown size={20} className="text-yellow-600 mr-2" />
-            <h1 className="text-lg font-semibold text-yellow-900">Premium Merchants</h1>
+            <Crown size={20} className="text-gray-600 mr-2" />
+            <h1 className="text-lg font-semibold text-gray-900">Premium Merchants</h1>
           </div>
         </div>
-        <div className="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-xs font-medium flex items-center">
+        <div className="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-xs font-medium flex items-center">
           <Crown size={12} className="mr-1" />
           Premium
         </div>
       </div>
 
       {/* Filters */}
-      <div className="p-4 border-b border-yellow-200 bg-white/80">
+      <div className="p-4 border-b border-gray-200 bg-white">
         <div className="flex items-center space-x-3">
           <Select value={sortBy} onValueChange={setSortBy}>
-            <SelectTrigger className="flex-1 bg-gradient-to-r from-yellow-600 to-yellow-700 text-white border-yellow-700">
+            <SelectTrigger className="flex-1 bg-gray-800 text-white border-gray-700">
               <SelectValue placeholder="Sort by: Best Rate" />
             </SelectTrigger>
             <SelectContent>
@@ -216,32 +216,32 @@ const PremiumMerchantList = () => {
               <SelectItem value="highest-rated">Sort by: Highest Rated</SelectItem>
             </SelectContent>
           </Select>
-          <Button variant="outline" size="icon" className="bg-gradient-to-r from-yellow-600 to-yellow-700 text-white border-yellow-700">
+          <Button variant="outline" size="icon" className="bg-gray-800 text-white border-gray-700">
             <Filter size={16} />
           </Button>
         </div>
 
         {/* Filter Tags */}
         <div className="flex space-x-2 mt-3">
-          <span className="bg-yellow-600 text-white text-xs px-3 py-1 rounded-full flex items-center">
+          <span className="bg-blue-500 text-white text-xs px-3 py-1 rounded-full flex items-center">
             <Crown size={10} className="mr-1" />
             Premium Only
           </span>
-          <span className="bg-green-600 text-white text-xs px-3 py-1 rounded-full flex items-center">
+          <span className="bg-green-500 text-white text-xs px-3 py-1 rounded-full flex items-center">
             <Star size={12} className="mr-1" />
             Verified
           </span>
-          <span className="bg-blue-600 text-white text-xs px-3 py-1 rounded-full">Online</span>
+          <span className="bg-gray-600 text-white text-xs px-3 py-1 rounded-full">Online</span>
         </div>
       </div>
 
       {/* Info Banner */}
-      <div className="p-4 bg-gradient-to-r from-yellow-100 to-orange-100 border-b border-yellow-200">
+      <div className="p-4 bg-blue-50 border-b border-blue-200">
         <div className="flex items-start">
-          <div className="w-6 h-6 bg-yellow-600 rounded-full flex items-center justify-center mr-3 mt-0.5">
+          <div className="w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center mr-3 mt-0.5">
             <Crown size={12} className="text-white" />
           </div>
-          <p className="text-sm text-yellow-800">
+          <p className="text-sm text-blue-800">
             Premium merchants offer exclusive rates, faster responses, and priority support. All merchants are verified and rated.
           </p>
         </div>
@@ -264,19 +264,19 @@ const PremiumMerchantList = () => {
           </div>
         ) : (
           filteredMerchants.map((merchant) => (
-            <Card key={merchant.id} className="p-4 bg-white/90 border border-yellow-200 rounded-xl hover:shadow-lg hover:border-yellow-300 transition-all">
+            <Card key={merchant.id} className="p-4 bg-white border border-gray-200 rounded-xl hover:shadow-md transition-all">
               {/* Merchant Header */}
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center">
-                  <div className="w-10 h-10 bg-gradient-to-r from-yellow-100 to-orange-100 rounded-full flex items-center justify-center mr-3">
-                    <span className="text-lg font-semibold text-yellow-700">
+                  <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center mr-3">
+                    <span className="text-lg font-semibold text-gray-600">
                       {getAvatarInitials(merchant.display_name)}
                     </span>
                   </div>
                   <div>
                     <div className="flex items-center space-x-2">
-                      <Crown size={14} className="text-yellow-600" />
-                      <h3 className="font-semibold text-yellow-900">{merchant.display_name}</h3>
+                      <Crown size={14} className="text-gray-600" />
+                      <h3 className="font-semibold text-gray-900">{merchant.display_name}</h3>
                     </div>
                     <div className="flex items-center">
                       {[...Array(5)].map((_, i) => (
@@ -290,7 +290,7 @@ const PremiumMerchantList = () => {
                           }`}
                         />
                       ))}
-                      <span className="text-sm text-yellow-700 ml-1">{merchant.rating.toFixed(1)}</span>
+                      <span className="text-sm text-gray-600 ml-1">{merchant.rating.toFixed(1)}</span>
                     </div>
                   </div>
                 </div>
@@ -303,26 +303,26 @@ const PremiumMerchantList = () => {
               {/* Merchant Stats */}
               <div className="grid grid-cols-2 gap-4 mb-4">
                 <div>
-                  <p className="text-xs text-yellow-600 font-medium mb-1">Premium Trades</p>
-                  <p className="text-sm font-semibold text-yellow-900">{merchant.trade_count}</p>
-                  <p className="text-xs text-yellow-600 font-medium mb-1 mt-2">Payment Methods</p>
-                  <p className="text-sm font-semibold text-yellow-900">
+                  <p className="text-xs text-blue-500 font-medium mb-1">Premium Trades</p>
+                  <p className="text-sm font-semibold text-gray-800">{merchant.trade_count}</p>
+                  <p className="text-xs text-blue-500 font-medium mb-1 mt-2">Payment Methods</p>
+                  <p className="text-sm font-semibold text-gray-800">
                     {merchant.payment_methods.slice(0, 2).join(', ')}
                     {merchant.payment_methods.length > 2 && ` +${merchant.payment_methods.length - 2}`}
                   </p>
                 </div>
                 <div>
-                  <p className="text-xs text-yellow-600 font-medium mb-1">Total Volume</p>
-                  <p className="text-sm font-semibold text-yellow-900">{formatCurrency(merchant.total_volume)}</p>
-                  <p className="text-xs text-yellow-600 font-medium mb-1 mt-2">Response Time</p>
-                  <p className="text-sm font-semibold text-yellow-900">{merchant.response_time || merchant.avg_response_time_minutes} mins</p>
+                  <p className="text-xs text-blue-500 font-medium mb-1">Total Volume</p>
+                  <p className="text-sm font-semibold text-gray-800">{formatCurrency(merchant.total_volume)}</p>
+                  <p className="text-xs text-blue-500 font-medium mb-1 mt-2">Response Time</p>
+                  <p className="text-sm font-semibold text-gray-800">{merchant.response_time || merchant.avg_response_time_minutes} mins</p>
                 </div>
               </div>
 
               {/* Action Button */}
               <Button
                 onClick={() => handleMerchantSelect(merchant.user_id)}
-                className="w-full h-10 bg-gradient-to-r from-yellow-600 to-yellow-700 hover:from-yellow-700 hover:to-yellow-800 text-white font-medium rounded-lg"
+                className="w-full h-10 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg"
                 disabled={!merchant.is_online}
               >
                 <Crown size={16} className="mr-2" />
