@@ -4,13 +4,13 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { useLocation, useNavigate } from 'react-router-dom';
 import PremiumTradeFlow from '@/components/PremiumTradeFlow';
-import { usePremium } from '@/hooks/usePremium';
+
 
 const CashDeliveryDetails: React.FC = () => {
   const navigate = useNavigate();
   const { state } = useLocation() as any;
   const { amount, nairaAmount } = state || {};
-  const { isPremium } = usePremium();
+  const isPremium = false; // Removed premium system
 
   const [showPremiumFlow, setShowPremiumFlow] = useState(false);
   const [fullName, setFullName] = useState('');

@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import PremiumBottomNavigation from '@/components/premium/PremiumBottomNavigation';
+import BottomNavigation from '@/components/BottomNavigation';
 
 const TrendingCoins = () => {
   const navigate = useNavigate();
@@ -268,7 +268,7 @@ const TrendingCoins = () => {
         )}
       </div>
 
-      <PremiumBottomNavigation />
+      <BottomNavigation />
     </div>
   );
 };

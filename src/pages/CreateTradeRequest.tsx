@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { realTimeTradeRequestService } from '@/services/supabaseService';
-import PremiumBottomNavigation from '@/components/premium/PremiumBottomNavigation';
+import BottomNavigation from '@/components/BottomNavigation';
 
 const CreateTradeRequest = () => {
   const navigate = useNavigate();
@@ -266,7 +266,7 @@ const CreateTradeRequest = () => {
         </form>
       </div>
 
-      <PremiumBottomNavigation />
+      <BottomNavigation />
     </div>
   );
 };

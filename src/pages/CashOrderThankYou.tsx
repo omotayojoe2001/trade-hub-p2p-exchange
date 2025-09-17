@@ -3,7 +3,7 @@ import { Crown, CheckCircle, Star, Gift, ArrowRight, Key, Copy } from 'lucide-re
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import PremiumBottomNavigation from '@/components/premium/PremiumBottomNavigation';
+import BottomNavigation from '@/components/BottomNavigation';
 
 const CashOrderThankYou = () => {
   const navigate = useNavigate();
@@ -285,7 +285,7 @@ const CashOrderThankYou = () => {
         </Card>
       </div>
 
-      <PremiumBottomNavigation />
+      <BottomNavigation />
     </div>
   );
 };

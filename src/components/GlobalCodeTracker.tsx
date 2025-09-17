@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { AlertCircle, X, Eye, Clock, MapPin, Truck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { usePremium } from '@/hooks/usePremium';
+
 import { useAuth } from '@/hooks/useAuth';
 
 interface ActiveCode {
@@ -15,7 +15,6 @@ interface ActiveCode {
 }
 
 const GlobalCodeTracker = () => {
-  const { isPremium } = usePremium();
   const { user } = useAuth();
   const [activeCodes, setActiveCodes] = useState<ActiveCode[]>([]);
   const [showDetails, setShowDetails] = useState(false);
@@ -155,8 +154,8 @@ const GlobalCodeTracker = () => {
     }
   };
 
-  // Don't show for non-premium users or when not logged in
-  if (!isPremium || !user || activeCodes.length === 0) {
+  // Don't show when not logged in or no active codes
+  if (!user || activeCodes.length === 0) {
     return null;
   }
 

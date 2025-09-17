@@ -10,7 +10,7 @@ import useInactivityDetector from "@/hooks/useInactivityDetector";
 import { useAuthStorage } from "@/hooks/useAuthStorage";
 import { QuickAuthProvider, useQuickAuth } from "@/hooks/useQuickAuth";
 import { AuthProvider, useAuth } from "./hooks/useAuth";
-import { PremiumProvider } from "./hooks/usePremium";
+
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { useLocation } from "react-router-dom";
 import Index from "./pages/Index";
@@ -20,7 +20,7 @@ import Coins from "./pages/Coins";
 import BuySell from "./pages/BuySell";
 import Settings from "./pages/Settings";
 import Notifications from "./pages/Notifications";
-import Premium from "./pages/Premium";
+
 
 import MerchantList from "./pages/MerchantList";
 import SelectCoin from "./pages/SelectCoin";
@@ -75,32 +75,13 @@ import BuyCryptoFlow from "./pages/BuyCryptoFlow";
 import BuyCryptoMerchantSelection from "./pages/BuyCryptoMerchantSelection";
 // Removed BuyCryptoSearching - not needed
 import MerchantDashboard from "./pages/MerchantDashboard";
-import PremiumPayment from "./pages/PremiumPayment";
-import PremiumPending from "./pages/PremiumPending";
-import PremiumDashboard from "./pages/PremiumDashboard";
-// Removed NotificationsDemo - not needed
-import PremiumSell from "./pages/PremiumSell";
 import CashDeliveryDetails from "./pages/CashDeliveryDetails";
 import CashPickupDetails from "./pages/CashPickupDetails";
-
 import SellForCash from "./pages/SellForCash";
-
 import CurrencyConversion from "./pages/CurrencyConversion";
-import PremiumTrades from "./pages/PremiumTrades";
-import PremiumNotifications from "./pages/PremiumNotifications";
-import PremiumSettings from "./pages/PremiumSettings";
-import PremiumTrade from "./pages/PremiumTrade";
-import PremiumMessages from "./pages/PremiumMessages";
-import PremiumNews from "./pages/PremiumNews";
 import TrendingCoins from "./pages/TrendingCoins";
-import PremiumReferral from "./pages/PremiumReferral";
-// Removed PremiumChatDetail, NewsDetail, PremiumNewsDetail, ChatDetail - not needed
 import CoinDetailPage from "./pages/CoinDetailPage";
-import PremiumTradeRequests from "./pages/PremiumTradeRequests";
 import CreateTradeRequest from "./pages/CreateTradeRequest";
-
-import Premium2FA from "./pages/Premium2FA";
-import PremiumProfile from "./pages/PremiumProfile";
 import UserProfile from "./components/UserProfile";
 
 import SellCryptoBankTransfer from "./pages/SellCryptoBankTransfer";
@@ -122,22 +103,15 @@ import EscrowTradeFlow from "./pages/EscrowTradeFlow";
 import ReceiptPage from "./pages/ReceiptPage";
 import { Blog } from "./pages/Blog";
 import MerchantMatchingChoice from "./pages/MerchantMatchingChoice";
-import PremiumMerchantChoice from "./pages/PremiumMerchantChoice";
 import IncomingTradeRequests from "./pages/IncomingTradeRequests";
 import TradeRequestNotifications from "./pages/TradeRequestNotifications";
 import SellCryptoTradeRequestDetails from "./pages/SellCryptoTradeRequestDetails";
-import ManageSubscription from "./pages/ManageSubscription";
 import AutoMerchantMatch from "./pages/AutoMerchantMatch";
 import VendorLogin from "./pages/VendorLogin";
 import SimpleVendorDashboard from "./pages/SimpleVendorDashboard";
 import CreditsPurchase from "./pages/CreditsPurchase";
 import VendorAuthGuard from "./components/VendorAuthGuard";
 import VendorDashboard from "./components/VendorDashboard";
-import PremiumCashDelivery from "./pages/PremiumCashDelivery";
-import PremiumCashPickup from "./pages/PremiumCashPickup";
-import PremiumCashDeliveryPayment from "./pages/PremiumCashDeliveryPayment";
-import PremiumCashDeliveryWaiting from "./pages/PremiumCashDeliveryWaiting";
-import PremiumCashDeliveryRequests from "./pages/PremiumCashDeliveryRequests";
 import VendorBankDetails from "./pages/VendorBankDetails";
 import VendorProfile from "./pages/VendorProfile";
 import VendorMessages from "./pages/VendorMessages";
@@ -145,16 +119,9 @@ import SendNairaPaymentStep from "./pages/SendNairaPaymentStep";
 import VendorCashOrderDetails from "./pages/VendorCashOrderDetails";
 import VendorPaymentConfirmation from "./pages/VendorPaymentConfirmation";
 import VendorTransactions from "./pages/VendorTransactions";
-import PersistentQuoteCode from "./components/premium/PersistentQuoteCode";
 
-// Premium Buy Flow Pages
-import PremiumSelectCoin from "./pages/PremiumSelectCoin";
-import PremiumMerchantMatchingChoice from "./pages/PremiumMerchantMatchingChoice";
-import PremiumAutoMerchantMatch from "./pages/PremiumAutoMerchantMatch";
-import PremiumMerchantList from "./pages/PremiumMerchantList";
-import PremiumBuyCryptoPaymentStep1 from "./pages/PremiumBuyCryptoPaymentStep1";
-import PremiumBuyCryptoPaymentStep2 from "./pages/PremiumBuyCryptoPaymentStep2";
-import PremiumBuyCryptoPaymentStep3 from "./pages/PremiumBuyCryptoPaymentStep3";
+
+
 // Removed BlogDetail - not needed
 import { ThankYouPage } from "./pages/ThankYouPage";
 // Removed SupabaseTest - not needed
@@ -261,7 +228,7 @@ const AppContent = () => {
             <Route path="/buy-sell" element={<BuySell />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/notifications" element={<Notifications />} />
-            <Route path="/premium" element={<Premium />} />
+
             <Route path="/referrals" element={<Referrals />} />
             <Route path="/profile-settings" element={<ProfileSettings />} />
             <Route path="/security" element={<Security />} />
@@ -288,13 +255,11 @@ const AppContent = () => {
             <Route path="/buy-crypto-dispute" element={<BuyCryptoDispute />} />
 
         <Route path="/merchant-matching-choice" element={<MerchantMatchingChoice />} />
-        <Route path="/premium-merchant-choice" element={<PremiumMerchantChoice />} />
         <Route path="/incoming-trade-requests" element={<IncomingTradeRequests />} />
         <Route path="/trade-notifications" element={<TradeRequestNotifications />} />
         <Route path="/sell-crypto-trade-request-details" element={<SellCryptoTradeRequestDetails />} />
             <Route path="/auto-merchant-match" element={<AutoMerchantMatch />} />
             <Route path="/merchant-list" element={<MerchantList />} />
-            <Route path="/manage-subscription" element={<ManageSubscription />} />
             <Route path="/select-coin" element={<SelectCoin />} />
             <Route path="/my-trades" element={<MyTrades />} />
             <Route path="/news" element={<CryptoNews />} />
@@ -326,34 +291,14 @@ const AppContent = () => {
             <Route path="/rate-merchant" element={<RateMerchant />} />
             <Route path="/buy-crypto-flow" element={<BuyCryptoFlow />} />
             <Route path="/merchant-dashboard" element={<MerchantDashboard />} />
-            <Route path="/premium-payment" element={<PremiumPayment />} />
-            <Route path="/premium-pending" element={<PremiumPending />} />
-            <Route path="/premium-dashboard" element={<PremiumDashboard />} />
-            <Route path="/premium-sell" element={<PremiumSell />} />
-            <Route path="/premium-cash-pickup" element={<PremiumCashPickup />} />
-            <Route path="/premium-cash-delivery" element={<PremiumCashDelivery />} />
-            <Route path="/premium-cash-delivery-payment" element={<PremiumCashDeliveryPayment />} />
-            <Route path="/premium-cash-delivery-waiting" element={<PremiumCashDeliveryWaiting />} />
-            <Route path="/premium-cash-delivery-requests" element={<PremiumCashDeliveryRequests />} />
 
             <Route path="/sell-for-cash" element={<SellForCash />} />
 
             <Route path="/currency-conversion" element={<CurrencyConversion />} />
-            <Route path="/premium-trades" element={<PremiumTrades />} />
-            <Route path="/premium-notifications" element={<PremiumNotifications />} />
-            <Route path="/premium-settings" element={<PremiumSettings />} />
-            <Route path="/premium-trade" element={<PremiumTrade />} />
-            <Route path="/premium-messages" element={<PremiumMessages />} />
-            <Route path="/premium-news" element={<PremiumNews />} />
             <Route path="/trending-coins" element={<TrendingCoins />} />
-            <Route path="/premium-referral" element={<PremiumReferral />} />
             {/* Removed demo chat/news routes - not needed */}
             <Route path="/coin-detail/:coinId" element={<CoinDetailPage />} />
-            <Route path="/premium-trade-requests" element={<PremiumTradeRequests />} />
             <Route path="/create-trade-request" element={<CreateTradeRequest />} />
-            
-            <Route path="/premium-2fa" element={<Premium2FA />} />
-            <Route path="/premium-profile" element={<PremiumProfile />} />
             <Route path="/user-profile/:userId" element={<UserProfile />} />
             
             <Route path="/sell-crypto-bank-transfer" element={<SellCryptoBankTransfer />} />
@@ -362,7 +307,6 @@ const AppContent = () => {
             <Route path="/cash-pickup-confirmation" element={<CashPickupConfirmation />} />
             <Route path="/cash-delivery-confirmation" element={<CashDeliveryConfirmation />} />
             <Route path="/send-naira-get-usd" element={<SendNairaGetUSD />} />
-            <Route path="/premium-trade-completed" element={<PremiumTradeCompleted />} />
             <Route path="/cash-order-thank-you" element={<CashOrderThankYou />} />
             <Route path="/delivery-status" element={<DeliveryStatus />} />
         <Route path="/trade-requests" element={<TradeRequests />} />
@@ -409,18 +353,10 @@ const AppContent = () => {
         {/* Credits Routes */}
         <Route path="/credits/purchase" element={<CreditsPurchase />} />
 
-        {/* Premium Buy Flow Routes */}
-        <Route path="/premium-select-coin" element={<PremiumSelectCoin />} />
-        <Route path="/premium-merchant-matching-choice" element={<PremiumMerchantMatchingChoice />} />
-        <Route path="/premium-auto-merchant-match" element={<PremiumAutoMerchantMatch />} />
-        <Route path="/premium-merchant-list" element={<PremiumMerchantList />} />
-        <Route path="/premium-buy-crypto-payment-step1" element={<PremiumBuyCryptoPaymentStep1 />} />
-        <Route path="/premium-buy-crypto-payment-step2" element={<PremiumBuyCryptoPaymentStep2 />} />
-        <Route path="/premium-buy-crypto-payment-step3" element={<PremiumBuyCryptoPaymentStep3 />} />
-
-        {/* Premium Cash Services - routes already defined above */}
+        {/* Cash Services Routes */}
         <Route path="/vendor-bank-details/:jobId?" element={<VendorBankDetails />} />
-        <Route path="/send-naira-payment" element={<SendNairaPaymentStep />} />
+        <Route path="/send-naira-payment-step" element={<SendNairaPaymentStep />} />
+        <Route path="/credits-purchase" element={<CreditsPurchase />} />
         <Route path="/vendor/cash-order/:jobId" element={<VendorCashOrderDetails />} />
         <Route path="/vendor/payment-confirmation/:orderId" element={
           <VendorAuthGuard>
@@ -439,9 +375,7 @@ const AppContent = () => {
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
-        
-        {/* Persistent Quote Code for Premium Users */}
-        <PersistentQuoteCode />
+
     </>
   );
 };
@@ -451,7 +385,6 @@ const App = () => (
     <BrowserRouter>
       <ThemeProvider>
         <AuthProvider>
-          <PremiumProvider>
             <QuickAuthProvider>
               <TooltipProvider>
                 <AppContent />
@@ -459,7 +392,6 @@ const App = () => (
                 <Sonner />
               </TooltipProvider>
             </QuickAuthProvider>
-          </PremiumProvider>
         </AuthProvider>
       </ThemeProvider>
     </BrowserRouter>

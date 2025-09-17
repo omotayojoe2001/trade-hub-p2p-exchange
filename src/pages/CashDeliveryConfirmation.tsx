@@ -4,7 +4,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import PremiumBottomNavigation from '@/components/premium/PremiumBottomNavigation';
+import BottomNavigation from '@/components/BottomNavigation';
 
 const CashDeliveryConfirmation = () => {
   const navigate = useNavigate();
@@ -323,7 +323,7 @@ const CashDeliveryConfirmation = () => {
         </div>
       </div>
 
-      <PremiumBottomNavigation />
+      <BottomNavigation />
     </div>
   );
 };

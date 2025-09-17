@@ -66,3 +66,11 @@ Each vendor can login at `/vendor/login` with their email and password.
 - **Island**: island@tradehub.com / TradeHub2024!
 - **Lekki**: lekki@tradehub.com / TradeHub2024!
 - **Ajah**: ajah@tradehub.com / TradeHub2024!
+
+
+
+
+
+
+
+

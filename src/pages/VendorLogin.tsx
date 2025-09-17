@@ -36,10 +36,10 @@ const VendorLogin = () => {
         .from('profiles')
         .select('*')
         .eq('user_id', authData.user.id)
-        .single();
+        .maybeSingle();
 
       if (profileError) throw profileError;
-      if (profile.role !== 'vendor') {
+      if (!profile || profile.role !== 'vendor') {
         throw new Error('Access denied. Vendor role required.');
       }
 
@@ -48,9 +48,10 @@ const VendorLogin = () => {
         .from('vendors')
         .select('*')
         .eq('user_id', authData.user.id)
-        .single();
+        .maybeSingle();
 
       if (vendorError) throw vendorError;
+      if (!vendorProfile) throw new Error('Vendor profile not found');
 
       // Store vendor info in localStorage
       localStorage.setItem('vendor_id', vendorProfile.id);

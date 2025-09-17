@@ -165,8 +165,24 @@ All colors MUST be HSL.
   }
 
   body {
-    @apply bg-background text-foreground font-sans antialiased;
+    @apply bg-background text-foreground antialiased;
+    font-family: 'Poppins', sans-serif;
   }
+}
+
+/* Crypto ticker animation */
+@keyframes crypto-scroll {
+  0% {
+    transform: translateX(100%);
+  }
+  100% {
+    transform: translateX(-100%);
+  }
+}
+
+.animate-crypto-scroll {
+  animation: crypto-scroll 80s linear infinite;
+  display: flex;
 }
 
 /* Global font size reduction */

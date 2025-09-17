@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import PremiumBottomNavigation from '@/components/premium/PremiumBottomNavigation';
+import BottomNavigation from '@/components/BottomNavigation';
 
 const CurrencyConversion = () => {
   const navigate = useNavigate();
@@ -296,7 +296,7 @@ const CurrencyConversion = () => {
         </Card>
       </div>
 
-      <PremiumBottomNavigation />
+      <BottomNavigation />
     </div>
   );
 };

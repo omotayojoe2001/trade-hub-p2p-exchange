@@ -7,13 +7,12 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { usePremium } from '@/hooks/usePremium';
-import PremiumBottomNavigation from '@/components/premium/PremiumBottomNavigation';
+import BottomNavigation from '@/components/BottomNavigation';
 
 const SellCryptoCashPickup = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { isPremium } = usePremium();
+  const isPremium = false; // Removed premium system
   const [searchParams] = useSearchParams();
   const location = useLocation();
   const preselectedCoin = searchParams.get('coin');
@@ -433,7 +432,7 @@ const SellCryptoCashPickup = () => {
         </Button>
       </div>
 
-      <PremiumBottomNavigation />
+      <BottomNavigation />
     </div>
   );
 };

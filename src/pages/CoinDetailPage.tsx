@@ -3,15 +3,13 @@ import { ArrowLeft, TrendingUp, TrendingDown, Star, Crown, ArrowUpRight, ArrowDo
 import { Link, useParams, useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { usePremium } from '@/hooks/usePremium';
-import PremiumBottomNavigation from '@/components/premium/PremiumBottomNavigation';
 import BottomNavigation from '@/components/BottomNavigation';
 
 const CoinDetailPage = () => {
   const { coinId } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
-  const { isPremium } = usePremium();
+  const isPremium = false; // Removed premium system
   
   // Get coin data from location state or use default
   const coinData = location.state?.coin || {
@@ -219,7 +217,7 @@ const CoinDetailPage = () => {
         )}
       </div>
 
-      {isPremium ? <PremiumBottomNavigation /> : <BottomNavigation />}
+      <BottomNavigation />
     </div>
   );
 };

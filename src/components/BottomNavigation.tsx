@@ -4,21 +4,14 @@ import { Link, useLocation } from 'react-router-dom';
 import { Home, ArrowUpDown, Briefcase, Settings, Newspaper, Bell } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { usePremium } from '@/hooks/usePremium';
-import PremiumBottomNavigation from '@/components/premium/PremiumBottomNavigation';
+
 
 const BottomNavigation = () => {
   const location = useLocation();
   const { user, profile } = useAuth();
-  const { isPremium } = usePremium();
   const [hasNewTradeRequest, setHasNewTradeRequest] = useState(false);
   const [notificationCount, setNotificationCount] = useState(0);
   const [isMerchant, setIsMerchant] = useState(false);
-
-  // If user is premium, show premium navigation instead
-  if (isPremium) {
-    return <PremiumBottomNavigation />;
-  }
 
   // Check merchant status and notifications
   useEffect(() => {
@@ -84,8 +77,8 @@ const BottomNavigation = () => {
   const navItems = [
     { path: '/home', icon: Home, label: 'Home' },
     { path: '/buy-sell', icon: ArrowUpDown, label: 'Trade' },
-    { path: '/news', icon: Newspaper, label: 'Updates' },
-    { path: '/my-trades', icon: Briefcase, label: 'My Trades' },
+    { path: '/news', icon: Newspaper, label: 'News' },
+    { path: '/my-trades', icon: Briefcase, label: 'Transactions' },
     { path: '/settings', icon: Settings, label: 'Settings' }
   ];
 

@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, MapPin, Phone, User, Clock, CheckCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { premiumTradeService, type PremiumTradeRequest, type PremiumTradeResponse } from '@/services/premiumTradeService';
-import { usePremium } from '@/hooks/usePremium';
+
 
 interface PremiumTradeFlowProps {
   onBack: () => void;
@@ -17,7 +17,7 @@ const PremiumTradeFlow: React.FC<PremiumTradeFlowProps> = ({ onBack }) => {
   const [loading, setLoading] = useState(false);
   const [tradeResponse, setTradeResponse] = useState<PremiumTradeResponse | null>(null);
   const { toast } = useToast();
-  const { isPremium } = usePremium();
+  const isPremium = false; // Removed premium system
 
   // Form data
   const [amountUSD, setAmountUSD] = useState('');

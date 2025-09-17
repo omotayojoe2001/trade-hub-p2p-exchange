@@ -8,7 +8,7 @@ import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import PaymentConfirmationDialog from "@/components/PaymentConfirmationDialog";
 import BottomNavigation from '@/components/BottomNavigation';
 import { useQuickAuth } from '@/hooks/useQuickAuth';
-import { usePremium } from '@/hooks/usePremium';
+
 import { useAuth } from '@/hooks/useAuth';
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
@@ -20,7 +20,7 @@ import TradeTimeDisplay from '@/components/TradeTimeDisplay';
 const MyTrades = () => {
   const navigate = useNavigate();
   const { isQuickAuthActive } = useQuickAuth();
-  const { isPremium } = usePremium();
+  const isPremium = false; // Removed premium system
   const { user } = useAuth();
   const { toast } = useToast();
 
@@ -317,12 +317,7 @@ const MyTrades = () => {
 
   const incompleteTradesCount = trades.filter(trade => trade.awaitingUserAction).length;
 
-  // Redirect premium users to premium trades page
-  React.useEffect(() => {
-    if (user && isPremium) {
-      navigate('/premium-trades');
-    }
-  }, [user, isPremium, navigate]);
+
 
   // Show loading state while fetching real data
   if (loading) {

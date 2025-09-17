@@ -3,10 +3,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { ArrowLeft, Bell, ChevronRight, User, Shield, CreditCard, HelpCircle, LogOut, Gift, TrendingUp, FileCheck, Smartphone, Camera, Upload, Crown } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import BottomNavigation from '@/components/BottomNavigation';
-import PremiumBottomNavigation from '@/components/premium/PremiumBottomNavigation';
 import { useAuth } from '@/hooks/useAuth';
 import { useQuickAuth } from '@/hooks/useQuickAuth';
-import { usePremium } from '@/hooks/usePremium';
 import TwoFactorSetup from '@/components/TwoFactorSetup';
 import { getTwoFactorData, disableTwoFactor, reEnableTwoFactor } from '@/services/twoFactorAuth';
 import { useToast } from '@/hooks/use-toast';
@@ -16,17 +14,9 @@ import { Button } from '@/components/ui/button';
 const Settings = () => {
   const { signOut, user } = useAuth();
   const { isQuickAuthActive } = useQuickAuth();
-  const { isPremium } = usePremium();
   const { toast } = useToast();
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  // Redirect premium users to premium settings
-  React.useEffect(() => {
-    if (user && isPremium) {
-      navigate('/premium-settings');
-    }
-  }, [user, isPremium, navigate]);
 
   const [showTwoFactorSetup, setShowTwoFactorSetup] = useState(false);
   const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
@@ -199,12 +189,6 @@ const Settings = () => {
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center space-x-3">
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Settings</h1>
-            {isPremium && (
-              <div className="bg-gradient-to-r from-yellow-400 to-amber-500 text-white px-2 py-1 rounded-full text-xs font-bold flex items-center">
-                <Crown size={10} className="mr-1" />
-                PREMIUM
-              </div>
-            )}
           </div>
           <div className="relative">
             <div
@@ -311,7 +295,7 @@ const Settings = () => {
         </div>
       </div>
 
-      {!isQuickAuthActive && (isPremium ? <PremiumBottomNavigation /> : <BottomNavigation />)}
+      {!isQuickAuthActive && <BottomNavigation />}
 
       <TwoFactorSetup
         isOpen={showTwoFactorSetup}

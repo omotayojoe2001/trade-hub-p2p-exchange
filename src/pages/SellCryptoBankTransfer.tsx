@@ -5,14 +5,12 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { usePremium } from '@/hooks/usePremium';
-import PremiumBottomNavigation from '@/components/premium/PremiumBottomNavigation';
 import BottomNavigation from '@/components/BottomNavigation';
 
 const SellCryptoBankTransfer = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { isPremium } = usePremium();
+  const isPremium = false; // Removed premium system
   const [searchParams] = useSearchParams();
   const preselectedCoin = searchParams.get('coin');
   
@@ -425,7 +423,7 @@ const SellCryptoBankTransfer = () => {
         )}
       </div>
 
-      {isPremium ? <PremiumBottomNavigation /> : <BottomNavigation />}
+      <BottomNavigation />
     </div>
   );
 };

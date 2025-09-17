@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
-import { usePremium } from '@/hooks/usePremium';
+
 import { messageService, realtimeService } from '@/services/supabaseService';
 import ClickableUser from '@/components/ClickableUser';
 import MessagesList from '@/components/MessagesList';
@@ -16,18 +16,13 @@ const Messages = () => {
   const location = useLocation();
   const { toast } = useToast();
   const { user } = useAuth();
-  const { isPremium } = usePremium();
+
   const { tradeId, recipientName, message: initialMessage } = location.state || {};
 
   // If no tradeId, show messages list
   const showMessagesList = !tradeId;
 
-  // Redirect premium users to premium messages
-  React.useEffect(() => {
-    if (user && isPremium) {
-      navigate('/premium-messages');
-    }
-  }, [user, isPremium, navigate]);
+
   
   const [messages, setMessages] = useState<any[]>([]);
   const [newMessage, setNewMessage] = useState(initialMessage || '');
