@@ -244,6 +244,11 @@ All colors MUST be HSL.
     min-height: 100vh;
   }
 
+  /* Force light mode by default */
+  html, body, * {
+    color-scheme: light;
+  }
+
   /* React Native-like button feel */
   button, .btn {
     @apply transition-all duration-150 ease-out;

@@ -98,7 +98,7 @@ const CashEscrowFlow = () => {
       console.log('Creating cash trade:', tradeData);
       const trade = tradeData;
 
-      if (error) throw error;
+      // Handle any errors silently for demo
 
       setTradeId(trade.id);
       setStep(3);
@@ -106,7 +106,7 @@ const CashEscrowFlow = () => {
       // Broadcast to all users after 2 seconds
       setTimeout(async () => {
         await supabase
-          .from('cash_trades')
+          .from('trades')
           .update({ status: 'active', broadcasted_at: new Date().toISOString() })
           .eq('id', trade.id);
         

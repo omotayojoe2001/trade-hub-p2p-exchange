@@ -11,7 +11,7 @@ import { useAuthStorage } from "@/hooks/useAuthStorage";
 import { QuickAuthProvider, useQuickAuth } from "@/hooks/useQuickAuth";
 import { AuthProvider, useAuth } from "./hooks/useAuth";
 
-import { ThemeProvider } from "@/components/ThemeProvider";
+// Removed ThemeProvider to disable dark mode by default
 import { useLocation } from "react-router-dom";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
@@ -322,7 +322,7 @@ const AppContent = () => {
         <Route path="/receipt" element={<ReceiptPage />} />
         <Route path="/receipt-page" element={<ReceiptPage />} />
         <Route path="/trade-requests" element={<TradeRequests />} />
-        <Route path="/messages" element={<Messages />} />
+            <Route path="/messages" element={<Messages />} />
         <Route path="/blog" element={<Blog />} />
         {/* Removed blog detail route - not needed */}
         <Route path="/thank-you" element={<ThankYouPage />} />
@@ -397,17 +397,17 @@ const AppContent = () => {
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <BrowserRouter>
-      <ThemeProvider>
-        <AuthProvider>
-            <QuickAuthProvider>
-              <TooltipProvider>
-                <AppContent />
-                <Toaster />
-                <Sonner />
-              </TooltipProvider>
-            </QuickAuthProvider>
-        </AuthProvider>
-      </ThemeProvider>
+        <div className="light" style={{ colorScheme: 'light' }}>
+          <AuthProvider>
+              <QuickAuthProvider>
+                <TooltipProvider>
+                  <AppContent />
+                  <Toaster />
+                  <Sonner />
+                </TooltipProvider>
+              </QuickAuthProvider>
+          </AuthProvider>
+        </div>
     </BrowserRouter>
   </QueryClientProvider>
 );

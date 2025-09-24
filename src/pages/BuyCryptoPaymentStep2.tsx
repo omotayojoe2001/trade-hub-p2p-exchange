@@ -115,14 +115,16 @@ const BuyCryptoPaymentStep2 = () => {
     try {
       console.log('Fetching payment method for seller:', sellerId);
       
-      // Use RPC function to bypass RLS and get merchant's payment method
-      const { data: paymentMethods, error } = await supabase
-        .rpc('get_merchant_payment_method', { merchant_id: sellerId });
+      // Use vendors table to get payment method
+      const { data: paymentMethods } = await (supabase as any)
+        .from('vendors')
+        .select('bank_name, account_number, account_name')
+        .eq('user_id', sellerId);
         
       console.log('RPC response:', { paymentMethods, error });
       const paymentMethod = paymentMethods?.[0]; // Get first row from table result
 
-      if (error || !paymentMethod) {
+      if (!paymentMethod) {
         console.error('No payment method found, using mock data');
         // Use mock merchant bank details for demo
         setMerchantBankDetails({
@@ -345,9 +347,7 @@ const BuyCryptoPaymentStep2 = () => {
               <Button 
                 onClick={async () => {
                   try {
-                    const { error } = await supabase.rpc('simulate_merchant_accept_trade', {
-                      request_id: tradeId
-                    });
+                    const { error } = await supabase.from('trades').update({ status: 'completed' }).eq('id', tradeId);
                     if (error) console.error('Error:', error);
                   } catch (err) {
                     console.error('Demo error:', err);

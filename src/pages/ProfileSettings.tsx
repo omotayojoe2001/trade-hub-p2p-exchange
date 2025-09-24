@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { ArrowLeft, Edit2, Camera, Mail, Phone, MapPin, Calendar, User, Shield, Upload, AlertTriangle, Trash2 } from 'lucide-react';
+import ThemeToggle from '@/components/ThemeToggle';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -527,9 +528,24 @@ const ProfileSettings = () => {
           )}
         </Card>
 
+        {/* Theme Settings */}
+        <Card className="bg-card p-6">
+          <h3 className="text-lg font-semibold text-foreground mb-4">Display Settings</h3>
+          
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <label className="text-sm font-medium text-foreground">Theme</label>
+                <p className="text-xs text-muted-foreground">Choose your preferred theme</p>
+              </div>
+              <ThemeToggle />
+            </div>
+          </div>
+        </Card>
+
         {/* Account Status */}
-        <Card className="bg-white p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Account Status</h3>
+        <Card className="bg-card p-6">
+          <h3 className="text-lg font-semibold text-foreground mb-4">Account Status</h3>
           
           <div className="space-y-3">
             <div className="flex items-center justify-between">

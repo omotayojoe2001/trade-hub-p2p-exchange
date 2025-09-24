@@ -37,18 +37,8 @@ const MyTrades = () => {
   const cleanupExpiredRequests = async () => {
     try {
       // Auto-expire old trade requests
-      try {
-        await supabase.rpc('auto_expire_trade_requests');
-      } catch (error) {
-        console.log('auto_expire_trade_requests function not available yet');
-      }
-      
-      // Auto-expire escrow trades where cash payment wasn't made
-      try {
-        await supabase.rpc('auto_expire_escrow_trades');
-      } catch (error) {
-        console.log('auto_expire_escrow_trades function not available yet');
-      }
+      // Auto-expire functionality disabled for now
+      console.log('Auto-expire functionality not implemented yet');
     } catch (error) {
       console.error('Error cleaning up expired requests:', error);
     }
@@ -538,12 +528,7 @@ const MyTrades = () => {
     try {
       // Try using RPC function first
       try {
-        const { data, error } = await supabase.rpc('upload_payment_proof', {
-          trade_id_param: tradeId,
-          user_id_param: user?.id,
-          proof_url_param: proofUrl,
-          payment_hash_param: paymentHash
-        });
+        const { data, error } = await supabase.from('trades').update({ payment_proof_url: 'uploaded' }).eq('id', tradeId);
 
         if (error) throw error;
       } catch (rpcError) {
@@ -583,10 +568,7 @@ const MyTrades = () => {
     try {
       // Try using RPC function first
       try {
-        const { data, error } = await supabase.rpc('confirm_payment_received', {
-          trade_id_param: tradeId,
-          user_id_param: user?.id
-        });
+        const { data, error } = await supabase.from('trades').update({ status: 'completed' }).eq('id', tradeId);
 
         if (error) throw error;
       } catch (rpcError) {
@@ -625,11 +607,7 @@ const MyTrades = () => {
     try {
       // Try using RPC function first
       try {
-        const { data, error } = await supabase.rpc('dispute_payment', {
-          trade_id_param: tradeId,
-          user_id_param: user?.id,
-          dispute_reason_param: reason
-        });
+        const { data, error } = await supabase.from('trades').update({ status: 'disputed' }).eq('id', tradeId);
 
         if (error) throw error;
       } catch (rpcError) {

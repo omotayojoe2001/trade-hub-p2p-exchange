@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Home, ArrowUpDown, Briefcase, Settings, Newspaper, Bell } from 'lucide-react';
+import { Home, ArrowUpDown, Briefcase, Settings, Newspaper, MessageCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -78,7 +78,8 @@ const BottomNavigation = () => {
     { path: '/home', icon: Home, label: 'Home' },
     { path: '/buy-sell', icon: ArrowUpDown, label: 'Trade' },
     { path: '/news', icon: Newspaper, label: 'News' },
-    { path: '/my-trades', icon: Briefcase, label: 'Transactions' },
+    { path: '/my-trades', icon: Briefcase, label: 'Trades' },
+    { path: '/messages', icon: MessageCircle, label: 'Messages' },
     { path: '/settings', icon: Settings, label: 'Settings' }
   ];
 
