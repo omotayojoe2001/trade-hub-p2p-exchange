@@ -100,8 +100,17 @@ export default {
 					'accordion-up': 'accordion-up 0.2s ease-out'
 				},
 				fontFamily: {
-					sans: ['Poppins', 'ui-sans-serif', 'system-ui', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'Noto Sans', 'sans-serif'],
+					sans: ['Inter', 'Poppins', 'ui-sans-serif', 'system-ui', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'Noto Sans', 'sans-serif'],
+					inter: ['Inter', 'ui-sans-serif', 'system-ui'],
 					poppins: ['Poppins', 'ui-sans-serif', 'system-ui']
+				},
+				boxShadow: {
+					'glow': 'var(--shadow-glow)',
+					'elegant': 'var(--shadow-lg)',
+					'soft': 'var(--shadow-md)',
+				},
+				backdropBlur: {
+					'xs': '2px',
 				}
 			}
 	},

@@ -1,63 +1,58 @@
 import React, { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Plus, MapPin, Phone, Edit2, Check } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
-import { supabase } from '@/integrations/supabase/client';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
+import { MapPin, Phone, Plus, Trash2 } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 
 interface Address {
   id: string;
+  user_id: string;
   street: string;
   city: string;
   state: string;
-  landmark?: string;
   label: string;
+  created_at: string;
 }
 
 interface Contact {
   id: string;
-  phone_number: string;
+  user_id: string;
   whatsapp_number: string;
   label: string;
+  created_at: string;
 }
 
 interface AddressContactSelectorProps {
-  onAddressSelect: (address: Address) => void;
-  onContactSelect: (contact: Contact) => void;
   selectedAddress?: Address;
   selectedContact?: Contact;
-  showAddressSection?: boolean;
-  prefilledAddress?: Address;
-  prefilledContact?: Contact;
+  onAddressSelect: (address: Address) => void;
+  onContactSelect: (contact: Contact) => void;
 }
 
-export const AddressContactSelector: React.FC<AddressContactSelectorProps> = ({
-  onAddressSelect,
-  onContactSelect,
+const AddressContactSelector: React.FC<AddressContactSelectorProps> = ({
   selectedAddress,
   selectedContact,
-  showAddressSection = true,
-  prefilledAddress,
-  prefilledContact
+  onAddressSelect,
+  onContactSelect,
 }) => {
   const { user } = useAuth();
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [contacts, setContacts] = useState<Contact[]>([]);
-  const [showAddAddress, setShowAddAddress] = useState(false);
-  const [showAddContact, setShowAddContact] = useState(false);
+  const [isAddressDialogOpen, setIsAddressDialogOpen] = useState(false);
+  const [isContactDialogOpen, setIsContactDialogOpen] = useState(false);
   const [newAddress, setNewAddress] = useState({
     street: '',
     city: '',
     state: '',
-    landmark: '',
-    label: ''
+    label: '',
   });
   const [newContact, setNewContact] = useState({
-    phone_number: '',
     whatsapp_number: '',
-    label: ''
+    label: '',
   });
 
   useEffect(() => {
@@ -67,274 +62,258 @@ export const AddressContactSelector: React.FC<AddressContactSelectorProps> = ({
     }
   }, [user]);
 
-  useEffect(() => {
-    // Auto-select prefilled data if provided
-    if (prefilledAddress && !selectedAddress) {
-      onAddressSelect(prefilledAddress);
-    }
-    if (prefilledContact && !selectedContact) {
-      onContactSelect(prefilledContact);
-    }
-  }, [prefilledAddress, prefilledContact]);
-
   const loadAddresses = async () => {
-    const { data } = await supabase
-      .from('user_addresses')
-      .select('*')
-      .eq('user_id', user?.id)
-      .order('created_at', { ascending: false });
-    
-    if (data) setAddresses(data);
+    // Mock addresses for now until user_addresses table is created
+    setAddresses([]);
   };
 
   const loadContacts = async () => {
-    const { data } = await supabase
-      .from('user_contacts')
-      .select('*')
-      .eq('user_id', user?.id)
-      .order('created_at', { ascending: false });
-    
-    if (data) setContacts(data);
+    // Mock contacts for now until user_contacts table is created
+    setContacts([]);
   };
 
-  const saveAddress = async () => {
-    if (!newAddress.street || !newAddress.city || !newAddress.state || !newAddress.label) return;
+  const addAddress = async (newAddressData: Omit<Address, 'id' | 'user_id' | 'created_at'>) => {
+    const addressWithId: Address = {
+      id: Math.random().toString(),
+      user_id: user?.id || '',
+      created_at: new Date().toISOString(),
+      ...newAddressData
+    };
 
-    const { data, error } = await supabase
-      .from('user_addresses')
-      .insert({
-        user_id: user?.id,
-        ...newAddress
-      })
-      .select()
-      .single();
-
-    if (!error && data) {
-      setAddresses(prev => [data, ...prev]);
-      onAddressSelect(data);
-      setNewAddress({ street: '', city: '', state: '', landmark: '', label: '' });
-      setShowAddAddress(false);
-    }
+    // Mock adding address for now
+    setAddresses(prev => [...prev, addressWithId]);
+    setIsAddressDialogOpen(false);
+    setNewAddress({ street: '', city: '', state: '', label: '' });
   };
 
-  const saveContact = async () => {
-    if (!newContact.phone_number || !newContact.whatsapp_number || !newContact.label) return;
+  const addContact = async (newContactData: Omit<Contact, 'id' | 'user_id' | 'created_at'>) => {
+    const contactWithId: Contact = {
+      id: Math.random().toString(),
+      user_id: user?.id || '',
+      created_at: new Date().toISOString(),
+      ...newContactData
+    };
 
-    const { data, error } = await supabase
-      .from('user_contacts')
-      .insert({
-        user_id: user?.id,
-        ...newContact
-      })
-      .select()
-      .single();
+    // Mock adding contact for now
+    setContacts(prev => [...prev, contactWithId]);
+    setIsContactDialogOpen(false);
+    setNewContact({ whatsapp_number: '', label: '' });
+  };
 
-    if (!error && data) {
-      setContacts(prev => [data, ...prev]);
-      onContactSelect(data);
-      setNewContact({ phone_number: '', whatsapp_number: '', label: '' });
-      setShowAddContact(false);
-    }
+  const deleteAddress = async (id: string) => {
+    setAddresses(prev => prev.filter(addr => addr.id !== id));
+  };
+
+  const deleteContact = async (id: string) => {
+    setContacts(prev => prev.filter(contact => contact.id !== id));
   };
 
   return (
     <div className="space-y-6">
-      {/* Address Selection */}
-      {showAddressSection && (
-        <Card className="p-4">
-          <h3 className="font-semibold text-gray-900 mb-3 flex items-center">
-            <MapPin size={20} className="mr-2 text-gray-600" />
-            Delivery Address
-          </h3>
-          
-          {/* Prefilled Address */}
-          {prefilledAddress && (
-            <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-blue-600 font-medium">From Premium Settings:</p>
-                  <p className="font-medium text-gray-900">{prefilledAddress.label}</p>
-                  <p className="text-sm text-gray-600">
-                    {prefilledAddress.street}, {prefilledAddress.city}, {prefilledAddress.state}
-                  </p>
-                </div>
-                <Button
-                  onClick={() => onAddressSelect(prefilledAddress)}
-                  size="sm"
-                  variant={selectedAddress?.id === prefilledAddress.id ? "default" : "outline"}
-                >
-                  {selectedAddress?.id === prefilledAddress.id ? 'Selected' : 'Use This'}
+      {/* Addresses Section */}
+      <Card className="shadow-soft">
+        <CardHeader className="pb-4">
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2 text-lg font-semibold">
+              <MapPin className="h-5 w-5 text-primary" />
+              Delivery Addresses
+            </CardTitle>
+            <Dialog open={isAddressDialogOpen} onOpenChange={setIsAddressDialogOpen}>
+              <DialogTrigger asChild>
+                <Button variant="outline" size="sm" className="gap-2">
+                  <Plus className="h-4 w-4" />
+                  Add Address
                 </Button>
-              </div>
-            </div>
-          )}
-        
-        <div className="space-y-3">
-          {addresses.map((address) => (
-            <button
-              key={address.id}
-              onClick={() => onAddressSelect(address)}
-              className={`w-full p-3 rounded-lg border-2 transition-colors text-left ${
-                selectedAddress?.id === address.id
-                  ? 'border-blue-500 bg-blue-50'
-                  : 'border-gray-200 bg-gray-50'
-              }`}
-            >
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="font-medium text-gray-900">{address.label}</div>
-                  <div className="text-sm text-gray-600">
-                    {address.street}, {address.city}, {address.state}
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                  <DialogTitle>Add New Address</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4 py-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="address-label">Label</Label>
+                    <Input
+                      id="address-label"
+                      placeholder="e.g., Home, Office"
+                      value={newAddress.label}
+                      onChange={(e) => setNewAddress(prev => ({ ...prev, label: e.target.value }))}
+                    />
                   </div>
-                  {address.landmark && (
-                    <div className="text-xs text-gray-500">Near: {address.landmark}</div>
-                  )}
+                  <div className="space-y-2">
+                    <Label htmlFor="street">Street Address</Label>
+                    <Input
+                      id="street"
+                      placeholder="Enter street address"
+                      value={newAddress.street}
+                      onChange={(e) => setNewAddress(prev => ({ ...prev, street: e.target.value }))}
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="city">City</Label>
+                      <Input
+                        id="city"
+                        placeholder="City"
+                        value={newAddress.city}
+                        onChange={(e) => setNewAddress(prev => ({ ...prev, city: e.target.value }))}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="state">State</Label>
+                      <Input
+                        id="state"
+                        placeholder="State"
+                        value={newAddress.state}
+                        onChange={(e) => setNewAddress(prev => ({ ...prev, state: e.target.value }))}
+                      />
+                    </div>
+                  </div>
+                  <Button 
+                    onClick={() => addAddress(newAddress)} 
+                    className="w-full"
+                    disabled={!newAddress.label || !newAddress.street || !newAddress.city || !newAddress.state}
+                  >
+                    Add Address
+                  </Button>
                 </div>
-                {selectedAddress?.id === address.id && (
-                  <Check size={20} className="text-blue-600" />
-                )}
-              </div>
-            </button>
-          ))}
-
-          {!showAddAddress ? (
-            <Button
-              onClick={() => setShowAddAddress(true)}
-              variant="outline"
-              className="w-full"
-            >
-              <Plus size={16} className="mr-2" />
-              Add New Address
-            </Button>
-          ) : (
-            <Card className="p-4 bg-gray-50">
-              <div className="space-y-3">
-                <Input
-                  placeholder="Address label (e.g., Home, Office)"
-                  value={newAddress.label}
-                  onChange={(e) => setNewAddress(prev => ({ ...prev, label: e.target.value }))}
-                />
-                <Input
-                  placeholder="Street address"
-                  value={newAddress.street}
-                  onChange={(e) => setNewAddress(prev => ({ ...prev, street: e.target.value }))}
-                />
-                <div className="grid grid-cols-2 gap-3">
-                  <Input
-                    placeholder="City"
-                    value={newAddress.city}
-                    onChange={(e) => setNewAddress(prev => ({ ...prev, city: e.target.value }))}
-                  />
-                  <Input
-                    placeholder="State"
-                    value={newAddress.state}
-                    onChange={(e) => setNewAddress(prev => ({ ...prev, state: e.target.value }))}
-                  />
-                </div>
-                <Input
-                  placeholder="Landmark (optional)"
-                  value={newAddress.landmark}
-                  onChange={(e) => setNewAddress(prev => ({ ...prev, landmark: e.target.value }))}
-                />
-                <div className="flex space-x-2">
-                  <Button onClick={saveAddress} className="flex-1">Save Address</Button>
-                  <Button onClick={() => setShowAddAddress(false)} variant="outline">Cancel</Button>
-                </div>
-              </div>
-            </Card>
-          )}
-        </div>
-      </Card>
-      )}
-
-      {/* Contact Selection */}
-      <Card className="p-4">
-        <h3 className="font-semibold text-gray-900 mb-3 flex items-center">
-          <Phone size={20} className="mr-2 text-gray-600" />
-          Contact Information
-        </h3>
-        
-        {/* Prefilled Contact */}
-        {prefilledContact && (
-          <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-blue-600 font-medium">From Premium Settings:</p>
-                <p className="font-medium text-gray-900">{prefilledContact.label}</p>
-                <p className="text-sm text-gray-600">Phone: {prefilledContact.phone_number}</p>
-                <p className="text-sm text-gray-600">WhatsApp: {prefilledContact.whatsapp_number}</p>
-              </div>
-              <Button
-                onClick={() => onContactSelect(prefilledContact)}
-                size="sm"
-                variant={selectedContact?.id === prefilledContact.id ? "default" : "outline"}
-              >
-                {selectedContact?.id === prefilledContact.id ? 'Selected' : 'Use This'}
-              </Button>
-            </div>
+              </DialogContent>
+            </Dialog>
           </div>
-        )}
-        
-        <div className="space-y-3">
-          {contacts.map((contact) => (
-            <button
-              key={contact.id}
-              onClick={() => onContactSelect(contact)}
-              className={`w-full p-3 rounded-lg border-2 transition-colors text-left ${
-                selectedContact?.id === contact.id
-                  ? 'border-blue-500 bg-blue-50'
-                  : 'border-gray-200 bg-gray-50'
-              }`}
-            >
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="font-medium text-gray-900">{contact.label}</div>
-                  <div className="text-sm text-gray-600">Phone: {contact.phone_number}</div>
-                  <div className="text-sm text-gray-600">WhatsApp: {contact.whatsapp_number}</div>
-                </div>
-                {selectedContact?.id === contact.id && (
-                  <Check size={20} className="text-blue-600" />
-                )}
-              </div>
-            </button>
-          ))}
-
-          {!showAddContact ? (
-            <Button
-              onClick={() => setShowAddContact(true)}
-              variant="outline"
-              className="w-full"
-            >
-              <Plus size={16} className="mr-2" />
-              Add New Contact
-            </Button>
+        </CardHeader>
+        <CardContent>
+          {addresses.length === 0 ? (
+            <p className="text-muted-foreground text-center py-6">No addresses added yet</p>
           ) : (
-            <Card className="p-4 bg-gray-50">
-              <div className="space-y-3">
-                <Input
-                  placeholder="Contact label (e.g., Personal, Work)"
-                  value={newContact.label}
-                  onChange={(e) => setNewContact(prev => ({ ...prev, label: e.target.value }))}
-                />
-                <Input
-                  placeholder="Phone number"
-                  value={newContact.phone_number}
-                  onChange={(e) => setNewContact(prev => ({ ...prev, phone_number: e.target.value }))}
-                />
-                <Input
-                  placeholder="WhatsApp number"
-                  value={newContact.whatsapp_number}
-                  onChange={(e) => setNewContact(prev => ({ ...prev, whatsapp_number: e.target.value }))}
-                />
-                <div className="flex space-x-2">
-                  <Button onClick={saveContact} className="flex-1">Save Contact</Button>
-                  <Button onClick={() => setShowAddContact(false)} variant="outline">Cancel</Button>
+            <div className="grid gap-3">
+              {addresses.map((address) => (
+                <div
+                  key={address.id}
+                  className={`p-4 border rounded-lg cursor-pointer transition-all ${
+                    selectedAddress?.id === address.id 
+                      ? 'border-primary bg-primary/5 shadow-sm' 
+                      : 'border-border hover:border-primary/30 hover:bg-accent/50'
+                  }`}
+                  onClick={() => onAddressSelect(address)}
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Badge variant="outline" className="text-xs">{address.label}</Badge>
+                      </div>
+                      <p className="text-sm font-medium">{address.street}</p>
+                      <p className="text-sm text-muted-foreground">{address.city}, {address.state}</p>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        deleteAddress(address.id);
+                      }}
+                      className="text-destructive hover:text-destructive/80"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
-              </div>
-            </Card>
+              ))}
+            </div>
           )}
-        </div>
+        </CardContent>
+      </Card>
+
+      {/* Contacts Section */}
+      <Card className="shadow-soft">
+        <CardHeader className="pb-4">
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2 text-lg font-semibold">
+              <Phone className="h-5 w-5 text-primary" />
+              WhatsApp Contacts
+            </CardTitle>
+            <Dialog open={isContactDialogOpen} onOpenChange={setIsContactDialogOpen}>
+              <DialogTrigger asChild>
+                <Button variant="outline" size="sm" className="gap-2">
+                  <Plus className="h-4 w-4" />
+                  Add Contact
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                  <DialogTitle>Add New Contact</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4 py-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="contact-label">Label</Label>
+                    <Input
+                      id="contact-label"
+                      placeholder="e.g., Primary, Secondary"
+                      value={newContact.label}
+                      onChange={(e) => setNewContact(prev => ({ ...prev, label: e.target.value }))}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="whatsapp">WhatsApp Number</Label>
+                    <Input
+                      id="whatsapp"
+                      placeholder="+234 XXX XXX XXXX"
+                      value={newContact.whatsapp_number}
+                      onChange={(e) => setNewContact(prev => ({ ...prev, whatsapp_number: e.target.value }))}
+                    />
+                  </div>
+                  <Button 
+                    onClick={() => addContact(newContact)} 
+                    className="w-full"
+                    disabled={!newContact.label || !newContact.whatsapp_number}
+                  >
+                    Add Contact
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {contacts.length === 0 ? (
+            <p className="text-muted-foreground text-center py-6">No contacts added yet</p>
+          ) : (
+            <div className="grid gap-3">
+              {contacts.map((contact) => (
+                <div
+                  key={contact.id}
+                  className={`p-4 border rounded-lg cursor-pointer transition-all ${
+                    selectedContact?.id === contact.id 
+                      ? 'border-primary bg-primary/5 shadow-sm' 
+                      : 'border-border hover:border-primary/30 hover:bg-accent/50'
+                  }`}
+                  onClick={() => onContactSelect(contact)}
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Badge variant="outline" className="text-xs">{contact.label}</Badge>
+                      </div>
+                      <p className="text-sm font-medium">{contact.whatsapp_number}</p>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        deleteContact(contact.id);
+                      }}
+                      className="text-destructive hover:text-destructive/80"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
       </Card>
     </div>
   );
 };
+
+export default AddressContactSelector;

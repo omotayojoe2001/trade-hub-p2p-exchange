@@ -90,7 +90,7 @@ import SellCryptoCashDelivery from "./pages/SellCryptoCashDelivery";
 import CashPickupConfirmation from "./pages/CashPickupConfirmation";
 import CashDeliveryConfirmation from "./pages/CashDeliveryConfirmation";
 import SendNairaGetUSD from "./pages/SendNairaGetUSD";
-import PremiumTradeCompleted from "./pages/PremiumTradeCompleted";
+// import PremiumTradeCompleted from "./pages/PremiumTradeCompleted";
 import CashOrderThankYou from "./pages/CashOrderThankYou";
 import GlobalCodeTracker from "./components/GlobalCodeTracker";
 import DeliveryStatus from "./pages/DeliveryStatus";
