@@ -98,7 +98,7 @@ const BuyCryptoPaymentStep2 = () => {
 
   const fetchMessages = async () => {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('vendor_messages')
         .select('*')
         .eq('trade_id', tradeId)
@@ -121,7 +121,7 @@ const BuyCryptoPaymentStep2 = () => {
         .select('bank_name, account_number, account_name')
         .eq('user_id', sellerId);
         
-      console.log('RPC response:', { paymentMethods, error });
+      console.log('Payment method response:', { paymentMethods });
       const paymentMethod = paymentMethods?.[0]; // Get first row from table result
 
       if (!paymentMethod) {
@@ -175,13 +175,13 @@ const BuyCryptoPaymentStep2 = () => {
     if (!newMessage.trim()) return;
 
     try {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('vendor_messages')
         .insert({
-          trade_id: tradeId,
+          job_id: tradeId,
           sender_id: user.id,
-          receiver_id: selectedMerchant.user_id,
-          content: newMessage,
+          sender_type: 'user',
+          message: newMessage,
           message_type: 'text'
         });
 

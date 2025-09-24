@@ -16,6 +16,21 @@ const Index = () => {
   const { cryptoData, loading: cryptoLoading } = useCryptoData(2);
   const [recentTrades, setRecentTrades] = useState<any[]>([]);
   const [totalUsers, setTotalUsers] = useState(20);
+
+  const fetchTotalTraders = async () => {
+    try {
+      const { count } = await supabase
+        .from('profiles')
+        .select('*', { count: 'exact', head: true })
+        .eq('is_merchant', true);
+      
+      if (count !== null) {
+        setTotalUsers(count);
+      }
+    } catch (error) {
+      console.error('Error fetching total traders:', error);
+    }
+  };
   const [unreadNotifications, setUnreadNotifications] = useState(0);
   const [selectedTab, setSelectedTab] = useState('All');
   const [userCredits, setUserCredits] = useState(0);
@@ -56,6 +71,7 @@ const Index = () => {
     if (user) {
       fetchUnreadNotifications();
       fetchUserCredits();
+      fetchTotalTraders();
       
       // Subscribe to credit changes with cleanup
       let subscription: any = null;
@@ -136,7 +152,7 @@ const Index = () => {
   ];
 
   return (
-    <div className="w-full min-h-screen bg-white font-['Poppins'] max-w-md mx-auto">
+    <div className="w-full min-h-screen bg-white font-['Poppins'] max-w-4xl mx-auto lg:max-w-md">
       {/* Header */}
       <div className="px-4 py-4">
         <div className="flex justify-between items-center">
@@ -231,10 +247,6 @@ const Index = () => {
             <Link to="/crypto-markets" className="text-blue-600 text-sm font-medium">See All</Link>
           </div>
           
-          {/* Crypto Ticker */}
-          <div className="mb-3 -mx-4">
-            <CryptoTicker />
-          </div>
           
           {/* Top Crypto Cards */}
           <div className="space-y-2 mb-4">
@@ -292,13 +304,13 @@ const Index = () => {
             <div className="bg-white rounded-xl p-3 shadow-sm border border-gray-100">
               <div className="text-gray-600 text-xs mb-1">USD → NGN Rate</div>
               <div className="flex items-center space-x-1">
-                <span className="text-gray-900 font-semibold text-base">1,547</span>
+                <span className="text-gray-900 font-semibold text-base">{Math.round(1547 + Math.random() * 20 - 10)}</span>
                 <span className="text-sm text-gray-500 font-medium">NGN</span>
               </div>
             </div>
             <div className="bg-white rounded-xl p-3 shadow-sm border border-gray-100">
               <div className="text-gray-600 text-xs mb-1">Total Traders</div>
-              <div className="text-gray-900 font-semibold text-base">2,847</div>
+              <div className="text-gray-900 font-semibold text-base">{totalUsers}</div>
             </div>
           </div>
         </div>

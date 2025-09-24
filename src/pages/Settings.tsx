@@ -129,8 +129,8 @@ const Settings = () => {
                   <div className="flex items-center">
                     {option.icon}
                     <div className="ml-3">
-                      <h3 className="font-semibold text-gray-900">{option.title}</h3>
-                      <p className="text-sm text-gray-500">{option.description}</p>
+                      <h3 className="text-sm font-medium text-gray-900">{option.title}</h3>
+                      <p className="text-xs text-gray-500">{option.description}</p>
                     </div>
                   </div>
                   <Switch 
@@ -150,8 +150,8 @@ const Settings = () => {
                 <div className="flex items-center">
                   {option.icon}
                   <div className="ml-3">
-                    <h3 className="font-semibold text-gray-900">{option.title}</h3>
-                    <p className="text-sm text-gray-500">{option.description}</p>
+                    <h3 className="text-sm font-medium text-gray-900">{option.title}</h3>
+                    <p className="text-xs text-gray-500">{option.description}</p>
                   </div>
                 </div>
                 <ChevronRight size={20} className="text-gray-400" />

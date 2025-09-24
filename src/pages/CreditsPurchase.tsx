@@ -145,10 +145,8 @@ const CreditsPurchase = () => {
         .from('credit_purchase_transactions')
         .insert({
           user_id: user.id,
-          crypto_type: selectedCrypto,
-          crypto_amount: cryptoAmount,
           credits_amount: currentPackage.credits,
-          payment_address: address,
+          price_paid_naira: currentPackage.price,
           status: 'pending'
         })
         .select()
