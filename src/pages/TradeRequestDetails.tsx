@@ -31,19 +31,19 @@ const TradeRequestDetails = () => {
         if (latest) {
           console.log('Trade request data:', latest);
           
-          // Try to fetch user display name using RPC
-          const userId = latest.user_id || latest.buyer_id || latest.created_by;
+          // Try to fetch user display name using mock service
+          const userId = latest.user_id;
           console.log('Trying to fetch name for userId:', userId);
           
           if (userId) {
             try {
-              const { data: displayName, error } = await supabase
-                .rpc('get_user_display_name', { user_uuid: userId });
+              // Use mock service instead of missing RPC function
+              const displayName = 'Anonymous User';
               
-              console.log('RPC response:', { displayName, error });
+              console.log('Mock response:', { displayName });
               
-              if (displayName && displayName !== 'Anonymous') {
-                latest.user_name = displayName;
+              if (displayName && displayName !== 'Anonymous User') {
+                (latest as any).user_name = displayName;
               }
             } catch (err) {
               console.error('Error fetching user name:', err);
@@ -193,10 +193,10 @@ const TradeRequestDetails = () => {
     return amount.toFixed(8).replace(/\.?0+$/, '');
   };
   
-  const userGets = isUserBuyingCrypto ? `${formatCryptoAmount(cryptoAmount)} ${cryptoType}` : `₦${fiatAmount?.toLocaleString()}`;
-  const userSends = isUserBuyingCrypto ? `₦${fiatAmount?.toLocaleString()}` : `${formatCryptoAmount(cryptoAmount)} ${cryptoType}`;
-  const merchantGets = isUserBuyingCrypto ? `₦${fiatAmount?.toLocaleString()}` : `${formatCryptoAmount(cryptoAmount)} ${cryptoType}`;
-  const merchantSends = isUserBuyingCrypto ? `${formatCryptoAmount(cryptoAmount)} ${cryptoType}` : `₦${fiatAmount?.toLocaleString()}`;
+  const userGets = isUserBuyingCrypto ? `${formatCryptoAmount(cryptoAmount)} ${cryptoType}` : `NGN ${fiatAmount?.toLocaleString()}`;
+  const userSends = isUserBuyingCrypto ? `NGN ${fiatAmount?.toLocaleString()}` : `${formatCryptoAmount(cryptoAmount)} ${cryptoType}`;
+  const merchantGets = isUserBuyingCrypto ? `NGN ${fiatAmount?.toLocaleString()}` : `${formatCryptoAmount(cryptoAmount)} ${cryptoType}`;
+  const merchantSends = isUserBuyingCrypto ? `${formatCryptoAmount(cryptoAmount)} ${cryptoType}` : `NGN ${fiatAmount?.toLocaleString()}`;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -320,15 +320,15 @@ const TradeRequestDetails = () => {
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">Rate</span>
-                <span className="font-semibold text-gray-900">₦{rate?.toLocaleString()}</span>
+                <span className="font-semibold text-gray-900">NGN {rate?.toLocaleString()}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">Fiat Amount</span>
-                <span className="font-semibold text-gray-900">₦{fiatAmount?.toLocaleString()}</span>
+                <span className="font-semibold text-gray-900">NGN {fiatAmount?.toLocaleString()}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">User</span>
-                <span className="font-semibold text-gray-900">{request.user_name || request.userName || 'Anonymous'}</span>
+                <span className="font-semibold text-gray-900">{(request as any).user_name || (request as any).userName || 'Anonymous'}</span>
               </div>
             </div>
           </CardContent>

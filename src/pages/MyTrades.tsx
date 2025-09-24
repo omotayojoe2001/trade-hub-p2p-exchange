@@ -129,9 +129,11 @@ const MyTrades = () => {
     if (activeTab === 'All') return trades;
     
     const statusMap = {
-      'Ongoing': ['pending', 'in_progress'],
+      'Ongoing': ['pending', 'in_progress', 'payment_proof_uploaded'],
       'Completed': ['completed'],
-      'Cancelled': ['cancelled', 'disputed']
+      'Cancelled': ['cancelled'],
+      'Disputes': ['disputed', 'under_review'],
+      'Escrow': ['escrow_pending', 'escrow_funded']
     };
     
     return trades.filter(trade => {
@@ -151,7 +153,7 @@ const MyTrades = () => {
 
   const formatAmount = (amount: number, currency: string) => {
     if (currency === 'NGN') {
-      return `₦${amount.toLocaleString()}`;
+      return `NGN ${amount.toLocaleString()}`;
     }
     return `${amount} ${currency}`;
   };
@@ -170,22 +172,22 @@ const MyTrades = () => {
   const filteredTrades = filterTrades(trades);
 
   return (
-    <div className="min-h-screen bg-white font-['Poppins']">
-      <div className="px-4 pt-6 pb-20">
+    <div className="min-h-screen bg-background font-['Poppins']">
+      <div className="px-4 pt-6 pb-20 max-w-7xl mx-auto">
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">My Trades</h1>
+          <h1 className="text-2xl font-bold text-foreground">My Trades</h1>
         </div>
 
         {/* Filter Tabs */}
-        <div className="flex space-x-1 mb-6 bg-gray-100 p-1 rounded-lg">
-          {['All', 'Ongoing', 'Completed', 'Cancelled'].map((status) => (
+        <div className="flex space-x-2 mb-6">
+          {['All', 'Ongoing', 'Completed', 'Cancelled', 'Disputes', 'Escrow'].map((status) => (
             <button
               key={status}
               onClick={() => setActiveTab(status)}
-              className={`flex-1 py-2 px-3 text-xs font-medium rounded-md transition-colors ${
+              className={`py-1.5 px-3 text-xs font-medium rounded-full transition-all duration-200 ${
                 activeTab === status
-                  ? 'bg-white text-blue-600 shadow-sm'
-                  : 'text-gray-600 hover:text-gray-900'
+                  ? 'bg-primary text-primary-foreground shadow-md scale-105'
+                  : 'bg-background text-muted-foreground hover:bg-accent hover:text-accent-foreground border border-border'
               }`}
             >
               {status}
@@ -213,61 +215,55 @@ const MyTrades = () => {
             </Link>
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {filteredTrades.map((trade) => {
               const status = getTradeStatus(trade);
-              const userRole = trade.buyer_id === user?.id ? 'buyer' : 'seller';
-              const shouldShowComplete = trade.status === 'pending' && trade.payment_proof_url;
+              const userRole = (trade as any).buyer_id === user?.id ? 'buyer' : 'seller';
+              const shouldShowComplete = trade.status === 'pending' && (trade as any).payment_proof_url;
 
               return (
-                <div key={trade.id} className="bg-white rounded-xl border border-gray-200 p-4 hover:shadow-lg transition-shadow">
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                        <span className="text-blue-600 font-semibold text-sm">
-                          {trade.crypto_type || trade.coin_type}
+                <div key={trade.id} className="bg-card rounded-lg border border-border p-3 hover:shadow-md transition-all duration-200">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center space-x-2">
+                      <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
+                        <span className="text-primary font-medium text-xs">
+                          {(trade.crypto_type || trade.coin_type || 'BTC').slice(0, 3)}
                         </span>
                       </div>
                       <div>
-                        <div className="flex items-center space-x-2">
-                          <span className="font-semibold text-gray-900">
+                        <div className="flex items-center space-x-1">
+                          <span className="font-medium text-sm text-foreground">
                             {userRole === 'buyer' ? 'Buy' : 'Sell'} {trade.crypto_type || trade.coin_type}
                           </span>
-                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${status.bgColor} ${status.color}`}>
+                          <span className={`px-1.5 py-0.5 rounded-full text-xs font-medium ${status.bgColor} ${status.color}`}>
                             {status.text}
                           </span>
                         </div>
-                        <div className="text-sm text-gray-500 mt-1">
+                        <div className="text-xs text-muted-foreground">
                           {formatDate(trade.created_at)}
                         </div>
                       </div>
                     </div>
-                    <ChevronRight size={20} className="text-gray-400" />
+                    <ChevronRight size={16} className="text-muted-foreground" />
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4 mb-4">
+                  <div className="grid grid-cols-3 gap-2 mb-3">
                     <div>
-                      <div className="text-xs text-gray-500 mb-1">Amount</div>
-                      <div className="font-semibold text-gray-900">
-                        {trade.amount_crypto || trade.amount} {trade.crypto_type || trade.coin_type}
+                      <div className="text-xs text-muted-foreground mb-0.5">Amount</div>
+                      <div className="font-medium text-xs text-foreground">
+                        {(trade as any).amount_crypto || trade.amount} {trade.crypto_type || trade.coin_type}
                       </div>
                     </div>
                     <div>
-                      <div className="text-xs text-gray-500 mb-1">Value</div>
-                      <div className="font-semibold text-gray-900">
-                        {formatAmount(trade.naira_amount || trade.amount, 'NGN')}
+                      <div className="text-xs text-muted-foreground mb-0.5">Value</div>
+                      <div className="font-medium text-xs text-foreground">
+                        {formatAmount((trade as any).naira_amount || trade.amount, 'NGN')}
                       </div>
                     </div>
                     <div>
-                      <div className="text-xs text-gray-500 mb-1">Rate</div>
-                      <div className="font-semibold text-gray-900">
-                        ₦{trade.rate?.toLocaleString() || 'N/A'}
-                      </div>
-                    </div>
-                    <div>
-                      <div className="text-xs text-gray-500 mb-1">Trade ID</div>
-                      <div className="font-mono text-xs text-gray-600">
-                        {trade.id.slice(-8)}
+                      <div className="text-xs text-muted-foreground mb-0.5">Rate</div>
+                      <div className="font-medium text-xs text-foreground">
+                        NGN {(trade as any).rate?.toLocaleString() || 'N/A'}
                       </div>
                     </div>
                   </div>
@@ -276,7 +272,7 @@ const MyTrades = () => {
                   <div className="flex space-x-2">
                     <Link
                       to={`/trade-details/${trade.id}`}
-                      className="flex-1 py-2 px-4 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-200 transition-colors text-center"
+                      className="flex-1 py-1.5 px-3 bg-secondary text-secondary-foreground rounded-md text-xs font-medium hover:bg-secondary/80 transition-colors text-center"
                     >
                       View Details
                     </Link>
@@ -284,9 +280,9 @@ const MyTrades = () => {
                     {shouldShowComplete && (
                       <button
                         onClick={() => handleCompleteTrade(trade.id)}
-                        className="px-3 py-1 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 transition-colors"
+                        className="px-3 py-1.5 bg-success text-success-foreground rounded-md text-xs font-medium hover:bg-success/90 transition-colors"
                       >
-                        Complete Trade
+                        Complete
                       </button>
                     )}
                   </div>

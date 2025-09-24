@@ -70,6 +70,7 @@ class CryptoService {
   private getFallbackCoins(): CoinPrice[] {
     return [
       {
+        id: 'bitcoin',
         name: 'Bitcoin',
         symbol: 'BTC',
         price: '$97,234.50',
@@ -78,6 +79,7 @@ class CryptoService {
         icon: '₿'
       },
       {
+        id: 'ethereum',
         name: 'Ethereum',
         symbol: 'ETH',
         price: '$3,456.78',
@@ -86,6 +88,7 @@ class CryptoService {
         icon: 'Ξ'
       },
       {
+        id: 'tether',
         name: 'USDT',
         symbol: 'USDT',
         price: '$1.00',
@@ -94,11 +97,12 @@ class CryptoService {
         icon: '₮'
       },
       {
+        id: 'bnb',
         name: 'BNB',
         symbol: 'BNB',
         price: '$692.45',
         change: '-0.87%',
-        changeType: 'negative',
+        changeType: 'negative' as const,
         icon: 'B'
       }
     ];

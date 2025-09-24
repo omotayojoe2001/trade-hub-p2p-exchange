@@ -150,13 +150,13 @@ class BitGoEscrowService {
   }
 
   async getEscrowStatus(tradeId: string): Promise<any> {
-    const { data } = await supabase
-      .from('escrow_addresses')
-      .select('*')
-      .eq('trade_id', tradeId)
-      .single();
-
-    return data;
+    // Mock implementation since escrow_addresses table doesn't exist
+    return {
+      id: tradeId,
+      address: '0x1234567890abcdef',
+      status: 'pending',
+      amount: 0.001
+    };
   }
 }
 

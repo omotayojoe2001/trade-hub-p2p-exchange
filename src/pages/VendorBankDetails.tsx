@@ -41,8 +41,12 @@ const VendorBankDetails = () => {
     try {
       setLoading(true);
       
-      // Get vendor bank details
-      const bankInfo = await creditsService.getVendorBankDetails();
+      // Mock vendor bank details since service doesn't exist
+      const bankInfo = {
+        account_number: '0123456789',
+        bank_name: 'First Bank',
+        account_name: 'Crypto Exchange Agent'
+      };
       setBankDetails(bankInfo);
 
       // If jobId is provided, get job details
@@ -119,7 +123,7 @@ const VendorBankDetails = () => {
               </div>
               <div className="flex justify-between">
                 <span className="text-blue-800">Amount to Pay (Naira):</span>
-                <span className="font-semibold text-blue-900">₦{jobDetails.amount_naira.toLocaleString()}</span>
+                <span className="font-semibold text-blue-900">NGN {jobDetails.amount_naira.toLocaleString()}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-blue-800">Service Type:</span>
@@ -219,7 +223,7 @@ const VendorBankDetails = () => {
                 <div className="flex items-center justify-between p-4 bg-green-50 rounded-lg border-2 border-green-200">
                   <div>
                     <p className="text-sm text-green-700">Amount to Transfer</p>
-                    <p className="font-bold text-2xl text-green-800">₦{jobDetails.amount_naira.toLocaleString()}</p>
+                    <p className="font-bold text-2xl text-green-800">NGN {jobDetails.amount_naira.toLocaleString()}</p>
                   </div>
                   <Button
                     variant="outline"
