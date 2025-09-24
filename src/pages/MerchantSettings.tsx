@@ -282,15 +282,15 @@ const MerchantSettings = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-20">
+    <div className="min-h-screen bg-white font-['Poppins'] pb-20">
       {/* Header */}
-      <div className="flex items-center justify-between p-4 bg-white border-b border-gray-100">
+      <div className="flex items-center justify-between p-4 bg-white border-b border-[#EAEAEA]">
         <div className="flex items-center">
           <Link to="/settings" className="mr-4">
-            <ArrowLeft size={24} className="text-gray-600" />
+            <ArrowLeft size={20} className="text-gray-600" />
           </Link>
-          <Settings size={24} className="text-blue-600 mr-3" />
-          <h1 className="text-xl font-semibold text-gray-900">Merchant Settings</h1>
+          <Settings size={20} className="text-[#1A73E8] mr-3" />
+          <h1 className="text-lg font-semibold text-gray-900">Merchant Settings</h1>
         </div>
       </div>
 
@@ -733,7 +733,7 @@ const MerchantSettings = () => {
 
         <Button 
           onClick={handleSave} 
-          className="w-full h-12 bg-blue-600 hover:bg-blue-700"
+          className="w-full h-12 bg-[#1A73E8] hover:bg-[#1557b0] text-white"
           disabled={loading}
         >
           {loading ? 'Saving...' : 'Save Merchant Settings'}

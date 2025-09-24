@@ -1,12 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Bell, TrendingUp, CheckCircle, Plus, ArrowUpRight, ArrowDownLeft, DollarSign, RefreshCw, Send, Settings, Wrench, Coins, Home, BarChart3, Newspaper, CreditCard, User, TrendingUpIcon } from 'lucide-react';
+import { Bell, TrendingUp, CheckCircle, Plus, ArrowUpRight, ArrowDownLeft, DollarSign, RefreshCw, Send, Settings, Wrench, Coins, Home, BarChart3, Newspaper, CreditCard, User, TrendingUpIcon, MoveRight } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useQuickAuth } from '@/hooks/useQuickAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useCryptoData } from '@/hooks/useCryptoData';
 import CryptoTicker from '@/components/CryptoTicker';
 import BottomNavigation from '@/components/BottomNavigation';
+import { creditsService } from '@/services/creditsService';
+import { mockCreditsService, isDemoMode } from '@/services/mockCreditsService';
 
 const Index = () => {
   const { user, profile, loading } = useAuth();
@@ -16,6 +18,7 @@ const Index = () => {
   const [totalUsers, setTotalUsers] = useState(20);
   const [unreadNotifications, setUnreadNotifications] = useState(0);
   const [selectedTab, setSelectedTab] = useState('All');
+  const [userCredits, setUserCredits] = useState(0);
 
   const navigate = useNavigate();
 
@@ -37,9 +40,41 @@ const Index = () => {
     }
   };
 
+  const fetchUserCredits = async () => {
+    if (!user) return;
+    
+    try {
+      const credits = await creditsService.getUserCredits(user.id);
+      setUserCredits(credits);
+    } catch (error) {
+      console.error('Error fetching user credits:', error);
+      setUserCredits(0);
+    }
+  };
+
   useEffect(() => {
     if (user) {
       fetchUnreadNotifications();
+      fetchUserCredits();
+      
+      // Subscribe to credit changes with cleanup
+      let subscription: any = null;
+      
+      const setupSubscription = () => {
+        subscription = creditsService.subscribeToCredits(user.id, (credits) => {
+          setUserCredits(credits);
+        });
+      };
+      
+      // Delay subscription to avoid conflicts
+      const timer = setTimeout(setupSubscription, 1000);
+
+      return () => {
+        clearTimeout(timer);
+        if (subscription) {
+          subscription.unsubscribe();
+        }
+      };
     }
   }, [user]);
 
@@ -69,8 +104,9 @@ const Index = () => {
   const displayName = profile?.display_name ||
                      user?.user_metadata?.full_name ||
                      user?.email?.split('@')[0] ||
-                     'AJ';
+                     'User';
 
+  const firstName = displayName.split(' ')[0];
   const userInitials = displayName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
   const profilePicture = profile?.profile_picture_url;
 
@@ -104,8 +140,8 @@ const Index = () => {
       {/* Header */}
       <div className="px-4 py-4">
         <div className="flex justify-between items-center">
-          <h1 className="text-base font-semibold text-black">
-            Good Morning, AJ
+          <h1 className="text-lg font-medium text-gray-900">
+            Good Morning, {firstName}
           </h1>
           <div className="flex items-center space-x-3">
             <Link to="/notifications" className="relative">
@@ -132,10 +168,13 @@ const Index = () => {
             <div className="flex justify-between items-center">
               <div className="flex items-center">
                 <div className="w-2 h-2 bg-green-400 rounded-full mr-2"></div>
-                <span className="text-white text-sm">Credits</span>
+                <span className="text-white text-base">Credits</span>
               </div>
               <div className="flex items-center space-x-3">
-                <div className="text-white text-xl font-bold">250</div>
+                <div className="text-white text-2xl font-bold">
+                  {userCredits}
+                  <span className="text-xs text-white/70 ml-1">(Live)</span>
+                </div>
                 <Link to="/credits-purchase" className="text-white/80 text-xs hover:text-white">
                   + Buy
                 </Link>
@@ -147,39 +186,39 @@ const Index = () => {
         {/* Quick Actions Grid */}
         <div className="mb-6">
           <div className="grid grid-cols-2 gap-3">
-            <Link to="/buy-sell" className="bg-white rounded-xl p-3 shadow-sm border border-gray-100">
+            <Link to="/buy-sell" className="bg-white rounded-xl p-3 shadow-sm border border-gray-100 card-hover active:scale-95 transition-transform">
               <div className="flex items-center">
                 <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-3">
                   <ArrowUpRight size={16} className="text-blue-600" />
                 </div>
-                <span className="text-black font-semibold text-sm">Buy Crypto</span>
+                <span className="text-black font-semibold text-base">Buy Crypto</span>
               </div>
             </Link>
             
-            <Link to="/sell-crypto" className="bg-white rounded-xl p-3 shadow-sm border border-gray-100">
+            <Link to="/sell-crypto" className="bg-white rounded-xl p-3 shadow-sm border border-gray-100 card-hover active:scale-95 transition-transform">
               <div className="flex items-center">
                 <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-3">
                   <ArrowDownLeft size={16} className="text-blue-600" />
                 </div>
-                <span className="text-black font-semibold text-sm">Sell Crypto</span>
+                <span className="text-black font-semibold text-base">Sell Crypto</span>
               </div>
             </Link>
             
-            <Link to="/sell-for-cash" className="bg-white rounded-xl p-3 shadow-sm border border-gray-100">
+            <Link to="/sell-for-cash" className="bg-white rounded-xl p-3 shadow-sm border border-gray-100 card-hover active:scale-95 transition-transform">
               <div className="flex items-center">
                 <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-3">
                   <DollarSign size={16} className="text-blue-600" />
                 </div>
-                <span className="text-black font-semibold text-sm">Sell → USD Cash</span>
+                <span className="text-black font-semibold text-base">Sell → USD Cash</span>
               </div>
             </Link>
             
-            <Link to="/send-naira-get-usd" className="bg-white rounded-xl p-3 shadow-sm border border-gray-100">
+            <Link to="/send-naira-get-usd" className="bg-white rounded-xl p-3 shadow-sm border border-gray-100 card-hover active:scale-95 transition-transform">
               <div className="flex items-center">
                 <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-3">
                   <Send size={16} className="text-blue-600" />
                 </div>
-                <span className="text-black font-semibold text-sm">Send NGN → USD Cash</span>
+                <span className="text-black font-semibold text-base">Send NGN → USD Cash</span>
               </div>
             </Link>
           </div>
@@ -187,36 +226,104 @@ const Index = () => {
 
         {/* Markets Section */}
         <div className="mb-6">
-          <h2 className="text-base font-semibold text-black mb-3">Markets</h2>
+          <div className="flex justify-between items-center mb-3">
+            <h2 className="text-lg font-medium text-gray-900">Markets</h2>
+            <Link to="/crypto-markets" className="text-blue-600 text-sm font-medium">See All</Link>
+          </div>
           
           {/* Crypto Ticker */}
           <div className="mb-3 -mx-4">
             <CryptoTicker />
           </div>
           
+          {/* Top Crypto Cards */}
+          <div className="space-y-2 mb-4">
+            <div className="bg-white rounded-xl p-3 shadow-sm border border-gray-100">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <span className="text-lg mr-2">₿</span>
+                  <div>
+                    <div className="text-gray-900 font-medium text-sm">Bitcoin</div>
+                    <div className="text-gray-500 text-xs">BTC</div>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="text-gray-900 font-semibold text-sm">$105,234</div>
+                  <div className="text-green-600 text-xs">+2.34%</div>
+                </div>
+              </div>
+            </div>
+            
+            <div className="bg-white rounded-xl p-3 shadow-sm border border-gray-100">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <span className="text-lg mr-2">Ξ</span>
+                  <div>
+                    <div className="text-gray-900 font-medium text-sm">Ethereum</div>
+                    <div className="text-gray-500 text-xs">ETH</div>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="text-gray-900 font-semibold text-sm">$3,456</div>
+                  <div className="text-red-600 text-xs">-1.23%</div>
+                </div>
+              </div>
+            </div>
+            
+            <div className="bg-white rounded-xl p-3 shadow-sm border border-gray-100">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <span className="text-lg mr-2">⊎</span>
+                  <div>
+                    <div className="text-gray-900 font-medium text-sm">Tether</div>
+                    <div className="text-gray-500 text-xs">USDT</div>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="text-gray-900 font-semibold text-sm">$1.00</div>
+                  <div className="text-gray-600 text-xs">0.00%</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
           {/* Rate Cards */}
           <div className="grid grid-cols-2 gap-3">
             <div className="bg-white rounded-xl p-3 shadow-sm border border-gray-100">
               <div className="text-gray-600 text-xs mb-1">USD → NGN Rate</div>
-              <div className="text-black font-bold text-sm">₦1,547</div>
+              <div className="flex items-center space-x-1">
+                <span className="text-gray-900 font-semibold text-base">1,547</span>
+                <span className="text-sm text-gray-500 font-medium">NGN</span>
+              </div>
             </div>
             <div className="bg-white rounded-xl p-3 shadow-sm border border-gray-100">
               <div className="text-gray-600 text-xs mb-1">Total Traders</div>
-              <div className="text-black font-bold text-sm">2,847</div>
+              <div className="text-gray-900 font-semibold text-base">2,847</div>
             </div>
           </div>
         </div>
 
         {/* Recent Trades */}
         <div className="mb-6">
-          <h2 className="text-base font-semibold text-black mb-3">Recent Trades</h2>
+          <h2 className="text-lg font-medium text-gray-900 mb-3">Recent Trades</h2>
           
           <div className="space-y-3">
             {recentTradesData.map((trade) => (
               <div key={trade.id} className="bg-white rounded-xl p-3 shadow-sm border border-gray-100">
                 <div className="flex justify-between items-start">
                   <div>
-                    <div className="text-black font-bold text-sm mb-1">{trade.text}</div>
+                    <div className="flex items-center space-x-2 mb-1">
+                      {trade.text.includes('→') ? (
+                        <>
+                          <span className="text-gray-900 font-semibold text-base">{trade.text.split(' → ')[0]}</span>
+                          <MoveRight size={14} className="text-gray-400" />
+                          <span className="text-gray-900 font-semibold text-base">{trade.text.split(' → ')[1].replace('₦', '')}</span>
+                          <span className="text-sm text-gray-500 font-medium">NGN</span>
+                        </>
+                      ) : (
+                        <span className="text-gray-900 font-semibold text-base">{trade.text}</span>
+                      )}
+                    </div>
                     <div className="text-gray-500 text-xs">{trade.date}</div>
                   </div>
                   <div className={`px-2 py-1 rounded text-xs font-medium ${trade.statusColor}`}>
@@ -233,7 +340,7 @@ const Index = () => {
           <Link to="/referrals" className="block">
             <div className="bg-[#0052FF] rounded-xl p-4">
               <div className="flex items-center justify-between">
-                <div className="text-white font-medium text-sm">
+                <div className="text-white font-medium text-base">
                   Invite friends. Earn Credits + Rewards.
                 </div>
                 <Send size={20} className="text-white" />
@@ -244,7 +351,7 @@ const Index = () => {
 
         {/* Platform Updates */}
         <div className="mb-8">
-          <h2 className="text-base font-semibold text-black mb-3">Platform Updates</h2>
+          <h2 className="text-lg font-medium text-gray-900 mb-3">Platform Updates</h2>
           
           {/* Tab Selector */}
           <div className="flex space-x-2 mb-4">
@@ -271,7 +378,7 @@ const Index = () => {
                   <Wrench size={12} className="text-gray-600" />
                 </div>
                 <div>
-                  <div className="text-black font-medium text-sm mb-1">
+                  <div className="text-gray-900 font-medium text-base mb-1">
                     Maintenance planned on Sept. 20.
                   </div>
                   <div className="text-gray-600 text-xs">
@@ -287,7 +394,7 @@ const Index = () => {
                   <Coins size={12} className="text-gray-600" />
                 </div>
                 <div>
-                  <div className="text-black font-medium text-sm mb-1">
+                  <div className="text-gray-900 font-medium text-base mb-1">
                     New coin listed: TON.
                   </div>
                   <div className="text-gray-600 text-xs">

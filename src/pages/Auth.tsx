@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Eye, EyeOff, User, Mail, Lock, Database } from 'lucide-react';
+import { Eye, EyeOff, User, Mail, Lock, Database, MapPin } from 'lucide-react';
 import TwoFactorLogin from '@/components/TwoFactorLogin';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -16,6 +16,7 @@ const Auth = () => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [fullName, setFullName] = useState('');
+  const [location, setLocation] = useState('');
   const [referralCode, setReferralCode] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -150,7 +151,8 @@ const Auth = () => {
           await supabase.from('profiles').insert({
             user_id: data.user.id,
             email: data.user.email,
-            display_name: fullName
+            display_name: fullName,
+            location: location
           });
           
           // Handle referral if provided
@@ -436,6 +438,24 @@ const Auth = () => {
               >
                 {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="location" className="text-sm font-medium text-gray-700">
+              Location
+            </Label>
+            <div className="relative">
+              <MapPin size={18} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+              <Input
+                id="location"
+                type="text"
+                value={location}
+                onChange={(e) => setLocation(e.target.value)}
+                className="h-12 bg-white border border-gray-300 rounded-lg pl-10 pr-4"
+                placeholder="Enter your city/location"
+                required
+              />
             </div>
           </div>
 

@@ -1,11 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { Search, ArrowDown, ArrowUp, CheckCircle, XCircle, Calendar, ArrowUpDown, Bell, Star, User } from 'lucide-react';
+import { ArrowDownRight, ArrowUpRight, DollarSign, Wallet, Bell, MessageCircle, Calendar, CheckCircle, XCircle, ArrowRight, MoveRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Calendar as CalendarComponent } from "@/components/ui/calendar";
-import PaymentConfirmationDialog from "@/components/PaymentConfirmationDialog";
 import BottomNavigation from '@/components/BottomNavigation';
 import { useQuickAuth } from '@/hooks/useQuickAuth';
 
@@ -24,15 +20,11 @@ const MyTrades = () => {
   const { user } = useAuth();
   const { toast } = useToast();
 
-  const [activeTab, setActiveTab] = useState('ongoing');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [typeFilter, setTypeFilter] = useState('all');
-  const [dateFrom, setDateFrom] = useState<Date>();
-  const [dateTo, setDateTo] = useState<Date>();
-  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
-  const [selectedTradeId, setSelectedTradeId] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState('All');
   const [trades, setTrades] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [dateFilter, setDateFilter] = useState<{from?: Date, to?: Date} | null>(null);
+  const [showDatePicker, setShowDatePicker] = useState(false);
 
   // Fetch real trades from database and cleanup expired requests
   useEffect(() => {
@@ -45,13 +37,34 @@ const MyTrades = () => {
   const cleanupExpiredRequests = async () => {
     try {
       // Auto-expire old trade requests
-      await supabase.rpc('auto_expire_trade_requests');
+      try {
+        await supabase.rpc('auto_expire_trade_requests');
+      } catch (error) {
+        console.log('auto_expire_trade_requests function not available yet');
+      }
+      
       // Auto-expire escrow trades where cash payment wasn't made
-      await supabase.rpc('auto_expire_escrow_trades');
+      try {
+        await supabase.rpc('auto_expire_escrow_trades');
+      } catch (error) {
+        console.log('auto_expire_escrow_trades function not available yet');
+      }
     } catch (error) {
       console.error('Error cleaning up expired requests:', error);
     }
   };
+
+  // Close date picker when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (showDatePicker && !(event.target as Element).closest('.date-picker-container')) {
+        setShowDatePicker(false);
+      }
+    };
+    
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showDatePicker]);
 
   // Set up real-time subscriptions for trade updates
   useEffect(() => {
@@ -63,11 +76,16 @@ const MyTrades = () => {
       .on('postgres_changes', {
         event: '*',
         schema: 'public',
-        table: 'trades',
-        filter: `buyer_id=eq.${user.id},seller_id=eq.${user.id}`
-      }, () => {
-        // Refresh trades when any change occurs
-        fetchUserTrades();
+        table: 'trades'
+        // Remove filter to catch all trade changes, then filter in callback
+      }, (payload) => {
+        // Only refresh if the change affects current user
+        const trade = payload.new || payload.old;
+        console.log('Trade change payload:', payload);
+        if (trade && (trade.buyer_id === user.id || trade.seller_id === user.id)) {
+          console.log('Trade change detected for user, refreshing trades');
+          setTimeout(() => fetchUserTrades(), 500); // Small delay to ensure DB is updated
+        }
       })
       .subscribe();
 
@@ -103,6 +121,8 @@ const MyTrades = () => {
         .select('*')
         .or(`buyer_id.eq.${user.id},seller_id.eq.${user.id}`)
         .order('created_at', { ascending: false });
+        
+
 
       if (tradesError) {
         console.error('Error fetching trades:', tradesError);
@@ -134,7 +154,7 @@ const MyTrades = () => {
           const tradeStatus = getTradeStatus(trade.status, trade.escrow_status);
           const awaitingAction = needsUserAction(trade, user.id);
 
-          return {
+          const formattedTrade = {
             id: trade.id,
             type: isBuyer ? 'buy' : 'sell',
             coin: trade.coin_type || 'BTC',
@@ -145,8 +165,8 @@ const MyTrades = () => {
             rating: 4.5, // Default rating
             status: tradeStatus,
             progress: getTradeProgress(trade.status, trade.escrow_status),
-                     startTime: new Date(trade.created_at).toLocaleDateString(),
-                     startDateTime: new Date(trade.created_at), // Add full datetime
+            startTime: new Date(trade.created_at).toLocaleDateString(),
+            startDateTime: new Date(trade.created_at), // Add full datetime
             date: new Date(trade.created_at),
             avatar: 'T',
             category: tradeStatus === 'completed' ? 'completed' : (tradeStatus === 'cancelled' || trade.status === 'cancelled' || trade.status === 'failed') ? 'cancelled' : 'ongoing',
@@ -162,6 +182,9 @@ const MyTrades = () => {
             actionRequired: getActionRequired(trade, user.id),
             tradeData: trade
           };
+          
+
+          return formattedTrade;
         }),
         // Format pending trade requests (only non-expired)
         ...(tradeRequestsData || []).map(request => {
@@ -204,6 +227,7 @@ const MyTrades = () => {
   };
 
   const getTradeStatus = (status: string, escrowStatus?: string) => {
+
     if (status === 'completed') return 'completed';
     if (status === 'cancelled') return 'cancelled';
     if (status === 'failed') return 'cancelled';
@@ -286,36 +310,107 @@ const MyTrades = () => {
     return null;
   };
 
-  // Filter trades based on active tab, search, type, and date
+  // Filter trades based on active tab and date
   const filteredTrades = useMemo(() => {
     return trades.filter(trade => {
       // Tab filter
-      if (activeTab === 'ongoing' && trade.category !== 'ongoing') return false;
-      if (activeTab === 'completed' && trade.category !== 'completed') return false;
-      if (activeTab === 'cancelled' && trade.category !== 'cancelled') return false;
-
-      // Search filter
-      if (searchQuery) {
-        const query = searchQuery.toLowerCase();
-        if (!trade.merchant.toLowerCase().includes(query) &&
-            !trade.coin.toLowerCase().includes(query) &&
-            !trade.amount.toLowerCase().includes(query)) {
-          return false;
-        }
+      if (activeTab === 'All') {
+        // Allow all
+      } else if (activeTab === 'Ongoing' && trade.category !== 'ongoing') {
+        return false;
+      } else if (activeTab === 'Completed' && trade.category !== 'completed') {
+        return false;
+      } else if (activeTab === 'Cancelled' && trade.category !== 'cancelled') {
+        return false;
       }
-
-      // Type filter
-      if (typeFilter !== 'all' && trade.type !== typeFilter) return false;
-
+      
       // Date filter
-      if (dateFrom && trade.date < dateFrom) return false;
-      if (dateTo && trade.date > dateTo) return false;
-
+      if (dateFilter) {
+        const tradeDate = new Date(trade.date);
+        if (dateFilter.from && tradeDate < dateFilter.from) return false;
+        if (dateFilter.to && tradeDate > dateFilter.to) return false;
+      }
+      
       return true;
     });
-  }, [trades, activeTab, searchQuery, typeFilter, dateFrom, dateTo]);
+  }, [trades, activeTab, dateFilter]);
 
-  const incompleteTradesCount = trades.filter(trade => trade.awaitingUserAction).length;
+  const getTransactionIcon = (type: string) => {
+    switch (type) {
+      case 'buy':
+        return <ArrowDownRight size={20} className="text-[#1A73E8]" />;
+      case 'sell':
+        return <ArrowUpRight size={20} className="text-[#1A73E8]" />;
+      case 'send_naira':
+        return <Wallet size={20} className="text-[#1A73E8]" />;
+      default:
+        return <DollarSign size={20} className="text-[#1A73E8]" />;
+    }
+  };
+
+  const getTransactionLabel = (type: string, coin?: string) => {
+    switch (type) {
+      case 'buy':
+        return `Buy ${coin || 'Crypto'}`;
+      case 'sell':
+        return `Sell ${coin || 'Crypto'}`;
+      case 'send_naira':
+        return 'Send Naira → USD Cash';
+      default:
+        return 'Transaction';
+    }
+  };
+
+  const getStatusBadgeNew = (status: string) => {
+    switch (status) {
+      case 'completed':
+        return (
+          <span className="px-3 py-1 rounded-full text-xs font-bold text-white bg-[#22C55E]">
+            Completed
+          </span>
+        );
+      case 'ongoing':
+      case 'waiting_payment':
+      case 'in_progress':
+        return (
+          <span className="px-3 py-1 rounded-full text-xs font-bold text-white bg-[#F59E0B]">
+            Ongoing
+          </span>
+        );
+      case 'cancelled':
+        return (
+          <span className="px-3 py-1 rounded-full text-xs font-bold text-white bg-[#EF4444]">
+            Cancelled
+          </span>
+        );
+      default:
+        return (
+          <span className="px-3 py-1 rounded-full text-xs font-bold text-white bg-[#F59E0B]">
+            Ongoing
+          </span>
+        );
+    }
+  };
+
+  const getTransactionDetails = (trade: any) => {
+    if (trade.tradeData?.escrow_address) {
+      return `Wallet: ${trade.tradeData.escrow_address.slice(0, 8)}... via Bank Transfer`;
+    }
+    if (trade.tradeData?.pickup_location) {
+      return `Pickup: ${trade.tradeData.pickup_location} — Ref: TXN-${trade.id.slice(0, 4)}`;
+    }
+    return `Transaction ID: TXN-${trade.id.slice(0, 8)}`;
+  };
+
+  const getProgressPercentage = (status: string) => {
+    switch (status) {
+      case 'completed': return 100;
+      case 'cancelled': return 100;
+      case 'waiting_payment': return 60;
+      case 'in_progress': return 40;
+      default: return 20;
+    }
+  };
 
 
 
@@ -441,14 +536,32 @@ const MyTrades = () => {
 
   const handleUploadPaymentProof = async (tradeId: string, proofUrl?: string, paymentHash?: string) => {
     try {
-      const { data, error } = await supabase.rpc('upload_payment_proof', {
-        trade_id_param: tradeId,
-        user_id_param: user?.id,
-        proof_url_param: proofUrl,
-        payment_hash_param: paymentHash
-      });
+      // Try using RPC function first
+      try {
+        const { data, error } = await supabase.rpc('upload_payment_proof', {
+          trade_id_param: tradeId,
+          user_id_param: user?.id,
+          proof_url_param: proofUrl,
+          payment_hash_param: paymentHash
+        });
 
-      if (error) throw error;
+        if (error) throw error;
+      } catch (rpcError) {
+        // Fallback to direct update if RPC function doesn't exist
+        console.log('Using fallback method for payment proof upload');
+        const { error } = await supabase
+          .from('trades')
+          .update({
+            payment_proof_url: proofUrl,
+            payment_hash: paymentHash,
+            payment_proof_uploaded_at: new Date().toISOString(),
+            escrow_status: 'payment_proof_uploaded',
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', tradeId);
+          
+        if (error) throw error;
+      }
 
       toast({
         title: "Payment Proof Uploaded",
@@ -468,12 +581,29 @@ const MyTrades = () => {
 
   const handleConfirmPayment = async (tradeId: string) => {
     try {
-      const { data, error } = await supabase.rpc('confirm_payment_received', {
-        trade_id_param: tradeId,
-        user_id_param: user?.id
-      });
+      // Try using RPC function first
+      try {
+        const { data, error } = await supabase.rpc('confirm_payment_received', {
+          trade_id_param: tradeId,
+          user_id_param: user?.id
+        });
 
-      if (error) throw error;
+        if (error) throw error;
+      } catch (rpcError) {
+        // Fallback to direct update if RPC function doesn't exist
+        console.log('Using fallback method for payment confirmation');
+        const { error } = await supabase
+          .from('trades')
+          .update({
+            status: 'completed',
+            escrow_status: 'completed',
+            completed_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', tradeId);
+          
+        if (error) throw error;
+      }
 
       toast({
         title: "Trade Completed!",
@@ -493,13 +623,31 @@ const MyTrades = () => {
 
   const handleDisputePayment = async (tradeId: string, reason: string) => {
     try {
-      const { data, error } = await supabase.rpc('dispute_payment', {
-        trade_id_param: tradeId,
-        user_id_param: user?.id,
-        dispute_reason_param: reason
-      });
+      // Try using RPC function first
+      try {
+        const { data, error } = await supabase.rpc('dispute_payment', {
+          trade_id_param: tradeId,
+          user_id_param: user?.id,
+          dispute_reason_param: reason
+        });
 
-      if (error) throw error;
+        if (error) throw error;
+      } catch (rpcError) {
+        // Fallback to direct update if RPC function doesn't exist
+        console.log('Using fallback method for dispute creation');
+        const { error } = await supabase
+          .from('trades')
+          .update({
+            status: 'disputed',
+            escrow_status: 'disputed',
+            dispute_reason: reason,
+            disputed_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', tradeId);
+          
+        if (error) throw error;
+      }
 
       toast({
         title: "Dispute Created",
@@ -576,460 +724,234 @@ const MyTrades = () => {
 
 
   return (
-    <div className="min-h-screen bg-background pb-24">
-      {/* Header */}
-      <div className="bg-card shadow-sm border-b border-border">
-        <div className="flex items-center justify-between p-4">
-          <div className="flex items-center">
-            <h1 className="text-xl font-bold text-foreground">My Trades</h1>
-          </div>
-          <button 
-            onClick={() => navigate('/notifications')}
-            className="relative w-10 h-10 bg-secondary rounded-full flex items-center justify-center hover:bg-secondary/80 transition-colors"
-          >
-            <Bell size={18} className="text-foreground/70" />
-            {incompleteTradesCount > 0 && (
-              <div className="absolute -top-1 -right-1 w-5 h-5 bg-brand rounded-full flex items-center justify-center">
-                <span className="text-white text-xs font-bold">{incompleteTradesCount}</span>
-              </div>
-            )}
-          </button>
-        </div>
-      </div>
-
-      {/* Notification Banner */}
-      {incompleteTradesCount > 0 && (
-        <div className="mx-4 mt-4 bg-secondary border border-brand/20 rounded-lg p-3 shadow-sm">
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 bg-brand rounded-full"></div>
-            <div>
-              <p className="text-foreground font-medium text-sm">
-                {incompleteTradesCount} trade{incompleteTradesCount > 1 ? 's' : ''} awaiting confirmation
-              </p>
-              <p className="text-foreground/70 text-xs">Please confirm payment received</p>
+    <div className="min-h-screen bg-white font-['Poppins'] pb-20">
+      {/* Sticky Header */}
+      <header className="sticky top-0 bg-white z-10 px-4 py-4 border-b border-[#EAEAEA]">
+        <div className="flex items-center justify-between">
+          <h1 className="text-lg font-semibold text-gray-900">Transactions</h1>
+          <div className="flex items-center space-x-3">
+            <button 
+              onClick={() => navigate('/notifications')}
+              className="w-10 h-10 border border-gray-200 rounded-full flex items-center justify-center hover:bg-gray-50 transition-colors"
+            >
+              <Bell size={20} className="text-gray-600" />
+            </button>
+            <button 
+              onClick={() => navigate('/messages')}
+              className="w-10 h-10 border border-gray-200 rounded-full flex items-center justify-center hover:bg-gray-50 transition-colors"
+            >
+              <MessageCircle size={20} className="text-gray-600" />
+            </button>
+            <button 
+              onClick={() => {
+                console.log('Manual refresh triggered');
+                fetchUserTrades();
+              }}
+              className="w-10 h-10 border border-gray-200 rounded-full flex items-center justify-center hover:bg-gray-50 transition-colors"
+              title="Refresh trades"
+            >
+              <span className="text-gray-600 text-xs">↻</span>
+            </button>
+            <div className="relative date-picker-container">
+              <button 
+                onClick={() => setShowDatePicker(!showDatePicker)}
+                className={`w-10 h-10 border border-gray-200 rounded-full flex items-center justify-center hover:bg-gray-50 transition-colors ml-1 ${
+                  dateFilter ? 'bg-blue-50 border-blue-200' : ''
+                }`}
+              >
+                <Calendar size={16} className={dateFilter ? 'text-blue-600' : 'text-gray-600'} />
+              </button>
+              
+              {showDatePicker && (
+                <div className="absolute right-0 top-12 bg-white border border-gray-200 rounded-lg shadow-lg p-4 z-50 w-64">
+                  <div className="space-y-3">
+                    <h3 className="font-medium text-gray-900">Filter by Date</h3>
+                    
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        onClick={() => {
+                          setDateFilter({ from: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) });
+                          setShowDatePicker(false);
+                        }}
+                        className="px-3 py-2 text-sm border border-gray-200 rounded hover:bg-gray-50"
+                      >
+                        Last 7 days
+                      </button>
+                      <button
+                        onClick={() => {
+                          setDateFilter({ from: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) });
+                          setShowDatePicker(false);
+                        }}
+                        className="px-3 py-2 text-sm border border-gray-200 rounded hover:bg-gray-50"
+                      >
+                        Last 30 days
+                      </button>
+                      <button
+                        onClick={() => {
+                          setDateFilter({ from: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000) });
+                          setShowDatePicker(false);
+                        }}
+                        className="px-3 py-2 text-sm border border-gray-200 rounded hover:bg-gray-50"
+                      >
+                        Last 3 months
+                      </button>
+                      <button
+                        onClick={() => {
+                          const today = new Date();
+                          const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+                          setDateFilter({ from: startOfMonth, to: today });
+                          setShowDatePicker(false);
+                        }}
+                        className="px-3 py-2 text-sm border border-gray-200 rounded hover:bg-gray-50"
+                      >
+                        This month
+                      </button>
+                    </div>
+                    
+                    <div className="border-t pt-3">
+                      <button
+                        onClick={() => {
+                          setDateFilter(null);
+                          setShowDatePicker(false);
+                        }}
+                        className="w-full px-3 py-2 text-sm text-red-600 border border-red-200 rounded hover:bg-red-50"
+                      >
+                        Clear Filter
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
+          </div>
+        </div>
+      </header>
+
+
+
+
+
+      {/* Date Filter Indicator */}
+      {dateFilter && (
+        <div className="px-4 mt-4">
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 flex items-center justify-between">
+            <span className="text-sm text-blue-800">
+              {dateFilter.from && dateFilter.to 
+                ? `${dateFilter.from.toLocaleDateString()} - ${dateFilter.to.toLocaleDateString()}`
+                : dateFilter.from 
+                ? `From ${dateFilter.from.toLocaleDateString()}`
+                : 'Date filtered'}
+            </span>
+            <button
+              onClick={() => setDateFilter(null)}
+              className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+            >
+              Clear
+            </button>
           </div>
         </div>
       )}
 
-      {/* Search and Filters */}
-      <div className="p-4 space-y-3">
-        <div className="relative">
-          <Search size={18} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-          <input
-            type="text"
-            placeholder="Search merchant or amount"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 bg-card border border-border rounded-lg text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent shadow-sm text-sm"
-          />
-        </div>
-        
-        {/* Filters Row */}
-        <div className="flex gap-3 overflow-x-auto pb-1 items-center">
-          <Select value={typeFilter} onValueChange={setTypeFilter}>
-            <SelectTrigger className="w-32 bg-card rounded-lg border-border shadow-sm text-sm h-9 flex-shrink-0">
-              <div className="flex items-center gap-2 justify-center">
-                <ArrowUpDown size={14} className="text-muted-foreground" />
-                <SelectValue placeholder="All Types" />
-              </div>
-            </SelectTrigger>
-            <SelectContent className="min-w-32">
-              <SelectItem value="all" className="text-sm">All Types</SelectItem>
-              <SelectItem value="buy" className="text-sm">Buy</SelectItem>
-              <SelectItem value="sell" className="text-sm">Sell</SelectItem>
-            </SelectContent>
-          </Select>
-
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                className={cn(
-                  "w-32 justify-start text-left font-normal bg-card rounded-lg border-border shadow-sm text-sm h-9",
-                  !dateFrom && "text-muted-foreground"
-                )}
-              >
-                <Calendar size={14} className="mr-1.5" />
-                {dateFrom ? format(dateFrom, "MMM dd") : "From"}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
-              <CalendarComponent
-                mode="single"
-                selected={dateFrom}
-                onSelect={setDateFrom}
-                initialFocus
-                className="p-3 pointer-events-auto"
-              />
-            </PopoverContent>
-          </Popover>
-
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                className={cn(
-                  "w-32 justify-start text-left font-normal bg-card rounded-lg border-border shadow-sm text-sm h-9",
-                  !dateTo && "text-muted-foreground"
-                )}
-              >
-                <Calendar size={14} className="mr-1.5" />
-                {dateTo ? format(dateTo, "MMM dd") : "To"}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
-              <CalendarComponent
-                mode="single"
-                selected={dateTo}
-                onSelect={setDateTo}
-                initialFocus
-                className="p-3 pointer-events-auto"
-              />
-            </PopoverContent>
-          </Popover>
-
-          {(dateFrom || dateTo || typeFilter !== 'all') && (
-            <Button
-              variant="ghost"
-              onClick={() => {
-                setDateFrom(undefined);
-                setDateTo(undefined);
-                setTypeFilter('all');
-              }}
-              className="px-2 text-foreground/60 hover:text-foreground text-sm h-9"
+      {/* Transaction Filter Tabs */}
+      <div className="px-4 mt-6 mb-6">
+        <div className="flex space-x-2 overflow-x-auto scrollbar-hide">
+          {['All', 'Ongoing', 'Completed', 'Cancelled'].map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap ${
+                activeTab === tab
+                  ? 'bg-[#1A73E8] text-white'
+                  : 'bg-white border border-[#1A73E8] text-[#1A73E8]'
+              }`}
             >
-              Clear
-            </Button>
-          )}
+              {tab}
+            </button>
+          ))}
         </div>
       </div>
 
-      {/* Tabs */}
-      <div className="px-4 mb-4">
-        <div className="bg-card rounded-lg p-1 shadow-sm border border-border">
-          <div className="flex">
-            <button
-              onClick={() => setActiveTab('ongoing')}
-              className={`flex-1 py-2 text-sm font-medium rounded-md transition-all duration-200 ${
-                activeTab === 'ongoing'
-                  ? 'bg-brand text-white shadow-sm'
-                  : 'text-foreground/60 hover:text-foreground'
-              }`}
-            >
-              Ongoing
-            </button>
-            <button
-              onClick={() => setActiveTab('completed')}
-              className={`flex-1 py-2 text-sm font-medium rounded-md transition-all duration-200 ${
-                activeTab === 'completed'
-                  ? 'bg-brand text-white shadow-sm'
-                  : 'text-foreground/60 hover:text-foreground'
-              }`}
-            >
-              Completed
-            </button>
-            <button
-              onClick={() => setActiveTab('cancelled')}
-              className={`flex-1 py-2 text-sm font-medium rounded-md transition-all duration-200 ${
-                activeTab === 'cancelled'
-                  ? 'bg-brand text-white shadow-sm'
-                  : 'text-foreground/60 hover:text-foreground'
-              }`}
-            >
-              Cancelled
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Trades List */}
-      <div className="px-4 space-y-4 pb-4">
+      {/* Transaction Cards */}
+      <div className="px-4 space-y-4 pb-6">
         {filteredTrades.length === 0 ? (
-          <div className="text-center py-8">
-            <div className="w-12 h-12 bg-secondary rounded-full flex items-center justify-center mx-auto mb-3">
-              <Search size={20} className="text-foreground/50" />
+          <div className="text-center py-12">
+            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <DollarSign size={24} className="text-gray-400" />
             </div>
-            <p className="text-foreground/70 font-medium">No trades found</p>
-            <p className="text-foreground/50 text-sm">Try adjusting your filters</p>
+            <p className="text-gray-600 font-medium mb-2">No transactions found</p>
+            <p className="text-gray-400 text-sm">Your transactions will appear here</p>
           </div>
         ) : (
           filteredTrades.map((trade) => (
             <div 
               key={trade.id} 
-              className="bg-card border border-border rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+              className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer card-hover active:scale-98"
               onClick={() => handleTradeClick(trade.id)}
             >
-              <div className="flex items-start justify-between mb-3">
+              {/* Top Row */}
+              <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center">
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center mr-3 bg-secondary`}>
-                    {trade.type === 'buy' ? (
-                      <ArrowDown size={14} className="text-brand" />
-                    ) : (
-                      <ArrowUp size={14} className="text-success" />
-                    )}
+                  <div className="w-10 h-10 bg-blue-50 rounded-full flex items-center justify-center mr-3">
+                    {getTransactionIcon(trade.type)}
                   </div>
                   <div>
-                    <h3 className="font-medium text-foreground capitalize text-sm">
-                      {trade.type}ing {trade.coin}
+                    <h3 className="font-semibold text-gray-900 text-base">
+                      {getTransactionLabel(trade.type, trade.coin)}
                     </h3>
-                    <p className="text-lg font-bold text-foreground">{trade.amount}</p>
-                    <p className="text-xs text-muted-foreground">{trade.coinAmount}</p>
                   </div>
                 </div>
-                {getStatusBadge(trade.status)}
+                {getStatusBadgeNew(trade.status)}
               </div>
               
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center">
-                  <div className="w-8 h-8 bg-secondary rounded-full flex items-center justify-center mr-3">
-                    <User size={14} className="text-foreground/60" />
-                  </div>
-                  <div>
-                    <p className="font-medium text-foreground text-sm">{trade.merchant}</p>
-                    <div className="flex items-center">
-                      <Star size={12} className="text-brand mr-1" />
-                      <span className="text-xs text-muted-foreground">{trade.rating}</span>
-                    </div>
+              {/* Middle Section */}
+              <div className="mb-4">
+                <div className="mb-2">
+                  <div className="flex items-center space-x-2">
+                    <span className="font-semibold text-gray-900 text-lg">{trade.coinAmount}</span>
+                    <MoveRight size={16} className="text-gray-400" />
+                    <span className="font-semibold text-gray-900 text-lg">{trade.amount.replace('₦', '')}</span>
+                    <span className="text-sm text-gray-500 font-medium">NGN</span>
                   </div>
                 </div>
-                <div className="text-right">
-                  <TradeTimeDisplay date={trade.startDateTime || trade.date} />
-                  {/* Show countdown for payment proof upload */}
-                  {trade.escrowExpiresAt && trade.cashSenderId === user?.id && !trade.paymentProofUploaded && (
-                    <div className="mt-1 text-right">
-                      <TradeCountdown
-                        startTime={new Date(trade.date)}
-                        duration={30}
-                        className="text-xs text-orange-600 font-medium"
-                      />
+                <p className="text-gray-500 text-sm truncate">
+                  {getTransactionDetails(trade)}
+                </p>
+                
+                {/* Progress Bar - Only for Ongoing */}
+                {(trade.status === 'ongoing' || trade.status === 'waiting_payment' || trade.status === 'in_progress') && (
+                  <div className="mt-3">
+                    <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div
+                        className="h-2 rounded-full bg-[#1A73E8] transition-all duration-300"
+                        style={{ width: `${getProgressPercentage(trade.status)}%` }}
+                      ></div>
                     </div>
-                  )}
-                  {/* Show payment proof status */}
-                  {trade.paymentProofUploaded && (
-                    <div className="mt-1 text-right">
-                      <span className="text-xs text-blue-600 font-medium">Proof Uploaded</span>
-                    </div>
-                  )}
-                </div>
+                  </div>
+                )}
               </div>
-
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex-1 mr-3">
-                  <div className="w-full bg-muted rounded-full h-2">
-                    <div
-                      className={`h-2 rounded-full transition-all duration-300 ${getProgressColor(trade.status)}`}
-                      style={{ width: `${trade.progress}%` }}
-                    ></div>
-                  </div>
-                </div>
-                <span className="text-xs font-medium text-muted-foreground">{trade.progress}%</span>
-              </div>
-
-              {/* Action Buttons for Completed Trades */}
-              {trade.status === 'completed' && (
-                <div className="flex gap-2 mt-3">
-                  <Button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      // Real receipt data from trade
-                      const receiptData = {
-                        transactionId: trade.id,
-                        amount: trade.tradeData?.amount || parseFloat(trade.coinAmount.replace(/[^\d.]/g, '')),
-                        coin: trade.coin,
-                        nairaAmount: trade.nairaAmount,
-                        rate: trade.tradeData?.rate || 0,
-                        escrowAddress: trade.tradeData?.escrow_address || 'N/A',
-                        receiverBankDetails: trade.tradeData?.bank_account_details || {
-                          accountNumber: 'N/A',
-                          bankName: 'N/A',
-                          accountName: 'N/A'
-                        },
-                        completedAt: trade.tradeData?.completed_at ? new Date(trade.tradeData.completed_at) : new Date(),
-                        txHash: trade.tradeData?.transaction_hash || 'N/A',
-                        tradeType: trade.type,
-                        merchant: trade.merchant,
-                        status: trade.status
-                      };
-
-                      navigate('/receipt', {
-                        state: { receiptData }
-                      });
-                    }}
-                    variant="outline"
-                    size="sm"
-                    className="flex-1"
-                  >
-                    Download Receipt
-                  </Button>
-                  <Button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      const shareText = `Trade completed! ${trade.amount} ${trade.coin} with ${trade.merchant}. Transaction ID: TXN-${trade.id}`;
-                      const shareUrl = `https://wa.me/?text=${encodeURIComponent(shareText)}`;
-                      window.open(shareUrl, '_blank');
-                    }}
-                    variant="outline"
-                    size="sm"
-                    className="flex-1"
-                  >
-                    Share
-                  </Button>
-                </div>
-              )}
-
-              {/* Action Buttons for Cash Sender - Upload Payment Proof */}
-              {trade.awaitingUserAction && trade.cashSenderId === user?.id && trade.escrowExpiresAt && (
-                <div className="flex gap-2 mt-3">
-                  <Button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      // Navigate to payment proof upload page
-                      navigate(`/upload-payment-proof/${trade.id}`);
-                    }}
-                    className="flex-1 bg-orange-500 hover:bg-orange-600 text-white py-2 rounded-lg text-sm font-medium"
-                  >
-                    Upload Payment Proof
-                  </Button>
-                </div>
-              )}
-
-              {/* Action Buttons for Crypto Sender - Confirm or Dispute */}
-              {trade.awaitingUserAction && trade.cryptoSenderId === user?.id && trade.paymentProofUploaded && (
-                <div className="flex gap-2 mt-3">
-                  <Button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleConfirmPayment(trade.id);
-                    }}
-                    className="flex-1 bg-green-500 hover:bg-green-600 text-white py-2 rounded-lg text-sm font-medium"
-                  >
-                    Confirm Payment Received
-                  </Button>
-                  <Button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      const reason = prompt('Why are you disputing this payment?');
-                      if (reason) {
-                        handleDisputePayment(trade.id, reason);
-                      }
-                    }}
-                    variant="destructive"
-                    size="sm"
-                    className="px-3"
-                  >
-                    Dispute
-                  </Button>
-                </div>
-              )}
-
-              {/* Action Button for Waiting Confirmation */}
-              {trade.status === 'waiting_confirmation' && trade.awaitingUserAction && (
-                <div className="flex gap-2 mt-3">
-                  <Button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleOpenConfirmDialog(trade.id);
-                    }}
-                    className="flex-1 bg-success hover:bg-success/90 text-white py-2 rounded-lg text-sm font-medium shadow-sm hover:shadow-md transition-all"
-                  >
-                    Confirm Payment Received
-                  </Button>
-                  <Button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleDeleteTrade(trade.id);
-                    }}
-                    variant="destructive"
-                    size="sm"
-                    className="px-3"
-                  >
-                    Delete
-                  </Button>
-                </div>
-              )}
-
-              {/* Cancel Button - Only show if user can cancel */}
-              {trade.canUserCancel && (trade.status === 'waiting_payment' || trade.status === 'pending' || trade.status === 'in_progress') && (
-                <Button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleDeleteTrade(trade.id);
-                  }}
-                  variant="destructive"
-                  size="sm"
-                  className="w-full mt-3"
-                >
-                  Cancel Trade
-                </Button>
-              )}
               
-              {/* Show countdown for cash sender when crypto is in escrow */}
-              {trade.escrowExpiresAt && trade.cashSenderId === user?.id && !trade.paymentProofUploaded && (
-                <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-yellow-800">Upload Proof Deadline:</span>
-                    <TradeCountdown
-                      startTime={new Date(trade.date)}
-                      duration={30}
-                      onExpire={() => {
-                        toast({
-                          title: "Trade Expired",
-                          description: "Crypto returned to sender - no payment proof uploaded",
-                          variant: "destructive"
-                        });
-                        fetchUserTrades();
-                      }}
-                      className="text-yellow-800 font-bold"
-                    />
-                  </div>
-                  <p className="text-xs text-yellow-600 mt-1">
-                    Upload payment proof before countdown ends
-                  </p>
-                </div>
-              )}
-
-              {/* Show payment proof uploaded status */}
-              {trade.paymentProofUploaded && (
-                <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-blue-800">Payment Proof Uploaded</span>
-                    <span className="text-xs text-blue-600">Waiting for confirmation</span>
-                  </div>
-                  {trade.cryptoSenderId === user?.id && (
-                    <p className="text-xs text-blue-600 mt-1">
-                      Review payment proof and confirm if you received payment
-                    </p>
-                  )}
-                </div>
-              )}
-
-              {/* Show dispute status */}
-              {trade.isDisputed && (
-                <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-red-800">Payment Disputed</span>
-                    <span className="text-xs text-red-600">Under Review</span>
-                  </div>
-                  <p className="text-xs text-red-600 mt-1">
-                    Support team is reviewing this dispute
-                  </p>
-                </div>
-              )}
+              {/* Bottom Row */}
+              <div className="flex items-center justify-between">
+                <span className="text-gray-400 text-sm">
+                  {new Date(trade.date).toLocaleDateString('en-US', { 
+                    month: 'short', 
+                    day: 'numeric', 
+                    year: 'numeric' 
+                  })} · {new Date(trade.date).toLocaleTimeString('en-US', { 
+                    hour: '2-digit', 
+                    minute: '2-digit' 
+                  })}
+                </span>
+                <span className="text-[#1A73E8] text-sm font-bold flex items-center">
+                  View Details <ArrowRight size={14} className="ml-1" />
+                </span>
+              </div>
             </div>
           ))
         )}
       </div>
 
-      {/* Confirmation Dialog */}
-      <PaymentConfirmationDialog 
-        isOpen={showConfirmDialog}
-        onClose={() => setShowConfirmDialog(false)}
-        onConfirm={handleConfirmationResponse}
-        amount={100000}
-        bankAccount="1234567890 - First Bank"
-        merchantName="Merchant"
-      />
+
 
       {!isQuickAuthActive && <BottomNavigation />}
     </div>

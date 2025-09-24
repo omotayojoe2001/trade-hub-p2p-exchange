@@ -55,12 +55,14 @@ const BuyCryptoPaymentStep3 = () => {
 
       if (trade) {
         setTradeData(trade); // Store full trade data
-        if (trade.status === 'payment_sent') {
+        if (trade.status === 'payment_sent' || trade.escrow_status === 'payment_proof_uploaded') {
           setTradeStatus('confirming_payment');
         } else if (trade.status === 'completed') {
           console.log('Trade completed, updating UI');
           setTradeStatus('completed');
-          setTxHash(trade.transaction_hash || 'completed');
+          setTxHash(trade.transaction_hash || trade.payment_hash || 'completed');
+        } else if (trade.escrow_status === 'crypto_received') {
+          setTradeStatus('confirming_payment');
         }
       } else {
         console.log('No trade found for ID:', tradeId);

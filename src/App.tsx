@@ -100,6 +100,7 @@ import MerchantTradeFlow from "./pages/MerchantTradeFlow";
 import Messages from "./pages/Messages";
 import EscrowFlow from "./pages/EscrowFlow";
 import EscrowTradeFlow from "./pages/EscrowTradeFlow";
+import CashEscrowFlow from "./pages/CashEscrowFlow";
 import ReceiptPage from "./pages/ReceiptPage";
 import { Blog } from "./pages/Blog";
 import MerchantMatchingChoice from "./pages/MerchantMatchingChoice";
@@ -110,6 +111,9 @@ import AutoMerchantMatch from "./pages/AutoMerchantMatch";
 import VendorLogin from "./pages/VendorLogin";
 import SimpleVendorDashboard from "./pages/SimpleVendorDashboard";
 import CreditsPurchase from "./pages/CreditsPurchase";
+import CreditsHistory from "./pages/CreditsHistory";
+import AdminCredits from "./pages/AdminCredits";
+import TestCredits from "./pages/TestCredits";
 import VendorAuthGuard from "./components/VendorAuthGuard";
 import VendorDashboard from "./components/VendorDashboard";
 import VendorBankDetails from "./pages/VendorBankDetails";
@@ -128,8 +132,10 @@ import { ThankYouPage } from "./pages/ThankYouPage";
 
 import CryptoNews from "./pages/CryptoNews";
 import NewsDetail from "./pages/NewsDetail";
+import CryptoMarkets from "./pages/CryptoMarkets";
 import UploadPaymentProof from "./pages/UploadPaymentProof";
 import ReferralLanding from "./pages/ReferralLanding";
+import TestTradeCompletion from "./pages/TestTradeCompletion";
 import React from 'react';
 
 const queryClient = new QueryClient();
@@ -264,6 +270,7 @@ const AppContent = () => {
             <Route path="/my-trades" element={<MyTrades />} />
             <Route path="/news" element={<CryptoNews />} />
             <Route path="/news/:id" element={<NewsDetail />} />
+            <Route path="/crypto-markets" element={<CryptoMarkets />} />
           <Route path="/upload-payment-proof/:tradeId" element={<UploadPaymentProof />} />
 
             <Route path="/buy-crypto-payment-step1" element={<BuyCryptoPaymentStep1 />} />
@@ -321,6 +328,7 @@ const AppContent = () => {
         <Route path="/thank-you" element={<ThankYouPage />} />
         <Route path="/escrow-flow" element={<EscrowFlow />} />
         <Route path="/escrow-flow/:tradeId" element={<EscrowTradeFlow />} />
+        <Route path="/cash-escrow-flow" element={<CashEscrowFlow />} />
 
         {/* Vendor Routes */}
         <Route path="/vendor/login" element={<VendorLogin />} />
@@ -352,6 +360,9 @@ const AppContent = () => {
 
         {/* Credits Routes */}
         <Route path="/credits/purchase" element={<CreditsPurchase />} />
+        <Route path="/credits-history" element={<CreditsHistory />} />
+        <Route path="/admin/credits" element={<AdminCredits />} />
+        <Route path="/test-credits" element={<TestCredits />} />
 
         {/* Cash Services Routes */}
         <Route path="/vendor-bank-details/:jobId?" element={<VendorBankDetails />} />
@@ -371,6 +382,9 @@ const AppContent = () => {
         {/* Removed demo/test routes - not needed */}
             {/* Referral Route */}
             <Route path="/refer/:userId" element={<ReferralLanding />} />
+            
+            {/* Test Route for debugging trade completion */}
+            <Route path="/test-trade-completion" element={<TestTradeCompletion />} />
             
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />

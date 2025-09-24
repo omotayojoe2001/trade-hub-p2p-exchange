@@ -60,7 +60,7 @@ export const escrowService = {
         .from('trades')
         .update({
           escrow_address: platformWallet,
-          escrow_status: 'escrow_created',
+          escrow_status: 'pending',
           status: 'pending'
         })
         .eq('id', tradeId)

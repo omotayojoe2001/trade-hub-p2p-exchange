@@ -175,9 +175,9 @@ const BuyCryptoPaymentStep1 = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/5 to-secondary/10">
+    <div className="min-h-screen bg-white font-['Poppins']">
       {/* Header */}
-      <div className="sticky top-0 backdrop-blur-sm bg-card/95 border-b p-4 flex items-center justify-between shadow-sm">
+      <div className="sticky top-0 bg-white border-b border-[#EAEAEA] p-4 flex items-center justify-between">
         <Button variant="ghost" size="icon" onClick={() => {
           if (hasUnsavedChanges) {
             const confirmed = window.confirm('You have an active trade request. Are you sure you want to cancel?');
@@ -192,7 +192,7 @@ const BuyCryptoPaymentStep1 = () => {
           <ArrowLeft className="w-5 h-5" />
         </Button>
         <div className="text-center">
-          <h1 className="text-lg font-bold">Buy {coinType}</h1>
+          <h1 className="text-lg font-semibold text-gray-900">Buy {coinType}</h1>
           <p className="text-xs text-muted-foreground">Step 1 of 3</p>
         </div>
         <div className="w-10" />
@@ -306,7 +306,7 @@ const BuyCryptoPaymentStep1 = () => {
         <Button
           onClick={handleSendTradeRequest}
           disabled={!cryptoAmount || !walletAddress || loading}
-          className="w-full font-semibold py-6 text-lg shadow-lg hover:shadow-xl transition-all duration-300 bg-gradient-to-r from-primary to-primary-foreground hover:from-primary/90 hover:to-primary-foreground/90 text-white"
+          className="w-full bg-[#1A73E8] hover:bg-[#1557b0] text-white font-semibold py-4 text-base rounded-xl"
           size="lg"
         >
           {loading ? 'Sending Request...' : 'Send Trade Request'}

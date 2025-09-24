@@ -1,225 +1,101 @@
 import { supabase } from '@/integrations/supabase/client';
-import { vendorAuthService } from './vendorAuthService';
 
-export interface CreditPurchaseTransaction {
+// Credit Value System: 1 credit = $0.01 USD
+export const CREDIT_VALUE_USD = 0.01;
+export const MIN_CREDIT_PURCHASE = 10; // $0.10 minimum
+
+// Calculate crypto amounts for credit purchase
+export const calculateCreditValue = (credits: number) => ({
+  credits,
+  usd: credits * CREDIT_VALUE_USD,
+  btc: (credits * CREDIT_VALUE_USD) / 100000, // Assuming BTC = $100,000
+  eth: (credits * CREDIT_VALUE_USD) / 3500    // Assuming ETH = $3,500
+});
+
+export interface CreditPurchase {
   id: string;
   user_id: string;
+  crypto_type: 'BTC' | 'ETH';
+  crypto_amount: number;
   credits_amount: number;
-  price_paid_naira: number;
-  status: string;
+  payment_address: string;
+  transaction_hash?: string;
+  status: 'pending' | 'paid' | 'confirmed' | 'completed' | 'failed';
   payment_proof_url?: string;
-  payment_reference?: string;
   created_at: string;
-  updated_at: string;
+  confirmed_at?: string;
+  expires_at: string;
 }
 
-export interface CreditBundle {
-  credits: number;
-  price_naira: number;
-  usd_value: number;
-  savings?: number;
-  popular?: boolean;
+export interface CreditTransaction {
+  id: string;
+  user_id: string;
+  type: 'purchase' | 'spend' | 'refund';
+  amount: number;
+  description: string;
+  reference_id?: string;
+  created_at: string;
 }
 
-export interface PurchaseCreditsRequest {
-  credits_amount: number;
-  payment_reference?: string;
-  payment_proof_url?: string;
-}
-
-class CreditsService {
-  // Get user's current credit balance
-  async getCreditBalance(userId: string): Promise<number> {
+export const creditsService = {
+  // Get user's current credit balance with fallback
+  async getUserCredits(userId: string): Promise<number> {
     try {
       const { data, error } = await supabase
         .from('profiles')
-        .select('credits_balance')
+        .select('credits')
         .eq('user_id', userId)
         .single();
 
-      if (error) throw error;
-      return data.credits_balance || 0;
+      if (error) {
+        console.error('Error fetching user credits:', error);
+        return 0;
+      }
+      return data?.credits || 0;
     } catch (error) {
-      console.error('Error fetching credit balance:', error);
+      console.error('Error in getUserCredits:', error);
       return 0;
     }
-  }
+  },
 
-  // Get credit pricing and bundles
-  async getCreditPricing(): Promise<{
-    pricePerCredit: number;
-    creditUsdValue: number;
-    bundles: CreditBundle[];
-  }> {
-    try {
-      const config = await vendorAuthService.getSystemConfig();
-      const pricePerCredit = parseFloat(config.CREDIT_PRICE_NGN || '1500');
-      const creditUsdValue = parseFloat(config.CREDIT_USD_VALUE || '10');
+  // Calculate crypto amount for credit purchase
+  calculateCryptoAmount(credits: number, cryptoType: 'BTC' | 'ETH'): number {
+    const usdValue = credits * CREDIT_VALUE_USD;
+    
+    switch (cryptoType) {
+      case 'BTC':
+        return usdValue / 100000; // Assuming BTC = $100,000
+      case 'ETH':
+        return usdValue / 3500;   // Assuming ETH = $3,500
+      default:
+        return 0;
+    }
+  },
 
-      // Define credit bundles with discounts
-      const bundles: CreditBundle[] = [
-        {
-          credits: 1,
-          price_naira: pricePerCredit,
-          usd_value: creditUsdValue,
-        },
-        {
-          credits: 5,
-          price_naira: pricePerCredit * 5 * 0.95, // 5% discount
-          usd_value: creditUsdValue * 5,
-          savings: pricePerCredit * 5 * 0.05,
-        },
-        {
-          credits: 10,
-          price_naira: pricePerCredit * 10 * 0.9, // 10% discount
-          usd_value: creditUsdValue * 10,
-          savings: pricePerCredit * 10 * 0.1,
-          popular: true,
-        },
-        {
-          credits: 25,
-          price_naira: pricePerCredit * 25 * 0.85, // 15% discount
-          usd_value: creditUsdValue * 25,
-          savings: pricePerCredit * 25 * 0.15,
-        },
-        {
-          credits: 50,
-          price_naira: pricePerCredit * 50 * 0.8, // 20% discount
-          usd_value: creditUsdValue * 50,
-          savings: pricePerCredit * 50 * 0.2,
-        },
-      ];
-
+  // Validate credit purchase amount
+  validatePurchaseAmount(credits: number): { valid: boolean; message?: string } {
+    if (credits < MIN_CREDIT_PURCHASE) {
       return {
-        pricePerCredit,
-        creditUsdValue,
-        bundles,
-      };
-    } catch (error) {
-      console.error('Error fetching credit pricing:', error);
-      return {
-        pricePerCredit: 1500,
-        creditUsdValue: 10,
-        bundles: [],
+        valid: false,
+        message: `Minimum purchase is ${MIN_CREDIT_PURCHASE} credits ($${(MIN_CREDIT_PURCHASE * CREDIT_VALUE_USD).toFixed(2)})`
       };
     }
-  }
-
-  // Calculate credits required for a USD amount
-  async calculateCreditsRequired(amountUsd: number): Promise<{
-    creditsRequired: number;
-    totalCost: number;
-    creditValue: number;
-  }> {
-    try {
-      const config = await vendorAuthService.getSystemConfig();
-      const creditUsdValue = parseFloat(config.CREDIT_USD_VALUE || '10');
-      const pricePerCredit = parseFloat(config.CREDIT_PRICE_NGN || '1500');
-      const roundingPolicy = config.POINTS_ROUNDING || 'ceil';
-      
-      const creditsNeeded = amountUsd / creditUsdValue;
-      const creditsRequired = roundingPolicy === 'ceil' 
-        ? Math.ceil(creditsNeeded) 
-        : Math.floor(creditsNeeded);
-
+    
+    if (credits > 100000) {
       return {
-        creditsRequired,
-        totalCost: creditsRequired * pricePerCredit,
-        creditValue: creditUsdValue,
-      };
-    } catch (error) {
-      console.error('Error calculating credits required:', error);
-      return {
-        creditsRequired: Math.ceil(amountUsd / 10),
-        totalCost: Math.ceil(amountUsd / 10) * 1500,
-        creditValue: 10,
+        valid: false,
+        message: 'Maximum purchase is 100,000 credits ($1,000.00)'
       };
     }
-  }
-
-  // Purchase credits
-  async purchaseCredits(userId: string, purchaseData: PurchaseCreditsRequest): Promise<CreditPurchaseTransaction> {
-    try {
-      const pricing = await this.getCreditPricing();
-      const totalPrice = purchaseData.credits_amount * pricing.pricePerCredit;
-
-      // Create purchase transaction
-      const { data, error } = await supabase
-        .from('credit_purchase_transactions')
-        .insert({
-          user_id: userId,
-          credits_amount: purchaseData.credits_amount,
-          price_paid_naira: totalPrice,
-          payment_reference: purchaseData.payment_reference,
-          payment_proof_url: purchaseData.payment_proof_url,
-          status: 'pending'
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data;
-    } catch (error: any) {
-      console.error('Error purchasing credits:', error);
-      throw new Error(error.message || 'Failed to purchase credits');
-    }
-  }
-
-  // Confirm credit purchase (admin/webhook action)
-  async confirmCreditPurchase(transactionId: string): Promise<void> {
-    try {
-      // Get transaction details
-      const { data: transaction, error: txError } = await supabase
-        .from('credit_purchase_transactions')
-        .select('*')
-        .eq('id', transactionId)
-        .single();
-
-      if (txError) throw txError;
-      if (transaction.status !== 'pending') {
-        throw new Error('Transaction is not in pending status');
-      }
-
-      // Get current user balance
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('credits_balance')
-        .eq('user_id', transaction.user_id)
-        .single();
-
-      if (profileError) throw profileError;
-
-      // Update user balance
-      const newBalance = (profile.credits_balance || 0) + transaction.credits_amount;
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update({ credits_balance: newBalance })
-        .eq('user_id', transaction.user_id);
-
-      if (updateError) throw updateError;
-
-      // Mark transaction as paid
-      const { error: txUpdateError } = await supabase
-        .from('credit_purchase_transactions')
-        .update({ 
-          status: 'paid',
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', transactionId);
-
-      if (txUpdateError) throw txUpdateError;
-
-    } catch (error: any) {
-      console.error('Error confirming credit purchase:', error);
-      throw new Error(error.message || 'Failed to confirm credit purchase');
-    }
-  }
+    
+    return { valid: true };
+  },
 
   // Get user's credit purchase history
-  async getCreditPurchaseHistory(userId: string): Promise<CreditPurchaseTransaction[]> {
+  async getCreditPurchases(userId: string): Promise<CreditPurchase[]> {
     try {
       const { data, error } = await supabase
-        .from('credit_purchase_transactions')
+        .from('credit_purchases')
         .select('*')
         .eq('user_id', userId)
         .order('created_at', { ascending: false });
@@ -227,118 +103,145 @@ class CreditsService {
       if (error) throw error;
       return data || [];
     } catch (error) {
-      console.error('Error fetching credit purchase history:', error);
+      console.error('Error fetching credit purchases:', error);
       return [];
     }
-  }
+  },
 
-  // Check if user has sufficient credits
-  async hasSufficientCredits(userId: string, requiredCredits: number): Promise<{
-    sufficient: boolean;
-    currentBalance: number;
-    shortfall: number;
-  }> {
+  // Get user's credit transaction history
+  async getCreditTransactions(userId: string): Promise<CreditTransaction[]> {
     try {
-      const currentBalance = await this.getCreditBalance(userId);
-      const sufficient = currentBalance >= requiredCredits;
-      const shortfall = sufficient ? 0 : requiredCredits - currentBalance;
-
-      return {
-        sufficient,
-        currentBalance,
-        shortfall,
-      };
-    } catch (error) {
-      console.error('Error checking credit sufficiency:', error);
-      return {
-        sufficient: false,
-        currentBalance: 0,
-        shortfall: requiredCredits,
-      };
-    }
-  }
-
-  // Get vendor bank account details for payments
-  async getVendorBankDetails(): Promise<{
-    account_number: string;
-    bank_name: string;
-    bank_code?: string;
-    account_name: string;
-  }> {
-    try {
-      const config = await vendorAuthService.getSystemConfig();
-      
-      return {
-        account_number: config.VENDOR_BANK_ACCOUNT || '1234567890',
-        bank_name: config.VENDOR_BANK_NAME || 'First Bank',
-        bank_code: config.VENDOR_BANK_CODE || '011',
-        account_name: 'TradeHub Vendor Services',
-      };
-    } catch (error) {
-      console.error('Error fetching vendor bank details:', error);
-      return {
-        account_number: '1234567890',
-        bank_name: 'First Bank',
-        account_name: 'TradeHub Vendor Services',
-      };
-    }
-  }
-
-  // Add credits to user (admin function)
-  async addCreditsToUser(userId: string, creditsAmount: number, reason: string = 'Admin credit'): Promise<void> {
-    try {
-      // Get current balance
-      const currentBalance = await this.getCreditBalance(userId);
-      const newBalance = currentBalance + creditsAmount;
-
-      // Update balance
-      const { error } = await supabase
-        .from('profiles')
-        .update({ credits_balance: newBalance })
-        .eq('user_id', userId);
+      const { data, error } = await supabase
+        .from('credit_transactions')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false });
 
       if (error) throw error;
-
-      // Log the credit addition
-      await supabase
-        .from('credit_purchase_transactions')
-        .insert({
-          user_id: userId,
-          credits_amount: creditsAmount,
-          price_paid_naira: 0,
-          status: 'paid',
-          payment_reference: `ADMIN_CREDIT_${Date.now()}`,
-        });
-
-    } catch (error: any) {
-      console.error('Error adding credits to user:', error);
-      throw new Error(error.message || 'Failed to add credits');
+      return data || [];
+    } catch (error) {
+      console.error('Error fetching credit transactions:', error);
+      return [];
     }
-  }
+  },
 
-  // Deduct credits from user (system function)
-  async deductCreditsFromUser(userId: string, creditsAmount: number, reason: string = 'Service usage'): Promise<void> {
+  // Spend credits (for cash services)
+  async spendCredits(userId: string, amount: number, description: string): Promise<boolean> {
     try {
-      const currentBalance = await this.getCreditBalance(userId);
+      const { data, error } = await supabase.rpc('spend_user_credits', {
+        user_id_param: userId,
+        credits_amount: amount,
+        description_text: description
+      });
+
+      if (error) throw error;
+      return data === true;
+    } catch (error) {
+      console.error('Error spending credits:', error);
+      return false;
+    }
+  },
+
+  // Check if user has enough credits
+  async hasEnoughCredits(userId: string, requiredAmount: number): Promise<boolean> {
+    const currentCredits = await this.getUserCredits(userId);
+    return currentCredits >= requiredAmount;
+  },
+
+  // Confirm credit purchase (admin function)
+  async confirmPurchase(purchaseId: string): Promise<boolean> {
+    try {
+      // Get purchase details
+      const { data: purchase, error: fetchError } = await supabase
+        .from('credit_purchases')
+        .select('*')
+        .eq('id', purchaseId)
+        .single();
+
+      if (fetchError) throw fetchError;
       
-      if (currentBalance < creditsAmount) {
-        throw new Error('Insufficient credits');
+      if (purchase.status === 'completed') {
+        console.log('Purchase already completed');
+        return true;
       }
 
-      const newBalance = currentBalance - creditsAmount;
+      // Add credits to user account
+      const { error: addError } = await supabase.rpc('add_user_credits', {
+        user_id_param: purchase.user_id,
+        credits_amount: purchase.credits_amount,
+        description_text: `Credit purchase confirmed - ${purchase.credits_amount} credits ($${(purchase.credits_amount * CREDIT_VALUE_USD).toFixed(2)})`
+      });
 
-      const { error } = await supabase
-        .from('profiles')
-        .update({ credits_balance: newBalance })
-        .eq('user_id', userId);
+      if (addError) throw addError;
 
-      if (error) throw error;
+      // Update purchase status
+      const { error: updateError } = await supabase
+        .from('credit_purchases')
+        .update({
+          status: 'completed',
+          confirmed_at: new Date().toISOString()
+        })
+        .eq('id', purchaseId);
 
-    } catch (error: any) {
-      console.error('Error deducting credits from user:', error);
-      throw new Error(error.message || 'Failed to deduct credits');
+      if (updateError) throw updateError;
+
+      console.log(`Successfully confirmed purchase: ${purchase.credits_amount} credits for user ${purchase.user_id}`);
+      return true;
+    } catch (error) {
+      console.error('Error confirming purchase:', error);
+      return false;
+    }
+  },
+
+  // Subscribe to credit balance changes with error handling
+  subscribeToCredits(userId: string, callback: (credits: number) => void) {
+    try {
+      // Use a simpler channel name to avoid conflicts
+      const channelName = `user_credits_${userId.replace(/-/g, '_')}`;
+      
+      const channel = supabase
+        .channel(channelName)
+        .on('postgres_changes', {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'profiles',
+          filter: `user_id=eq.${userId}`
+        }, async (payload) => {
+          if (payload.new) {
+            callback(payload.new.credits || 0);
+          }
+        })
+        .subscribe();
+
+      return channel;
+    } catch (error) {
+      console.error('Error subscribing to credits:', error);
+      return null;
+    }
+  },
+
+  // Get purchase and transaction history combined
+  async getCreditHistory(userId: string) {
+    try {
+      const [purchases, transactions] = await Promise.all([
+        this.getCreditPurchases(userId),
+        this.getCreditTransactions(userId)
+      ]);
+
+      return { purchases, transactions };
+    } catch (error) {
+      console.error('Error fetching credit history:', error);
+      return { purchases: [], transactions: [] };
     }
   }
-}
+};
 
-export const creditsService = new CreditsService();
+// Credit costs for different services (in credits)
+export const CREDIT_COSTS = {
+  CASH_PICKUP: 50,      // $0.50 - Cash pickup service
+  CASH_DELIVERY: 100,   // $1.00 - Cash delivery service
+  PRIORITY_SUPPORT: 25, // $0.25 - Priority customer support
+  ADVANCED_FEATURES: 75,// $0.75 - Advanced trading features
+  PREMIUM_MATCHING: 10, // $0.10 - Priority trade matching
+  EXTENDED_ESCROW: 15   // $0.15 - Extended escrow protection
+};

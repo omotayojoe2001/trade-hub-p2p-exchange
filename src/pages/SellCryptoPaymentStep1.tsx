@@ -138,9 +138,9 @@ const SellCryptoPaymentStep1 = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/5 to-secondary/10">
+    <div className="min-h-screen bg-white font-['Poppins']">
       {/* Header */}
-      <div className="sticky top-0 bg-background border-b p-4 flex items-center justify-between">
+      <div className="sticky top-0 bg-white border-b border-[#EAEAEA] p-4 flex items-center justify-between">
         <Button variant="ghost" size="icon" onClick={() => {
           if (hasUnsavedChanges) {
             const confirmed = window.confirm('You have unsaved changes. Are you sure you want to go back?');
@@ -154,7 +154,7 @@ const SellCryptoPaymentStep1 = () => {
           <ArrowLeft className="w-5 h-5" />
         </Button>
         <div className="text-center">
-          <h1 className="text-lg font-bold">Sell {coinType}</h1>
+          <h1 className="text-lg font-semibold text-gray-900">Sell {coinType}</h1>
           <p className="text-xs text-muted-foreground">Step 1 of 3 - Trade Setup</p>
         </div>
         <div className="w-10" />
@@ -177,7 +177,7 @@ const SellCryptoPaymentStep1 = () => {
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">Rate:</span>
-              <span className="font-semibold">₦{getMerchantRate().toLocaleString()}/{coinType}</span>
+              <span className="font-semibold">{getMerchantRate().toLocaleString()} NGN/{coinType}</span>
             </div>
           </CardContent>
         </Card>
@@ -206,7 +206,7 @@ const SellCryptoPaymentStep1 = () => {
             {cryptoAmount && (
               <div className="p-3 bg-muted rounded-lg">
                 <p className="text-sm text-muted-foreground">You'll receive (after fees)</p>
-                <p className="text-lg font-semibold">₦{calculateNetAmount().toLocaleString()}</p>
+                <p className="text-lg font-semibold">{calculateNetAmount().toLocaleString()} NGN</p>
               </div>
             )}
           </CardContent>
@@ -303,15 +303,15 @@ const SellCryptoPaymentStep1 = () => {
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Gross Amount:</span>
-                <span>₦{calculateCashAmount().toLocaleString()}</span>
+                <span>{calculateCashAmount().toLocaleString()} NGN</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Platform Fee (3%):</span>
-                <span>₦{calculatePlatformFee().toLocaleString()}</span>
+                <span>{calculatePlatformFee().toLocaleString()} NGN</span>
               </div>
               <div className="border-t pt-2 flex justify-between">
                 <span className="font-semibold">You'll Receive:</span>
-                <span className="font-semibold text-primary">₦{calculateNetAmount().toLocaleString()}</span>
+                <span className="font-semibold text-primary">{calculateNetAmount().toLocaleString()} NGN</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Merchant:</span>
@@ -329,7 +329,7 @@ const SellCryptoPaymentStep1 = () => {
         <Button
           onClick={handleContinueToEscrow}
           disabled={!cryptoAmount || !selectedAccount}
-          className="w-full bg-gradient-to-r from-primary to-primary-foreground hover:from-primary/90 hover:to-primary-foreground/90 text-white font-semibold py-6 text-lg shadow-lg hover:shadow-xl transition-all duration-300"
+          className="w-full bg-[#1A73E8] hover:bg-[#1557b0] text-white font-semibold py-4 text-base rounded-xl"
           size="lg"
         >
           Continue to Escrow

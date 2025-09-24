@@ -347,15 +347,15 @@ const ProfileSettings = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-6">
+    <div className="min-h-screen bg-white font-['Poppins'] pb-20">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200 px-4 py-4">
+      <div className="bg-white border-b border-[#EAEAEA] px-4 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center">
             <Link to="/settings" className="mr-3">
-              <ArrowLeft size={24} className="text-gray-600" />
+              <ArrowLeft size={20} className="text-gray-600" />
             </Link>
-            <h1 className="text-xl font-semibold text-gray-900">Profile Settings</h1>
+            <h1 className="text-lg font-semibold text-gray-900">Profile Settings</h1>
           </div>
           <Button
             variant="outline"

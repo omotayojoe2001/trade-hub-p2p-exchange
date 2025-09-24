@@ -42,17 +42,28 @@ const SellCryptoPaymentStep3 = () => {
           setPaymentReference(`TXN-${Date.now()}`);
           
           // Simulate payment being sent
-          setTimeout(() => {
+          setTimeout(async () => {
             setTradeStatus('completed');
             
-            // Update trade status in database
-            supabase
-              .from('trades')
-              .update({ 
-                status: 'completed',
-                completed_at: new Date().toISOString()
-              })
-              .eq('id', tradeId);
+            // Update trade status in database using RPC function or fallback
+            try {
+              await supabase.rpc('complete_trade', {
+                trade_id_param: tradeId,
+                user_id_param: user?.id
+              });
+            } catch (rpcError) {
+              // Fallback to direct update
+              console.log('Using fallback method for trade completion');
+              await supabase
+                .from('trades')
+                .update({ 
+                  status: 'completed',
+                  escrow_status: 'completed',
+                  completed_at: new Date().toISOString(),
+                  updated_at: new Date().toISOString()
+                })
+                .eq('id', tradeId);
+            }
           }, 4000);
         }, 5000);
       }
@@ -135,10 +146,10 @@ Thank you for using Central Exchange!
   const statusInfo = getStatusDisplay();
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-white font-['Poppins']">
       {/* Header */}
-      <div className="sticky top-0 bg-background border-b p-4 flex items-center justify-center">
-        <h1 className="text-lg font-semibold">Sell {coinType} - Final Step</h1>
+      <div className="sticky top-0 bg-white border-b border-[#EAEAEA] p-4 flex items-center justify-center">
+        <h1 className="text-lg font-semibold text-gray-900">Sell {coinType} - Final Step</h1>
       </div>
 
       <div className="p-4 flex items-center justify-center min-h-96">
@@ -147,7 +158,7 @@ Thank you for using Central Exchange!
             <div className="mb-6">{statusInfo.icon}</div>
             <h2 className="text-xl font-semibold mb-2">{statusInfo.title}</h2>
             <p className="text-muted-foreground mb-6">
-              {statusInfo.description}
+              {statusInfo.description.replace('₦', '').replace('₦', '') + (statusInfo.description.includes('₦') || statusInfo.description.includes('₦') ? ' NGN' : '')}
             </p>
             
             {tradeStatus === 'completed' && (
@@ -160,7 +171,7 @@ Thank you for using Central Exchange!
                     </div>
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Received:</span>
-                      <span className="font-semibold text-green-600">₦{netAmount?.toLocaleString()}</span>
+                      <span className="font-semibold text-green-600">{netAmount?.toLocaleString()} NGN</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Bank:</span>
@@ -202,7 +213,7 @@ Thank you for using Central Exchange!
                   
                   <Button
                     onClick={() => navigate('/buy-sell')}
-                    className="w-full"
+                    className="w-full bg-[#1A73E8] hover:bg-[#1557b0] text-white rounded-xl"
                   >
                     Sell More Crypto
                   </Button>

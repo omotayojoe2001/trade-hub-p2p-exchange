@@ -23,6 +23,9 @@ const ESCROW_WALLETS: BitGoWallet = {
   USDT: '68c3152aa55fc893636939a9eaf44484' // Use ETH wallet for USDT tokens
 };
 
+// Production mode - using real BitGo API
+const MOCK_MODE = false;
+
 // CORS headers for direct API calls
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -76,43 +79,36 @@ class BitGoEscrowService {
 
   async generateEscrowAddress(tradeId: string, coin: 'BTC' | 'ETH' | 'USDT', expectedAmount?: number): Promise<string> {
     try {
-      console.log('Calling Edge Function with:', { tradeId, coin, expectedAmount });
+      console.log('Calling BitGo Edge Function with:', { tradeId, coin, expectedAmount });
       
+      // Use real Supabase Edge Function for BitGo integration
       const { data, error } = await supabase.functions.invoke('bitgo-escrow', {
         body: { tradeId, coin, expectedAmount }
       });
       
       console.log('Edge Function response:', { data, error });
       
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
+      if (error) {
+        console.error('Edge Function error:', error);
+        throw new Error(`Edge Function failed: ${error.message}`);
+      }
       
-      return data?.address;
+      if (data?.error) {
+        console.error('BitGo API error from Edge Function:', data.error);
+        throw new Error(`BitGo API error: ${data.error}`);
+      }
+      
+      if (!data?.address) {
+        console.error('No address returned from BitGo Edge Function');
+        throw new Error('No address returned from BitGo');
+      }
+      
+      console.log('Generated real BitGo address:', data.address);
+      return data.address;
+      
     } catch (error) {
-      console.error('Edge Function failed, trying direct API call:', error);
-      
-      // Test wallet access first
-      await this.testWalletAccess(coin as 'BTC' | 'ETH');
-      
-      // Try direct API call as fallback
-      const walletId = ESCROW_WALLETS[coin];
-      const coinType = coin === 'BTC' ? 'tbtc' : 'hteth';
-      
-      const response = await this.makeRequest(`/${coinType}/wallet/${walletId}/address`, 'POST', {
-        label: `escrow-${tradeId}`
-      });
-      
-      // Store in database with expected amount
-      await supabase.from('escrow_addresses').insert({
-        trade_id: tradeId,
-        coin,
-        address: response.address,
-        wallet_id: walletId,
-        status: 'pending',
-        expected_amount: expectedAmount
-      });
-      
-      return response.address;
+      console.error('Error generating BitGo address:', error);
+      throw new Error(`Failed to generate payment address: ${error.message}`);
     }
   }
 

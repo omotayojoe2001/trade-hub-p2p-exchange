@@ -2,9 +2,9 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const BITGO_BASE_URL = 'https://app.bitgo-test.com/api/v2';
-const BITGO_ACCESS_TOKEN = Deno.env.get('BITGO_ACCESS_TOKEN');
-const BTC_WALLET_ID = Deno.env.get('BITGO_BTC_WALLET_ID');
-const ETH_WALLET_ID = Deno.env.get('BITGO_ETH_WALLET_ID');
+const BITGO_ACCESS_TOKEN = Deno.env.get('BITGO_ACCESS_TOKEN') || 'v2x534d125c94f2c8e142c81d56cf28064772b15b51f75772292ef610a860db53b6';
+const BTC_WALLET_ID = Deno.env.get('BITGO_BTC_WALLET_ID') || '68c3107e4e3a88eabbaa707336d8245f';
+const ETH_WALLET_ID = Deno.env.get('BITGO_ETH_WALLET_ID') || '68c3152aa55fc893636939a9eaf44484';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -32,15 +32,30 @@ serve(async (req) => {
       hasEthWallet: !!ETH_WALLET_ID,
       tokenValue: BITGO_ACCESS_TOKEN?.slice(0, 10) + '...',
       btcWalletValue: BTC_WALLET_ID,
-      ethWalletValue: ETH_WALLET_ID
+      ethWalletValue: ETH_WALLET_ID,
+      baseUrl: BITGO_BASE_URL
     });
     
-    if (!BITGO_ACCESS_TOKEN) {
-      throw new Error('BITGO_ACCESS_TOKEN environment variable not set');
-    }
+    // Test BitGo API connectivity first
+    console.log('Testing BitGo API connectivity...');
+    const testResponse = await fetch(`${BITGO_BASE_URL}/user/me`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${BITGO_ACCESS_TOKEN}`,
+        'Content-Type': 'application/json'
+      }
+    });
     
-    if (!BTC_WALLET_ID || !ETH_WALLET_ID) {
-      throw new Error('BitGo wallet IDs not configured');
+    console.log('BitGo API test response:', {
+      status: testResponse.status,
+      statusText: testResponse.statusText,
+      ok: testResponse.ok
+    });
+    
+    if (!testResponse.ok) {
+      const errorText = await testResponse.text();
+      console.error('BitGo API test failed:', errorText);
+      throw new Error(`BitGo API authentication failed: ${testResponse.status} - ${errorText}`);
     }
     
     if (action === 'release') {
@@ -85,6 +100,13 @@ serve(async (req) => {
     const walletId = coin === 'BTC' ? BTC_WALLET_ID : ETH_WALLET_ID;
     const coinType = coin === 'BTC' ? 'tbtc' : 'hteth';
     
+    console.log('Creating address with:', {
+      url: `${BITGO_BASE_URL}/${coinType}/wallet/${walletId}/address`,
+      coinType,
+      walletId,
+      tradeId
+    });
+    
     const response = await fetch(`${BITGO_BASE_URL}/${coinType}/wallet/${walletId}/address`, {
       method: 'POST',
       headers: {
@@ -94,13 +116,21 @@ serve(async (req) => {
       body: JSON.stringify({ label: `escrow-${tradeId}` })
     });
     
+    console.log('Address creation response:', {
+      status: response.status,
+      statusText: response.statusText,
+      ok: response.ok,
+      headers: Object.fromEntries(response.headers.entries())
+    });
+    
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('BitGo API error:', {
+      console.error('BitGo API error details:', {
         status: response.status,
         statusText: response.statusText,
         errorText,
-        url: response.url
+        url: response.url,
+        requestBody: { label: `escrow-${tradeId}` }
       });
       throw new Error(`BitGo API error: ${response.status} - ${errorText}`);
     }

@@ -44,7 +44,7 @@ const MerchantMatchingChoice = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-white font-['Poppins']">
       {/* Header */}
       <div className="flex items-center p-4 bg-white border-b border-gray-200">
         <button onClick={() => navigate('/select-coin', { state: { mode } })} className="mr-3">
@@ -110,9 +110,12 @@ const MerchantMatchingChoice = () => {
                   </div>
                 </div>
                 <div className="mt-3 p-3 bg-green-50 rounded-lg">
-                  <p className="text-sm text-green-800 font-medium">
-                    ⚡ Fastest option - Usually matches within 30 seconds
-                  </p>
+                  <div className="flex items-center space-x-2">
+                    <Zap className="w-4 h-4 text-green-600" />
+                    <p className="text-sm text-green-800 font-medium">
+                      Fastest option - Usually matches within 30 seconds
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
@@ -159,9 +162,12 @@ const MerchantMatchingChoice = () => {
                   </div>
                 </div>
                 <div className="mt-3 p-3 bg-purple-50 rounded-lg">
-                  <p className="text-sm text-purple-800 font-medium">
-                    🎯 Full control - Choose exactly who you want to trade with
-                  </p>
+                  <div className="flex items-center space-x-2">
+                    <Users className="w-4 h-4 text-purple-600" />
+                    <p className="text-sm text-purple-800 font-medium">
+                      Full control - Choose exactly who you want to trade with
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
@@ -199,7 +205,7 @@ const MerchantMatchingChoice = () => {
         <Button
           onClick={handleContinue}
           disabled={!selectedOption}
-          className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg"
+          className="w-full h-12 bg-[#1A73E8] hover:bg-[#1557b0] text-white font-semibold rounded-lg"
         >
           {selectedOption === 'auto' ? 'Find Best Merchant' : selectedOption === 'manual' ? 'Browse Merchants' : 'Select an Option'}
         </Button>

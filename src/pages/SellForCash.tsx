@@ -1,97 +1,334 @@
-import React, { useState } from 'react';
-import { ArrowLeft, DollarSign, Truck, MapPin } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { ArrowLeft, MoreVertical } from 'lucide-react';
+import { Button } from "@/components/ui/button";
 import { useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useAuth } from '@/hooks/useAuth';
+import { creditsService, CREDIT_COSTS } from '@/services/creditsService';
+import NotesSection from '@/components/sell-crypto/NotesSection';
+import SecurityNotice from '@/components/sell-crypto/SecurityNotice';
 
 const SellForCash = () => {
+  const [amount, setAmount] = useState('');
+  const [selectedCrypto, setSelectedCrypto] = useState('BTC');
+  const [selectedPayment, setSelectedPayment] = useState('pickup');
+  const [deliveryAddress, setDeliveryAddress] = useState('');
+  const [notes, setNotes] = useState('');
+  const [currentRate, setCurrentRate] = useState(1755000);
+  const [userCredits, setUserCredits] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
   const navigate = useNavigate();
-  const [selectedOption, setSelectedOption] = useState<'pickup' | 'delivery' | null>(null);
+  const { user } = useAuth();
 
-  const handleContinue = () => {
-    if (selectedOption === 'pickup') {
-      navigate('/sell-crypto-cash-pickup');
-    } else if (selectedOption === 'delivery') {
-      navigate('/sell-crypto-cash-delivery');
+  const cryptoOptions = [
+    { value: 'BTC', label: 'Bitcoin', rate: 105000, icon: '₿' },
+    { value: 'USDT', label: 'Tether', rate: 1, icon: '₮' },
+    { value: 'ETH', label: 'Ethereum', rate: 3500, icon: 'Ξ' },
+    { value: 'XRP', label: 'Ripple', rate: 2.5, icon: '◉' },
+    { value: 'BNB', label: 'Binance Coin', rate: 650, icon: '🔶' },
+    { value: 'ADA', label: 'Cardano', rate: 1.2, icon: '₳' },
+    { value: 'SOL', label: 'Solana', rate: 250, icon: '◎' },
+    { value: 'DOGE', label: 'Dogecoin', rate: 0.4, icon: 'Ð' }
+  ];
+
+  // Load user credits
+  useEffect(() => {
+    const loadCredits = async () => {
+      if (user) {
+        const credits = await creditsService.getUserCredits(user.id);
+        setUserCredits(credits);
+      }
+    };
+    loadCredits();
+  }, [user]);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownOpen && !event.target.closest('.relative')) {
+        setDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [dropdownOpen]);
+
+  // Simulate real-time rate changes
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const variation = (Math.random() - 0.5) * 10000;
+      setCurrentRate(prev => Math.max(1745000, Math.min(1765000, prev + variation)));
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  const calculateUSDValue = () => {
+    if (!amount || isNaN(parseFloat(amount))) return 0;
+    return parseFloat(amount) * currentRate;
+  };
+
+  const getRequiredCredits = () => {
+    return selectedPayment === 'pickup' ? CREDIT_COSTS.CASH_PICKUP : CREDIT_COSTS.CASH_DELIVERY;
+  };
+
+  const getPlatformFee = () => {
+    const usdValue = calculateUSDValue();
+    return Math.round(usdValue * 0.005); // 0.5% platform fee in credits
+  };
+
+  const getTotalCreditsNeeded = () => {
+    return getRequiredCredits() + getPlatformFee();
+  };
+
+  const handleSendTradeRequest = async () => {
+    if (!user) {
+      alert('Please login to continue');
+      return;
+    }
+
+    // Validate required fields
+    if (!amount || parseFloat(amount) <= 0) {
+      alert('Please enter a valid crypto amount');
+      return;
+    }
+
+    if (selectedPayment === 'delivery' && !deliveryAddress.trim()) {
+      alert('Please enter your delivery address');
+      return;
+    }
+
+    // Check credits
+    const totalCredits = getTotalCreditsNeeded();
+    if (userCredits < totalCredits) {
+      alert(`You need ${totalCredits} credits total (${getRequiredCredits()} service + ${getPlatformFee()} platform fee). You have ${userCredits} credits.`);
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      // Spend credits
+      const success = await creditsService.spendCredits(user.id, totalCredits, `Sell ${selectedCrypto} for cash (${selectedPayment})`);
+      
+      if (!success) {
+        alert('Failed to process credits. Please try again.');
+        return;
+      }
+
+      // Navigate to cash escrow flow
+      navigate('/cash-escrow-flow', {
+        state: {
+          amount,
+          cryptoType: selectedCrypto,
+          usdAmount: calculateUSDValue(),
+          mode: 'sell-for-cash',
+          deliveryType: selectedPayment,
+          deliveryAddress: selectedPayment === 'delivery' ? deliveryAddress : null,
+          serviceFee: getRequiredCredits(),
+          platformFee: getPlatformFee(),
+          totalFee: totalCredits
+        }
+      });
+    } catch (error) {
+      console.error('Error processing trade request:', error);
+      alert('Failed to process trade request. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="bg-white border-b border-gray-200 px-4 py-3">
+    <div className="min-h-screen bg-white">
+      {/* Header */}
+      <div className="flex items-center justify-between p-4 border-b border-gray-100">
         <div className="flex items-center">
-          <button onClick={() => navigate('/')} className="mr-3">
-            <ArrowLeft size={20} className="text-gray-600" />
+          <button onClick={() => navigate(-1)}>
+            <ArrowLeft size={24} className="text-gray-700 mr-4" />
           </button>
-          <h1 className="text-lg font-semibold text-gray-900">Sell Crypto → Get USD Cash</h1>
+          <h1 className="text-lg font-semibold text-gray-900">Sell Crypto for Cash</h1>
         </div>
+        <MoreVertical size={24} className="text-gray-700" />
       </div>
 
-      <div className="p-4">
-        <div className="mb-6">
-          <div className="flex items-center mb-2">
-            <DollarSign className="w-5 h-5 text-green-500 mr-2" />
-            <span className="text-sm text-gray-600">Credits required for this service</span>
+      <div className="p-4 space-y-6">
+        {/* Credits Display */}
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <div className="flex justify-between items-center">
+            <span className="text-sm font-medium text-blue-800">Your Credits</span>
+            <span className="text-lg font-bold text-blue-900">{userCredits}</span>
           </div>
-          <p className="text-gray-700">Choose how you want to receive your USD cash:</p>
+          <div className="text-xs text-blue-600 mt-2 space-y-1">
+            <div className="flex justify-between">
+              <span>Service ({selectedPayment}):</span>
+              <span>{getRequiredCredits()} credits</span>
+            </div>
+            <div className="flex justify-between">
+              <span>Platform fee (0.5%):</span>
+              <span>{getPlatformFee()} credits</span>
+            </div>
+            <div className="flex justify-between font-medium border-t pt-1">
+              <span>Total needed:</span>
+              <span>{getTotalCreditsNeeded()} credits</span>
+            </div>
+          </div>
         </div>
 
-        <div className="space-y-4 mb-6">
-          <Card 
-            className={`cursor-pointer transition-all ${selectedOption === 'pickup' ? 'ring-2 ring-blue-500 bg-blue-50' : 'hover:shadow-md'}`}
-            onClick={() => setSelectedOption('pickup')}
-          >
-            <CardContent className="p-4">
-              <div className="flex items-center">
-                <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mr-4">
-                  <MapPin size={24} className="text-blue-600" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-semibold text-gray-900">Cash Pickup</h3>
-                  <p className="text-sm text-gray-600">Pick up cash from our agent's location</p>
-                  <p className="text-xs text-green-600 mt-1">Lower fees • Available locations</p>
-                </div>
+        {/* Crypto Selection */}
+        <div className="space-y-2 relative">
+          <h3 className="text-sm font-medium text-gray-700">Cryptocurrency</h3>
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setDropdownOpen(!dropdownOpen)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-left text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 flex items-center justify-between"
+            >
+              <span className="flex items-center">
+                <span className="text-lg mr-2">{cryptoOptions.find(c => c.value === selectedCrypto)?.icon}</span>
+                <span className="font-medium text-blue-600">{selectedCrypto}</span>
+                <span className="ml-2 text-gray-500">- {cryptoOptions.find(c => c.value === selectedCrypto)?.label}</span>
+              </span>
+              <svg className={`w-4 h-4 text-gray-400 transition-transform ${dropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+            
+            {dropdownOpen && (
+              <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-auto">
+                {cryptoOptions.map(crypto => (
+                  <button
+                    key={crypto.value}
+                    type="button"
+                    onClick={() => {
+                      setSelectedCrypto(crypto.value);
+                      setCurrentRate(crypto.rate);
+                      setDropdownOpen(false);
+                    }}
+                    className={`w-full px-3 py-2 text-left hover:bg-blue-50 flex items-center justify-between transition-colors ${
+                      selectedCrypto === crypto.value ? 'bg-blue-50 text-blue-600' : 'text-gray-900'
+                    }`}
+                  >
+                    <div className="flex items-center">
+                      <span className="text-lg mr-2">{crypto.icon}</span>
+                      <span className="font-medium">{crypto.value}</span>
+                      <span className="ml-2 text-sm text-gray-500">{crypto.label}</span>
+                    </div>
+                    <span className="text-xs text-gray-400">${crypto.rate.toLocaleString()}</span>
+                  </button>
+                ))}
               </div>
-            </CardContent>
-          </Card>
-
-          <Card 
-            className={`cursor-pointer transition-all ${selectedOption === 'delivery' ? 'ring-2 ring-blue-500 bg-blue-50' : 'hover:shadow-md'}`}
-            onClick={() => setSelectedOption('delivery')}
-          >
-            <CardContent className="p-4">
-              <div className="flex items-center">
-                <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mr-4">
-                  <Truck size={24} className="text-purple-600" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-semibold text-gray-900">Cash Delivery</h3>
-                  <p className="text-sm text-gray-600">Get cash delivered to your address</p>
-                  <p className="text-xs text-blue-600 mt-1">Convenient • Same day delivery</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+            )}
+          </div>
         </div>
 
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
-          <h4 className="font-medium text-yellow-800 mb-2">Credits Required</h4>
-          <p className="text-sm text-yellow-700">
-            This service requires credits. Credits are deducted based on transaction amount:
-          </p>
-          <ul className="text-sm text-yellow-700 mt-2 space-y-1">
-            <li>• $100 = 10 credits</li>
-            <li>• $200 = 20 credits</li>
-            <li>• $500 = 50 credits</li>
+        {/* Amount Input */}
+        <div className="space-y-2">
+          <h3 className="text-sm font-medium text-gray-700">Amount to Sell</h3>
+          <div className="relative">
+            <input
+              type="text"
+              value={amount}
+              onChange={(e) => {
+                const value = e.target.value.replace(/[^0-9.]/g, '');
+                const parts = value.split('.');
+                if (parts.length <= 2 && (!parts[1] || parts[1].length <= 8)) {
+                  setAmount(value);
+                }
+              }}
+              className="w-full text-lg font-medium text-gray-900 border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              placeholder="0.00"
+            />
+            <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-sm font-medium text-gray-500">{selectedCrypto}</span>
+          </div>
+          <div className="flex justify-between items-center mt-2">
+            <span className="text-xs text-gray-500">Rate: ${currentRate.toLocaleString()}/{selectedCrypto}</span>
+            <span className="text-sm font-bold text-green-600">${calculateUSDValue().toLocaleString()}</span>
+          </div>
+        </div>
+
+        {/* Delivery Method */}
+        <div className="space-y-3">
+          <h3 className="text-sm font-medium text-gray-700">Cash Delivery Method</h3>
+          <div className="space-y-2">
+            <label className="flex items-center p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50">
+              <input
+                type="radio"
+                name="delivery"
+                value="pickup"
+                checked={selectedPayment === 'pickup'}
+                onChange={(e) => setSelectedPayment(e.target.value)}
+                className="mr-3"
+              />
+              <div className="flex-1">
+                <div className="font-medium text-gray-900">Pickup</div>
+                <div className="text-sm text-gray-500">Pick up cash from vendor location (50 credits)</div>
+              </div>
+            </label>
+            <label className="flex items-center p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50">
+              <input
+                type="radio"
+                name="delivery"
+                value="delivery"
+                checked={selectedPayment === 'delivery'}
+                onChange={(e) => setSelectedPayment(e.target.value)}
+                className="mr-3"
+              />
+              <div className="flex-1">
+                <div className="font-medium text-gray-900">Home Delivery</div>
+                <div className="text-sm text-gray-500">Cash delivered to your address (100 credits)</div>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        {/* Delivery Address */}
+        {selectedPayment === 'delivery' && (
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-700">Delivery Address</label>
+            <textarea
+              value={deliveryAddress}
+              onChange={(e) => setDeliveryAddress(e.target.value)}
+              placeholder="Enter your full delivery address"
+              className="w-full px-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+              rows={3}
+            />
+          </div>
+        )}
+
+        {/* Notes */}
+        <NotesSection
+          notes={notes}
+          onNotesChange={setNotes}
+        />
+
+        {/* Security Notice */}
+        <SecurityNotice />
+
+        {/* Info Banner */}
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+          <h4 className="font-medium text-yellow-800 mb-2">How it works:</h4>
+          <ul className="text-sm text-yellow-700 space-y-1">
+            <li>• You deposit crypto into secure escrow first</li>
+            <li>• After deposit, trade request goes to all users</li>
+            <li>• Fastest user accepts and pays vendor</li>
+            <li>• Vendor delivers cash to you</li>
+            <li>• Crypto released to buyer</li>
           </ul>
         </div>
 
-        <Button 
-          onClick={handleContinue}
-          disabled={!selectedOption}
-          className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-semibold"
+        {/* Send Trade Request Button */}
+        <Button
+          onClick={handleSendTradeRequest}
+          disabled={
+            loading ||
+            !amount ||
+            parseFloat(amount) <= 0 ||
+            (selectedPayment === 'delivery' && !deliveryAddress.trim()) ||
+            userCredits < getTotalCreditsNeeded()
+          }
+          className="w-full bg-blue-600 hover:bg-blue-700 text-white py-4 rounded-lg text-lg font-medium disabled:bg-gray-400"
         >
-          Continue
+          {loading ? 'Processing...' : 'Continue to Escrow'}
         </Button>
       </div>
     </div>

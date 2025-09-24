@@ -101,7 +101,7 @@ const BuySell = () => {
           )}
         </div>
         
-        <h1 className="text-lg font-semibold text-black">Trade</h1>
+        <h1 className="text-lg font-medium text-gray-900">Trade</h1>
         
         <div className="flex items-center space-x-2">
           <button onClick={() => navigate('/notifications')} className="p-1">
@@ -120,7 +120,7 @@ const BuySell = () => {
       <div className="px-4 space-y-3 mb-4">
         {/* Buy Crypto Card */}
         <div 
-          className="w-full bg-white border border-[#E5E7EB] rounded-xl p-4 cursor-pointer"
+          className="w-full bg-white border border-[#E5E7EB] rounded-xl p-4 cursor-pointer card-hover active:scale-98 transition-all duration-150"
           onClick={handleBuyCrypto}
         >
           <div className="flex items-center justify-between">
@@ -129,8 +129,8 @@ const BuySell = () => {
                 <Download size={20} className="text-[#2563EB]" />
               </div>
               <div className="flex-1">
-                <h3 className="text-base font-bold text-black mb-1">Buy Crypto</h3>
-                <p className="text-sm text-[#6B7280] mb-1">Send ₦, Receive BTC/USDT</p>
+                <h3 className="text-base font-semibold text-gray-900 mb-1">Buy Crypto</h3>
+                <p className="text-sm text-[#6B7280] mb-1">Send NGN, Receive BTC/USDT</p>
                 <p className="text-xs text-[#9CA3AF]">Fast processing</p>
               </div>
             </div>
@@ -142,7 +142,7 @@ const BuySell = () => {
 
         {/* Sell Crypto Card */}
         <div 
-          className="w-full bg-white border border-[#E5E7EB] rounded-xl p-4 cursor-pointer"
+          className="w-full bg-white border border-[#E5E7EB] rounded-xl p-4 cursor-pointer card-hover active:scale-98 transition-all duration-150"
           onClick={handleSellCrypto}
         >
           <div className="flex items-center justify-between">
@@ -151,8 +151,8 @@ const BuySell = () => {
                 <Upload size={20} className="text-[#2563EB]" />
               </div>
               <div className="flex-1">
-                <h3 className="text-base font-bold text-black mb-1">Sell Crypto</h3>
-                <p className="text-sm text-[#6B7280] mb-1">Send BTC/USDT, Receive ₦</p>
+                <h3 className="text-base font-semibold text-gray-900 mb-1">Sell Crypto</h3>
+                <p className="text-sm text-[#6B7280] mb-1">Send BTC/USDT, Receive NGN</p>
                 <p className="text-xs text-[#9CA3AF]">Secure escrow</p>
               </div>
             </div>
@@ -164,7 +164,7 @@ const BuySell = () => {
 
         {/* Sell Crypto → Get Cash Card */}
         <div 
-          className="w-full bg-white border border-[#E5E7EB] rounded-xl p-4 cursor-pointer"
+          className="w-full bg-white border border-[#E5E7EB] rounded-xl p-4 cursor-pointer card-hover active:scale-98 transition-all duration-150"
           onClick={() => navigate('/sell-for-cash')}
         >
           <div className="flex items-center justify-between">
@@ -173,7 +173,7 @@ const BuySell = () => {
                 <DollarSign size={20} className="text-[#2563EB]" />
               </div>
               <div className="flex-1">
-                <h3 className="text-base font-bold text-black mb-1">Sell Crypto → Get Cash (Pickup/Delivery)</h3>
+                <h3 className="text-base font-semibold text-gray-900 mb-1">Sell Crypto → Get Cash (Pickup/Delivery)</h3>
                 <p className="text-sm text-[#6B7280] mb-1">Send BTC/USDT, Receive USD Cash</p>
                 <div className="flex items-center justify-between">
                   <p className="text-xs text-[#9CA3AF]">Handled by vendor</p>
@@ -189,7 +189,7 @@ const BuySell = () => {
 
         {/* Send Naira → Get USD Cash Card */}
         <div 
-          className="w-full bg-white border border-[#E5E7EB] rounded-xl p-4 cursor-pointer"
+          className="w-full bg-white border border-[#E5E7EB] rounded-xl p-4 cursor-pointer card-hover active:scale-98 transition-all duration-150"
           onClick={() => navigate('/send-naira-get-usd')}
         >
           <div className="flex items-center justify-between">
@@ -198,8 +198,8 @@ const BuySell = () => {
                 <Wallet size={20} className="text-[#2563EB]" />
               </div>
               <div className="flex-1">
-                <h3 className="text-base font-bold text-black mb-1">Send Naira → Get USD Cash</h3>
-                <p className="text-sm text-[#6B7280] mb-1">Pay in ₦, Receive USD Cash</p>
+                <h3 className="text-base font-semibold text-gray-900 mb-1">Send Naira → Get USD Cash</h3>
+                <p className="text-sm text-[#6B7280] mb-1">Pay in NGN, Receive USD Cash</p>
                 <div className="flex items-center justify-between">
                   <p className="text-xs text-[#9CA3AF]">Direct vendor conversion</p>
                   <button className="text-xs text-[#0052FF] underline">Credits Required</button>
@@ -226,7 +226,7 @@ const BuySell = () => {
       {/* Trade Requests Section */}
       <div className="px-4 mb-4">
         <div className="flex items-center justify-between mb-3">
-          <h4 className="text-base font-bold text-black">Trade Requests</h4>
+          <h4 className="text-base font-semibold text-gray-900">Trade Requests</h4>
           <button 
             onClick={() => navigate('/trade-requests')}
             className="text-sm text-[#0052FF] font-medium"

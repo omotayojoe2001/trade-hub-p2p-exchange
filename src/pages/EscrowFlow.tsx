@@ -16,7 +16,7 @@ const EscrowFlow = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
-  const { tradeId, trade, request, amount: initialAmount, mode } = (location.state as any) || {};
+  const { tradeId, trade, request, amount: initialAmount, mode, deliveryType, deliveryAddress, serviceFee } = (location.state as any) || {};
   
   // Get user ID from auth context
   const { user } = useAuth();
@@ -43,6 +43,12 @@ const EscrowFlow = () => {
   
   const { generateQRCode } = useCryptoPayments();
 
+  // Extract trade details from passed data
+  const tradeAmount = trade?.amount_crypto || request?.amount_crypto || initialAmount || 0;
+  const tradeCurrency = trade?.crypto_type || request?.crypto_type || 'BTC';
+  const fiatAmount = trade?.amount_fiat || request?.amount_fiat || (location.state?.nairaAmount || 0);
+  const buyerWalletAddress = trade?.receiver_wallet_address || '';
+
   const {
     transaction,
     confirmCashReceived,
@@ -51,16 +57,11 @@ const EscrowFlow = () => {
     setReceiverWalletAddress
   } = useEscrowFlowManager({
     transactionId,
+    tradeAmount,
     onStatusChange: (status) => {
       handleStatusUpdate(status);
     }
   });
-
-  // Extract trade details from passed data
-  const tradeAmount = trade?.amount_crypto || request?.amount_crypto || initialAmount || 0;
-  const tradeCurrency = trade?.crypto_type || request?.crypto_type || 'BTC';
-  const fiatAmount = trade?.amount_fiat || request?.amount_fiat || 0;
-  const buyerWalletAddress = trade?.receiver_wallet_address || '';
 
   useEffect(() => {
     // Set the buyer's wallet address for crypto release
@@ -68,12 +69,16 @@ const EscrowFlow = () => {
       setReceiverWalletAddress(buyerWalletAddress);
     }
     
-    // Default to merchant role for escrow flow (merchant deposits crypto first)
-    const roleFromState = location.state?.userRole;
-    if (roleFromState === 'buyer') {
-      setUserRole('buyer');
+    // Set user role based on mode
+    if (mode === 'sell-for-cash') {
+      setUserRole('merchant'); // User is selling crypto, so they are the merchant
     } else {
-      setUserRole('merchant'); // Default to merchant who deposits crypto
+      const roleFromState = location.state?.userRole;
+      if (roleFromState === 'buyer') {
+        setUserRole('buyer');
+      } else {
+        setUserRole('merchant'); // Default to merchant who deposits crypto
+      }
     }
     
     // Fetch merchant's real bank details
@@ -287,6 +292,7 @@ const EscrowFlow = () => {
         .from('trades')
         .update({ 
           status: 'completed',
+          escrow_status: 'completed',
           transaction_hash: `bitgo-${Date.now()}`,
           completed_at: new Date().toISOString()
         })
@@ -391,10 +397,13 @@ const EscrowFlow = () => {
               <div className="text-center mb-6">
                 <Shield size={48} className="text-blue-600 mx-auto mb-4" />
                 <h2 className="text-xl font-semibold text-gray-900 mb-2">
-                  {userRole === 'merchant' ? 'Send Crypto to Escrow' : 'Waiting for Crypto Deposit'}
+                  {mode === 'sell-for-cash' ? 'Deposit Crypto to Sell for Cash' : 
+                   userRole === 'merchant' ? 'Send Crypto to Escrow' : 'Waiting for Crypto Deposit'}
                 </h2>
                 <p className="text-gray-600">
-                  {userRole === 'merchant' 
+                  {mode === 'sell-for-cash' 
+                    ? `Deposit ${tradeAmount} ${tradeCurrency} to escrow. Your trade request will go to all users for fastest acceptance.`
+                    : userRole === 'merchant' 
                     ? `Send ${tradeAmount} ${tradeCurrency} to the secure escrow address below`
                     : 'Merchant is depositing crypto into secure BitGo escrow'
                   }
@@ -493,7 +502,7 @@ const EscrowFlow = () => {
                     disabled={!cryptoPaymentProof}
                     className="w-full bg-blue-600 hover:bg-blue-700 text-white disabled:bg-gray-400"
                   >
-                    I Have Made the Payment
+                    {mode === 'sell-for-cash' ? 'I Have Deposited the Crypto' : 'I Have Made the Payment'}
                   </Button>
                 </div>
               )}
@@ -557,10 +566,12 @@ const EscrowFlow = () => {
               <div className="text-center mb-6">
                 <CheckCircle size={48} className="text-green-600 mx-auto mb-4" />
                 <h2 className="text-xl font-semibold text-gray-900 mb-2">
-                  Crypto Secured in Escrow!
+                  {mode === 'sell-for-cash' ? 'Crypto Secured! Finding Buyer...' : 'Crypto Secured in Escrow!'}
                 </h2>
                 <p className="text-gray-600">
-                  {userRole === 'buyer' 
+                  {mode === 'sell-for-cash'
+                    ? `Your ${tradeAmount} ${tradeCurrency} is secured. Trade request sent to all users. Fastest buyer will pay vendor for your cash ${deliveryType}.`
+                    : userRole === 'buyer' 
                     ? `Merchant has deposited crypto in escrow. Send ₦${fiatAmount?.toLocaleString()} to complete the trade.`
                     : `Crypto secured in escrow. Buyer has been notified to send ₦${fiatAmount?.toLocaleString()}.`
                   }
@@ -647,7 +658,27 @@ const EscrowFlow = () => {
               )}
             </Card>
 
-            {userRole === 'merchant' && (
+            {mode === 'sell-for-cash' ? (
+              <Card className="p-4 border-green-200 bg-green-50">
+                <h4 className="font-medium text-green-800 mb-2">Cash Delivery in Progress</h4>
+                <p className="text-sm text-green-700 mb-4">
+                  A buyer has accepted your trade! They will pay the vendor who will deliver cash to your {deliveryType === 'delivery' ? 'address' : 'pickup location'}.
+                  You will be notified when cash is ready for {deliveryType}.
+                </p>
+                
+                {deliveryType === 'delivery' && deliveryAddress && (
+                  <div className="bg-white p-3 rounded border border-green-200 mb-3">
+                    <p className="text-sm text-green-800 font-medium">Delivery Address:</p>
+                    <p className="text-xs text-green-700">{deliveryAddress}</p>
+                  </div>
+                )}
+                
+                <div className="bg-white p-3 rounded border border-green-200">
+                  <p className="text-sm text-green-800 font-medium">Service Fee: {serviceFee} credits (already deducted)</p>
+                  <p className="text-xs text-green-600 mt-1">Vendor will contact you for {deliveryType} details</p>
+                </div>
+              </Card>
+            ) : userRole === 'merchant' && (
               <Card className="p-4 border-orange-200 bg-orange-50">
                 <h4 className="font-medium text-orange-800 mb-2">Waiting for Cash Payment</h4>
                 <p className="text-sm text-orange-700 mb-4">

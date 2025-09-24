@@ -99,8 +99,8 @@ const BuyCryptoPaymentStep2 = () => {
   const fetchMessages = async () => {
     try {
       const { data, error } = await supabase
-        .from('messages')
-        .select('*, sender:profiles!sender_id(*)')
+        .from('vendor_messages')
+        .select('*')
         .eq('trade_id', tradeId)
         .order('created_at', { ascending: true });
 
@@ -174,7 +174,7 @@ const BuyCryptoPaymentStep2 = () => {
 
     try {
       const { error } = await supabase
-        .from('messages')
+        .from('vendor_messages')
         .insert({
           trade_id: tradeId,
           sender_id: user.id,

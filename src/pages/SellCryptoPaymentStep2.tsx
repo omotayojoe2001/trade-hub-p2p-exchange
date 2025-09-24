@@ -191,13 +191,13 @@ const SellCryptoPaymentStep2 = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-white font-['Poppins']">
       {/* Header */}
-      <div className="sticky top-0 bg-background border-b p-4 flex items-center justify-between">
+      <div className="sticky top-0 bg-white border-b border-[#EAEAEA] p-4 flex items-center justify-between">
         <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
           <ArrowLeft className="w-5 h-5" />
         </Button>
-        <h1 className="text-lg font-semibold">Sell {coinType} - Step 2</h1>
+        <h1 className="text-lg font-semibold text-gray-900">Sell {coinType} - Step 2</h1>
         <div className="w-10" />
       </div>
 
@@ -251,8 +251,8 @@ const SellCryptoPaymentStep2 = () => {
                 <div className="text-center space-y-4">
                   <div>
                     <p className="text-sm font-medium mb-2">Escrow Address</p>
-                    <div className="p-3 bg-white rounded border">
-                      <p className="font-mono text-sm break-all">{escrowAddress}</p>
+                    <div className="p-4 bg-white rounded-xl border border-gray-200">
+                      <p className="font-mono text-sm break-all text-gray-900">{escrowAddress}</p>
                     </div>
                     <Button
                       variant="outline"
@@ -268,11 +268,13 @@ const SellCryptoPaymentStep2 = () => {
                   <div>
                     <p className="text-sm font-medium mb-2">QR Code</p>
                     <div className="flex justify-center">
-                      <img 
-                        src={`https://api.qrserver.com/v1/create-qr-code/?size=128x128&data=${escrowAddress}`}
-                        alt="QR Code"
-                        className="w-32 h-32 border rounded"
-                      />
+                      <div className="p-4 bg-white rounded-xl border border-gray-200">
+                        <img 
+                          src={`https://api.qrserver.com/v1/create-qr-code/?size=128x128&data=${escrowAddress}`}
+                          alt="QR Code"
+                          className="w-32 h-32 mx-auto"
+                        />
+                      </div>
                     </div>
                   </div>
 
@@ -314,7 +316,7 @@ const SellCryptoPaymentStep2 = () => {
                 <Button
                   onClick={handleConfirmDeposit}
                   disabled={!depositProof || loading}
-                  className="w-full"
+                  className="w-full bg-[#1A73E8] hover:bg-[#1557b0] text-white rounded-xl"
                   size="lg"
                 >
                   {loading ? 'Processing...' : 'Confirm Crypto Deposit & Send Trade Request'}
@@ -345,7 +347,7 @@ const SellCryptoPaymentStep2 = () => {
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">You'll Receive:</span>
-              <span className="font-semibold text-primary">₦{netAmount?.toLocaleString()}</span>
+              <span className="font-semibold text-primary">{netAmount?.toLocaleString()} NGN</span>
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">Merchant:</span>
