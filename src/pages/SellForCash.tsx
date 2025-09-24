@@ -6,12 +6,16 @@ import { useAuth } from '@/hooks/useAuth';
 import { creditsService, CREDIT_COSTS } from '@/services/creditsService';
 import NotesSection from '@/components/sell-crypto/NotesSection';
 import SecurityNotice from '@/components/sell-crypto/SecurityNotice';
+import LocationSelector from '@/components/LocationSelector';
+import DeliveryAddressForm from '@/components/DeliveryAddressForm';
 
 const SellForCash = () => {
   const [amount, setAmount] = useState('');
   const [selectedCrypto, setSelectedCrypto] = useState('BTC');
   const [selectedPayment, setSelectedPayment] = useState('pickup');
   const [deliveryAddress, setDeliveryAddress] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [pickupLocation, setPickupLocation] = useState('');
   const [notes, setNotes] = useState('');
   const [currentRate, setCurrentRate] = useState(1755000);
   const [userCredits, setUserCredits] = useState(0);
@@ -98,6 +102,16 @@ const SellForCash = () => {
       return;
     }
 
+    if (selectedPayment === 'pickup' && !pickupLocation.trim()) {
+      alert('Please select a pickup location');
+      return;
+    }
+
+    if (selectedPayment === 'delivery' && !phoneNumber.trim()) {
+      alert('Please enter your phone number for delivery');
+      return;
+    }
+
     // Check credits
     const totalCredits = getTotalCreditsNeeded();
     if (userCredits < totalCredits) {
@@ -125,6 +139,8 @@ const SellForCash = () => {
           mode: 'sell-for-cash',
           deliveryType: selectedPayment,
           deliveryAddress: selectedPayment === 'delivery' ? deliveryAddress : null,
+          pickupLocation: selectedPayment === 'pickup' ? pickupLocation : null,
+          phoneNumber: selectedPayment === 'delivery' ? phoneNumber : null,
           serviceFee: getRequiredCredits(),
           platformFee: getPlatformFee(),
           totalFee: totalCredits
@@ -281,18 +297,22 @@ const SellForCash = () => {
           </div>
         </div>
 
-        {/* Delivery Address */}
+        {/* Pickup Location */}
+        {selectedPayment === 'pickup' && (
+          <LocationSelector
+            selectedLocation={pickupLocation}
+            onLocationChange={setPickupLocation}
+          />
+        )}
+
+        {/* Delivery Address and Phone */}
         {selectedPayment === 'delivery' && (
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-700">Delivery Address</label>
-            <textarea
-              value={deliveryAddress}
-              onChange={(e) => setDeliveryAddress(e.target.value)}
-              placeholder="Enter your full delivery address"
-              className="w-full px-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-              rows={3}
-            />
-          </div>
+          <DeliveryAddressForm
+            deliveryAddress={deliveryAddress}
+            phoneNumber={phoneNumber}
+            onAddressChange={setDeliveryAddress}
+            onPhoneChange={setPhoneNumber}
+          />
         )}
 
         {/* Notes */}
@@ -323,7 +343,8 @@ const SellForCash = () => {
             loading ||
             !amount ||
             parseFloat(amount) <= 0 ||
-            (selectedPayment === 'delivery' && !deliveryAddress.trim()) ||
+            (selectedPayment === 'delivery' && (!deliveryAddress.trim() || !phoneNumber.trim())) ||
+            (selectedPayment === 'pickup' && !pickupLocation.trim()) ||
             userCredits < getTotalCreditsNeeded()
           }
           className="w-full bg-blue-600 hover:bg-blue-700 text-white py-4 rounded-lg text-lg font-medium disabled:bg-gray-400"
