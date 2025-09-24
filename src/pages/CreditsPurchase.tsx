@@ -142,7 +142,7 @@ const CreditsPurchase = () => {
 
       // Create purchase record in real database
       const { data: purchase, error } = await supabase
-        .from('credit_purchases')
+        .from('credit_purchase_transactions')
         .insert({
           user_id: user.id,
           crypto_type: selectedCrypto,
@@ -239,11 +239,10 @@ const CreditsPurchase = () => {
 
       // Update purchase record in real database
       const { error: updateError } = await supabase
-        .from('credit_purchases')
+        .from('credit_purchase_transactions')
         .update({
           status: 'paid',
-          payment_proof_url: proofUrl,
-          transaction_hash: transactionHash
+          payment_proof_url: proofUrl
         })
         .eq('id', purchaseId);
 

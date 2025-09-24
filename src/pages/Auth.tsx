@@ -161,17 +161,16 @@ const Auth = () => {
             
             const { data: referrerProfiles } = await supabase
               .from('profiles')
-              .select('user_id, email, display_name')
+              .select('user_id, display_name')
               .not('user_id', 'eq', data.user.id);
             
             console.log('Found profiles:', referrerProfiles);
             
             const referrer = referrerProfiles?.find(profile => {
-              const emailPrefix = profile.email?.split('@')[0]?.toLowerCase();
               const displayName = profile.display_name?.toLowerCase().replace(/[^a-z0-9]/g, '');
               const code = referralCode.toLowerCase();
-              console.log('Checking:', { emailPrefix, displayName, code });
-              return emailPrefix === code || displayName === code;
+              console.log('Checking:', { displayName, code });
+              return displayName === code;
             });
             
             console.log('Found referrer:', referrer);

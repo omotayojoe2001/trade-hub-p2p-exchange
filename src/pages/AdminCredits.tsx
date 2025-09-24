@@ -17,7 +17,7 @@ const AdminCredits = () => {
   const fetchPendingPurchases = async () => {
     try {
       const { data, error } = await supabase
-        .from('credit_purchases')
+        .from('credit_purchase_transactions')
         .select(`
           *,
           profiles!inner(display_name, user_id)
@@ -37,17 +37,16 @@ const AdminCredits = () => {
   const confirmPurchase = async (purchaseId: string, userId: string, creditsAmount: number) => {
     try {
       // Add credits to user
-      const { error: addError } = await supabase.rpc('add_user_credits', {
-        user_id_param: userId,
-        credits_amount: creditsAmount,
-        description_text: `Credit purchase confirmed - ${creditsAmount} credits ($${(creditsAmount * 0.01).toFixed(2)})`
+      const { error: addError } = await supabase.rpc('update_credit_balance', {
+        p_user_id: userId,
+        p_amount: creditsAmount
       });
 
       if (addError) throw addError;
 
       // Update purchase status
       const { error: updateError } = await supabase
-        .from('credit_purchases')
+        .from('credit_purchase_transactions')
         .update({
           status: 'completed',
           confirmed_at: new Date().toISOString()
@@ -75,7 +74,7 @@ const AdminCredits = () => {
   const rejectPurchase = async (purchaseId: string) => {
     try {
       const { error } = await supabase
-        .from('credit_purchases')
+        .from('credit_purchase_transactions')
         .update({ status: 'failed' })
         .eq('id', purchaseId);
 
