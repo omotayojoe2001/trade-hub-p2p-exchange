@@ -43,7 +43,7 @@ export const creditsService = {
     try {
       const { data, error } = await supabase
         .from('profiles')
-        .select('credits')
+        .select('credits_balance')
         .eq('user_id', userId)
         .single();
 
@@ -51,7 +51,7 @@ export const creditsService = {
         console.error('Error fetching user credits:', error);
         return 0;
       }
-      return data?.credits || 0;
+      return (data as any)?.credits_balance || 0;
     } catch (error) {
       console.error('Error in getUserCredits:', error);
       return 0;
@@ -94,14 +94,14 @@ export const creditsService = {
   // Get user's credit purchase history
   async getCreditPurchases(userId: string): Promise<CreditPurchase[]> {
     try {
-      const { data, error } = await supabase
-        .from('credit_purchases')
+      const { data, error } = await (supabase as any)
+        .from('credit_purchase_transactions')
         .select('*')
         .eq('user_id', userId)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return data || [];
+      return data as any[] || [];
     } catch (error) {
       console.error('Error fetching credit purchases:', error);
       return [];
@@ -111,14 +111,14 @@ export const creditsService = {
   // Get user's credit transaction history
   async getCreditTransactions(userId: string): Promise<CreditTransaction[]> {
     try {
-      const { data, error } = await supabase
-        .from('credit_transactions')
+      const { data, error } = await (supabase as any)
+        .from('credit_purchase_transactions')
         .select('*')
         .eq('user_id', userId)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return data || [];
+      return data as any[] || [];
     } catch (error) {
       console.error('Error fetching credit transactions:', error);
       return [];
@@ -128,7 +128,7 @@ export const creditsService = {
   // Spend credits (for cash services)
   async spendCredits(userId: string, amount: number, description: string): Promise<boolean> {
     try {
-      const { data, error } = await supabase.rpc('spend_user_credits', {
+      const { data, error } = await (supabase as any).rpc('spend_user_credits', {
         user_id_param: userId,
         credits_amount: amount,
         description_text: description
@@ -152,8 +152,8 @@ export const creditsService = {
   async confirmPurchase(purchaseId: string): Promise<boolean> {
     try {
       // Get purchase details
-      const { data: purchase, error: fetchError } = await supabase
-        .from('credit_purchases')
+      const { data: purchase, error: fetchError } = await (supabase as any)
+        .from('credit_purchase_transactions')
         .select('*')
         .eq('id', purchaseId)
         .single();
@@ -165,21 +165,19 @@ export const creditsService = {
         return true;
       }
 
-      // Add credits to user account
-      const { error: addError } = await supabase.rpc('add_user_credits', {
-        user_id_param: purchase.user_id,
-        credits_amount: purchase.credits_amount,
-        description_text: `Credit purchase confirmed - ${purchase.credits_amount} credits ($${(purchase.credits_amount * CREDIT_VALUE_USD).toFixed(2)})`
+      // Add credits to user account using database function
+      const { error: addError } = await (supabase as any).rpc('update_credit_balance', {
+        p_user_id: purchase.user_id,
+        p_amount: purchase.credits_amount
       });
 
       if (addError) throw addError;
 
       // Update purchase status
       const { error: updateError } = await supabase
-        .from('credit_purchases')
+        .from('credit_purchase_transactions')
         .update({
-          status: 'completed',
-          confirmed_at: new Date().toISOString()
+          status: 'paid'
         })
         .eq('id', purchaseId);
 
@@ -208,7 +206,7 @@ export const creditsService = {
           filter: `user_id=eq.${userId}`
         }, async (payload) => {
           if (payload.new) {
-            callback(payload.new.credits || 0);
+            callback((payload.new as any).credits_balance || 0);
           }
         })
         .subscribe();

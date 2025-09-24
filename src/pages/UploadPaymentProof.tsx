@@ -125,7 +125,7 @@ const UploadPaymentProof = () => {
         proofUrl = await uploadFile(selectedFile);
       }
 
-      const { data, error } = await supabase.rpc('upload_payment_proof', {
+      const { data, error } = await (supabase as any).rpc('upload_payment_proof', {
         trade_id_param: tradeId,
         user_id_param: user?.id,
         proof_url_param: proofUrl,

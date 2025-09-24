@@ -350,7 +350,7 @@ const EscrowFlow = () => {
     if (!user?.id) return;
     
     try {
-      const { data: paymentMethods, error } = await supabase
+      const { data: paymentMethods, error } = await (supabase as any)
         .rpc('get_merchant_payment_method', { merchant_id: user.id });
         
       if (error) {

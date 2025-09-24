@@ -22,18 +22,18 @@ const TestCredits = () => {
       // Add credits to existing balance
       const { data: currentProfile, error: fetchError } = await supabase
         .from('profiles')
-        .select('credits')
+        .select('credits_balance')
         .eq('user_id', user.id)
         .single();
 
-      const currentCredits = currentProfile?.credits || 0;
+      const currentCredits = currentProfile?.credits_balance || 0;
       const newTotal = currentCredits + creditsAmount;
 
       const { error: updateError } = await supabase
         .from('profiles')
         .upsert({
           user_id: user.id,
-          credits: newTotal
+          credits_balance: newTotal
         }, {
           onConflict: 'user_id'
         });
@@ -45,12 +45,13 @@ const TestCredits = () => {
 
       // Add transaction record
       const { error: transactionError } = await supabase
-        .from('credit_transactions')
+        .from('credit_purchase_transactions')
         .insert({
           user_id: user.id,
-          type: 'purchase',
-          amount: creditsAmount,
-          description: `Test credits added - ${creditsAmount} credits`
+          credits_amount: creditsAmount,
+          price_paid_naira: 0,
+          status: 'paid',
+          payment_reference: `TEST_${Date.now()}`
         });
 
       if (transactionError) {
@@ -80,7 +81,7 @@ const TestCredits = () => {
     try {
       const { data, error } = await supabase
         .from('profiles')
-        .select('credits, user_id')
+        .select('credits_balance, user_id')
         .eq('user_id', user.id)
         .single();
 
@@ -96,7 +97,7 @@ const TestCredits = () => {
 
       toast({
         title: "Current Credits",
-        description: `You have ${data?.credits || 0} credits`,
+        description: `You have ${data?.credits_balance || 0} credits`,
       });
 
     } catch (error) {
@@ -105,7 +106,7 @@ const TestCredits = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4">
+    <div className="min-h-screen bg-white p-4">
       <div className="max-w-md mx-auto">
         <Card>
           <CardHeader>

@@ -47,7 +47,7 @@ const SellCryptoPaymentStep3 = () => {
             
             // Update trade status in database using RPC function or fallback
             try {
-              await supabase.rpc('complete_trade', {
+              await (supabase as any).rpc('complete_trade', {
                 trade_id_param: tradeId,
                 user_id_param: user?.id
               });
