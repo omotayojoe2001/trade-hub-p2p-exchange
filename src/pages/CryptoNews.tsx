@@ -149,12 +149,12 @@ const CryptoNews: React.FC = () => {
 
       {/* Category Tabs */}
       <div className="px-4 mt-6 mb-4">
-        <div className="flex space-x-2 overflow-x-auto scrollbar-hide">
+        <div className="flex space-x-2 overflow-x-auto">
           {categories.map((category) => (
             <button
               key={category}
               onClick={() => setActiveCategory(category)}
-              className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap ${
+              className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap flex-shrink-0 ${
                 activeCategory === category
                   ? 'bg-[#1A73E8] text-white'
                   : 'border border-gray-200 text-black'

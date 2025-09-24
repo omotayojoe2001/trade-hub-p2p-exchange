@@ -166,13 +166,13 @@ const Index = () => {
                 <div className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"></div>
               )}
             </Link>
-            <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center overflow-hidden">
+            <Link to="/settings" className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center overflow-hidden">
               {profilePicture ? (
                 <img src={profilePicture} alt={displayName} className="w-full h-full object-cover" />
               ) : (
                 <span className="text-blue-600 font-medium text-sm">{userInitials}</span>
               )}
-            </div>
+            </Link>
           </div>
         </div>
       </div>

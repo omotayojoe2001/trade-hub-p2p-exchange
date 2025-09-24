@@ -7,6 +7,9 @@ import { useAuth } from '@/hooks/useAuth';
 import { useQuickAuth } from '@/hooks/useQuickAuth';
 import { Switch } from '@/components/ui/switch';
 import { creditsService } from '@/services/creditsService';
+import TwoFactorSetup from '@/components/TwoFactorSetup';
+import { getTwoFactorData, enableTwoFactor, disableTwoFactor } from '@/services/twoFactorAuth';
+import { useToast } from '@/hooks/use-toast';
 
 const Settings = () => {
   const { signOut, user, profile } = useAuth();
@@ -14,10 +17,15 @@ const Settings = () => {
   const navigate = useNavigate();
   const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
   const [userCredits, setUserCredits] = useState(0);
+  const [showTwoFactorSetup, setShowTwoFactorSetup] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
     if (user) {
       fetchUserCredits();
+      // Check 2FA status
+      const twoFactorData = getTwoFactorData();
+      setTwoFactorEnabled(twoFactorData.isEnabled);
     }
   }, [user]);
 
@@ -35,6 +43,24 @@ const Settings = () => {
   const userEmail = user?.email || 'aj@cryptoapp.com';
   const userInitials = displayName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
   const profilePicture = profile?.profile_picture_url;
+
+  const handleTwoFactorToggle = async (enabled: boolean) => {
+    if (enabled) {
+      setShowTwoFactorSetup(true);
+    } else {
+      disableTwoFactor();
+      setTwoFactorEnabled(false);
+      toast({
+        title: "2FA Disabled",
+        description: "Two-factor authentication has been disabled.",
+      });
+    }
+  };
+
+  const handleTwoFactorComplete = () => {
+    setTwoFactorEnabled(true);
+    setShowTwoFactorSetup(false);
+  };
 
 
   
@@ -135,7 +161,7 @@ const Settings = () => {
                   </div>
                   <Switch 
                     checked={twoFactorEnabled} 
-                    onCheckedChange={setTwoFactorEnabled}
+                    onCheckedChange={handleTwoFactorToggle}
                   />
                 </div>
               );
@@ -172,6 +198,16 @@ const Settings = () => {
       </div>
 
       {!isQuickAuthActive && <BottomNavigation />}
+      
+      {/* Two Factor Setup Dialog */}
+      {user && (
+        <TwoFactorSetup
+          isOpen={showTwoFactorSetup}
+          onClose={() => setShowTwoFactorSetup(false)}
+          onComplete={handleTwoFactorComplete}
+          userEmail={user.email || ''}
+        />
+      )}
     </div>
   );
 };

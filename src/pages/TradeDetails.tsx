@@ -281,170 +281,243 @@ const TradeDetails = () => {
   const canResumeTrade = currentTrade && ['pending', 'waiting_payment', 'waiting_confirmation'].includes(currentTrade.status);
 
   return (
-    <TradeTemplate
-      tradeData={transactionDetails}
-      title="Trade Details"
-      showPaymentProgress={transactionDetails.status === 'pending'}
-      showQRCode={transactionDetails.status === 'pending'}
-      actionButtonText={transactionDetails.status === 'pending' ? 'View Payment Status' : undefined}
-      onActionClick={transactionDetails.status === 'pending' ? handleViewPaymentStatus : undefined}
-      onReportTrade={() => setShowReportDialog(true)}
-      onDeleteTrade={() => setShowDeleteDialog(true)}
-      onResumeTrade={handleResumeTrade}
-      canResume={canResumeTrade}
-    >
-      {/* Trade Details Card */}
-      <Card className="bg-white shadow-sm">
-        <CardContent className="p-6">
-          <h4 className="font-semibold text-gray-900 mb-4">Transaction Details</h4>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 font-['Poppins']">
+      {/* Premium Header */}
+      <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 pt-8 pb-6">
+        <div className="flex items-center justify-between mb-4">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => navigate(-1)}
+            className="text-white hover:bg-white/20"
+          >
+            <ArrowLeft size={24} />
+          </Button>
+          <div className="text-center">
+            <h1 className="text-xl font-semibold text-white">Trade Details</h1>
+            <p className="text-blue-100 text-sm">#{transactionDetails.id?.slice(-8)}</p>
+          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="text-white hover:bg-white/20">
+                <MoreVertical size={20} />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              {canResumeTrade && (
+                <DropdownMenuItem onClick={handleResumeTrade}>
+                  <Play size={16} className="mr-2" />
+                  Resume Trade
+                </DropdownMenuItem>
+              )}
+              <DropdownMenuItem onClick={() => setShowReportDialog(true)}>
+                <Flag size={16} className="mr-2" />
+                Report Trade
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setShowDeleteDialog(true)} className="text-red-600">
+                <Trash2 size={16} className="mr-2" />
+                Cancel Trade
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
 
-          <div className="space-y-3">
-            <div className="flex justify-between items-center py-2 border-b border-gray-100">
-              <span className="text-gray-600">Date & Time</span>
-              <span className="font-semibold text-gray-900">{transactionDetails.date} • {transactionDetails.time}</span>
+        {/* Status Badge */}
+        <div className="flex justify-center">
+          <Badge 
+            className={`text-sm px-4 py-2 ${
+              transactionDetails.status === 'completed' ? 'bg-green-500 text-white' :
+              transactionDetails.status === 'pending' ? 'bg-orange-500 text-white' :
+              'bg-red-500 text-white'
+            }`}
+          >
+            {transactionDetails.status === 'completed' ? 'Completed' :
+             transactionDetails.status === 'pending' ? 'In Progress' : 'Failed'}
+          </Badge>
+        </div>
+      </div>
+
+      <div className="px-6 py-6 space-y-6">
+        {/* Trade Overview Card */}
+        <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-xl">
+          <CardContent className="p-6">
+            <div className="text-center mb-6">
+              <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center">
+                <span className="text-white text-2xl font-bold">
+                  {transactionDetails.coin === 'BTC' ? '₿' : 
+                   transactionDetails.coin === 'ETH' ? 'Ξ' : '⊎'}
+                </span>
+              </div>
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                {transactionDetails.amount} {transactionDetails.coin}
+              </h2>
+              <p className="text-lg text-gray-600">
+                {(transactionDetails.nairaAmount || 0).toLocaleString()} NGN
+              </p>
             </div>
 
-            <div className="flex justify-between items-center py-2 border-b border-gray-100">
-              <span className="text-gray-600">Merchant</span>
-              <div className="text-right">
-                <div className="font-semibold text-gray-900">{transactionDetails.merchant.name}</div>
-                <div className="flex items-center text-sm text-gray-500">
-                  <Star size={14} className="text-yellow-500 mr-1" />
-                  <span>{transactionDetails.merchant.rating} • {transactionDetails.merchant.trades} trades</span>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="text-center p-4 bg-blue-50 rounded-xl">
+                <DollarSign className="w-6 h-6 text-blue-600 mx-auto mb-2" />
+                <p className="text-sm text-gray-600">Exchange Rate</p>
+                <p className="font-semibold text-gray-900">{(1650000).toLocaleString()} NGN/{transactionDetails.coin}</p>
+              </div>
+              <div className="text-center p-4 bg-green-50 rounded-xl">
+                <Calendar className="w-6 h-6 text-green-600 mx-auto mb-2" />
+                <p className="text-sm text-gray-600">Trade Date</p>
+                <p className="font-semibold text-gray-900">{transactionDetails.date}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Merchant Information Card */}
+        <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-xl">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center text-gray-900">
+              <User className="w-5 h-5 mr-2" />
+              Merchant Details
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center">
+                <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center mr-3">
+                  <span className="text-white font-semibold">{transactionDetails.merchant.name?.charAt(0)}</span>
                 </div>
+                <div>
+                  <p className="font-semibold text-gray-900">{transactionDetails.merchant.name}</p>
+                  <div className="flex items-center">
+                    <Star size={14} className="text-yellow-500 mr-1" />
+                    <span className="text-sm text-gray-600">{transactionDetails.merchant.rating} • {transactionDetails.merchant.trades} trades</span>
+                  </div>
+                </div>
+              </div>
+              <Button variant="outline" size="sm">
+                <MessageSquare size={16} className="mr-2" />
+                Message
+              </Button>
+            </div>
+            
+            <div className="grid grid-cols-1 gap-3">
+              <div className="flex justify-between py-2 border-b border-gray-100">
+                <span className="text-gray-600">Phone</span>
+                <span className="font-medium text-gray-900">{transactionDetails.merchant.phone}</span>
+              </div>
+              <div className="flex justify-between py-2">
+                <span className="text-gray-600">Bank Account</span>
+                <span className="font-medium text-gray-900">{transactionDetails.merchant.bankAccount}</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Transaction Details Card */}
+        <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-xl">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center text-gray-900">
+              <Clock className="w-5 h-5 mr-2" />
+              Transaction Details
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 gap-3">
+              <div className="flex justify-between py-3 border-b border-gray-100">
+                <span className="text-gray-600 font-medium">Transaction ID</span>
+                <span className="font-mono text-sm text-gray-900 bg-gray-100 px-2 py-1 rounded">
+                  {transactionDetails.id?.slice(-12)}
+                </span>
+              </div>
+
+              <div className="flex justify-between py-3 border-b border-gray-100">
+                <span className="text-gray-600 font-medium">Crypto Amount</span>
+                <span className="font-semibold text-gray-900">{transactionDetails.amount} {transactionDetails.coin}</span>
+              </div>
+
+              <div className="flex justify-between py-3 border-b border-gray-100">
+                <span className="text-gray-600 font-medium">Naira Value</span>
+                <span className="font-semibold text-gray-900">{(transactionDetails.nairaAmount || 0).toLocaleString()} NGN</span>
+              </div>
+
+              <div className="flex justify-between py-3 border-b border-gray-100">
+                <span className="text-gray-600 font-medium">Platform Fee (1%)</span>
+                <span className="font-semibold text-gray-900">{Math.round((transactionDetails.nairaAmount || 0) * 0.01).toLocaleString()} NGN</span>
+              </div>
+
+              <div className="flex justify-between py-3 border-b border-gray-100">
+                <span className="text-gray-600 font-medium">Net Amount</span>
+                <span className="font-bold text-lg text-gray-900">{Math.round((transactionDetails.nairaAmount || 0) * 0.99).toLocaleString()} NGN</span>
+              </div>
+
+              <div className="flex justify-between py-3">
+                <span className="text-gray-600 font-medium">Payment Method</span>
+                <span className="font-semibold text-gray-900">Bank Transfer</span>
               </div>
             </div>
 
-            <div className="flex justify-between items-center py-2 border-b border-gray-100">
-              <span className="text-gray-600">Phone</span>
-              <span className="font-medium text-gray-900">{transactionDetails.merchant.phone}</span>
-            </div>
-
-            <div className="flex justify-between items-center py-2 border-b border-gray-100">
-              <span className="text-gray-600">Bank Account</span>
-              <span className="font-medium text-gray-900">{transactionDetails.merchant.bankAccount}</span>
-            </div>
-
-            <div className="flex justify-between items-center py-2">
-              <span className="text-gray-600">Trade Type</span>
-              <span className={`font-medium ${transactionDetails.type === 'buy' ? 'text-green-600' : 'text-blue-600'}`}>
-                {transactionDetails.type === 'buy' ? 'Buying' : 'Selling'} {transactionDetails.coin}
-              </span>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Comprehensive Trade Information */}
-      <Card className="bg-white shadow-sm">
-        <CardContent className="p-6">
-          <h4 className="font-semibold text-gray-900 mb-4">Complete Trade Information</h4>
-
-          <div className="space-y-3">
-            <div className="flex justify-between items-center py-2 border-b border-gray-100">
-              <span className="text-gray-600">Transaction ID</span>
-              <span className="font-semibold text-gray-900 text-sm">{transactionDetails.id}</span>
-            </div>
-
-            <div className="flex justify-between items-center py-2 border-b border-gray-100">
-              <span className="text-gray-600">Cryptocurrency Amount</span>
-              <span className="font-semibold text-gray-900">{transactionDetails.amount} {transactionDetails.coin}</span>
-            </div>
-
-            <div className="flex justify-between items-center py-2 border-b border-gray-100">
-              <span className="text-gray-600">Naira Value</span>
-              <span className="font-semibold text-gray-900">₦{(transactionDetails.nairaAmount || 0).toLocaleString()}</span>
-            </div>
-
-            <div className="flex justify-between items-center py-2 border-b border-gray-100">
-              <span className="text-gray-600">Exchange Rate</span>
-              <span className="font-semibold text-gray-900">₦{(1650000).toLocaleString()}/{transactionDetails.coin || 'BTC'}</span>
-            </div>
-
-            <div className="flex justify-between items-center py-2 border-b border-gray-100">
-              <span className="text-gray-600">Platform Fee (1%)</span>
-              <span className="font-semibold text-gray-900">₦{Math.round((transactionDetails.nairaAmount || 0) * 0.01).toLocaleString()}</span>
-            </div>
-
-            <div className="flex justify-between items-center py-2 border-b border-gray-100">
-              <span className="text-gray-600">Net Amount</span>
-              <span className="font-semibold text-gray-900">₦{Math.round((transactionDetails.nairaAmount || 0) * 0.99).toLocaleString()}</span>
-            </div>
-
-            <div className="flex justify-between items-center py-2 border-b border-gray-100">
-              <span className="text-gray-600">Payment Method</span>
-              <span className="font-semibold text-gray-900">Bank Transfer</span>
-            </div>
-
-            <div className="flex justify-between items-center py-2">
-              <span className="text-gray-600">Current Status</span>
-               <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                transactionDetails.status === 'completed' ? 'bg-green-100 text-green-700' :
-                transactionDetails.status === 'pending' ? 'bg-orange-100 text-orange-700' :
-                'bg-red-100 text-red-700'
-              }`}>
-                {transactionDetails.status === 'completed' ? 'Completed' :
-                 transactionDetails.status === 'pending' ? 'Pending Payment' : 'Failed'}
-              </span>
-            </div>
-          </div>
-
-          {/* Resume Trade Button for Incomplete Trades */}
-          {transactionDetails.status === 'pending' && (
-            <div className="mt-6 pt-4 border-t border-gray-100">
-              <Button
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white"
-                onClick={() => {
-                  // Navigate back to PaymentStatus to resume the trade
-                  navigate('/payment-status', {
-                    state: {
-                      tradeId: transactionDetails.id,
-                      amount: transactionDetails.amount,
-                      nairaAmount: transactionDetails.nairaAmount,
-                      mode: transactionDetails.type,
-                      selectedMerchant: { name: transactionDetails.merchant?.name || transactionDetails.merchant },
-                      coinType: transactionDetails.coin,
-                      activeStep: transactionDetails.status === 'pending' ? 2 : 3,
-                      resumeTrade: true
-                    }
-                  });
-                }}
-              >
-                Resume Trade
-              </Button>
-              <p className="text-sm text-gray-500 text-center mt-2">
-                Continue from where you left off
-              </p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Status-specific content for completed trades */}
-      {transactionDetails.status === 'completed' && (
-        <Card className="bg-white shadow-sm">
-          <CardContent className="p-6">
-            <div className="bg-green-50 border border-green-200 rounded-xl p-6 text-center">
-              <CheckCircle size={32} className="text-green-600 mx-auto mb-3" />
-              <h3 className="text-xl font-semibold text-green-900">Trade Completed</h3>
-              <p className="text-sm text-green-800 mt-2">Funds have been released successfully.</p>
-            </div>
+            {/* Action Buttons */}
+            {transactionDetails.status === 'pending' && (
+              <div className="mt-6 pt-4 border-t border-gray-200">
+                <Button
+                  className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold py-3"
+                  onClick={() => {
+                    navigate('/payment-status', {
+                      state: {
+                        tradeId: transactionDetails.id,
+                        amount: transactionDetails.amount,
+                        nairaAmount: transactionDetails.nairaAmount,
+                        mode: transactionDetails.type,
+                        selectedMerchant: { name: transactionDetails.merchant?.name || transactionDetails.merchant },
+                        coinType: transactionDetails.coin,
+                        activeStep: transactionDetails.status === 'pending' ? 2 : 3,
+                        resumeTrade: true
+                      }
+                    });
+                  }}
+                >
+                  <Play className="w-5 h-5 mr-2" />
+                  Resume Trade
+                </Button>
+                <p className="text-sm text-gray-500 text-center mt-2">
+                  Continue from where you left off
+                </p>
+              </div>
+            )}
           </CardContent>
         </Card>
-      )}
 
-      {/* Failed/Cancelled Status */}
-      {(transactionDetails.status === 'failed' || transactionDetails.status === 'cancelled') && (
-        <Card className="bg-white shadow-sm">
-          <CardContent className="p-6">
-            <div className="bg-red-50 border border-red-200 rounded-xl p-6 text-center">
-              <XCircle size={32} className="text-red-600 mx-auto mb-3" />
-              <h3 className="text-xl font-semibold text-red-900">Trade {transactionDetails.status}</h3>
-              <p className="text-sm text-red-800 mt-2">Reason: Payment not confirmed within the time window.</p>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+        {/* Status Cards */}
+        {transactionDetails.status === 'completed' && (
+          <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-xl">
+            <CardContent className="p-6">
+              <div className="bg-gradient-to-r from-green-500 to-emerald-500 rounded-xl p-6 text-center text-white">
+                <CheckCircle size={48} className="mx-auto mb-4" />
+                <h3 className="text-xl font-bold mb-2">Trade Completed Successfully!</h3>
+                <p className="text-green-100">Funds have been released and transferred.</p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {(transactionDetails.status === 'failed' || transactionDetails.status === 'cancelled') && (
+          <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-xl">
+            <CardContent className="p-6">
+              <div className="bg-gradient-to-r from-red-500 to-rose-500 rounded-xl p-6 text-center text-white">
+                <XCircle size={48} className="mx-auto mb-4" />
+                <h3 className="text-xl font-bold mb-2">
+                  {transactionDetails.status === 'failed' ? 'Trade Failed' : 'Trade Cancelled'}
+                </h3>
+                <p className="text-red-100">
+                  {transactionDetails.status === 'failed' 
+                    ? 'This trade could not be completed due to an error.' 
+                    : 'This trade has been cancelled by user request.'
+                  }
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+      </div>
 
       {/* Report Trade Dialog */}
       <Dialog open={showReportDialog} onOpenChange={setShowReportDialog}>
@@ -522,7 +595,7 @@ const TradeDetails = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </TradeTemplate>
+    </div>
   );
 };
 

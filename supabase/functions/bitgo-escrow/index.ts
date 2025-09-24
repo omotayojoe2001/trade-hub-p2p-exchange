@@ -59,9 +59,11 @@ serve(async (req) => {
     }
     
     if (action === 'release') {
-      // Release funds
+      // Release funds from escrow
       const walletId = coin === 'BTC' ? BTC_WALLET_ID : ETH_WALLET_ID;
       const coinType = coin === 'BTC' ? 'tbtc' : 'hteth';
+      
+      console.log('Releasing funds:', { walletId, coinType, toAddress, amount });
       
       const response = await fetch(`${BITGO_BASE_URL}/${coinType}/wallet/${walletId}/sendcoins`, {
         method: 'POST',
@@ -71,17 +73,27 @@ serve(async (req) => {
         },
         body: JSON.stringify({
           address: toAddress,
-          amount: amount.toString()
+          amount: amount.toString(),
+          walletPassphrase: Deno.env.get('BITGO_WALLET_PASSPHRASE') || ''
         })
+      });
+      
+      console.log('Release response:', {
+        status: response.status,
+        statusText: response.statusText,
+        ok: response.ok
       });
       
       if (!response.ok) {
         const errorText = await response.text();
-        throw new Error(`BitGo API error: ${response.status} - ${errorText}`);
+        console.error('Release error:', errorText);
+        throw new Error(`BitGo release error: ${response.status} - ${errorText}`);
       }
       
       const data = await response.json();
+      console.log('Release successful:', data);
       
+      // Update escrow status
       await supabase
         .from('escrow_addresses')
         .update({ 
@@ -113,7 +125,10 @@ serve(async (req) => {
         'Authorization': `Bearer ${BITGO_ACCESS_TOKEN}`,
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ label: `escrow-${tradeId}` })
+      body: JSON.stringify({ 
+        label: `escrow-${tradeId}-${Date.now()}`,
+        chain: coinType === 'tbtc' ? 0 : 1 // 0 for external chain, 1 for change chain
+      })
     });
     
     console.log('Address creation response:', {
@@ -138,14 +153,21 @@ serve(async (req) => {
     const data = await response.json();
     console.log('BitGo response:', data);
     
-    await supabase.from('escrow_addresses').insert({
+    // Store the real BitGo address in database
+    const { error: insertError } = await supabase.from('escrow_addresses').insert({
       trade_id: tradeId,
       coin,
       address: data.address,
       wallet_id: walletId,
       status: 'pending',
-      expected_amount: expectedAmount
+      expected_amount: expectedAmount,
+      created_at: new Date().toISOString()
     });
+    
+    if (insertError) {
+      console.error('Database insert error:', insertError);
+      // Continue anyway, address was created successfully
+    }
     
     return new Response(JSON.stringify({ address: data.address }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }

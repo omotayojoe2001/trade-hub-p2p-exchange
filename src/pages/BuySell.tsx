@@ -107,12 +107,6 @@ const BuySell = () => {
           <button onClick={() => navigate('/notifications')} className="p-1">
             <Bell size={24} className="text-gray-600" />
           </button>
-          <button onClick={() => navigate('/messages')} className="p-1 relative">
-            <MessageCircle size={24} className="text-gray-600" />
-            {unreadMessages > 0 && (
-              <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full"></div>
-            )}
-          </button>
         </div>
       </div>
 
