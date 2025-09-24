@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { ChevronRight, AlertCircle, Clock } from 'lucide-react';
+import { ChevronRight, AlertCircle, Clock, Calendar, ChevronDown } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useQuickAuth } from '@/hooks/useQuickAuth';
 import BottomNavigation from '@/components/BottomNavigation';
+import CryptoIcon from '@/components/CryptoIcon';
 import { toast } from '@/hooks/use-toast';
 
 interface Trade {
@@ -30,6 +31,8 @@ const MyTrades = () => {
   const [trades, setTrades] = useState<Trade[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('All');
+  const [dateFilter, setDateFilter] = useState('All Time');
+  const [showDateFilter, setShowDateFilter] = useState(false);
 
   const fetchTrades = async () => {
     if (!user) return;
@@ -125,6 +128,25 @@ const MyTrades = () => {
     }
   };
 
+  const filterTradesByDate = (trades: Trade[]) => {
+    const now = new Date();
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const startOfWeek = new Date(now.setDate(now.getDate() - now.getDay()));
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+    switch (dateFilter) {
+      case 'Today':
+        return trades.filter(trade => new Date(trade.created_at) >= startOfToday);
+      case 'This Week':
+        return trades.filter(trade => new Date(trade.created_at) >= startOfWeek);
+      case 'This Month':
+        return trades.filter(trade => new Date(trade.created_at) >= startOfMonth);
+      case 'All Time':
+      default:
+        return trades;
+    }
+  };
+
   const filterTrades = (trades: Trade[]) => {
     if (activeTab === 'All') return trades;
     
@@ -169,13 +191,44 @@ const MyTrades = () => {
     );
   }
 
-  const filteredTrades = filterTrades(trades);
+  const filteredTrades = filterTradesByDate(filterTrades(trades));
 
   return (
     <div className="min-h-screen bg-background font-['Poppins']">
       <div className="px-4 pt-6 pb-20 max-w-7xl mx-auto">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-2xl font-bold text-foreground">My Trades</h1>
+          
+          {/* Date Filter Dropdown */}
+          <div className="relative">
+            <button
+              onClick={() => setShowDateFilter(!showDateFilter)}
+              className="flex items-center space-x-2 px-3 py-1.5 bg-background border border-border rounded-lg text-sm font-medium text-foreground hover:bg-accent transition-colors"
+            >
+              <Calendar size={16} />
+              <span>{dateFilter}</span>
+              <ChevronDown size={16} className={`transition-transform ${showDateFilter ? 'rotate-180' : ''}`} />
+            </button>
+            
+            {showDateFilter && (
+              <div className="absolute right-0 mt-2 w-40 bg-card border border-border rounded-lg shadow-lg z-10">
+                {['All Time', 'Today', 'This Week', 'This Month'].map((filter) => (
+                  <button
+                    key={filter}
+                    onClick={() => {
+                      setDateFilter(filter);
+                      setShowDateFilter(false);
+                    }}
+                    className={`w-full text-left px-3 py-2 text-sm hover:bg-accent rounded-lg transition-colors ${
+                      dateFilter === filter ? 'bg-accent text-accent-foreground' : 'text-foreground'
+                    }`}
+                  >
+                    {filter}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Filter Tabs */}
@@ -225,11 +278,10 @@ const MyTrades = () => {
                 <div key={trade.id} className="bg-card rounded-lg border border-border p-3 hover:shadow-md transition-all duration-200">
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center space-x-2">
-                      <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
-                        <span className="text-primary font-medium text-xs">
-                          {(trade.crypto_type || trade.coin_type || 'BTC').slice(0, 3)}
-                        </span>
-                      </div>
+                      <CryptoIcon 
+                        symbol={(trade.crypto_type || trade.coin_type || 'BTC').toUpperCase()} 
+                        size={32} 
+                      />
                       <div>
                         <div className="flex items-center space-x-1">
                           <span className="font-medium text-sm text-foreground">
