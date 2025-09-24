@@ -31,24 +31,25 @@ const DeliveryAddressForm: React.FC<DeliveryAddressFormProps> = ({
     
     setLoading(true);
     try {
-      // Load user profile data
+      // Load user profile data including location information
       const { data: profile } = await supabase
         .from('profiles')
-        .select('phone_number')
+        .select('phone_number, city, state, country, location')
         .eq('user_id', user.id)
         .single();
 
       const phone = profile?.phone_number || '';
-      // For now, we'll just use the phone from profile
-      // Address functionality can be enhanced later when user_addresses table is properly accessible
-      const address = '';
+      // Build address from location fields
+      const address = profile?.location || 
+        [profile?.city, profile?.state, profile?.country].filter(Boolean).join(', ') || '';
 
       setProfilePhone(phone);
       setProfileAddress(address);
 
-      // Pre-fill phone if available
-      if (useProfileAddress && phone) {
-        onPhoneChange(phone);
+      // Pre-fill phone and address if available
+      if (useProfileAddress) {
+        if (phone) onPhoneChange(phone);
+        if (address) onAddressChange(address);
       }
     } catch (error) {
       console.error('Error loading user profile:', error);
@@ -59,10 +60,12 @@ const DeliveryAddressForm: React.FC<DeliveryAddressFormProps> = ({
 
   const handleUseProfileToggle = (use: boolean) => {
     setUseProfileAddress(use);
-    if (use && profilePhone) {
-      onPhoneChange(profilePhone);
-    } else if (!use) {
+    if (use) {
+      if (profilePhone) onPhoneChange(profilePhone);
+      if (profileAddress) onAddressChange(profileAddress);
+    } else {
       onPhoneChange('');
+      onAddressChange('');
     }
   };
 
@@ -82,16 +85,24 @@ const DeliveryAddressForm: React.FC<DeliveryAddressFormProps> = ({
         Delivery Details
       </label>
 
-      {profilePhone && (
+      {(profilePhone || profileAddress) && (
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
           <div className="flex items-start justify-between">
             <div className="flex-1">
-              <h4 className="text-sm font-medium text-blue-800 mb-2">Use Profile Phone</h4>
-              <div className="text-sm text-blue-700">
-                <div className="flex items-center">
-                  <Phone size={14} className="mr-2 text-blue-600" />
-                  <span>{profilePhone}</span>
-                </div>
+              <h4 className="text-sm font-medium text-blue-800 mb-2">Use Profile Information</h4>
+              <div className="text-sm text-blue-700 space-y-1">
+                {profileAddress && (
+                  <div className="flex items-start">
+                    <Home size={14} className="mr-2 mt-0.5 text-blue-600 flex-shrink-0" />
+                    <span className="break-words">{profileAddress}</span>
+                  </div>
+                )}
+                {profilePhone && (
+                  <div className="flex items-center">
+                    <Phone size={14} className="mr-2 text-blue-600" />
+                    <span>{profilePhone}</span>
+                  </div>
+                )}
               </div>
             </div>
             <button

@@ -196,6 +196,81 @@ export type Database = {
         }
         Relationships: []
       }
+      credit_purchases: {
+        Row: {
+          confirmed_at: string | null
+          created_at: string | null
+          credits_amount: number
+          crypto_amount: number
+          crypto_type: string
+          expires_at: string | null
+          id: string
+          payment_address: string
+          payment_proof_url: string | null
+          status: string | null
+          transaction_hash: string | null
+          user_id: string
+        }
+        Insert: {
+          confirmed_at?: string | null
+          created_at?: string | null
+          credits_amount: number
+          crypto_amount: number
+          crypto_type: string
+          expires_at?: string | null
+          id?: string
+          payment_address: string
+          payment_proof_url?: string | null
+          status?: string | null
+          transaction_hash?: string | null
+          user_id: string
+        }
+        Update: {
+          confirmed_at?: string | null
+          created_at?: string | null
+          credits_amount?: number
+          crypto_amount?: number
+          crypto_type?: string
+          expires_at?: string | null
+          id?: string
+          payment_address?: string
+          payment_proof_url?: string | null
+          status?: string | null
+          transaction_hash?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      credit_transactions: {
+        Row: {
+          amount: number
+          created_at: string | null
+          description: string | null
+          id: string
+          reference_id: string | null
+          type: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          reference_id?: string | null
+          type: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          reference_id?: string | null
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       crypto_wallets: {
         Row: {
           available_balance: number | null
@@ -304,6 +379,45 @@ export type Database = {
           trade_id?: string | null
           updated_at?: string | null
           user_id?: string
+        }
+        Relationships: []
+      }
+      escrow_addresses: {
+        Row: {
+          address: string
+          amount: number | null
+          coin: string
+          created_at: string | null
+          id: string
+          released_at: string | null
+          status: string | null
+          trade_id: string
+          tx_hash: string | null
+          wallet_id: string
+        }
+        Insert: {
+          address: string
+          amount?: number | null
+          coin: string
+          created_at?: string | null
+          id?: string
+          released_at?: string | null
+          status?: string | null
+          trade_id: string
+          tx_hash?: string | null
+          wallet_id: string
+        }
+        Update: {
+          address?: string
+          amount?: number | null
+          coin?: string
+          created_at?: string | null
+          id?: string
+          released_at?: string | null
+          status?: string | null
+          trade_id?: string
+          tx_hash?: string | null
+          wallet_id?: string
         }
         Relationships: []
       }
@@ -566,6 +680,128 @@ export type Database = {
         }
         Relationships: []
       }
+      points_transactions: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          order_id: string | null
+          points_amount: number
+          transaction_type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          order_id?: string | null
+          points_amount: number
+          transaction_type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          order_id?: string | null
+          points_amount?: number
+          transaction_type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_points_transactions_order_id"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "premium_cash_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      premium_cash_orders: {
+        Row: {
+          assigned_vendor_id: string | null
+          created_at: string | null
+          crypto_amount: number
+          crypto_type: string
+          delivery_address: string | null
+          delivery_city: string | null
+          delivery_landmark: string | null
+          delivery_state: string | null
+          delivery_type: string
+          escrow_address: string | null
+          id: string
+          merchant_id: string | null
+          naira_amount: number
+          payment_proof_url: string | null
+          phone_number: string
+          points_deducted: number | null
+          preferred_date: string
+          preferred_time: string
+          selected_areas: string[] | null
+          status: string | null
+          trade_request_id: string | null
+          updated_at: string | null
+          user_id: string
+          vault_id: string | null
+          whatsapp_number: string | null
+        }
+        Insert: {
+          assigned_vendor_id?: string | null
+          created_at?: string | null
+          crypto_amount: number
+          crypto_type: string
+          delivery_address?: string | null
+          delivery_city?: string | null
+          delivery_landmark?: string | null
+          delivery_state?: string | null
+          delivery_type: string
+          escrow_address?: string | null
+          id?: string
+          merchant_id?: string | null
+          naira_amount: number
+          payment_proof_url?: string | null
+          phone_number: string
+          points_deducted?: number | null
+          preferred_date: string
+          preferred_time: string
+          selected_areas?: string[] | null
+          status?: string | null
+          trade_request_id?: string | null
+          updated_at?: string | null
+          user_id: string
+          vault_id?: string | null
+          whatsapp_number?: string | null
+        }
+        Update: {
+          assigned_vendor_id?: string | null
+          created_at?: string | null
+          crypto_amount?: number
+          crypto_type?: string
+          delivery_address?: string | null
+          delivery_city?: string | null
+          delivery_landmark?: string | null
+          delivery_state?: string | null
+          delivery_type?: string
+          escrow_address?: string | null
+          id?: string
+          merchant_id?: string | null
+          naira_amount?: number
+          payment_proof_url?: string | null
+          phone_number?: string
+          points_deducted?: number | null
+          preferred_date?: string
+          preferred_time?: string
+          selected_areas?: string[] | null
+          status?: string | null
+          trade_request_id?: string | null
+          updated_at?: string | null
+          user_id?: string
+          vault_id?: string | null
+          whatsapp_number?: string | null
+        }
+        Relationships: []
+      }
       premium_trade_codes: {
         Row: {
           amount_naira: number
@@ -624,13 +860,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "premium_trade_codes_vendor_id_fkey"
-            columns: ["vendor_id"]
-            isOneToOne: false
-            referencedRelation: "vendors"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "premium_trade_codes_vendor_job_id_fkey"
             columns: ["vendor_job_id"]
             isOneToOne: false
@@ -645,7 +874,10 @@ export type Database = {
           backup_codes: string[] | null
           bio: string | null
           bvn: string | null
+          city: string | null
+          country: string | null
           created_at: string | null
+          credits: number | null
           credits_balance: number | null
           date_of_birth: string | null
           deactivated_at: string | null
@@ -653,15 +885,18 @@ export type Database = {
           is_active: boolean | null
           is_merchant: boolean | null
           is_premium: boolean | null
+          is_vendor: boolean | null
           location: string | null
           merchant_mode: boolean | null
           occupation: string | null
           phone_number: string | null
+          points_balance: number | null
           profile_completed: boolean | null
           rating: number | null
           referral_code: string | null
           referred_by: string | null
           role: Database["public"]["Enums"]["user_role"] | null
+          state: string | null
           updated_at: string | null
           user_id: string
           user_type: string | null
@@ -671,7 +906,10 @@ export type Database = {
           backup_codes?: string[] | null
           bio?: string | null
           bvn?: string | null
+          city?: string | null
+          country?: string | null
           created_at?: string | null
+          credits?: number | null
           credits_balance?: number | null
           date_of_birth?: string | null
           deactivated_at?: string | null
@@ -679,15 +917,18 @@ export type Database = {
           is_active?: boolean | null
           is_merchant?: boolean | null
           is_premium?: boolean | null
+          is_vendor?: boolean | null
           location?: string | null
           merchant_mode?: boolean | null
           occupation?: string | null
           phone_number?: string | null
+          points_balance?: number | null
           profile_completed?: boolean | null
           rating?: number | null
           referral_code?: string | null
           referred_by?: string | null
           role?: Database["public"]["Enums"]["user_role"] | null
+          state?: string | null
           updated_at?: string | null
           user_id: string
           user_type?: string | null
@@ -697,7 +938,10 @@ export type Database = {
           backup_codes?: string[] | null
           bio?: string | null
           bvn?: string | null
+          city?: string | null
+          country?: string | null
           created_at?: string | null
+          credits?: number | null
           credits_balance?: number | null
           date_of_birth?: string | null
           deactivated_at?: string | null
@@ -705,15 +949,18 @@ export type Database = {
           is_active?: boolean | null
           is_merchant?: boolean | null
           is_premium?: boolean | null
+          is_vendor?: boolean | null
           location?: string | null
           merchant_mode?: boolean | null
           occupation?: string | null
           phone_number?: string | null
+          points_balance?: number | null
           profile_completed?: boolean | null
           rating?: number | null
           referral_code?: string | null
           referred_by?: string | null
           role?: Database["public"]["Enums"]["user_role"] | null
+          state?: string | null
           updated_at?: string | null
           user_id?: string
           user_type?: string | null
@@ -909,6 +1156,53 @@ export type Database = {
         }
         Relationships: []
       }
+      trade_disputes: {
+        Row: {
+          admin_notes: string | null
+          created_at: string | null
+          dispute_reason: string
+          disputed_by: string
+          evidence_urls: string[] | null
+          id: string
+          resolution: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          trade_id: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          created_at?: string | null
+          dispute_reason: string
+          disputed_by: string
+          evidence_urls?: string[] | null
+          id?: string
+          resolution?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          trade_id: string
+        }
+        Update: {
+          admin_notes?: string | null
+          created_at?: string | null
+          dispute_reason?: string
+          disputed_by?: string
+          evidence_urls?: string[] | null
+          id?: string
+          resolution?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          trade_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trade_disputes_trade_id_fkey"
+            columns: ["trade_id"]
+            isOneToOne: false
+            referencedRelation: "trades"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       trade_progress: {
         Row: {
           amount: number | null
@@ -970,51 +1264,105 @@ export type Database = {
       }
       trade_requests: {
         Row: {
+          accepted_at: string | null
           amount_crypto: number
           amount_fiat: number
+          bank_account_id: string | null
           created_at: string | null
           crypto_type: string
+          delivery_address: string | null
+          delivery_areas: string[] | null
+          escrow_address: string | null
           expires_at: string | null
           id: string
           merchant_id: string | null
+          merchant_payment_proof: string | null
+          merchant_wallet_address: string | null
           payment_method: string
+          payment_proof_url: string | null
+          premium_cash_order_id: string | null
           rate: number
           status: string | null
           trade_type: string
+          user_account_name: string | null
+          user_account_number: string | null
+          user_bank_name: string | null
           user_id: string
+          vault_id: string | null
           wallet_address: string | null
         }
         Insert: {
+          accepted_at?: string | null
           amount_crypto: number
           amount_fiat: number
+          bank_account_id?: string | null
           created_at?: string | null
           crypto_type: string
+          delivery_address?: string | null
+          delivery_areas?: string[] | null
+          escrow_address?: string | null
           expires_at?: string | null
           id?: string
           merchant_id?: string | null
+          merchant_payment_proof?: string | null
+          merchant_wallet_address?: string | null
           payment_method: string
+          payment_proof_url?: string | null
+          premium_cash_order_id?: string | null
           rate: number
           status?: string | null
           trade_type: string
+          user_account_name?: string | null
+          user_account_number?: string | null
+          user_bank_name?: string | null
           user_id: string
+          vault_id?: string | null
           wallet_address?: string | null
         }
         Update: {
+          accepted_at?: string | null
           amount_crypto?: number
           amount_fiat?: number
+          bank_account_id?: string | null
           created_at?: string | null
           crypto_type?: string
+          delivery_address?: string | null
+          delivery_areas?: string[] | null
+          escrow_address?: string | null
           expires_at?: string | null
           id?: string
           merchant_id?: string | null
+          merchant_payment_proof?: string | null
+          merchant_wallet_address?: string | null
           payment_method?: string
+          payment_proof_url?: string | null
+          premium_cash_order_id?: string | null
           rate?: number
           status?: string | null
           trade_type?: string
+          user_account_name?: string | null
+          user_account_number?: string | null
+          user_bank_name?: string | null
           user_id?: string
+          vault_id?: string | null
           wallet_address?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "trade_requests_bank_account_id_fkey"
+            columns: ["bank_account_id"]
+            isOneToOne: false
+            referencedRelation: "user_bank_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trade_requests_premium_cash_order_id_fkey"
+            columns: ["premium_cash_order_id"]
+            isOneToOne: false
+            referencedRelation: "premium_cash_orders"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       trades: {
         Row: {
@@ -1025,15 +1373,19 @@ export type Database = {
           bank_account_details: Json | null
           buyer_id: string
           cash_payment_confirmed_at: string | null
+          cash_sender_id: string | null
           coin_type: string
           completed_at: string | null
           completion_time: unknown | null
           created_at: string | null
           crypto_deposited_at: string | null
           crypto_released_at: string | null
+          crypto_sender_id: string | null
           crypto_type: string | null
           dispute_reason: string | null
+          disputed_at: string | null
           escrow_address: string | null
+          escrow_expires_at: string | null
           escrow_status: string | null
           escrow_vault_id: string | null
           expires_at: string | null
@@ -1042,12 +1394,15 @@ export type Database = {
           merchant_rate: number | null
           naira_amount: number
           net_amount: number | null
+          payment_hash: string | null
           payment_method: string
+          payment_proof_uploaded_at: string | null
           payment_proof_url: string | null
           platform_fee_amount: number | null
           platform_fee_percentage: number | null
           rate: number
           receiver_wallet_address: string | null
+          resolved_by: string | null
           seller_id: string
           status: string
           trade_data: Json | null
@@ -1065,15 +1420,19 @@ export type Database = {
           bank_account_details?: Json | null
           buyer_id: string
           cash_payment_confirmed_at?: string | null
+          cash_sender_id?: string | null
           coin_type: string
           completed_at?: string | null
           completion_time?: unknown | null
           created_at?: string | null
           crypto_deposited_at?: string | null
           crypto_released_at?: string | null
+          crypto_sender_id?: string | null
           crypto_type?: string | null
           dispute_reason?: string | null
+          disputed_at?: string | null
           escrow_address?: string | null
+          escrow_expires_at?: string | null
           escrow_status?: string | null
           escrow_vault_id?: string | null
           expires_at?: string | null
@@ -1082,12 +1441,15 @@ export type Database = {
           merchant_rate?: number | null
           naira_amount: number
           net_amount?: number | null
+          payment_hash?: string | null
           payment_method: string
+          payment_proof_uploaded_at?: string | null
           payment_proof_url?: string | null
           platform_fee_amount?: number | null
           platform_fee_percentage?: number | null
           rate: number
           receiver_wallet_address?: string | null
+          resolved_by?: string | null
           seller_id: string
           status?: string
           trade_data?: Json | null
@@ -1105,15 +1467,19 @@ export type Database = {
           bank_account_details?: Json | null
           buyer_id?: string
           cash_payment_confirmed_at?: string | null
+          cash_sender_id?: string | null
           coin_type?: string
           completed_at?: string | null
           completion_time?: unknown | null
           created_at?: string | null
           crypto_deposited_at?: string | null
           crypto_released_at?: string | null
+          crypto_sender_id?: string | null
           crypto_type?: string | null
           dispute_reason?: string | null
+          disputed_at?: string | null
           escrow_address?: string | null
+          escrow_expires_at?: string | null
           escrow_status?: string | null
           escrow_vault_id?: string | null
           expires_at?: string | null
@@ -1122,12 +1488,15 @@ export type Database = {
           merchant_rate?: number | null
           naira_amount?: number
           net_amount?: number | null
+          payment_hash?: string | null
           payment_method?: string
+          payment_proof_uploaded_at?: string | null
           payment_proof_url?: string | null
           platform_fee_amount?: number | null
           platform_fee_percentage?: number | null
           rate?: number
           receiver_wallet_address?: string | null
+          resolved_by?: string | null
           seller_id?: string
           status?: string
           trade_data?: Json | null
@@ -1146,6 +1515,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      user_addresses: {
+        Row: {
+          city: string
+          created_at: string | null
+          id: string
+          label: string
+          landmark: string | null
+          state: string
+          street: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          city: string
+          created_at?: string | null
+          id?: string
+          label: string
+          landmark?: string | null
+          state: string
+          street: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          city?: string
+          created_at?: string | null
+          id?: string
+          label?: string
+          landmark?: string | null
+          state?: string
+          street?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
       }
       user_bank_accounts: {
         Row: {
@@ -1183,6 +1588,36 @@ export type Database = {
           is_verified?: boolean | null
           updated_at?: string | null
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      user_contacts: {
+        Row: {
+          created_at: string | null
+          id: string
+          label: string
+          phone_number: string
+          updated_at: string | null
+          user_id: string
+          whatsapp_number: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          label: string
+          phone_number: string
+          updated_at?: string | null
+          user_id: string
+          whatsapp_number: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          label?: string
+          phone_number?: string
+          updated_at?: string | null
+          user_id?: string
+          whatsapp_number?: string
         }
         Relationships: []
       }
@@ -1246,6 +1681,27 @@ export type Database = {
           updated_at?: string | null
           user_id?: string
           verification_level?: string | null
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string | null
+          id: string
+          role: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          role: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          role?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -1318,8 +1774,39 @@ export type Database = {
             referencedRelation: "vendor_jobs"
             referencedColumns: ["id"]
           },
+        ]
+      }
+      vendor_credentials: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          last_login: string | null
+          user_id: string
+          username: string
+          vendor_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          last_login?: string | null
+          user_id: string
+          username: string
+          vendor_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          last_login?: string | null
+          user_id?: string
+          username?: string
+          vendor_id?: string
+        }
+        Relationships: [
           {
-            foreignKeyName: "vendor_activity_log_vendor_id_fkey"
+            foreignKeyName: "vendor_credentials_vendor_id_fkey"
             columns: ["vendor_id"]
             isOneToOne: false
             referencedRelation: "vendors"
@@ -1448,13 +1935,6 @@ export type Database = {
             referencedRelation: "trades"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "vendor_jobs_vendor_id_fkey"
-            columns: ["vendor_id"]
-            isOneToOne: false
-            referencedRelation: "vendors"
-            referencedColumns: ["id"]
-          },
         ]
       }
       vendor_messages: {
@@ -1496,53 +1976,67 @@ export type Database = {
             referencedRelation: "vendor_jobs"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "vendor_messages_sender_id_fkey"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "available_merchants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendor_messages_sender_id_fkey"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
         ]
       }
       vendors: {
         Row: {
-          active: boolean | null
-          bank_account: string
-          bank_code: string | null
-          bank_name: string
-          created_at: string | null
-          display_name: string
+          account_name: string | null
+          account_number: string | null
+          address: string
+          area_type: string | null
+          bank_name: string | null
+          created_at: string
           id: string
-          location_lat: number | null
-          location_lng: number | null
-          phone: string
-          updated_at: string | null
+          is_active: boolean | null
+          location: string
+          name: string
+          phone_number: string | null
+          rating: number | null
           user_id: string | null
-          working_hours: Json | null
         }
         Insert: {
-          active?: boolean | null
-          bank_account: string
-          bank_code?: string | null
-          bank_name: string
-          created_at?: string | null
-          display_name: string
+          account_name?: string | null
+          account_number?: string | null
+          address: string
+          area_type?: string | null
+          bank_name?: string | null
+          created_at?: string
           id?: string
-          location_lat?: number | null
-          location_lng?: number | null
-          phone: string
-          updated_at?: string | null
+          is_active?: boolean | null
+          location: string
+          name: string
+          phone_number?: string | null
+          rating?: number | null
           user_id?: string | null
-          working_hours?: Json | null
         }
         Update: {
-          active?: boolean | null
-          bank_account?: string
-          bank_code?: string | null
-          bank_name?: string
-          created_at?: string | null
-          display_name?: string
+          account_name?: string | null
+          account_number?: string | null
+          address?: string
+          area_type?: string | null
+          bank_name?: string | null
+          created_at?: string
           id?: string
-          location_lat?: number | null
-          location_lng?: number | null
-          phone?: string
-          updated_at?: string | null
+          is_active?: boolean | null
+          location?: string
+          name?: string
+          phone_number?: string | null
+          rating?: number | null
           user_id?: string | null
-          working_hours?: Json | null
         }
         Relationships: []
       }
@@ -1583,9 +2077,29 @@ export type Database = {
       }
     }
     Functions: {
+      add_user_credits: {
+        Args: {
+          credits_amount: number
+          description_text?: string
+          user_id_param: string
+        }
+        Returns: boolean
+      }
       assign_agent: {
         Args: { delivery_location: string; delivery_type: string }
         Returns: string
+      }
+      assign_vendor_role: {
+        Args: { user_uuid: string }
+        Returns: undefined
+      }
+      auto_expire_escrow_trades: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      auto_expire_trade_requests: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
       }
       auto_match_trade_request: {
         Args: {
@@ -1602,6 +2116,14 @@ export type Database = {
       clean_expired_trade_progress: {
         Args: Record<PropertyKey, never>
         Returns: undefined
+      }
+      complete_trade: {
+        Args: { trade_id_param: string; user_id_param?: string }
+        Returns: Json
+      }
+      confirm_payment_received: {
+        Args: { trade_id_param: string; user_id_param: string }
+        Returns: Json
       }
       create_cash_order_with_vendor: {
         Args: {
@@ -1633,11 +2155,9 @@ export type Database = {
               p_premium_user_id: string
             }
         Returns: {
-          auto_matched: boolean
           matched_merchant_id: string
-          message: string
-          request_id: string
           trade_id: string
+          vendor_job_id: string
         }[]
       }
       create_premium_trade_with_vendor: {
@@ -1673,6 +2193,14 @@ export type Database = {
         }
         Returns: string
       }
+      dispute_payment: {
+        Args: {
+          dispute_reason_param: string
+          trade_id_param: string
+          user_id_param: string
+        }
+        Returns: Json
+      }
       generate_cash_order_tracking_code: {
         Args: { order_type: string }
         Returns: string
@@ -1704,6 +2232,15 @@ export type Database = {
         Args: { p_user_id: string }
         Returns: number
       }
+      get_merchant_payment_method: {
+        Args: { merchant_id: string }
+        Returns: {
+          account_name: string
+          account_number: string
+          bank_code: string
+          bank_name: string
+        }[]
+      }
       get_trade_messages: {
         Args: { trade_uuid: string; user_uuid: string }
         Returns: {
@@ -1716,6 +2253,10 @@ export type Database = {
           sender_id: string
           sender_name: string
         }[]
+      }
+      get_user_display_name: {
+        Args: { user_id_param: string }
+        Returns: string
       }
       get_user_recent_trades: {
         Args: { user_uuid: string }
@@ -1731,6 +2272,10 @@ export type Database = {
           trade_type: string
         }[]
       }
+      has_role: {
+        Args: { role_name: string; user_uuid: string }
+        Returns: boolean
+      }
       notify_merchant_of_trade: {
         Args: {
           p_amount_usd: number
@@ -1739,6 +2284,18 @@ export type Database = {
         }
         Returns: undefined
       }
+      simulate_merchant_accept_trade: {
+        Args: { request_id: string }
+        Returns: undefined
+      }
+      spend_user_credits: {
+        Args: {
+          credits_amount: number
+          description_text?: string
+          user_id_param: string
+        }
+        Returns: boolean
+      }
       update_credit_balance: {
         Args: { p_amount: number; p_user_id: string }
         Returns: boolean
@@ -1746,6 +2303,15 @@ export type Database = {
       update_merchant_ratings: {
         Args: { merchant_user_id: string }
         Returns: undefined
+      }
+      upload_payment_proof: {
+        Args: {
+          payment_hash_param?: string
+          proof_url_param?: string
+          trade_id_param: string
+          user_id_param: string
+        }
+        Returns: Json
       }
     }
     Enums: {

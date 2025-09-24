@@ -6,9 +6,11 @@ import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Eye, EyeOff, User, Mail, Lock, Database, MapPin } from 'lucide-react';
+import { Eye, EyeOff, User, Mail, Lock, Database, MapPin, Shield, Zap } from 'lucide-react';
 import TwoFactorLogin from '@/components/TwoFactorLogin';
 import { useAuth } from '@/hooks/useAuth';
+import LocationSelectionForm from '@/components/LocationSelectionForm';
+import { countries } from '@/data/countries';
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -17,6 +19,9 @@ const Auth = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [fullName, setFullName] = useState('');
   const [location, setLocation] = useState('');
+  const [country, setCountry] = useState('NG');
+  const [state, setState] = useState('');
+  const [city, setCity] = useState('');
   const [referralCode, setReferralCode] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -148,11 +153,17 @@ const Auth = () => {
         // Create profile and handle referral
         try {
           // Create profile first
+          const countryData = countries.find(c => c.code === country);
+          const stateData = countryData?.states.find(s => s.code === state);
+          
           await supabase.from('profiles').insert({
             user_id: data.user.id,
             email: data.user.email,
             display_name: fullName,
-            location: location
+            location: `${city}, ${stateData?.name || state}, ${countryData?.name || country}`,
+            country: country,
+            state: state,
+            city: city
           });
           
           // Handle referral if provided
@@ -226,102 +237,114 @@ const Auth = () => {
 
   if (isLogin) {
     return (
-      <div className="min-h-screen bg-white px-4 py-8">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 px-4 py-8">
         <div className="max-w-sm mx-auto">
           <div className="text-center mb-8">
-            <div className="w-16 h-16 bg-blue-500 rounded-2xl flex items-center justify-center mx-auto mb-6">
-              <Database size={32} className="text-white" />
+            <div className="w-20 h-20 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-lg">
+              <Shield size={36} className="text-white" />
             </div>
-            <h1 className="text-2xl font-bold text-black mb-2">
+            <h1 className="text-3xl font-bold text-gray-900 mb-3">
               Welcome Back
             </h1>
-            <p className="text-sm text-gray-600">
-              Login to continue your crypto trades
+            <p className="text-gray-600 leading-relaxed">
+              Sign in to your Central Exchange account and continue trading crypto securely
             </p>
           </div>
 
-          {error && (
-            <Alert variant="destructive" className="mb-4">
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          )}
+          <div className="bg-white rounded-2xl shadow-xl p-6 space-y-6">
+            {error && (
+              <Alert variant="destructive" className="border-red-200 bg-red-50">
+                <AlertDescription className="text-red-700">{error}</AlertDescription>
+              </Alert>
+            )}
 
-          <form onSubmit={handleLogin} className="space-y-6">
-            <div className="space-y-2">
-              <Label htmlFor="email" className="text-sm font-medium text-gray-700">
-                Email
-              </Label>
-              <div className="relative">
-                <Mail size={18} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                <Input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="h-12 bg-white border border-gray-300 rounded-lg pl-10 pr-4"
-                  placeholder="Enter your email"
-                  required
-                />
+            <form onSubmit={handleLogin} className="space-y-5">
+              <div className="space-y-2">
+                <Label htmlFor="email" className="text-sm font-semibold text-gray-800">
+                  Email Address
+                </Label>
+                <div className="relative">
+                  <Mail size={20} className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                  <Input
+                    id="email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="h-14 bg-gray-50 border-2 border-gray-200 rounded-xl pl-12 pr-4 text-gray-900 focus:border-blue-500 focus:bg-white transition-all duration-200"
+                    placeholder="your.email@example.com"
+                    required
+                  />
+                </div>
               </div>
-            </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="password" className="text-sm font-medium text-gray-700">
-                Password
-              </Label>
-              <div className="relative">
-                <Lock size={18} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                <Input
-                  id="password"
-                  type={showPassword ? "text" : "password"}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="h-12 bg-white border border-gray-300 rounded-lg pl-10 pr-12"
-                  placeholder="Enter your password"
-                  required
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400"
-                >
-                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                </button>
+              <div className="space-y-2">
+                <Label htmlFor="password" className="text-sm font-semibold text-gray-800">
+                  Password
+                </Label>
+                <div className="relative">
+                  <Lock size={20} className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                  <Input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="h-14 bg-gray-50 border-2 border-gray-200 rounded-xl pl-12 pr-14 text-gray-900 focus:border-blue-500 focus:bg-white transition-all duration-200"
+                    placeholder="Enter your password"
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                  >
+                    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                  </button>
+                </div>
               </div>
-            </div>
 
-            <Button
-              type="submit"
-              className="w-full h-12 bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded-lg"
-              disabled={loading}
-            >
-              {loading ? 'Signing in...' : 'Login'}
-            </Button>
+              <Button
+                type="submit"
+                className="w-full h-14 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold rounded-xl text-lg shadow-lg hover:shadow-xl transition-all duration-200"
+                disabled={loading}
+              >
+                {loading ? (
+                  <div className="flex items-center">
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                    Signing in...
+                  </div>
+                ) : (
+                  <div className="flex items-center">
+                    <Zap size={20} className="mr-2" />
+                    Sign In
+                  </div>
+                )}
+              </Button>
 
 
 
-            <div className="text-center">
-              <p className="text-sm text-gray-600">
-                Don't have an account?{' '}
-                <button
-                  type="button"
-                  onClick={() => setIsLogin(false)}
-                  className="text-blue-500 font-medium"
-                >
-                  Create one
-                </button>
-              </p>
-            </div>
-          </form>
+              <div className="text-center">
+                <p className="text-gray-600">
+                  Don't have an account?{' '}
+                  <button
+                    type="button"
+                    onClick={() => setIsLogin(false)}
+                    className="text-blue-600 font-semibold hover:text-blue-700 transition-colors"
+                  >
+                    Create one
+                  </button>
+                </p>
+              </div>
+            </form>
+          </div>
 
           {/* Vendor Login Link */}
           <div className="text-center mt-6 pt-4 border-t border-gray-200">
             <button
               type="button"
               onClick={() => navigate('/vendor/login')}
-              className="text-sm text-gray-500 hover:text-blue-500 font-medium"
+              className="text-sm text-gray-500 hover:text-blue-600 font-medium transition-colors"
             >
-              Vendor Login
+              Are you a vendor? Login here
             </button>
           </div>
         </div>
@@ -330,171 +353,185 @@ const Auth = () => {
   }
 
   return (
-    <div className="min-h-screen bg-white px-4 py-6">
-      <div className="max-w-sm mx-auto">
+    <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-100 px-4 py-6">
+      <div className="max-w-md mx-auto">
         <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold text-black mb-2">
-            Create Account
+          <div className="w-20 h-20 bg-gradient-to-r from-green-600 to-emerald-600 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-lg">
+            <User size={36} className="text-white" />
+          </div>
+          <h1 className="text-3xl font-bold text-gray-900 mb-3">
+            Join Central Exchange
           </h1>
-          <p className="text-sm text-gray-600">
-            Join Central Exchange to start trading
+          <p className="text-gray-600 leading-relaxed">
+            Create your account and start trading crypto with confidence
           </p>
         </div>
 
-        {error && (
-          <Alert variant="destructive" className="mb-4">
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        )}
+        <div className="bg-white rounded-2xl shadow-xl p-6 space-y-6">
+          {error && (
+            <Alert variant="destructive" className="border-red-200 bg-red-50">
+              <AlertDescription className="text-red-700">{error}</AlertDescription>
+            </Alert>
+          )}
 
-        {message && (
-          <Alert className="mb-4">
-            <AlertDescription>{message}</AlertDescription>
-          </Alert>
-        )}
+          {message && (
+            <Alert className="border-green-200 bg-green-50">
+              <AlertDescription className="text-green-700">{message}</AlertDescription>
+            </Alert>
+          )}
 
-        <form onSubmit={handleSignUp} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="fullName" className="text-sm font-medium text-gray-700">
-              Full Name
-            </Label>
-            <div className="relative">
-              <User size={18} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+          <form onSubmit={handleSignUp} className="space-y-5">
+            <div className="space-y-2">
+              <Label htmlFor="fullName" className="text-sm font-semibold text-gray-800">
+                Full Name
+              </Label>
+              <div className="relative">
+                <User size={20} className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                <Input
+                  id="fullName"
+                  type="text"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  className="h-14 bg-gray-50 border-2 border-gray-200 rounded-xl pl-12 pr-4 text-gray-900 focus:border-green-500 focus:bg-white transition-all duration-200"
+                  placeholder="Enter your full name"
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="email" className="text-sm font-semibold text-gray-800">
+                Email Address
+              </Label>
+              <div className="relative">
+                <Mail size={20} className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                <Input
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="h-14 bg-gray-50 border-2 border-gray-200 rounded-xl pl-12 pr-4 text-gray-900 focus:border-green-500 focus:bg-white transition-all duration-200"
+                  placeholder="your.email@example.com"
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="password" className="text-sm font-semibold text-gray-800">
+                Password
+              </Label>
+              <div className="relative">
+                <Lock size={20} className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                <Input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="h-14 bg-gray-50 border-2 border-gray-200 rounded-xl pl-12 pr-14 text-gray-900 focus:border-green-500 focus:bg-white transition-all duration-200"
+                  placeholder="Create a strong password (min 6 characters)"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                </button>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="confirmPassword" className="text-sm font-semibold text-gray-800">
+                Confirm Password
+              </Label>
+              <div className="relative">
+                <Lock size={20} className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                <Input
+                  id="confirmPassword"
+                  type={showConfirmPassword ? "text" : "password"}
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="h-14 bg-gray-50 border-2 border-gray-200 rounded-xl pl-12 pr-14 text-gray-900 focus:border-green-500 focus:bg-white transition-all duration-200"
+                  placeholder="Confirm your password"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                </button>
+              </div>
+            </div>
+
+            {/* Location Selection */}
+            <div className="space-y-2">
+              <Label className="text-sm font-semibold text-gray-800">
+                Location
+              </Label>
+              <div className="bg-gray-50 border-2 border-gray-200 rounded-xl p-4 focus-within:border-green-500 transition-all duration-200">
+                <LocationSelectionForm
+                  selectedCountry={country}
+                  selectedState={state}
+                  selectedCity={city}
+                  onCountryChange={setCountry}
+                  onStateChange={setState}
+                  onCityChange={setCity}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="referralCode" className="text-sm font-semibold text-gray-800">
+                Referral Code (Optional)
+              </Label>
               <Input
-                id="fullName"
+                id="referralCode"
                 type="text"
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                className="h-12 bg-white border border-gray-300 rounded-lg pl-10 pr-4"
-                placeholder="Enter your full name"
-                required
+                value={referralCode}
+                onChange={(e) => setReferralCode(e.target.value)}
+                className="h-14 bg-gray-50 border-2 border-gray-200 rounded-xl px-4 text-gray-900 focus:border-green-500 focus:bg-white transition-all duration-200"
+                placeholder="Enter referral code"
               />
             </div>
-          </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="email" className="text-sm font-medium text-gray-700">
-              Email
-            </Label>
-            <div className="relative">
-              <Mail size={18} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-              <Input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="h-12 bg-white border border-gray-300 rounded-lg pl-10 pr-4"
-                placeholder="Enter your email"
-                required
-              />
+            <Button
+              type="submit"
+              className="w-full h-14 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-semibold rounded-xl text-lg shadow-lg hover:shadow-xl transition-all duration-200"
+              disabled={loading || !country || !state}
+            >
+              {loading ? (
+                <div className="flex items-center">
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                  Creating Account...
+                </div>
+              ) : (
+                <div className="flex items-center">
+                  <User size={20} className="mr-2" />
+                  Create My Account
+                </div>
+              )}
+            </Button>
+
+
+
+            <div className="text-center">
+              <p className="text-gray-600">
+                Already have an account?{' '}
+                <button
+                  type="button"
+                  onClick={() => setIsLogin(true)}
+                  className="text-green-600 font-semibold hover:text-green-700 transition-colors"
+                >
+                  Sign In
+                </button>
+              </p>
             </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="password" className="text-sm font-medium text-gray-700">
-              Password
-            </Label>
-            <div className="relative">
-              <Lock size={18} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-              <Input
-                id="password"
-                type={showPassword ? "text" : "password"}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="h-12 bg-white border border-gray-300 rounded-lg pl-10 pr-12"
-                placeholder="Create a password (min 6 characters)"
-                required
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400"
-              >
-                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-              </button>
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="confirmPassword" className="text-sm font-medium text-gray-700">
-              Confirm Password
-            </Label>
-            <div className="relative">
-              <Lock size={18} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-              <Input
-                id="confirmPassword"
-                type={showConfirmPassword ? "text" : "password"}
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                className="h-12 bg-white border border-gray-300 rounded-lg pl-10 pr-12"
-                placeholder="Confirm your password"
-                required
-              />
-              <button
-                type="button"
-                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400"
-              >
-                {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-              </button>
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="location" className="text-sm font-medium text-gray-700">
-              Location
-            </Label>
-            <div className="relative">
-              <MapPin size={18} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-              <Input
-                id="location"
-                type="text"
-                value={location}
-                onChange={(e) => setLocation(e.target.value)}
-                className="h-12 bg-white border border-gray-300 rounded-lg pl-10 pr-4"
-                placeholder="Enter your city/location"
-                required
-              />
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="referralCode" className="text-sm font-medium text-gray-700">
-              Referral Code (Optional)
-            </Label>
-            <Input
-              id="referralCode"
-              type="text"
-              value={referralCode}
-              onChange={(e) => setReferralCode(e.target.value)}
-              className="h-12 bg-white border border-gray-300 rounded-lg px-4"
-              placeholder="Enter referral code"
-            />
-          </div>
-
-          <Button
-            type="submit"
-            className="w-full h-12 bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded-lg"
-            disabled={loading}
-          >
-            {loading ? 'Creating Account...' : 'Create Account'}
-          </Button>
-
-
-
-          <div className="text-center">
-            <p className="text-sm text-gray-600">
-              Already have an account?{' '}
-              <button
-                type="button"
-                onClick={() => setIsLogin(true)}
-                className="text-blue-500 font-medium"
-              >
-                Log In
-              </button>
-            </p>
-          </div>
-        </form>
+          </form>
+        </div>
       </div>
     </div>
   );
