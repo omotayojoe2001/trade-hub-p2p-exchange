@@ -126,21 +126,21 @@ const SellForCash = () => {
       return;
     }
 
-    // Check credits
-    const totalCredits = getTotalCredits();
-    if (userCredits < totalCredits) {
-      alert(`You need ${totalCredits} credits total (${getRequiredCredits()} service fee + ${getPlatformFee()} platform fee for $${getUsdValue().toFixed(2)}). You have ${userCredits} credits.`);
+    // Check platform fee credits only (service fees calculated later)
+    const platformFee = getPlatformFee();
+    if (userCredits < platformFee) {
+      alert(`You need ${platformFee} credits for platform fee ($${getUsdValue().toFixed(2)} USD). You have ${userCredits} credits.`);
       return;
     }
 
     setLoading(true);
 
     try {
-      // Spend credits
-      const success = await creditsService.spendCredits(user.id, totalCredits, `Sell ${selectedCrypto} for cash (${selectedPayment})`);
+      // Spend only platform fee credits for now
+      const success = await creditsService.spendCredits(user.id, platformFee, `Platform fee for selling ${selectedCrypto} for cash (${selectedPayment})`);
       
       if (!success) {
-        alert('Failed to process credits. Please try again.');
+        alert('Failed to process platform fee. Please try again.');
         return;
       }
 
@@ -155,9 +155,9 @@ const SellForCash = () => {
           deliveryAddress: selectedPayment === 'delivery' ? deliveryAddress : null,
           pickupLocation: selectedPayment === 'pickup' ? pickupLocation : null,
           phoneNumber: selectedPayment === 'delivery' ? phoneNumber : null,
-          serviceFee: getRequiredCredits(),
+          serviceFee: 0, // Will be calculated later
           platformFee: getPlatformFee(),
-          totalFee: totalCredits
+          totalFee: platformFee
         }
       });
     } catch (error) {
@@ -190,16 +190,11 @@ const SellForCash = () => {
           </div>
           <div className="text-xs text-blue-600 mt-2 space-y-1">
             <div className="flex justify-between">
-              <span>Service ({selectedPayment}):</span>
-              <span>{getRequiredCredits()} credits</span>
-            </div>
-            <div className="flex justify-between">
-              <span>Platform fee (${getUsdValue().toFixed(2)} USD = {getPlatformFee()} credits):</span>
+              <span>Platform fee (${getUsdValue().toFixed(2)} USD):</span>
               <span>{getPlatformFee()} credits</span>
             </div>
-            <div className="flex justify-between font-medium border-t pt-1">
-              <span>Total needed:</span>
-              <span>{getTotalCredits()} credits</span>
+            <div className="text-xs text-amber-600 mt-1">
+              Service fees will be calculated after location selection
             </div>
           </div>
         </div>
@@ -302,7 +297,7 @@ const SellForCash = () => {
               />
               <div className="flex-1">
                 <div className="font-medium text-gray-900">Pickup</div>
-                <div className="text-sm text-gray-500">Pick up cash from vendor location (50 credits)</div>
+                <div className="text-sm text-gray-500">Pick up cash from vendor location (fee calculated by distance)</div>
               </div>
             </div>
             <div 
@@ -327,7 +322,7 @@ const SellForCash = () => {
               />
               <div className="flex-1">
                 <div className="font-medium text-gray-900">Home Delivery</div>
-                <div className="text-sm text-gray-500">Cash delivered to your address (100 credits)</div>
+                <div className="text-sm text-gray-500">Cash delivered to your address (fee calculated by distance)</div>
               </div>
             </div>
           </div>
@@ -381,7 +376,7 @@ const SellForCash = () => {
             parseFloat(amount) <= 0 ||
             (selectedPayment === 'delivery' && (!deliveryAddress.trim() || !phoneNumber.trim())) ||
             (selectedPayment === 'pickup' && !pickupLocation.trim()) ||
-            userCredits < getTotalCredits()
+            userCredits < getPlatformFee()
           }
           className="w-full bg-blue-600 hover:bg-blue-700 text-white py-4 rounded-lg text-lg font-medium disabled:bg-gray-400"
         >
