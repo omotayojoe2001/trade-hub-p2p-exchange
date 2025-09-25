@@ -69,6 +69,18 @@ const DeliveryAddressForm: React.FC<DeliveryAddressFormProps> = ({
     }
   };
 
+  // Auto-fill on component mount if profile data is available
+  useEffect(() => {
+    if (!loading && useProfileAddress) {
+      if (profilePhone && !phoneNumber) {
+        onPhoneChange(profilePhone);
+      }
+      if (profileAddress && !deliveryAddress) {
+        onAddressChange(profileAddress);
+      }
+    }
+  }, [loading, profilePhone, profileAddress, useProfileAddress, phoneNumber, deliveryAddress, onPhoneChange, onAddressChange]);
+
   if (loading) {
     return (
       <div className="space-y-4 animate-pulse">
@@ -142,9 +154,8 @@ const DeliveryAddressForm: React.FC<DeliveryAddressFormProps> = ({
           type="tel"
           value={phoneNumber}
           onChange={(e) => onPhoneChange(e.target.value)}
-          placeholder={useProfileAddress && profilePhone ? profilePhone : "+234..."}
+          placeholder="+234..."
           className="w-full px-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-          disabled={useProfileAddress && !!profilePhone}
         />
       </div>
     </div>

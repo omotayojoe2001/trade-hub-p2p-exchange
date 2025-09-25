@@ -265,29 +265,37 @@ const SellForCash = () => {
         {/* Delivery Method */}
         <div className="space-y-3">
           <h3 className="text-sm font-medium text-gray-700">Cash Delivery Method</h3>
-          <div className="space-y-2">
-            <label className="flex items-center p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50">
+          <div className="space-y-3">
+            <label className={`flex items-center p-4 border-2 rounded-lg cursor-pointer transition-all ${
+              selectedPayment === 'pickup' 
+                ? 'border-blue-500 bg-blue-50' 
+                : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+            }`}>
               <input
                 type="radio"
                 name="delivery"
                 value="pickup"
                 checked={selectedPayment === 'pickup'}
                 onChange={(e) => setSelectedPayment(e.target.value)}
-                className="mr-3"
+                className="mr-3 w-4 h-4 text-blue-600"
               />
               <div className="flex-1">
                 <div className="font-medium text-gray-900">Pickup</div>
                 <div className="text-sm text-gray-500">Pick up cash from vendor location (50 credits)</div>
               </div>
             </label>
-            <label className="flex items-center p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50">
+            <label className={`flex items-center p-4 border-2 rounded-lg cursor-pointer transition-all ${
+              selectedPayment === 'delivery' 
+                ? 'border-blue-500 bg-blue-50' 
+                : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+            }`}>
               <input
                 type="radio"
                 name="delivery"
                 value="delivery"
                 checked={selectedPayment === 'delivery'}
                 onChange={(e) => setSelectedPayment(e.target.value)}
-                className="mr-3"
+                className="mr-3 w-4 h-4 text-blue-600"
               />
               <div className="flex-1">
                 <div className="font-medium text-gray-900">Home Delivery</div>

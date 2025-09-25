@@ -25,7 +25,12 @@ const LocationSelector: React.FC<LocationSelectorProps> = ({
   ];
 
   const handleLocationSelect = (location: string) => {
-    onLocationChange(location === 'Other (specify below)' ? customLocation : location);
+    if (location === 'Other (specify below)') {
+      onLocationChange(customLocation);
+    } else {
+      onLocationChange(location);
+      setCustomLocation('');
+    }
   };
 
   return (
@@ -37,16 +42,20 @@ const LocationSelector: React.FC<LocationSelectorProps> = ({
       
       <div className="space-y-2">
         {predefinedLocations.map((location) => (
-          <label key={location} className="flex items-center p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50">
+          <label key={location} className={`flex items-center p-3 border-2 rounded-lg cursor-pointer transition-all ${
+            selectedLocation === location || (location === 'Other (specify below)' && !predefinedLocations.includes(selectedLocation))
+              ? 'border-blue-500 bg-blue-50'
+              : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+          }`}>
             <input
               type="radio"
               name="pickup-location"
               value={location}
               checked={selectedLocation === location || (location === 'Other (specify below)' && !predefinedLocations.includes(selectedLocation))}
               onChange={() => handleLocationSelect(location)}
-              className="mr-3"
+              className="mr-3 w-4 h-4 text-blue-600"
             />
-            <span className="text-sm text-gray-900">{location}</span>
+            <span className="text-sm text-gray-900 font-medium">{location}</span>
           </label>
         ))}
       </div>
