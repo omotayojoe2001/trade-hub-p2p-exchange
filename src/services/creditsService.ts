@@ -236,10 +236,22 @@ export const creditsService = {
 
 // Credit costs for different services (in credits)
 export const CREDIT_COSTS = {
-  CASH_PICKUP: 50,      // $0.50 - Cash pickup service
-  CASH_DELIVERY: 100,   // $1.00 - Cash delivery service
+  CASH_PICKUP: 200,     // $2.00 - Fixed cash pickup service fee
+  CASH_DELIVERY: 300,   // $3.00 - Fixed cash delivery service fee  
   PRIORITY_SUPPORT: 25, // $0.25 - Priority customer support
   ADVANCED_FEATURES: 75,// $0.75 - Advanced trading features
   PREMIUM_MATCHING: 10, // $0.10 - Priority trade matching
   EXTENDED_ESCROW: 15   // $0.15 - Extended escrow protection
+};
+
+// Calculate platform fee based on USD amount (10 credits per $100)
+export const calculatePlatformFeeCredits = (usdAmount: number): number => {
+  return Math.ceil(usdAmount / 10); // 10 credits per $100 USD
+};
+
+// Calculate total credits needed for cash services
+export const calculateTotalCreditsForCash = (usdAmount: number, serviceType: 'pickup' | 'delivery'): number => {
+  const platformFee = calculatePlatformFeeCredits(usdAmount);
+  const serviceFee = serviceType === 'pickup' ? CREDIT_COSTS.CASH_PICKUP : CREDIT_COSTS.CASH_DELIVERY;
+  return platformFee + serviceFee;
 };

@@ -3,7 +3,7 @@ import { ArrowLeft, MoreVertical } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
-import { creditsService, CREDIT_COSTS } from '@/services/creditsService';
+import { creditsService, CREDIT_COSTS, calculatePlatformFeeCredits, calculateTotalCreditsForCash } from '@/services/creditsService';
 import NotesSection from '@/components/sell-crypto/NotesSection';
 import SecurityNotice from '@/components/sell-crypto/SecurityNotice';
 import LocationSelector from '@/components/LocationSelector';
@@ -72,17 +72,20 @@ const SellForCash = () => {
     return parseFloat(amount) * currentRate;
   };
 
+  const getUsdValue = () => {
+    return calculateUSDValue();
+  };
+
   const getRequiredCredits = () => {
     return selectedPayment === 'pickup' ? CREDIT_COSTS.CASH_PICKUP : CREDIT_COSTS.CASH_DELIVERY;
   };
 
   const getPlatformFee = () => {
-    const usdValue = calculateUSDValue();
-    return Math.round(usdValue * 0.005); // 0.5% platform fee in credits
+    return calculatePlatformFeeCredits(getUsdValue());
   };
 
-  const getTotalCreditsNeeded = () => {
-    return getRequiredCredits() + getPlatformFee();
+  const getTotalCredits = () => {
+    return calculateTotalCreditsForCash(getUsdValue(), selectedPayment as 'pickup' | 'delivery');
   };
 
   const handleSendTradeRequest = async () => {
@@ -113,9 +116,9 @@ const SellForCash = () => {
     }
 
     // Check credits
-    const totalCredits = getTotalCreditsNeeded();
+    const totalCredits = getTotalCredits();
     if (userCredits < totalCredits) {
-      alert(`You need ${totalCredits} credits total (${getRequiredCredits()} service + ${getPlatformFee()} platform fee). You have ${userCredits} credits.`);
+      alert(`You need ${totalCredits} credits total (${getRequiredCredits()} service fee + ${getPlatformFee()} platform fee for $${getUsdValue().toFixed(2)}). You have ${userCredits} credits.`);
       return;
     }
 
@@ -180,12 +183,12 @@ const SellForCash = () => {
               <span>{getRequiredCredits()} credits</span>
             </div>
             <div className="flex justify-between">
-              <span>Platform fee (0.5%):</span>
+              <span>Platform fee (${getUsdValue().toFixed(2)} USD = {getPlatformFee()} credits):</span>
               <span>{getPlatformFee()} credits</span>
             </div>
             <div className="flex justify-between font-medium border-t pt-1">
               <span>Total needed:</span>
-              <span>{getTotalCreditsNeeded()} credits</span>
+              <span>{getTotalCredits()} credits</span>
             </div>
           </div>
         </div>
@@ -367,7 +370,7 @@ const SellForCash = () => {
             parseFloat(amount) <= 0 ||
             (selectedPayment === 'delivery' && (!deliveryAddress.trim() || !phoneNumber.trim())) ||
             (selectedPayment === 'pickup' && !pickupLocation.trim()) ||
-            userCredits < getTotalCreditsNeeded()
+            userCredits < getTotalCredits()
           }
           className="w-full bg-blue-600 hover:bg-blue-700 text-white py-4 rounded-lg text-lg font-medium disabled:bg-gray-400"
         >
