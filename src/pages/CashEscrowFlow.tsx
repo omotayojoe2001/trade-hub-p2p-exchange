@@ -99,55 +99,46 @@ const CashEscrowFlow = () => {
 
     setLoading(true);
     try {
-      // Create real cash trade request in database
-      const tradeData = {
-        seller_id: user.id,
-        buyer_id: user.id, // Temporary - will be updated when merchant accepts
-        crypto_type: cryptoType,
-        coin_type: cryptoType,
-        amount: parseFloat(amount),
-        amount_crypto: parseFloat(amount),
-        naira_amount: usdAmount * 1650, // Convert USD to Naira for display
-        amount_fiat: usdAmount * 1650,
-        rate: 1650,
+      // Create trade request that others can accept
+      const tradeRequestData = {
+        user_id: user.id,
         trade_type: 'sell',
+        crypto_type: cryptoType,
+        amount_crypto: parseFloat(amount),
+        amount_fiat: usdAmount * 1650, // Convert USD to Naira for display
+        rate: 1650,
         payment_method: 'cash_delivery',
-        status: 'pending',
+        status: 'open',
         escrow_address: cryptoAddress,
-        escrow_status: 'pending',
-        payment_proof_url: paymentProof.url
+        payment_proof_url: paymentProof.url,
+        delivery_address: deliveryType === 'delivery' ? deliveryAddress : null,
+        expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() // 24 hours
       };
 
-      // Insert trade into database
-      const { data: trade, error: tradeError } = await supabase
-        .from('trades')
-        .insert(tradeData)
+      // Insert trade request into database
+      const { data: tradeRequest, error: tradeError } = await supabase
+        .from('trade_requests')
+        .insert(tradeRequestData)
         .select()
         .single();
 
       if (tradeError) throw tradeError;
 
-      // Only spend credits AFTER successful trade creation
+      // Only spend credits AFTER successful trade request creation
       const platformFee = Math.ceil(usdAmount / 10); // 1 credit per $10 USD
       const creditSuccess = await creditsService.spendCredits(user.id, platformFee, `Platform fee for selling ${cryptoType} for cash (${deliveryType})`);
       
       if (!creditSuccess) {
-        // Delete the trade if credit spending fails
-        await supabase.from('trades').delete().eq('id', trade.id);
+        // Delete the trade request if credit spending fails
+        await supabase.from('trade_requests').delete().eq('id', tradeRequest.id);
         throw new Error('Failed to process platform fee');
       }
 
-      setTradeId(trade.id);
+      setTradeId(tradeRequest.id);
       setStep(3);
 
       // Broadcast to all users after 2 seconds
       setTimeout(async () => {
-        // Update trade status to active and set broadcast time
-        await supabase
-          .from('trades')
-          .update({ status: 'active', broadcasted_at: new Date().toISOString() })
-          .eq('id', trade.id);
-        
         // Notify all merchants about the new trade request
         const { data: merchants } = await supabase
           .from('profiles')
@@ -163,7 +154,7 @@ const CashEscrowFlow = () => {
             title: 'New Cash Trade Available',
             message: `Someone wants to sell ${amount} ${cryptoType} for $${usdAmount?.toLocaleString()} USD cash`,
             data: {
-              trade_id: trade.id,
+              trade_request_id: tradeRequest.id,
               crypto_type: cryptoType,
               amount_crypto: amount,
               usd_amount: usdAmount,
