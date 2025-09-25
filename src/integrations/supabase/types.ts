@@ -1996,47 +1996,74 @@ export type Database = {
         Row: {
           account_name: string | null
           account_number: string | null
+          active: boolean | null
           address: string
           area_type: string | null
+          bank_account: string | null
+          bank_code: string | null
           bank_name: string | null
           created_at: string
+          display_name: string | null
           id: string
           is_active: boolean | null
           location: string
+          location_lat: number | null
+          location_lng: number | null
           name: string
+          phone: string | null
           phone_number: string | null
           rating: number | null
+          updated_at: string | null
           user_id: string | null
+          working_hours: Json | null
         }
         Insert: {
           account_name?: string | null
           account_number?: string | null
+          active?: boolean | null
           address: string
           area_type?: string | null
+          bank_account?: string | null
+          bank_code?: string | null
           bank_name?: string | null
           created_at?: string
+          display_name?: string | null
           id?: string
           is_active?: boolean | null
           location: string
+          location_lat?: number | null
+          location_lng?: number | null
           name: string
+          phone?: string | null
           phone_number?: string | null
           rating?: number | null
+          updated_at?: string | null
           user_id?: string | null
+          working_hours?: Json | null
         }
         Update: {
           account_name?: string | null
           account_number?: string | null
+          active?: boolean | null
           address?: string
           area_type?: string | null
+          bank_account?: string | null
+          bank_code?: string | null
           bank_name?: string | null
           created_at?: string
+          display_name?: string | null
           id?: string
           is_active?: boolean | null
           location?: string
+          location_lat?: number | null
+          location_lng?: number | null
           name?: string
+          phone?: string | null
           phone_number?: string | null
           rating?: number | null
+          updated_at?: string | null
           user_id?: string | null
+          working_hours?: Json | null
         }
         Relationships: []
       }
