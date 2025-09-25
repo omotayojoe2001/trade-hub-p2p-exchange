@@ -17,7 +17,7 @@ const DeliveryAddressForm: React.FC<DeliveryAddressFormProps> = ({
   onPhoneChange
 }) => {
   const { user } = useAuth();
-  const [useProfileAddress, setUseProfileAddress] = useState(true);
+  const [useProfileAddress, setUseProfileAddress] = useState(false);
   const [profileAddress, setProfileAddress] = useState('');
   const [profilePhone, setProfilePhone] = useState('');
   const [loading, setLoading] = useState(true);
@@ -46,10 +46,12 @@ const DeliveryAddressForm: React.FC<DeliveryAddressFormProps> = ({
       setProfilePhone(phone);
       setProfileAddress(address);
 
-      // Pre-fill phone and address if available
-      if (useProfileAddress) {
-        if (phone) onPhoneChange(phone);
-        if (address) onAddressChange(address);
+      // Auto-prefill if we have profile data
+      if (phone && !phoneNumber) {
+        onPhoneChange(phone);
+      }
+      if (address && !deliveryAddress) {
+        onAddressChange(address);
       }
     } catch (error) {
       console.error('Error loading user profile:', error);
