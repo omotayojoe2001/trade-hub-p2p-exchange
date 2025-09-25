@@ -128,14 +128,37 @@ export const creditsService = {
   // Spend credits (for cash services)
   async spendCredits(userId: string, amount: number, description: string): Promise<boolean> {
     try {
-      const { data, error } = await (supabase as any).rpc('spend_user_credits', {
-        user_id_param: userId,
-        credits_amount: amount,
-        description_text: description
-      });
+      // Check if user has enough credits first
+      const currentCredits = await this.getUserCredits(userId);
+      if (currentCredits < amount) {
+        console.error('Insufficient credits:', { current: currentCredits, required: amount });
+        return false;
+      }
+
+      // Update credits balance directly
+      const { error } = await supabase
+        .from('profiles')
+        .update({ credits_balance: currentCredits - amount })
+        .eq('user_id', userId);
 
       if (error) throw error;
-      return data === true;
+
+      // Log the transaction
+      try {
+        await supabase
+          .from('credit_purchase_transactions')
+          .insert({
+            user_id: userId,
+            credits_amount: -amount,
+            price_paid_naira: 0,
+            status: 'paid',
+            payment_reference: `SPEND_${Date.now()}_${description}`.slice(0, 100)
+          });
+      } catch (logError) {
+        console.warn('Failed to log credit transaction:', logError);
+      }
+
+      return true;
     } catch (error) {
       console.error('Error spending credits:', error);
       return false;

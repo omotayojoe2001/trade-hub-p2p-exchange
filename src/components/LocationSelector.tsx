@@ -27,8 +27,8 @@ const LocationSelector: React.FC<LocationSelectorProps> = ({
   const handleLocationSelect = (location: string) => {
     console.log('Location selected:', location);
     if (location === 'Other (specify below)') {
+      onLocationChange('Other (specify below)');
       setCustomLocation('');
-      onLocationChange('');
     } else {
       onLocationChange(location);
       setCustomLocation('');

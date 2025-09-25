@@ -375,7 +375,7 @@ const SellForCash = () => {
             !amount ||
             parseFloat(amount) <= 0 ||
             (selectedPayment === 'delivery' && (!deliveryAddress.trim() || !phoneNumber.trim())) ||
-            (selectedPayment === 'pickup' && !pickupLocation.trim()) ||
+            (selectedPayment === 'pickup' && (!pickupLocation.trim() || pickupLocation === 'Other (specify below)')) ||
             userCredits < getPlatformFee()
           }
           className="w-full bg-blue-600 hover:bg-blue-700 text-white py-4 rounded-lg text-lg font-medium disabled:bg-gray-400"

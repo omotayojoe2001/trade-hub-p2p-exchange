@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Home, Phone, Edit3 } from 'lucide-react';
+import { Home, Phone, MapPin, Navigation } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -21,6 +21,8 @@ const DeliveryAddressForm: React.FC<DeliveryAddressFormProps> = ({
   const [profileAddress, setProfileAddress] = useState('');
   const [profilePhone, setProfilePhone] = useState('');
   const [loading, setLoading] = useState(true);
+  const [selectedState, setSelectedState] = useState('');
+  const [landmark, setLandmark] = useState('');
 
   useEffect(() => {
     loadUserProfile();
@@ -135,21 +137,91 @@ const DeliveryAddressForm: React.FC<DeliveryAddressFormProps> = ({
       )}
 
       <div className="space-y-3">
-        <label className="text-sm font-medium text-gray-700">Delivery Address</label>
+        <label className="text-sm font-medium text-gray-700 flex items-center">
+          <Navigation size={16} className="mr-2" />
+          State <span className="text-red-500 ml-1">*</span>
+        </label>
+        
+        <select
+          value={selectedState}
+          onChange={(e) => setSelectedState(e.target.value)}
+          className="w-full px-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          required
+        >
+          <option value="">Select State</option>
+          <option value="Lagos">Lagos</option>
+          <option value="Abuja">Abuja (FCT)</option>
+          <option value="Ogun">Ogun</option>
+          <option value="Rivers">Rivers</option>
+          <option value="Kano">Kano</option>
+          <option value="Kaduna">Kaduna</option>
+          <option value="Oyo">Oyo</option>
+          <option value="Delta">Delta</option>
+          <option value="Edo">Edo</option>
+          <option value="Anambra">Anambra</option>
+          <option value="Imo">Imo</option>
+          <option value="Enugu">Enugu</option>
+          <option value="Abia">Abia</option>
+          <option value="Cross River">Cross River</option>
+          <option value="Akwa Ibom">Akwa Ibom</option>
+          <option value="Plateau">Plateau</option>
+          <option value="Kwara">Kwara</option>
+          <option value="Osun">Osun</option>
+          <option value="Niger">Niger</option>
+          <option value="Ekiti">Ekiti</option>
+          <option value="Ondo">Ondo</option>
+          <option value="Kogi">Kogi</option>
+          <option value="Benue">Benue</option>
+          <option value="Taraba">Taraba</option>
+          <option value="Adamawa">Adamawa</option>
+          <option value="Borno">Borno</option>
+          <option value="Yobe">Yobe</option>
+          <option value="Gombe">Gombe</option>
+          <option value="Bauchi">Bauchi</option>
+          <option value="Jigawa">Jigawa</option>
+          <option value="Katsina">Katsina</option>
+          <option value="Zamfara">Zamfara</option>
+          <option value="Sokoto">Sokoto</option>
+          <option value="Kebbi">Kebbi</option>
+          <option value="Nasarawa">Nasarawa</option>
+          <option value="Ebonyi">Ebonyi</option>
+          <option value="Bayelsa">Bayelsa</option>
+        </select>
+      </div>
+
+      <div className="space-y-3">
+        <label className="text-sm font-medium text-gray-700 flex items-center">
+          <MapPin size={16} className="mr-2" />
+          Closest Landmark or Location <span className="text-red-500 ml-1">*</span>
+        </label>
+        
+        <input
+          type="text"
+          value={landmark}
+          onChange={(e) => setLandmark(e.target.value)}
+          placeholder="e.g., Near Shoprite, Victoria Island"
+          className="w-full px-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          required
+        />
+      </div>
+
+      <div className="space-y-3">
+        <label className="text-sm font-medium text-gray-700">Full Address <span className="text-red-500 ml-1">*</span></label>
         
         <textarea
           value={deliveryAddress}
           onChange={(e) => onAddressChange(e.target.value)}
-          placeholder="Enter your full delivery address"
+          placeholder="Enter your complete delivery address with house number and street"
           className="w-full px-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
           rows={3}
+          required
         />
       </div>
 
       <div className="space-y-3">
         <label className="text-sm font-medium text-gray-700 flex items-center">
           <Phone size={16} className="mr-2" />
-          Phone Number
+          Phone Number <span className="text-red-500 ml-1">*</span>
         </label>
         
         <input
@@ -158,7 +230,14 @@ const DeliveryAddressForm: React.FC<DeliveryAddressFormProps> = ({
           onChange={(e) => onPhoneChange(e.target.value)}
           placeholder="+234..."
           className="w-full px-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          required
         />
+      </div>
+
+      <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+        <p className="text-sm text-amber-700">
+          <strong>Note:</strong> Service fees will be calculated based on distance from vendor to your location once a vendor accepts your trade.
+        </p>
       </div>
     </div>
   );
