@@ -10,6 +10,7 @@ import LocationSelector from '@/components/LocationSelector';
 import DeliveryAddressForm from '@/components/DeliveryAddressForm';
 
 const SellForCash = () => {
+  console.log('SellForCash component rendered at:', new Date().toISOString());
   const [amount, setAmount] = useState('');
   const [selectedCrypto, setSelectedCrypto] = useState('BTC');
   const [selectedPayment, setSelectedPayment] = useState('pickup');
@@ -72,8 +73,11 @@ const SellForCash = () => {
     return parseFloat(amount) * currentRate;
   };
 
+  // Helper function to get USD value for credit calculations
   const getUsdValue = () => {
-    return calculateUSDValue();
+    const usdVal = calculateUSDValue();
+    console.log('getUsdValue called, returning:', usdVal);
+    return usdVal;
   };
 
   const getRequiredCredits = () => {
@@ -81,11 +85,18 @@ const SellForCash = () => {
   };
 
   const getPlatformFee = () => {
-    return calculatePlatformFeeCredits(getUsdValue());
+    const usdValue = getUsdValue();
+    const fee = calculatePlatformFeeCredits(usdValue);
+    console.log('Platform fee calculated:', fee, 'for USD:', usdValue);
+    return fee;
   };
 
   const getTotalCredits = () => {
-    return calculateTotalCreditsForCash(getUsdValue(), selectedPayment as 'pickup' | 'delivery');
+    const usdValue = getUsdValue();
+    const paymentType = selectedPayment as 'pickup' | 'delivery';
+    const total = calculateTotalCreditsForCash(usdValue, paymentType);
+    console.log('Total credits calculated:', total, 'for USD:', usdValue, 'payment:', paymentType);
+    return total;
   };
 
   const handleSendTradeRequest = async () => {
