@@ -103,8 +103,12 @@ class PremiumTradeService {
         vendor_job_id: vendorJob.id,
         trade_code: vendorJob.verification_code,
         vendor_info: {
-          name: vendorJob.vendor?.display_name || 'Vendor',
-          phone: vendorJob.vendor?.phone || ''
+          name: vendorJob.vendor && typeof vendorJob.vendor === 'object' && !Array.isArray(vendorJob.vendor)
+            ? ((vendorJob.vendor as any).display_name || (vendorJob.vendor as any).name || 'Vendor')
+            : 'Vendor',
+          phone: vendorJob.vendor && typeof vendorJob.vendor === 'object' && !Array.isArray(vendorJob.vendor)
+            ? ((vendorJob.vendor as any).phone || (vendorJob.vendor as any).phone_number || '')
+            : ''
         },
         estimated_delivery: new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString(), // 2 hours
         amount_naira: nairaAmount

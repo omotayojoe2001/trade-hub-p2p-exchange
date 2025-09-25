@@ -87,12 +87,14 @@ export class CashOrderService {
         .eq('id', orderId)
         .single();
 
-      // Notify vendor about payment proof upload
-      if (orderData?.vendor_job?.vendor?.user_id) {
+      // Check if vendor relation exists and has user_id
+      const vendorData = orderData?.vendor_job?.vendor;
+      const vendorUserId = vendorData && typeof vendorData === 'object' && !Array.isArray(vendorData) && 'user_id' in vendorData ? (vendorData as any).user_id : null;
+      if (vendorUserId && typeof vendorUserId === 'string') {
         await supabase
           .from('notifications')
           .insert({
-            user_id: orderData.vendor_job.vendor.user_id,
+            user_id: vendorUserId,
             type: 'payment_proof_uploaded',
             title: 'Payment Proof Uploaded',
             message: `Payment proof has been uploaded for order ${orderData.tracking_code} ($${orderData.usd_amount})`,

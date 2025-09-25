@@ -9,12 +9,16 @@ import VendorBottomNavigation from '@/components/vendor/VendorBottomNavigation';
 
 interface VendorProfileData {
   id: string;
-  display_name: string;
-  phone: string;
-  bank_account: string;
+  name: string;
+  display_name?: string;
+  phone_number: string;
+  phone?: string;
+  account_number: string;
+  bank_account?: string;
   bank_name: string;
   bank_code?: string;
-  active: boolean;
+  is_active: boolean;
+  active?: boolean;
 }
 
 const VendorProfile = () => {

@@ -19,17 +19,23 @@ export interface VendorLoginResponse {
 export interface VendorProfile {
   id: string;
   user_id: string;
-  display_name: string;
-  bank_account: string;
+  name?: string;
+  display_name?: string;
+  phone_number?: string;
+  phone?: string;
+  account_number?: string;
+  bank_account?: string;
   bank_name: string;
   bank_code?: string;
-  phone: string;
-  active: boolean;
+  is_active?: boolean;
+  active?: boolean;
+  address?: string;
+  location?: string;
   location_lat?: number;
   location_lng?: number;
-  working_hours: any;
+  working_hours?: any;
   created_at: string;
-  updated_at: string;
+  updated_at?: string;
 }
 
 class VendorAuthService {
@@ -105,7 +111,14 @@ class VendorAuthService {
         .single();
 
       if (error) throw error;
-      return data;
+      // Map database fields to expected interface
+      return {
+        ...data,
+        display_name: data.display_name || data.name,
+        phone: data.phone || data.phone_number,
+        bank_account: data.bank_account || data.account_number,
+        active: data.active ?? data.is_active
+      };
     } catch (error) {
       console.error('Error fetching vendor profile:', error);
       return null;
@@ -114,9 +127,26 @@ class VendorAuthService {
 
   async createVendorProfile(vendorData: Partial<VendorProfile>): Promise<VendorProfile> {
     try {
+      // Map interface fields to database fields
+      const dbData = {
+        user_id: vendorData.user_id,
+        name: vendorData.display_name || vendorData.name || 'Vendor',
+        display_name: vendorData.display_name || vendorData.name || 'Vendor',
+        phone_number: vendorData.phone || vendorData.phone_number || '',
+        phone: vendorData.phone || vendorData.phone_number || '',
+        account_number: vendorData.bank_account || vendorData.account_number || '',
+        bank_account: vendorData.bank_account || vendorData.account_number || '',
+        bank_name: vendorData.bank_name || '',
+        bank_code: vendorData.bank_code || '',
+        address: vendorData.address || vendorData.location || 'Not specified',
+        location: vendorData.address || vendorData.location || 'Not specified',
+        is_active: vendorData.active ?? vendorData.is_active ?? true,
+        active: vendorData.active ?? vendorData.is_active ?? true
+      };
+
       const { data, error } = await supabase
         .from('vendors')
-        .insert(vendorData as any)
+        .insert(dbData)
         .select()
         .single();
 
@@ -130,9 +160,19 @@ class VendorAuthService {
 
   async updateVendorProfile(vendorId: string, updates: Partial<VendorProfile>): Promise<VendorProfile> {
     try {
+      // Map interface fields to database fields
+      const dbUpdates = {
+        ...(updates.display_name && { name: updates.display_name, display_name: updates.display_name }),
+        ...(updates.phone && { phone_number: updates.phone, phone: updates.phone }),
+        ...(updates.bank_account && { account_number: updates.bank_account, bank_account: updates.bank_account }),
+        ...(updates.bank_name && { bank_name: updates.bank_name }),
+        ...(updates.bank_code && { bank_code: updates.bank_code }),
+        ...(updates.active !== undefined && { is_active: updates.active, active: updates.active })
+      };
+
       const { data, error } = await supabase
         .from('vendors')
-        .update(updates)
+        .update(dbUpdates)
         .eq('id', vendorId)
         .select()
         .single();
