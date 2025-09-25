@@ -113,7 +113,7 @@ const CashEscrowFlow = () => {
         payment_method: 'cash_delivery',
         status: 'pending_broadcast',
         escrow_address: cryptoAddress,
-        escrow_status: 'awaiting_deposit',
+        escrow_status: 'pending',
         payment_proof_url: paymentProof.url
       };
 
