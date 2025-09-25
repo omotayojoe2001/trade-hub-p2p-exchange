@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
+import { creditsService } from '@/services/creditsService';
 
 const CashEscrowFlow = () => {
   const [step, setStep] = useState(1);
@@ -111,7 +112,7 @@ const CashEscrowFlow = () => {
         rate: 1650,
         trade_type: 'sell',
         payment_method: 'cash_delivery',
-        status: 'pending_broadcast',
+        status: 'pending',
         escrow_address: cryptoAddress,
         escrow_status: 'pending',
         payment_proof_url: paymentProof.url
@@ -125,6 +126,16 @@ const CashEscrowFlow = () => {
         .single();
 
       if (tradeError) throw tradeError;
+
+      // Only spend credits AFTER successful trade creation
+      const platformFee = Math.ceil(usdAmount / 10); // 1 credit per $10 USD
+      const creditSuccess = await creditsService.spendCredits(user.id, platformFee, `Platform fee for selling ${cryptoType} for cash (${deliveryType})`);
+      
+      if (!creditSuccess) {
+        // Delete the trade if credit spending fails
+        await supabase.from('trades').delete().eq('id', trade.id);
+        throw new Error('Failed to process platform fee');
+      }
 
       setTradeId(trade.id);
       setStep(3);

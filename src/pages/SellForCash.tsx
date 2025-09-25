@@ -136,15 +136,7 @@ const SellForCash = () => {
     setLoading(true);
 
     try {
-      // Spend only platform fee credits for now
-      const success = await creditsService.spendCredits(user.id, platformFee, `Platform fee for selling ${selectedCrypto} for cash (${selectedPayment})`);
-      
-      if (!success) {
-        alert('Failed to process platform fee. Please try again.');
-        return;
-      }
-
-      // Navigate to cash escrow flow
+      // Navigate to cash escrow flow (credits will be spent after successful trade creation)
       navigate('/cash-escrow-flow', {
         state: {
           amount,
