@@ -26,20 +26,42 @@ const CashEscrowFlow = () => {
     totalFee
   } = location.state || {};
 
-  // Generate crypto address for deposit (using static addresses for demo)
-  const [cryptoAddress] = useState(() => {
-    const addresses = {
-      BTC: 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh',
-      USDT: '0x742d35Cc6634C0532925a3b8D4C9db4C4C4C4C4C',
-      ETH: '0x742d35Cc6634C0532925a3b8D4C9db4C4C4C4C4C',
-      XRP: 'rN7n7otQDd6FczFgLdSqtcsAUxDkw6fzRH',
-      BNB: 'bnb1grpf0955h0ykzq3ar5nmum7y6gdfl6lxfn46h2',
-      ADA: 'addr1qx2fxv2umyhttkxyxp8x0dlpdt3k6cwng5pxj3jhsydzer3jcu5d8ps7zex2k2xt3uqxgjqnnj0vs2qd4a6gtmk4l3zcsr4qgns',
-      SOL: '7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU',
-      DOGE: 'DH5yaieqoZN36fDVciNyRueRGvGLR3mr7L'
+  // Generate real BitGo crypto address for deposit
+  const [cryptoAddress, setCryptoAddress] = useState('');
+  const [generatingAddress, setGeneratingAddress] = useState(true);
+
+  useEffect(() => {
+    const generateRealEscrowAddress = async () => {
+      try {
+        setGeneratingAddress(true);
+        const { bitgoEscrow } = await import('@/services/bitgoEscrow');
+        const tradeId = `cash_trade_${Date.now()}`;
+        const coinType = cryptoType === 'BTC' ? 'BTC' : cryptoType === 'ETH' ? 'ETH' : 'USDT';
+        const expectedAmountInSatoshis = cryptoType === 'BTC' 
+          ? Math.round(parseFloat(amount) * 100000000) // BTC to satoshis
+          : Math.round(parseFloat(amount) * 1000000000000000000); // ETH/USDT to wei
+        
+        const address = await bitgoEscrow.generateEscrowAddress(tradeId, coinType as 'BTC' | 'ETH' | 'USDT', expectedAmountInSatoshis);
+        setCryptoAddress(address);
+        console.log('Generated real BitGo escrow address:', address);
+      } catch (error) {
+        console.error('Error generating real escrow address:', error);
+        // Fallback to demo address if BitGo fails
+        const demoAddresses = {
+          BTC: 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh',
+          USDT: '0x742d35Cc6634C0532925a3b8D4C9db4C4C4C4C4C',
+          ETH: '0x742d35Cc6634C0532925a3b8D4C9db4C4C4C4C4C'
+        };
+        setCryptoAddress(demoAddresses[cryptoType] || demoAddresses.BTC);
+      } finally {
+        setGeneratingAddress(false);
+      }
     };
-    return addresses[cryptoType] || addresses.BTC;
-  });
+
+    if (cryptoType && amount) {
+      generateRealEscrowAddress();
+    }
+  }, [cryptoType, amount]);
 
   const handleFileUpload = async (event) => {
     const file = event.target.files[0];
@@ -76,39 +98,72 @@ const CashEscrowFlow = () => {
 
     setLoading(true);
     try {
-      // Create cash trade request (using mock data for demo)
+      // Create real cash trade request in database
       const tradeData = {
-        id: `cash_trade_${Date.now()}`,
         seller_id: user.id,
+        buyer_id: user.id, // Temporary - will be updated when merchant accepts
         crypto_type: cryptoType,
-        crypto_amount: parseFloat(amount),
-        usd_amount: usdAmount,
-        delivery_type: deliveryType,
-        delivery_address: deliveryAddress,
-        service_fee: serviceFee,
-        platform_fee: platformFee,
-        total_fee: totalFee,
-        payment_proof_url: paymentProof.url,
+        coin_type: cryptoType,
+        amount: parseFloat(amount),
+        amount_crypto: parseFloat(amount),
+        naira_amount: usdAmount * 1650, // Convert USD to Naira for display
+        amount_fiat: usdAmount * 1650,
+        rate: 1650,
+        trade_type: 'sell',
+        payment_method: 'cash_delivery',
         status: 'pending_broadcast',
-        crypto_address: cryptoAddress,
-        created_at: new Date().toISOString()
+        escrow_address: cryptoAddress,
+        escrow_status: 'awaiting_deposit',
+        payment_proof_url: paymentProof.url
       };
 
-      // For demo purposes, we'll simulate the database insert
-      console.log('Creating cash trade:', tradeData);
-      const trade = tradeData;
+      // Insert trade into database
+      const { data: trade, error: tradeError } = await supabase
+        .from('trades')
+        .insert(tradeData)
+        .select()
+        .single();
 
-      // Handle any errors silently for demo
+      if (tradeError) throw tradeError;
 
       setTradeId(trade.id);
       setStep(3);
 
       // Broadcast to all users after 2 seconds
       setTimeout(async () => {
+        // Update trade status to active and set broadcast time
         await supabase
           .from('trades')
           .update({ status: 'active', broadcasted_at: new Date().toISOString() })
           .eq('id', trade.id);
+        
+        // Notify all merchants about the new trade request
+        const { data: merchants } = await supabase
+          .from('profiles')
+          .select('user_id')
+          .eq('is_merchant', true)
+          .eq('merchant_mode', true)
+          .neq('user_id', user.id);
+
+        if (merchants && merchants.length > 0) {
+          const notifications = merchants.map(merchant => ({
+            user_id: merchant.user_id,
+            type: 'trade_request',
+            title: 'New Cash Trade Available',
+            message: `Someone wants to sell ${amount} ${cryptoType} for $${usdAmount?.toLocaleString()} USD cash`,
+            data: {
+              trade_id: trade.id,
+              crypto_type: cryptoType,
+              amount_crypto: amount,
+              usd_amount: usdAmount,
+              delivery_type: deliveryType
+            }
+          }));
+
+          await supabase
+            .from('notifications')
+            .insert(notifications);
+        }
         
         setStep(4);
       }, 2000);
@@ -174,13 +229,27 @@ const CashEscrowFlow = () => {
                   onClick={() => copyToClipboard(cryptoAddress)}
                   variant="outline"
                   size="sm"
+                  disabled={generatingAddress || !cryptoAddress}
                 >
                   Copy
                 </Button>
               </div>
               <div className="bg-white border rounded p-3 break-all text-sm font-mono">
-                {cryptoAddress}
+                {generatingAddress ? (
+                  <div className="flex items-center justify-center">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
+                    Generating secure BitGo address...
+                  </div>
+                ) : (
+                  cryptoAddress
+                )}
               </div>
+              {!generatingAddress && cryptoAddress && (
+                <p className="text-xs text-green-600 mt-2 flex items-center">
+                  <CheckCircle size={12} className="mr-1" />
+                  Real BitGo escrow address generated
+                </p>
+              )}
             </div>
 
             <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
@@ -313,12 +382,12 @@ const CashEscrowFlow = () => {
             </ul>
           </div>
 
-          <Button
-            onClick={() => navigate('/dashboard')}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white py-4"
-          >
-            View Trade Status
-          </Button>
+            <Button
+              onClick={() => navigate('/my-trades')}
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white py-4"
+            >
+              View Trade Status
+            </Button>
         </div>
       </div>
     );

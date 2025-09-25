@@ -1371,6 +1371,7 @@ export type Database = {
           amount_fiat: number | null
           assigned_vendor_job_id: string | null
           bank_account_details: Json | null
+          broadcasted_at: string | null
           buyer_id: string
           cash_payment_confirmed_at: string | null
           cash_sender_id: string | null
@@ -1418,6 +1419,7 @@ export type Database = {
           amount_fiat?: number | null
           assigned_vendor_job_id?: string | null
           bank_account_details?: Json | null
+          broadcasted_at?: string | null
           buyer_id: string
           cash_payment_confirmed_at?: string | null
           cash_sender_id?: string | null
@@ -1465,6 +1467,7 @@ export type Database = {
           amount_fiat?: number | null
           assigned_vendor_job_id?: string | null
           bank_account_details?: Json | null
+          broadcasted_at?: string | null
           buyer_id?: string
           cash_payment_confirmed_at?: string | null
           cash_sender_id?: string | null

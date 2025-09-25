@@ -78,6 +78,7 @@ import MerchantDashboard from "./pages/MerchantDashboard";
 import CashDeliveryDetails from "./pages/CashDeliveryDetails";
 import CashPickupDetails from "./pages/CashPickupDetails";
 import SellForCash from "./pages/SellForCash";
+import Dashboard from "./pages/Dashboard";
 import CurrencyConversion from "./pages/CurrencyConversion";
 import TrendingCoins from "./pages/TrendingCoins";
 import CoinDetailPage from "./pages/CoinDetailPage";
@@ -300,6 +301,7 @@ const AppContent = () => {
             <Route path="/merchant-dashboard" element={<MerchantDashboard />} />
 
             <Route path="/sell-for-cash" element={<SellForCash />} />
+            <Route path="/dashboard" element={<Dashboard />} />
 
             <Route path="/currency-conversion" element={<CurrencyConversion />} />
             <Route path="/trending-coins" element={<TrendingCoins />} />
