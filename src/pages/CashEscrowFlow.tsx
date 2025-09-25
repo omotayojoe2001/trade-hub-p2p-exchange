@@ -109,9 +109,6 @@ const CashEscrowFlow = () => {
         rate: 1650,
         payment_method: 'cash_delivery',
         status: 'open',
-        escrow_address: cryptoAddress,
-        payment_proof_url: paymentProof.url,
-        delivery_address: deliveryType === 'delivery' ? deliveryAddress : null,
         expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() // 24 hours
       };
 
@@ -123,6 +120,113 @@ const CashEscrowFlow = () => {
         .single();
 
       if (tradeError) throw tradeError;
+
+      // Select vendor based on delivery location
+      let selectedVendorId;
+      
+      // First, let's see what vendors exist
+      const { data: allVendors, error: vendorError } = await supabase
+        .from('vendors')
+        .select('id, location, active, display_name')
+        .eq('active', true);
+      
+      console.log('🔍 CASH ESCROW DEBUG: Available vendors:', allVendors);
+      console.log('🔍 CASH ESCROW DEBUG: Delivery type:', deliveryType);
+      console.log('🔍 CASH ESCROW DEBUG: Delivery address:', deliveryAddress);
+      
+      if (vendorError) {
+        console.error('Error fetching vendors:', vendorError);
+        throw new Error(`Database error: ${vendorError.message}`);
+      }
+      
+      if (deliveryType === 'pickup') {
+        // For pickup, match vendor by location (e.g., "Ikeja")
+        const pickupLocation = deliveryAddress || 'Ikeja';
+        console.log('Looking for vendor in location:', pickupLocation);
+        
+        // Try exact match first
+        let locationVendors = allVendors?.filter(v => 
+          v.location?.toLowerCase() === pickupLocation.toLowerCase()
+        );
+        
+        // If no exact match, try partial match
+        if (!locationVendors?.length) {
+          locationVendors = allVendors?.filter(v => 
+            v.location?.toLowerCase().includes(pickupLocation.toLowerCase())
+          );
+        }
+        
+        // If still no match, use any vendor
+        if (!locationVendors?.length) {
+          locationVendors = allVendors;
+        }
+        
+        selectedVendorId = locationVendors?.[0]?.id;
+        console.log('🎯 CASH ESCROW DEBUG: Selected vendor for pickup:', locationVendors?.[0]);
+        console.log('🎯 CASH ESCROW DEBUG: Selected vendor ID:', selectedVendorId);
+      } else {
+        // For delivery, find any active vendor
+        selectedVendorId = allVendors?.[0]?.id;
+        console.log('🎯 CASH ESCROW DEBUG: Selected vendor for delivery:', allVendors?.[0]);
+        console.log('🎯 CASH ESCROW DEBUG: Selected vendor ID:', selectedVendorId);
+      }
+      
+      if (!selectedVendorId) {
+        const locationMsg = deliveryType === 'pickup' ? ` in ${deliveryAddress || 'Ikeja'}` : '';
+        throw new Error(`No vendors available for cash ${deliveryType}${locationMsg}. Found ${allVendors?.length || 0} total vendors.`);
+      }
+
+      // Store cash-specific data with vendor assignment
+      console.log('💰 CASH ESCROW DEBUG: Creating cash trade with vendor ID:', selectedVendorId);
+      const cashTradeData = {
+        trade_request_id: tradeRequest.id,
+        seller_id: user.id,
+        vendor_id: selectedVendorId,
+        usd_amount: usdAmount,
+        delivery_type: deliveryType,
+        delivery_address: deliveryType === 'delivery' ? deliveryAddress : null,
+        pickup_location: deliveryType === 'pickup' ? (deliveryAddress || 'Ikeja') : null,
+        escrow_address: cryptoAddress,
+        payment_proof_url: paymentProof.url,
+        status: 'pending_acceptance'
+      };
+
+      // Insert into cash trades table
+      try {
+        console.log('Inserting cash trade data:', cashTradeData);
+        const { data: cashTrade, error: cashError } = await supabase
+          .from('cash_trades')
+          .insert(cashTradeData)
+          .select()
+          .single();
+        
+        if (cashError) {
+          console.error('Cash trades insert error:', cashError);
+          throw cashError;
+        }
+        
+        console.log('Cash trade created successfully:', cashTrade);
+      } catch (cashError) {
+        console.error('Cash trades table error:', {
+          error: cashError,
+          message: cashError.message,
+          code: cashError.code,
+          details: cashError.details
+        });
+        
+        // If table doesn't exist, continue with localStorage fallback
+        if (cashError.code === '42P01' || cashError.message?.includes('does not exist')) {
+          console.warn('Cash trades table does not exist, using localStorage fallback');
+          try {
+            localStorage.setItem(`cash_trade_${tradeRequest.id}`, JSON.stringify(cashTradeData));
+          } catch (storageError) {
+            console.error('localStorage fallback failed:', storageError);
+          }
+        } else {
+          // Re-throw other errors
+          throw cashError;
+        }
+      }
 
       // Only spend credits AFTER successful trade request creation
       const platformFee = Math.ceil(usdAmount / 10); // 1 credit per $10 USD
@@ -137,9 +241,9 @@ const CashEscrowFlow = () => {
       setTradeId(tradeRequest.id);
       setStep(3);
 
-      // Broadcast to all users after 2 seconds
+      // Broadcast to merchants (NOT vendors)
       setTimeout(async () => {
-        // Notify all merchants about the new trade request
+        // Notify merchants about the new trade request
         const { data: merchants } = await supabase
           .from('profiles')
           .select('user_id')
@@ -158,7 +262,8 @@ const CashEscrowFlow = () => {
               crypto_type: cryptoType,
               amount_crypto: amount,
               usd_amount: usdAmount,
-              delivery_type: deliveryType
+              delivery_type: deliveryType,
+              trade_mode: 'sell_for_cash'
             }
           }));
 
@@ -172,7 +277,13 @@ const CashEscrowFlow = () => {
 
     } catch (error) {
       console.error('Error creating trade:', error);
-      alert('Failed to create trade request. Please try again.');
+      console.error('Error details:', {
+        message: error.message,
+        code: error.code,
+        details: error.details,
+        hint: error.hint
+      });
+      alert(`Failed to create trade request: ${error.message || 'Unknown error'}`);
     } finally {
       setLoading(false);
     }
@@ -377,10 +488,10 @@ const CashEscrowFlow = () => {
           <div className="bg-green-50 border border-green-200 rounded-lg p-4">
             <h3 className="font-medium text-green-800 mb-2">What happens next:</h3>
             <ul className="text-sm text-green-700 space-y-1">
-              <li>• Users compete to accept your trade</li>
+              <li>• Merchants compete to accept your trade</li>
               <li>• Winner pays vendor for cash delivery</li>
-              <li>• Vendor delivers ${usdAmount?.toLocaleString()} USD to you</li>
-              <li>• Your crypto is released to the buyer</li>
+              <li>• Vendor delivers ${usdAmount?.toLocaleString()} USD cash to you</li>
+              <li>• You confirm cash receipt → Your crypto is released to merchant</li>
             </ul>
           </div>
 

@@ -11,8 +11,8 @@ interface VendorProfileData {
   id: string;
   name: string;
   display_name?: string;
-  phone_number: string;
-  phone?: string;
+  phone_number?: string;
+  location?: string;
   account_number: string;
   bank_account?: string;
   bank_name: string;
@@ -69,7 +69,8 @@ const VendorProfile = () => {
         .from('vendors')
         .update({
           display_name: editData.display_name,
-          phone: editData.phone,
+          phone_number: editData.phone_number,
+          location: editData.location,
           bank_account: editData.bank_account,
           bank_name: editData.bank_name,
           bank_code: editData.bank_code,
@@ -197,14 +198,33 @@ const VendorProfile = () => {
               </label>
               {isEditing ? (
                 <Input
-                  value={editData.phone || ''}
-                  onChange={(e) => setEditData({...editData, phone: e.target.value})}
+                  value={editData.phone_number || ''}
+                  onChange={(e) => setEditData({...editData, phone_number: e.target.value})}
                   placeholder="Enter your phone number"
                 />
               ) : (
                 <div className="flex items-center space-x-2">
                   <Phone className="w-4 h-4 text-gray-500" />
-                  <span>{profile?.phone}</span>
+                  <span>{profile?.phone_number}</span>
+                </div>
+              )}
+            </div>
+
+            {/* Location */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Location
+              </label>
+              {isEditing ? (
+                <Input
+                  value={editData.location || ''}
+                  onChange={(e) => setEditData({...editData, location: e.target.value})}
+                  placeholder="Enter your location/area"
+                />
+              ) : (
+                <div className="flex items-center space-x-2">
+                  <MapPin className="w-4 h-4 text-gray-500" />
+                  <span>{profile?.location}</span>
                 </div>
               )}
             </div>

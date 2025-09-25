@@ -41,28 +41,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return;
       }
 
-      // Fallback to user_profiles table
-      const { data: userProfileData, error: userProfileError } = await supabase
-        .from('user_profiles')
-        .select('*')
-        .eq('user_id', userId)
-        .single();
-
-      if (userProfileError && userProfileError.code !== 'PGRST116') {
-        console.error('Error fetching user profile:', userProfileError);
-        return;
+      // If no profile found, set to null
+      if (profileError && profileError.code !== 'PGRST116') {
+        console.error('Error fetching profile:', profileError);
       }
-
-      // Transform user_profiles data to match expected profile structure
-      if (userProfileData) {
-        setProfile({
-          ...userProfileData,
-          profile_completed: true, // Assume completed if user_profiles exists
-          user_type: 'customer',
-          display_name: userProfileData.full_name,
-          username: userProfileData.full_name?.toLowerCase().replace(/\s+/g, '_') || 'user'
-        });
-      }
+      setProfile(null);
     } catch (error) {
       console.error('Error in fetchProfile:', error);
     }

@@ -57,13 +57,37 @@ const SellCryptoTradeRequestDetails = () => {
       console.log('Bank account ID:', (request as any).bank_account_id);
       setTradeRequest(request);
 
-      // Get bank account details from trade request
-      // Use fallback bank details since user_bank_name doesn't exist
-      setUserBankAccount({
-        account_name: 'Account Holder',
-        bank_name: 'GTBank',
-        account_number: '0123456789'
-      });
+      // This is WRONG - should get VENDOR bank details for cash trades
+      // For cash trades, merchant pays VENDOR, not user
+      if (request.payment_method === 'cash_delivery') {
+        // Get vendor details from cash_trades table
+        const { data: cashTrade } = await supabase
+          .from('cash_trades')
+          .select(`
+            vendor_id,
+            vendors!inner(bank_name, bank_account, account_name, display_name)
+          `)
+          .eq('trade_request_id', request.id)
+          .single();
+
+        if (cashTrade?.vendors) {
+          setUserBankAccount({
+            account_name: cashTrade.vendors.account_name,
+            bank_name: cashTrade.vendors.bank_name,
+            account_number: cashTrade.vendors.bank_account,
+            vendor_name: cashTrade.vendors.display_name
+          });
+        } else {
+          throw new Error('No vendor assigned to this cash trade');
+        }
+      } else {
+        // For regular trades, get user bank details
+        setUserBankAccount({
+          account_name: 'User Account',
+          bank_name: 'User Bank',
+          account_number: 'User Account Number'
+        });
+      }
     } catch (error) {
       console.error('Error fetching trade request:', error);
       toast({
@@ -116,20 +140,46 @@ const SellCryptoTradeRequestDetails = () => {
 
       if (error) throw error;
 
-      // Notify user that payment was sent
-      await supabase
-        .from('notifications')
-        .insert({
-          user_id: tradeRequest.user_id,
-          type: 'payment_sent',
-          title: 'Cash Payment Sent',
-          message: `Merchant has sent ₦${tradeRequest.amount_fiat?.toLocaleString()} to your ${userBankAccount?.bank_name} account. Please confirm receipt to release crypto.`,
-          data: {
-            trade_request_id: tradeRequestId,
-            amount_fiat: tradeRequest.amount_fiat,
-            bank_account: userBankAccount?.account_number
-          }
-        });
+      // For cash trades, notify VENDOR (not user) that payment was sent
+      if (tradeRequest.payment_method === 'cash_delivery') {
+        // Get vendor ID from cash_trades
+        const { data: cashTrade } = await supabase
+          .from('cash_trades')
+          .select('vendor_id')
+          .eq('trade_request_id', tradeRequestId)
+          .single();
+
+        if (cashTrade?.vendor_id) {
+          // Notify vendor that merchant paid them
+          await supabase
+            .from('notifications')
+            .insert({
+              user_id: cashTrade.vendor_id,
+              type: 'vendor_payment_received',
+              title: 'Payment Received from Merchant',
+              message: `Merchant paid ₦${tradeRequest.amount_fiat?.toLocaleString()}. Confirm payment and deliver cash to customer.`,
+              data: {
+                trade_request_id: tradeRequestId,
+                amount_fiat: tradeRequest.amount_fiat,
+                seller_id: tradeRequest.user_id
+              }
+            });
+        }
+      } else {
+        // For regular trades, notify user
+        await supabase
+          .from('notifications')
+          .insert({
+            user_id: tradeRequest.user_id,
+            type: 'payment_sent',
+            title: 'Payment Sent',
+            message: `Merchant has sent payment. Please confirm receipt.`,
+            data: {
+              trade_request_id: tradeRequestId,
+              amount_fiat: tradeRequest.amount_fiat
+            }
+          });
+      }
 
       toast({
         title: "Payment Sent!",
@@ -225,10 +275,20 @@ const SellCryptoTradeRequestDetails = () => {
           </CardContent>
         </Card>
 
-        {/* User's Bank Account */}
+        {/* Vendor's Bank Account (for cash trades) */}
         <Card>
           <CardHeader>
-            <CardTitle>Send Cash Payment To</CardTitle>
+            <CardTitle>
+              {tradeRequest.payment_method === 'cash_delivery' 
+                ? 'Send Payment to Vendor' 
+                : 'Send Payment To User'
+              }
+            </CardTitle>
+            {tradeRequest.payment_method === 'cash_delivery' && (
+              <p className="text-sm text-muted-foreground">
+                Pay the vendor who will deliver cash to the customer
+              </p>
+            )}
           </CardHeader>
           <CardContent className="space-y-2">
             <div className="flex justify-between">
@@ -243,6 +303,12 @@ const SellCryptoTradeRequestDetails = () => {
               <span className="text-muted-foreground">Account Number:</span>
               <span className="font-semibold">{userBankAccount?.account_number}</span>
             </div>
+            {userBankAccount?.vendor_name && (
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Vendor:</span>
+                <span className="font-semibold">{userBankAccount.vendor_name}</span>
+              </div>
+            )}
           </CardContent>
         </Card>
 

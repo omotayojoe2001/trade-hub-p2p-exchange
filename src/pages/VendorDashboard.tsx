@@ -1,397 +1,415 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Package, 
-  Clock, 
-  CheckCircle, 
-  AlertCircle, 
-  Phone, 
-  MapPin, 
-  DollarSign,
-  Truck,
-  User,
-  Calendar
-} from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { CheckCircle, Clock, MapPin, Phone, User, DollarSign, Package } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { vendorJobService, VendorJob } from '@/services/vendorJobService';
-import { useAuth } from '@/hooks/useAuth';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
-import { useNavigate } from 'react-router-dom';
+import VendorBottomNavigation from '@/components/vendor/VendorBottomNavigation';
+import VendorDeliveryPopup from '@/components/vendor/VendorDeliveryPopup';
+
+interface CashDeliveryRequest {
+  id: string;
+  trade_id: string;
+  seller_id: string;
+  buyer_id: string;
+  usd_amount: number;
+  delivery_type: 'pickup' | 'delivery';
+  delivery_address?: string;
+  pickup_location?: string;
+  delivery_code: string;
+  customer_phone?: string;
+  status: string;
+  created_at: string;
+  seller_name?: string;
+  buyer_name?: string;
+}
 
 const VendorDashboard = () => {
-  const [jobs, setJobs] = useState<VendorJob[]>([]);
+  const [requests, setRequests] = useState<CashDeliveryRequest[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [selectedStatus, setSelectedStatus] = useState<string>('all');
-  const { user } = useAuth();
-  const [vendorId, setVendorId] = useState<string>('');
-  const navigate = useNavigate();
+  const [processingId, setProcessingId] = useState<string | null>(null);
+  const [showPopup, setShowPopup] = useState(false);
+  const [popupRequest, setPopupRequest] = useState<CashDeliveryRequest | null>(null);
+  const [lastRequestCount, setLastRequestCount] = useState(0);
 
   useEffect(() => {
-    // Get vendor ID from localStorage
-    const storedVendorId = localStorage.getItem('vendor_id');
-    if (storedVendorId) {
-      setVendorId(storedVendorId);
-    }
-  }, []);
+    console.log('🚀 VENDOR DEBUG: VendorDashboard component mounted');
+    console.log('🚀 VENDOR DEBUG: Initial localStorage check:', {
+      vendor_id: localStorage.getItem('vendor_id'),
+      vendor_user_id: localStorage.getItem('vendor_user_id')
+    });
+    
+    loadDeliveryRequests();
+    
+    // Subscribe to real-time updates for cash_trades
+    const channel = supabase
+      .channel('vendor-cash-trades')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'cash_trades'
+      }, (payload) => {
+        console.log('🔔 VENDOR DEBUG: Cash trade event received:', payload);
+        console.log('🔔 Event type:', payload.eventType);
+        console.log('🔔 New record:', payload.new);
+        console.log('🔔 Old record:', payload.old);
+        console.log('🔔 Current vendor ID:', localStorage.getItem('vendor_id'));
+        
+        if (payload.eventType === 'UPDATE' && payload.new?.status === 'vendor_paid') {
+          console.log('🎯 VENDOR DEBUG: New vendor_paid status detected!');
+          console.log('🎯 Vendor ID in record:', payload.new.vendor_id);
+          console.log('🎯 Current vendor ID:', localStorage.getItem('vendor_id'));
+          
+          if (payload.new.vendor_id === localStorage.getItem('vendor_id')) {
+            console.log('✅ VENDOR DEBUG: This trade is for current vendor!');
+          } else {
+            console.log('❌ VENDOR DEBUG: This trade is for different vendor');
+          }
+        }
+        
+        loadDeliveryRequests();
+      })
+      .subscribe();
 
-  useEffect(() => {
-    if (vendorId) {
-      loadJobs();
-    }
-  }, [selectedStatus, vendorId]);
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [lastRequestCount]);
 
-  const loadJobs = async () => {
+  const loadDeliveryRequests = async () => {
     try {
       setLoading(true);
+      const vendorId = localStorage.getItem('vendor_id');
+      const vendorUserId = localStorage.getItem('vendor_user_id');
+      
+      console.log('🔍 VENDOR DEBUG: Loading delivery requests...');
+      console.log('🔍 VENDOR DEBUG: Vendor ID from localStorage:', vendorId);
+      console.log('🔍 VENDOR DEBUG: Vendor User ID from localStorage:', vendorUserId);
+      console.log('🔍 VENDOR DEBUG: All localStorage keys:', Object.keys(localStorage));
+      
       if (!vendorId) {
-        setError('Vendor ID not found. Please login again.');
-        return;
+        console.log('❌ VENDOR DEBUG: No vendor ID found in localStorage');
+        console.log('❌ VENDOR DEBUG: Available localStorage items:', {
+          vendor_id: localStorage.getItem('vendor_id'),
+          vendor_user_id: localStorage.getItem('vendor_user_id'),
+          all_keys: Object.keys(localStorage)
+        });
+        
+        // Try to get vendor ID from vendors table using user ID
+        if (vendorUserId) {
+          console.log('🔄 VENDOR DEBUG: Trying to get vendor ID from vendors table...');
+          const { data: vendorData, error: vendorError } = await supabase
+            .from('vendors')
+            .select('id')
+            .eq('user_id', vendorUserId)
+            .single();
+          
+          console.log('🔄 VENDOR DEBUG: Vendor lookup result:', { vendorData, vendorError });
+          
+          if (vendorData?.id) {
+            localStorage.setItem('vendor_id', vendorData.id);
+            console.log('✅ VENDOR DEBUG: Found and stored vendor ID:', vendorData.id);
+            // Continue with the found vendor ID
+          } else {
+            console.log('❌ VENDOR DEBUG: No vendor found for user ID:', vendorUserId);
+            return;
+          }
+        } else {
+          return;
+        }
       }
 
-      const jobsData = await vendorJobService.getVendorJobs(
-        vendorId,
-        selectedStatus === 'all' ? undefined : selectedStatus
-      );
-      setJobs(jobsData);
-    } catch (error: any) {
-      setError(error.message || 'Failed to load jobs');
+      // Get cash trades where merchant has paid this vendor
+      const { data: cashTrades, error } = await supabase
+        .from('cash_trades')
+        .select(`
+          *,
+          profiles!seller_id(phone)
+        `)
+        .eq('vendor_id', vendorId)
+        .eq('status', 'vendor_paid')
+        .order('created_at', { ascending: false });
+
+      console.log('🔍 VENDOR DEBUG: Cash trades query result:', { cashTrades, error });
+      console.log('🔍 VENDOR DEBUG: Found', cashTrades?.length || 0, 'delivery requests');
+      console.log('🔍 VENDOR DEBUG: Raw cash trades data:', cashTrades);
+      
+      // Also check all cash trades to see what exists
+      const { data: allTrades } = await supabase
+        .from('cash_trades')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      console.log('🔍 VENDOR DEBUG: All cash trades in database:', allTrades);
+      console.log('🔍 VENDOR DEBUG: Trades with vendor_paid status:', 
+        allTrades?.filter(t => t.status === 'vendor_paid'));
+
+      if (error) {
+        console.error('❌ VENDOR DEBUG: Error fetching cash trades:', error);
+        throw error;
+      }
+
+      // Transform to delivery requests format
+      const deliveryRequests: CashDeliveryRequest[] = (cashTrades || []).map(trade => ({
+        id: trade.id,
+        trade_id: trade.trade_request_id,
+        seller_id: trade.seller_id,
+        buyer_id: trade.buyer_id,
+        usd_amount: trade.usd_amount,
+        delivery_type: trade.delivery_type,
+        delivery_address: trade.delivery_address,
+        pickup_location: trade.pickup_location,
+        delivery_code: trade.delivery_code,
+        customer_phone: trade.seller_phone || trade.profiles?.phone || 'Not provided',
+        status: trade.status,
+        created_at: trade.created_at,
+        seller_name: 'Customer',
+        buyer_name: 'Merchant'
+      }));
+
+      setRequests(deliveryRequests);
+      
+      console.log('📊 VENDOR DEBUG: Processed delivery requests:', deliveryRequests);
+      console.log('📊 VENDOR DEBUG: Previous count:', lastRequestCount, 'New count:', deliveryRequests.length);
+      
+      // Check for new requests and show popup
+      if (deliveryRequests.length > lastRequestCount && lastRequestCount > 0) {
+        const newRequest = deliveryRequests[0]; // Most recent request
+        console.log('🎉 VENDOR DEBUG: New delivery request detected!', newRequest);
+        setPopupRequest(newRequest);
+        setShowPopup(true);
+        
+        // Play notification sound
+        try {
+          const audio = new Audio('/notification.mp3');
+          audio.play().catch(() => console.log('Could not play notification sound'));
+        } catch (e) {
+          console.log('Notification sound not available');
+        }
+      }
+      
+      setLastRequestCount(deliveryRequests.length);
+    } catch (error) {
+      console.error('❌ VENDOR DEBUG: Error loading delivery requests:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleLogout = async () => {
+  const handleAcceptDelivery = async (requestId: string) => {
+    // Close popup if accepting from popup
+    if (showPopup && popupRequest?.id === requestId) {
+      setShowPopup(false);
+      setPopupRequest(null);
+    }
+    setProcessingId(requestId);
+    
+    const request = requests.find(r => r.id === requestId);
+    if (!request) {
+      alert('Request not found');
+      setProcessingId(null);
+      return;
+    }
+
     try {
-      await supabase.auth.signOut();
-      localStorage.removeItem('vendor_id');
-      localStorage.removeItem('vendor_user_id');
-      navigate('/vendor/login');
+      // Update status to cash delivered
+      await supabase
+        .from('cash_trades')
+        .update({ 
+          status: 'cash_delivered',
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', requestId);
+
+      // Notify seller that cash has been delivered
+      await supabase
+        .from('notifications')
+        .insert({
+          user_id: request.seller_id,
+          type: 'cash_delivered',
+          title: 'Cash Delivered!',
+          message: `Your $${request.usd_amount} USD cash has been delivered. Use code ${request.delivery_code} to confirm receipt.`,
+          data: {
+            trade_id: request.trade_id,
+            delivery_code: request.delivery_code,
+            amount_usd: request.usd_amount
+          }
+        });
+
+      alert('✅ Delivery confirmed! Customer has been notified.');
+      loadDeliveryRequests();
     } catch (error) {
-      console.error('Logout error:', error);
+      console.error('Error confirming delivery:', error);
+      alert(`Failed to confirm delivery: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      setProcessingId(null);
     }
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'pending_payment':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'payment_received':
-        return 'bg-blue-100 text-blue-800';
-      case 'awaiting_handoff':
-        return 'bg-purple-100 text-purple-800';
-      case 'completed':
-        return 'bg-green-100 text-green-800';
-      case 'cancelled':
-        return 'bg-red-100 text-red-800';
-      case 'dispute':
-        return 'bg-orange-100 text-orange-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
-  };
-
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'pending_payment':
-        return <Clock className="w-4 h-4" />;
-      case 'payment_received':
-        return <CheckCircle className="w-4 h-4" />;
-      case 'awaiting_handoff':
-        return <Truck className="w-4 h-4" />;
-      case 'completed':
-        return <CheckCircle className="w-4 h-4" />;
-      case 'cancelled':
-      case 'dispute':
-        return <AlertCircle className="w-4 h-4" />;
-      default:
-        return <Package className="w-4 h-4" />;
-    }
-  };
-
-  const formatStatus = (status: string) => {
-    return status.split('_').map(word => 
-      word.charAt(0).toUpperCase() + word.slice(1)
-    ).join(' ');
-  };
-
-  const getDeliveryTypeIcon = (type: string) => {
-    switch (type) {
-      case 'pickup':
-        return <Package className="w-4 h-4 text-blue-600" />;
-      case 'delivery':
-        return <Truck className="w-4 h-4 text-green-600" />;
-      case 'naira_to_usd':
-        return <DollarSign className="w-4 h-4 text-purple-600" />;
-      default:
-        return <Package className="w-4 h-4" />;
-    }
-  };
-
-  const formatDeliveryType = (type: string) => {
-    switch (type) {
-      case 'pickup':
-        return 'Cash Pickup';
-      case 'delivery':
-        return 'Cash Delivery';
-      case 'naira_to_usd':
-        return 'Naira → USD';
-      default:
-        return type;
-    }
-  };
-
-  const maskUserName = (name: string) => {
-    if (!name) return 'User';
-    const parts = name.split(' ');
-    if (parts.length === 1) {
-      return parts[0].charAt(0) + '***';
-    }
-    return parts[0] + ' ' + parts[1].charAt(0) + '.';
-  };
-
-  // Calculate dashboard stats
-  const stats = {
-    total: jobs.length,
-    pending: jobs.filter(j => j.status === 'pending_payment').length,
-    active: jobs.filter(j => ['payment_received', 'awaiting_handoff'].includes(j.status)).length,
-    completed: jobs.filter(j => j.status === 'completed').length,
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center pb-20">
         <div className="text-center">
           <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading vendor dashboard...</p>
+          <p className="text-gray-600">Loading delivery requests...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 pb-20">
       {/* Header */}
       <div className="bg-white border-b border-gray-200 p-4">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-xl font-semibold text-gray-900">Vendor Dashboard</h1>
-            <p className="text-sm text-gray-600">Manage your delivery and pickup jobs</p>
+            <h1 className="text-xl font-semibold text-gray-900">Cash Deliveries</h1>
+            <p className="text-sm text-gray-600">Manage your delivery requests</p>
           </div>
           <div className="flex items-center space-x-2">
-            <Badge variant="secondary" className="bg-blue-100 text-blue-800">
-              Vendor
-            </Badge>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleLogout}
-              className="text-red-600 border-red-200 hover:bg-red-50"
-            >
-              Logout
-            </Button>
+            <Package className="w-5 h-5 text-blue-600" />
+            <span className="px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+              {requests.filter(r => r.status === 'vendor_paid').length} Pending
+            </span>
           </div>
         </div>
       </div>
 
       <div className="p-4">
-        {error && (
-          <Alert className="mb-4 border-red-200 bg-red-50">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription className="text-red-800">
-              {error}
-            </AlertDescription>
-          </Alert>
-        )}
-
-        {/* Stats Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-          <Card>
-            <CardContent className="p-4 text-center">
-              <div className="text-2xl font-bold text-gray-900">{stats.total}</div>
-              <div className="text-sm text-gray-600">Total Jobs</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4 text-center">
-              <div className="text-2xl font-bold text-yellow-600">{stats.pending}</div>
-              <div className="text-sm text-gray-600">Pending Payment</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4 text-center">
-              <div className="text-2xl font-bold text-blue-600">{stats.active}</div>
-              <div className="text-sm text-gray-600">Active Jobs</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4 text-center">
-              <div className="text-2xl font-bold text-green-600">{stats.completed}</div>
-              <div className="text-sm text-gray-600">Completed</div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Filter Tabs */}
-        <div className="flex space-x-2 mb-4 overflow-x-auto">
-          {[
-            { key: 'all', label: 'All Jobs' },
-            { key: 'pending_payment', label: 'Pending Payment' },
-            { key: 'payment_received', label: 'Payment Received' },
-            { key: 'awaiting_handoff', label: 'Ready for Handoff' },
-            { key: 'completed', label: 'Completed' },
-          ].map((tab) => (
-            <Button
-              key={tab.key}
-              variant={selectedStatus === tab.key ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setSelectedStatus(tab.key)}
-              className="whitespace-nowrap"
-            >
-              {tab.label}
-            </Button>
-          ))}
-        </div>
-
-        {/* Jobs List */}
-        <div className="space-y-4">
-          {jobs.length === 0 ? (
-            <Card>
-              <CardContent className="p-8 text-center">
-                <Package className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">No Jobs Found</h3>
-                <p className="text-gray-600">
-                  {selectedStatus === 'all' 
-                    ? 'No jobs assigned to you yet.' 
-                    : `No jobs with status "${formatStatus(selectedStatus)}".`
-                  }
-                </p>
-              </CardContent>
-            </Card>
-          ) : (
-            jobs.map((job) => (
-              <Card key={job.id} className="hover:shadow-md transition-shadow">
-                <CardContent className="p-4">
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="flex items-center space-x-2">
-                      {getDeliveryTypeIcon(job.delivery_type)}
-                      <div>
-                        <h3 className="font-medium text-gray-900">
-                          {formatDeliveryType(job.delivery_type)}
-                        </h3>
-                        <p className="text-sm text-gray-600">
-                          Job #{job.id.slice(0, 8)}
-                        </p>
-                      </div>
-                    </div>
-                    <Badge className={getStatusColor(job.status)}>
-                      <div className="flex items-center space-x-1">
-                        {getStatusIcon(job.status)}
-                        <span>{formatStatus(job.status)}</span>
-                      </div>
-                    </Badge>
+        {requests.length === 0 ? (
+          <div className="text-center py-12">
+            <Package className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-gray-900 mb-2">No delivery requests</h3>
+            <p className="text-gray-500">
+              You'll see cash delivery requests here when customers need deliveries in your area.
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {requests.map((request) => (
+              <Card key={request.id} className="bg-white">
+                <CardHeader className="pb-3">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-lg flex items-center">
+                      <DollarSign className="w-5 h-5 text-green-600 mr-2" />
+                      ${request.usd_amount.toLocaleString()} USD Delivery
+                    </CardTitle>
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                      request.status === 'vendor_paid' 
+                        ? 'bg-orange-100 text-orange-800' 
+                        : 'bg-green-100 text-green-800'
+                    }`}>
+                      {request.status === 'vendor_paid' ? 'Ready for Delivery' : 'Delivered'}
+                    </span>
                   </div>
-
-                  <div className="grid grid-cols-2 gap-4 mb-4">
-                    <div>
-                      <div className="flex items-center space-x-2 text-sm text-gray-600 mb-1">
-                        <User className="w-4 h-4" />
-                        <span>Customer</span>
+                  <p className="text-sm text-gray-600">{formatDate(request.created_at)}</p>
+                </CardHeader>
+                
+                <CardContent className="space-y-4">
+                  {/* Delivery Details */}
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                    <h4 className="font-medium text-blue-800 mb-2">Delivery Information</h4>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex items-center">
+                        <MapPin className="w-4 h-4 text-blue-600 mr-2" />
+                        <span className="text-blue-700">
+                          {request.delivery_type === 'delivery' 
+                            ? `Deliver to: ${request.delivery_address}` 
+                            : `Pickup at: ${request.pickup_location || 'Customer location'}`
+                          }
+                        </span>
                       </div>
-                      <p className="font-medium">
-                        {maskUserName(job.premium_user?.display_name || 'User')}
-                      </p>
-                      {job.premium_user?.phone_number && (
-                        <a 
-                          href={`tel:${job.premium_user.phone_number}`}
-                          className="text-blue-600 text-sm flex items-center space-x-1 mt-1"
-                        >
-                          <Phone className="w-3 h-3" />
-                          <span>Call Customer</span>
-                        </a>
-                      )}
-                    </div>
-                    <div>
-                      <div className="flex items-center space-x-2 text-sm text-gray-600 mb-1">
-                        <DollarSign className="w-4 h-4" />
-                        <span>Amount</span>
+                      <div className="flex items-center">
+                        <Phone className="w-4 h-4 text-blue-600 mr-2" />
+                        <span className="text-blue-700">{request.customer_phone}</span>
                       </div>
-                      <p className="font-medium">${job.amount_usd}</p>
-                      {job.amount_naira_received && (
-                        <p className="text-sm text-gray-600">
-                          ₦{job.amount_naira_received.toLocaleString()} received
-                        </p>
-                      )}
+                      <div className="flex items-center">
+                        <User className="w-4 h-4 text-blue-600 mr-2" />
+                        <span className="text-blue-700">Customer: {request.seller_name}</span>
+                      </div>
                     </div>
                   </div>
 
-                  {job.address_json && (
-                    <div className="mb-4">
-                      <div className="flex items-center space-x-2 text-sm text-gray-600 mb-1">
-                        <MapPin className="w-4 h-4" />
-                        <span>Location</span>
-                      </div>
-                      <p className="text-sm">
-                        {job.address_json.street}, {job.address_json.city}
-                      </p>
+                  {/* Delivery Code */}
+                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                    <h4 className="font-medium text-yellow-800 mb-2">Delivery Code</h4>
+                    <div className="flex items-center justify-between">
+                      <span className="text-2xl font-mono font-bold text-yellow-900">
+                        {request.delivery_code}
+                      </span>
+                      <span className="text-xs text-yellow-700">
+                        Customer will provide this code
+                      </span>
                     </div>
+                  </div>
+
+                  {/* Instructions */}
+                  <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
+                    <h4 className="font-medium text-gray-800 mb-2">Instructions</h4>
+                    <ul className="text-sm text-gray-600 space-y-1">
+                      <li>• Contact customer to arrange {request.delivery_type}</li>
+                      <li>• Deliver exactly ${request.usd_amount.toLocaleString()} USD in cash</li>
+                      <li>• Get delivery code from customer before handing over cash</li>
+                      <li>• Confirm delivery in app after successful handover</li>
+                    </ul>
+                  </div>
+
+                  {/* Action Button */}
+                  {request.status === 'vendor_paid' && (
+                    <Button
+                      onClick={() => handleAcceptDelivery(request.id)}
+                      disabled={processingId === request.id}
+                      className="w-full bg-green-600 hover:bg-green-700 text-white"
+                    >
+                      {processingId === request.id ? (
+                        <div className="flex items-center">
+                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                          Confirming Delivery...
+                        </div>
+                      ) : (
+                        <div className="flex items-center">
+                          <CheckCircle className="w-4 h-4 mr-2" />
+                          Confirm Cash Delivered
+                        </div>
+                      )}
+                    </Button>
                   )}
 
-                  <div className="flex items-center justify-between text-sm text-gray-600 mb-4">
-                    <div className="flex items-center space-x-2">
-                      <Calendar className="w-4 h-4" />
-                      <span>{new Date(job.created_at).toLocaleDateString()}</span>
+                  {request.status === 'cash_delivered' && (
+                    <div className="flex items-center justify-center py-2 text-green-600">
+                      <CheckCircle className="w-5 h-5 mr-2" />
+                      <span className="font-medium">Delivery Completed</span>
                     </div>
-                    {job.trade_id && (
-                      <span className="text-blue-600">Trade #{job.trade_id.slice(0, 8)}</span>
-                    )}
-                  </div>
-
-                  {/* Action Buttons */}
-                  <div className="flex space-x-2">
-                    {job.status === 'pending_payment' && (
-                      <Button 
-                        size="sm" 
-                        className="bg-green-600 hover:bg-green-700"
-                        onClick={() => {/* Navigate to confirm payment */}}
-                      >
-                        Confirm Payment
-                      </Button>
-                    )}
-                    {job.status === 'payment_received' && (
-                      <Button 
-                        size="sm" 
-                        className="bg-blue-600 hover:bg-blue-700"
-                        onClick={() => {/* Navigate to handoff */}}
-                      >
-                        Ready for Handoff
-                      </Button>
-                    )}
-                    {job.status === 'awaiting_handoff' && (
-                      <Button 
-                        size="sm" 
-                        className="bg-purple-600 hover:bg-purple-700"
-                        onClick={() => {/* Navigate to verification */}}
-                      >
-                        Enter Code
-                      </Button>
-                    )}
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => {/* Navigate to job details */}}
-                    >
-                      View Details
-                    </Button>
-                  </div>
+                  )}
                 </CardContent>
               </Card>
-            ))
-          )}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
+
+      {/* Bottom Navigation */}
+      <VendorBottomNavigation />
+      
+      {/* Delivery Request Popup */}
+      {showPopup && popupRequest && (
+        <VendorDeliveryPopup
+          request={popupRequest}
+          onAccept={() => handleAcceptDelivery(popupRequest.id)}
+          onClose={() => {
+            setShowPopup(false);
+            setPopupRequest(null);
+          }}
+        />
+      )}
     </div>
   );
 };

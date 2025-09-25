@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { vendorPaymentService } from '@/services/vendorPaymentService';
 import { supabase } from '@/integrations/supabase/client';
 
 interface VendorTransaction {
@@ -48,15 +47,39 @@ const VendorTransactions = () => {
     try {
       setLoading(true);
       
-      // Get current vendor user ID
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        throw new Error('Not authenticated');
+      const vendorId = localStorage.getItem('vendor_id');
+      if (!vendorId) {
+        throw new Error('Vendor ID not found');
       }
 
-      // Get vendor's cash orders
-      const vendorOrders = await vendorPaymentService.getVendorCashOrders(user.id);
-      setTransactions(vendorOrders);
+      // Get vendor's cash trades (completed deliveries)
+      const { data: cashTrades, error } = await supabase
+        .from('cash_trades')
+        .select('*')
+        .eq('vendor_id', vendorId)
+        .in('status', ['cash_delivered', 'completed'])
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      // Transform to transaction format
+      const transactions = (cashTrades || []).map(trade => ({
+        id: trade.id,
+        tracking_code: trade.delivery_code || `CT-${trade.id.slice(0, 8)}`,
+        order_type: trade.delivery_type === 'pickup' ? 'naira_to_usd_pickup' : 'naira_to_usd_delivery',
+        naira_amount: trade.usd_amount * 1650, // Convert USD to Naira
+        usd_amount: trade.usd_amount,
+        service_fee: Math.round(trade.usd_amount * 0.05 * 1650), // 5% service fee in Naira
+        status: trade.status === 'completed' ? 'completed' : 'cash_delivered',
+        created_at: trade.created_at,
+        completed_at: trade.updated_at,
+        user_profile: {
+          display_name: 'Customer',
+          phone_number: trade.seller_phone || 'Not provided'
+        }
+      }));
+
+      setTransactions(transactions);
       
     } catch (error: any) {
       setError(error.message || 'Failed to load transactions');

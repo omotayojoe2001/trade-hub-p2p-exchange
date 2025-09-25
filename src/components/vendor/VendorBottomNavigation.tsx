@@ -16,12 +16,13 @@ const VendorBottomNavigation = () => {
       if (!user) return;
 
       try {
-        // Get active vendor jobs count
+        // Get active cash delivery jobs count
+        const vendorId = localStorage.getItem('vendor_id');
         const { data: jobs } = await supabase
-          .from('vendor_jobs')
+          .from('cash_trades')
           .select('id')
-          .eq('vendor_id', user.id)
-          .eq('status', 'pending');
+          .eq('vendor_id', vendorId)
+          .eq('status', 'vendor_paid');
 
         // Get unread messages count (mock for now)
         const messages: any[] = [];
@@ -39,7 +40,7 @@ const VendorBottomNavigation = () => {
     const channel = supabase
       .channel('vendor-updates')
       .on('postgres_changes',
-        { event: '*', schema: 'public', table: 'vendor_jobs' },
+        { event: '*', schema: 'public', table: 'cash_trades' },
         () => fetchCounts()
       )
       .subscribe();

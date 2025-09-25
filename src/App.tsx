@@ -102,6 +102,7 @@ import Messages from "./pages/Messages";
 import EscrowFlow from "./pages/EscrowFlow";
 import EscrowTradeFlow from "./pages/EscrowTradeFlow";
 import CashEscrowFlow from "./pages/CashEscrowFlow";
+import CashTradeFlow from "./pages/CashTradeFlow";
 import ReceiptPage from "./pages/ReceiptPage";
 import { Blog } from "./pages/Blog";
 import MerchantMatchingChoice from "./pages/MerchantMatchingChoice";
@@ -116,13 +117,14 @@ import CreditsHistory from "./pages/CreditsHistory";
 import AdminCredits from "./pages/AdminCredits";
 import TestCredits from "./pages/TestCredits";
 import VendorAuthGuard from "./components/VendorAuthGuard";
-import VendorDashboard from "./components/VendorDashboard";
+import VendorDashboard from "./pages/VendorDashboard";
+import ConfirmCashReceipt from "./pages/ConfirmCashReceipt";
+import VendorPaymentConfirmation from "./pages/VendorPaymentConfirmation";
 import VendorBankDetails from "./pages/VendorBankDetails";
 import VendorProfile from "./pages/VendorProfile";
 import VendorMessages from "./pages/VendorMessages";
 import SendNairaPaymentStep from "./pages/SendNairaPaymentStep";
 import VendorCashOrderDetails from "./pages/VendorCashOrderDetails";
-import VendorPaymentConfirmation from "./pages/VendorPaymentConfirmation";
 import VendorTransactions from "./pages/VendorTransactions";
 
 
@@ -331,6 +333,11 @@ const AppContent = () => {
         <Route path="/escrow-flow" element={<EscrowFlow />} />
         <Route path="/escrow-flow/:tradeId" element={<EscrowTradeFlow />} />
         <Route path="/cash-escrow-flow" element={<CashEscrowFlow />} />
+        <Route path="/cash-trade-flow" element={<CashTradeFlow />} />
+        <Route path="/confirm-cash-receipt" element={<ConfirmCashReceipt />} />
+        <Route path="/vendor-cash-dashboard" element={<VendorDashboard />} />
+        <Route path="/vendor/cash-delivery/:tradeId" element={<VendorDashboard />} />
+        <Route path="/vendor/payment-confirmation" element={<VendorPaymentConfirmation />} />
 
         {/* Vendor Routes */}
         <Route path="/vendor/login" element={<VendorLogin />} />

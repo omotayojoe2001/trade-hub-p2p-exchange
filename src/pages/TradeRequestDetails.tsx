@@ -119,8 +119,28 @@ const TradeRequestDetails = () => {
         variant: "default"
       });
 
-      // Go to escrow flow so Fireblocks vault/wallet is front-and-center
-      navigate(`/escrow-flow`, { state: { tradeId: trade.id, request, trade, amount: request.amount, mode: 'trade_accepted' } });
+      // Navigate to appropriate flow based on trade type
+      const isCashTrade = request.payment_method === 'cash_delivery' || request.trade_type === 'sell_for_cash';
+      const isVendorAcceptedCash = request.data?.trade_mode === 'vendor_accepted_cash_delivery';
+      
+      if (isCashTrade || isVendorAcceptedCash) {
+        // For cash trades, go to cash trade flow where buyer pays vendor
+        const vendorId = request.data?.vendor_id || 'default-vendor';
+        navigate(`/cash-trade-flow`, { 
+          state: { 
+            tradeId: trade.id, 
+            request: {
+              ...request,
+              vendor_id: vendorId,
+              usd_amount: request.data?.usd_amount || request.amount_fiat / 1650
+            }, 
+            trade 
+          } 
+        });
+      } else {
+        // For regular crypto trades, go to escrow flow
+        navigate(`/escrow-flow`, { state: { tradeId: trade.id, request, trade, amount: request.amount, mode: 'trade_accepted' } });
+      }
 
     } catch (error) {
       console.error('Error accepting trade:', error);
