@@ -108,11 +108,20 @@ const VendorDashboard: React.FC = () => {
         return;
       }
 
-      // Transform to match VendorJob interface
+      // Transform to match VendorJob interface with proper vendor data handling
       const transformedJobs = (cashOrders || []).map(job => ({
         ...job,
         delivery_type: job.delivery_type as 'pickup' | 'delivery',
         status: job.status as 'completed' | 'cancelled' | 'pending_payment' | 'payment_submitted' | 'payment_confirmed' | 'in_progress',
+        vendor: job.vendor && typeof job.vendor === 'object' && !Array.isArray(job.vendor) && 'display_name' in job.vendor
+          ? {
+              display_name: (job.vendor as any).display_name || 'Vendor',
+              phone: (job.vendor as any).phone || ''
+            }
+          : {
+              display_name: 'Vendor',
+              phone: ''
+            },
         premium_user: {
           display_name: 'Premium User',
           phone_number: (job.cash_order?.contact_details as any)?.phoneNumber || job.customer_phone || ''

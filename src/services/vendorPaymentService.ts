@@ -112,6 +112,29 @@ class VendorPaymentService {
     }
   }
 
+  async getCashOrderWithUserDetails(orderId: string): Promise<CashOrderWithUserDetails | null> {
+    return this.getCashOrderById(orderId);
+  }
+
+  async confirmPaymentReceivedWithData(data: { orderId: string; amountReceived: number; transactionReference?: string }): Promise<boolean> {
+    return this.confirmPaymentReceived(data.orderId);
+  }
+
+  async completeDelivery(data: { orderId: string; quoteCode: string }): Promise<{ success: boolean; message: string }> {
+    try {
+      const success = await this.confirmOrderDelivery(data.orderId, '');
+      return {
+        success,
+        message: success ? 'Delivery completed successfully' : 'Failed to complete delivery'
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: 'Failed to complete delivery'
+      };
+    }
+  }
+
   async getVendorCashOrders(vendorId: string): Promise<CashOrderWithUserDetails[]> {
     try {
       const { data: orders, error } = await supabase

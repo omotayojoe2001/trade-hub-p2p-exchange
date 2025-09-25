@@ -148,6 +148,15 @@ class PremiumTradeService {
         ...job,
         delivery_type: job.delivery_type as 'pickup' | 'delivery',
         status: job.status as 'completed' | 'cancelled' | 'pending_payment' | 'payment_confirmed' | 'in_progress',
+        vendor: job.vendor && typeof job.vendor === 'object' && !Array.isArray(job.vendor) && 'display_name' in job.vendor
+          ? {
+              display_name: (job.vendor as any).display_name || 'Vendor',
+              phone: (job.vendor as any).phone || ''
+            }
+          : {
+              display_name: 'Vendor',
+              phone: ''
+            },
         premium_user: {
           display_name: 'Premium User',
           phone_number: ''

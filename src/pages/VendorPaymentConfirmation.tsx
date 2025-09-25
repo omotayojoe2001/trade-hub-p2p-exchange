@@ -75,7 +75,7 @@ const VendorPaymentConfirmation = () => {
     try {
       setSubmitting(true);
       
-      await vendorPaymentService.confirmPaymentReceived({
+      await vendorPaymentService.confirmPaymentReceivedWithData({
         orderId: orderDetails.id,
         amountReceived: parseFloat(amountReceived),
         transactionReference: transactionReference.trim() || undefined
@@ -261,36 +261,36 @@ const VendorPaymentConfirmation = () => {
                     </div>
                   </div>
 
-                  {orderDetails.user_profile.whatsapp_number && (
+                  {(orderDetails.user_profile as any).whatsapp_number && (
                     <div className="flex items-center space-x-2">
                       <Phone className="w-4 h-4 text-gray-500" />
                       <div>
                         <p className="text-sm text-gray-600">WhatsApp Number</p>
-                        <p className="font-medium">{orderDetails.user_profile.whatsapp_number}</p>
+                        <p className="font-medium">{(orderDetails.user_profile as any).whatsapp_number}</p>
                       </div>
                     </div>
                   )}
 
-                  {orderDetails.user_profile.email && (
+                  {(orderDetails.user_profile as any).email && (
                     <div className="flex items-center space-x-2">
                       <Mail className="w-4 h-4 text-gray-500" />
                       <div>
                         <p className="text-sm text-gray-600">Email Address</p>
-                        <p className="font-medium">{orderDetails.user_profile.email}</p>
+                        <p className="font-medium">{(orderDetails.user_profile as any).email}</p>
                       </div>
                     </div>
                   )}
                 </div>
 
                 <div className="space-y-3">
-                  {orderDetails.user_profile.bank_account && (
+                  {(orderDetails.user_profile as any).bank_account && (
                     <div className="flex items-center space-x-2">
                       <Building className="w-4 h-4 text-gray-500" />
                       <div>
                         <p className="text-sm text-gray-600">Bank Account</p>
-                        <p className="font-medium">{orderDetails.user_profile.bank_account}</p>
-                        {orderDetails.user_profile.bank_name && (
-                          <p className="text-sm text-gray-500">{orderDetails.user_profile.bank_name}</p>
+                        <p className="font-medium">{(orderDetails.user_profile as any).bank_account}</p>
+                        {(orderDetails.user_profile as any).bank_name && (
+                          <p className="text-sm text-gray-500">{(orderDetails.user_profile as any).bank_name}</p>
                         )}
                       </div>
                     </div>
