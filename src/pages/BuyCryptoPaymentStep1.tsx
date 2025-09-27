@@ -117,7 +117,7 @@ const BuyCryptoPaymentStep1 = () => {
           user_id: selectedMerchant.user_id,
           type: 'trade_request',
           title: 'New Buy Crypto Request',
-          message: `${user.user_metadata?.display_name || user.email || 'A user'} wants to buy ${cryptoAmount} ${coinType} for ₦${nairaAmount.toLocaleString()}`,
+          message: `${user.user_metadata?.display_name || user.email || 'A user'} wants to buy ${cryptoAmount} ${coinType} for NGN ${nairaAmount.toLocaleString()}`,
           data: {
             trade_request_id: tradeRequest.id,
             trade_type: 'buy',
@@ -215,7 +215,7 @@ const BuyCryptoPaymentStep1 = () => {
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">Rate:</span>
-              <span className="font-semibold">₦{getMerchantRate().toLocaleString()}/{coinType}</span>
+              <span className="font-semibold">NGN {getMerchantRate().toLocaleString()}/{coinType}</span>
             </div>
           </CardContent>
         </Card>
@@ -241,7 +241,7 @@ const BuyCryptoPaymentStep1 = () => {
             {cryptoAmount && (
               <div className="p-3 bg-muted rounded-lg">
                 <p className="text-sm text-muted-foreground">You'll pay</p>
-                <p className="text-lg font-semibold">₦{calculateCashAmount().toLocaleString()}</p>
+                <p className="text-lg font-semibold">NGN {calculateCashAmount().toLocaleString()}</p>
               </div>
             )}
           </CardContent>
@@ -280,15 +280,15 @@ const BuyCryptoPaymentStep1 = () => {
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Base Amount:</span>
-                <span>₦{calculateCashAmount().toLocaleString()}</span>
+                <span>NGN {calculateCashAmount().toLocaleString()}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Platform Fee (3%):</span>
-                <span>₦{calculatePlatformFee().toLocaleString()}</span>
+                <span>NGN {calculatePlatformFee().toLocaleString()}</span>
               </div>
               <div className="border-t pt-2 flex justify-between">
                 <span className="font-semibold">Total Amount:</span>
-                <span className="font-semibold text-primary">₦{calculateTotalAmount().toLocaleString()}</span>
+                <span className="font-semibold text-primary">NGN {calculateTotalAmount().toLocaleString()}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Merchant:</span>

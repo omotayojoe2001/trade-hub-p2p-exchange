@@ -238,7 +238,7 @@ const SellCryptoMerchantSelection: React.FC = () => {
             </div>
             <div className="flex justify-between">
               <span className="text-blue-700">Rate:</span>
-              <span className="font-semibold text-blue-900">₦{rate?.toLocaleString()}/{cryptoType}</span>
+              <span className="font-semibold text-blue-900">NGN {rate?.toLocaleString()}/{cryptoType}</span>
             </div>
           </div>
         </div>

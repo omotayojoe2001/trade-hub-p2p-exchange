@@ -62,7 +62,7 @@ const TradeRequests = () => {
             amount: request.amount_crypto?.toString() || '0',
             rate: isPremiumCashDelivery 
               ? `$${request.rate?.toLocaleString() || 0}/${request.crypto_type}` 
-              : `₦${request.rate?.toLocaleString() || 0}/${request.crypto_type}`,
+              : `NGN ${request.rate?.toLocaleString() || 0}/${request.crypto_type}`,
             nairaAmount: isPremiumCashDelivery 
               ? `$${(request.amount_fiat || 0).toLocaleString()} USD Cash`
               : `₦${(request.amount_fiat || request.amount_crypto * request.rate || 0).toLocaleString()}`,

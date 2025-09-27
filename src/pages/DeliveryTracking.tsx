@@ -31,7 +31,7 @@ const DeliveryTracking = () => {
       const transformedResult = {
         code: result.tracking_code,
         type: result.delivery_type === 'cash_delivery' ? 'Cash Delivery' : 'Cash Pickup',
-        amount: `${result.currency === 'NGN' ? '₦' : '$'}${result.amount.toLocaleString()}`,
+        amount: `${result.currency === 'NGN' ? 'NGN ' : '$'}${result.amount.toLocaleString()}`,
         crypto: result.crypto_type,
         status: result.status,
         agentName: result.agent_name || 'Agent Pending',

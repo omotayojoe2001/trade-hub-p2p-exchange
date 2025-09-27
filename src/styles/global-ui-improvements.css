@@ -1,0 +1,95 @@
+/* Global UI Improvements - Clean, Native Design */
+
+:root {
+  --brand-color: #007AFF;
+  --text-primary: #1D1D1F;
+  --text-secondary: #6E6E73;
+  --background-primary: #FFFFFF;
+  --background-secondary: #F2F2F7;
+  --border-light: #E5E5EA;
+  --success-color: #34C759;
+  --error-color: #FF3B30;
+  --radius: 8px;
+  --shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+* {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+}
+
+body {
+  background-color: var(--background-primary) !important;
+  color: var(--text-primary) !important;
+}
+
+.bg-white {
+  background-color: var(--background-primary) !important;
+  box-shadow: var(--shadow) !important;
+}
+
+[class*="border"] {
+  border-color: var(--border-light) !important;
+  border-width: 1px !important;
+}
+
+.rounded, .rounded-lg, .rounded-xl {
+  border-radius: var(--radius) !important;
+}
+
+button {
+  font-weight: 500 !important;
+  border-radius: var(--radius) !important;
+  transition: all 0.2s ease !important;
+  border: none !important;
+}
+
+button:not([class*="outline"]):not([class*="ghost"]) {
+  background-color: var(--brand-color) !important;
+  color: white !important;
+}
+
+[class*="outline"] {
+  background-color: transparent !important;
+  border: 1px solid var(--border-light) !important;
+  color: var(--text-primary) !important;
+}
+
+[class*="ghost"] {
+  background-color: transparent !important;
+  color: var(--text-secondary) !important;
+}
+
+input, textarea, select {
+  background-color: var(--background-secondary) !important;
+  border: 1px solid var(--border-light) !important;
+  border-radius: var(--radius) !important;
+  color: var(--text-primary) !important;
+}
+
+.text-muted-foreground {
+  color: var(--text-secondary) !important;
+}
+
+.text-primary {
+  color: var(--brand-color) !important;
+}
+
+.bg-green-50 {
+  background-color: rgba(52, 199, 89, 0.08) !important;
+}
+
+.bg-blue-50 {
+  background-color: rgba(0, 122, 255, 0.08) !important;
+}
+
+.bg-gray-50 {
+  background-color: var(--background-secondary) !important;
+}
+
+.text-green-600 {
+  color: var(--success-color) !important;
+}
+
+.text-red-600 {
+  color: var(--error-color) !important;
+}

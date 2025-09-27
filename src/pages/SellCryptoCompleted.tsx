@@ -21,7 +21,7 @@ const SellCryptoCompleted: React.FC = () => {
   
   // Use the correct variable names from the sell crypto flow
   const amount = cryptoAmount;
-  const nairaAmount = `₦${netAmount?.toLocaleString() || '0'}`;
+  const nairaAmount = `NGN ${netAmount?.toLocaleString() || '0'}`;
   const cryptoType = coinType;
   const tradeId = tradeRequestId;
   const merchantName = selectedMerchant?.display_name || 'Merchant';

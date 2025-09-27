@@ -111,88 +111,11 @@ const PaymentMethods = () => {
     }
   };
 
-  const handleVerifyAccount = async () => {
-    if (!bankData.accountNumber || !bankData.bankCode) {
+  const handleAddBankAccount = async () => {
+    if (!bankData.accountNumber.trim() || !bankData.accountName.trim() || !bankData.bankCode || !user) {
       toast({
         title: "Missing Information",
-        description: "Please enter account number and select a bank",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    if (!validateAccountNumber(bankData.accountNumber, bankData.country)) {
-      toast({
-        title: "Invalid Account Number",
-        description: `Account number format is invalid for ${bankData.country}`,
-        variant: "destructive"
-      });
-      return;
-    }
-
-    setVerifyingAccount(true);
-    try {
-      const result = await verifyAccountName(bankData.accountNumber, bankData.bankCode, bankData.country);
-
-      if (result.success && result.accountName) {
-        setBankData(prev => ({ ...prev, accountName: result.accountName! }));
-        setAccountVerified(true);
-        toast({
-          title: "Account Verified",
-          description: `Account belongs to ${result.accountName}`,
-        });
-      } else {
-        toast({
-          title: "Verification Failed",
-          description: result.error || "Could not verify account",
-          variant: "destructive"
-        });
-      }
-    } catch (error) {
-      toast({
-        title: "Verification Error",
-        description: "Failed to verify account",
-        variant: "destructive"
-      });
-    } finally {
-      setVerifyingAccount(false);
-    }
-  };
-
-  const handleAddBankAccount = async () => {
-    // Basic validation
-    if (!bankData.accountNumber.trim()) {
-      toast({
-        title: "Missing Account Number",
-        description: "Please enter the account number",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    if (!bankData.accountName.trim()) {
-      toast({
-        title: "Missing Account Name",
-        description: "Please enter the account holder name",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    // Ensure a bank is selected
-    if (!bankData.bankCode) {
-      toast({
-        title: "No Bank Selected",
-        description: "Please select a bank from the list",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    if (!user) {
-      toast({
-        title: "Authentication Required",
-        description: "Please log in to add a bank account",
+        description: "Please fill in all required fields",
         variant: "destructive"
       });
       return;
@@ -200,22 +123,8 @@ const PaymentMethods = () => {
 
     try {
       setSaving(true);
-
       const bankName = availableBanks.find(bank => bank.code === bankData.bankCode)?.name || '';
 
-      const accountData = {
-        user_id: user.id,
-        type: 'bank_account',
-        bank_name: bankName,
-        bank_code: bankData.bankCode,
-        account_number: bankData.accountNumber,
-        account_name: bankData.accountName,
-        country: bankData.country,
-        is_default: bankAccounts.length === 0, // First account is default
-        is_active: true
-      };
-
-      // Add to user_bank_accounts table directly
       const { error } = await supabase
         .from('user_bank_accounts')
         .insert({
@@ -233,31 +142,17 @@ const PaymentMethods = () => {
       toast({
         title: "Bank Account Added",
         description: "Your bank account has been added successfully",
-        duration: 3000
       });
 
-      // Reload bank accounts to show the new one
       await loadBankAccounts();
       resetBankForm();
       setIsAddingBank(false);
-      
-      // If user came from sell crypto flow, navigate back
-      if (returnPath) {
-        const savedState = sessionStorage.getItem('sellCryptoState');
-        if (savedState) {
-          const state = JSON.parse(savedState);
-          sessionStorage.removeItem('sellCryptoState');
-          navigate(returnPath, { state });
-          return;
-        }
-      }
     } catch (error) {
       console.error('Error saving bank account:', error);
       toast({
         title: "Error",
         description: "Failed to save bank account. Please try again.",
         variant: "destructive",
-        duration: 3000
       });
     } finally {
       setSaving(false);
@@ -268,10 +163,7 @@ const PaymentMethods = () => {
     if (!user) return;
 
     try {
-      // Use bankAccountService to set default
       await bankAccountService.setDefaultBankAccount(user.id, accountId);
-
-      // Update local state
       setBankAccounts(prev =>
         prev.map(account => ({
           ...account,
@@ -293,25 +185,32 @@ const PaymentMethods = () => {
     }
   };
 
-  const handleDeleteAccount = (accountId: string) => {
-    const accountToDelete = bankAccounts.find(acc => acc.id === accountId);
-    if (accountToDelete?.isDefault && bankAccounts.length > 1) {
-      // Set another account as default
-      setBankAccounts(prev => {
-        const filtered = prev.filter(acc => acc.id !== accountId);
-        if (filtered.length > 0) {
-          filtered[0].isDefault = true;
-        }
-        return filtered;
-      });
-    } else {
-      setBankAccounts(prev => prev.filter(acc => acc.id !== accountId));
-    }
+  const handleDeleteAccount = async (accountId: string) => {
+    if (!user) return;
 
-    toast({
-      title: "Account Deleted",
-      description: "Bank account has been removed",
-    });
+    try {
+      const { error } = await supabase
+        .from('user_bank_accounts')
+        .delete()
+        .eq('id', accountId)
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+
+      setBankAccounts(prev => prev.filter(acc => acc.id !== accountId));
+
+      toast({
+        title: "Account Deleted",
+        description: "Bank account has been removed",
+      });
+    } catch (error) {
+      console.error('Error deleting account:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete account. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
 
   const resetBankForm = () => {
@@ -335,46 +234,59 @@ const PaymentMethods = () => {
       accountName: account.accountName,
       country: account.country
     });
-    setAccountVerified(true); // Assume existing accounts are verified
     setIsAddingBank(true);
   };
 
-  const handleUpdateBankAccount = () => {
-    if (!editingAccount || !accountVerified) {
+  const handleUpdateBankAccount = async () => {
+    if (!editingAccount || !user) return;
+
+    try {
+      setSaving(true);
+      const selectedBank = availableBanks.find(bank => bank.code === bankData.bankCode);
+      if (!selectedBank) return;
+
+      const { error } = await supabase
+        .from('user_bank_accounts')
+        .update({
+          bank_name: selectedBank.name,
+          bank_code: bankData.bankCode,
+          account_number: bankData.accountNumber,
+          account_name: bankData.accountName
+        })
+        .eq('id', editingAccount.id)
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+
+      setBankAccounts(prev =>
+        prev.map(account =>
+          account.id === editingAccount.id ? {
+            ...account,
+            bankName: selectedBank.name,
+            bankCode: selectedBank.code,
+            accountNumber: bankData.accountNumber,
+            accountName: bankData.accountName
+          } : account
+        )
+      );
+
+      resetBankForm();
+      setIsAddingBank(false);
+
       toast({
-        title: "Cannot Update",
-        description: "Please verify the account before updating",
+        title: "Account Updated",
+        description: "Your bank account has been updated successfully",
+      });
+    } catch (error) {
+      console.error('Error updating account:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update account. Please try again.",
         variant: "destructive"
       });
-      return;
+    } finally {
+      setSaving(false);
     }
-
-    const selectedBank = availableBanks.find(bank => bank.code === bankData.bankCode);
-
-    if (!selectedBank) return;
-
-    const updatedAccount: BankAccount = {
-      ...editingAccount,
-      bankName: selectedBank.name,
-      bankCode: selectedBank.code,
-      accountNumber: bankData.accountNumber,
-      accountName: bankData.accountName,
-      country: bankData.country
-    };
-
-    setBankAccounts(prev =>
-      prev.map(account =>
-        account.id === editingAccount.id ? updatedAccount : account
-      )
-    );
-
-    resetBankForm();
-    setIsAddingBank(false);
-
-    toast({
-      title: "Account Updated",
-      description: "Your bank account has been updated successfully",
-    });
   };
 
   const handleBankInputChange = (field: string, value: string) => {
@@ -382,14 +294,6 @@ const PaymentMethods = () => {
       ...prev,
       [field]: value
     }));
-
-    // Reset verification when account number or bank changes
-    if (field === 'accountNumber' || field === 'bankCode') {
-      setAccountVerified(false);
-      if (field === 'accountNumber') {
-        setBankData(prev => ({ ...prev, accountName: '' }));
-      }
-    }
   };
 
   return (
@@ -399,50 +303,17 @@ const PaymentMethods = () => {
         <div className="flex items-center justify-between">
           <div className="flex items-center">
             <button 
-              onClick={() => {
-                if (returnPath) {
-                  const savedState = sessionStorage.getItem('sellCryptoState');
-                  if (savedState) {
-                    const state = JSON.parse(savedState);
-                    sessionStorage.removeItem('sellCryptoState');
-                    navigate(returnPath, { state });
-                    return;
-                  }
-                }
-                navigate('/settings');
-              }}
+              onClick={() => navigate('/settings')}
               className="mr-3"
             >
               <ArrowLeft size={24} className="text-gray-600" />
             </button>
             <h1 className="text-xl font-semibold text-gray-900">Payment Methods</h1>
           </div>
-          <Dialog>
-            <DialogTrigger asChild>
-              <Button size="sm">
-                <Plus size={16} className="mr-2" />
-                Add
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Add Bank Account</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4">
-                <div className="text-center">
-                  <Building size={48} className="mx-auto mb-4 text-blue-600" />
-                  <p className="text-gray-600 mb-4">Add your bank account for secure transactions</p>
-                  <Button
-                    className="w-full bg-blue-600 hover:bg-blue-700 text-white"
-                    onClick={() => setIsAddingBank(true)}
-                  >
-                    <Building size={20} className="mr-2" />
-                    Add Bank Account
-                  </Button>
-                </div>
-              </div>
-            </DialogContent>
-          </Dialog>
+          <Button size="sm" onClick={() => setIsAddingBank(true)}>
+            <Plus size={16} className="mr-2" />
+            Add
+          </Button>
         </div>
       </div>
 
@@ -505,7 +376,11 @@ const PaymentMethods = () => {
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => handleDeleteAccount(account.id)}
+                      onClick={() => {
+                        if (confirm('Are you sure you want to delete this bank account?')) {
+                          handleDeleteAccount(account.id);
+                        }
+                      }}
                       title="Delete account"
                     >
                       <Trash2 size={16} className="text-red-500" />
@@ -517,114 +392,110 @@ const PaymentMethods = () => {
           )}
         </Card>
 
-
-
-        {/* Add New Bank Form */}
+        {/* Add New Bank Form Modal */}
         {isAddingBank && (
-          <Card className="bg-white p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">
-                {editingAccount ? 'Edit Bank Account' : 'Add Bank Account'}
-              </h3>
-              <Button variant="outline" size="sm" onClick={() => { setIsAddingBank(false); resetBankForm(); }}>
-                Cancel
-              </Button>
-            </div>
-
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Country</label>
-                <Select value={bankData.country} onValueChange={(value) => handleBankInputChange('country', value)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select country" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="NG">🇳🇬 Nigeria</SelectItem>
-                    <SelectItem value="US">🇺🇸 United States</SelectItem>
-                    <SelectItem value="GB">🇬🇧 United Kingdom</SelectItem>
-                    <SelectItem value="CA">🇨🇦 Canada</SelectItem>
-                    <SelectItem value="KE">🇰🇪 Kenya</SelectItem>
-                    <SelectItem value="ZA">🇿🇦 South Africa</SelectItem>
-                    <SelectItem value="GH">🇬🇭 Ghana</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Bank Name</label>
-
-                <Select value={bankData.bankCode} onValueChange={(value) => {
-                  const selectedBank = availableBanks.find(bank => bank.code === value);
-                  if (selectedBank) {
-                    handleBankInputChange('bankCode', value);
-                    handleBankInputChange('bankName', selectedBank.name);
-                  }
-                }}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select your bank" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {availableBanks.map((bank) => (
-                      <SelectItem key={bank.id} value={bank.code}>
-                        {bank.name} {bank.ussd && `(${bank.ussd})`}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Account Number</label>
-                <div className="flex space-x-2">
-                  <Input
-                    value={bankData.accountNumber}
-                    onChange={(e) => handleBankInputChange('accountNumber', e.target.value.replace(/\D/g, ''))}
-                    placeholder={bankData.country === 'NG' ? '1234567890' : 'Account number'}
-                    maxLength={bankData.country === 'NG' ? 10 : 20}
-                    className="flex-1"
-                  />
-
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg max-w-md w-full max-h-[90vh] overflow-y-auto">
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold text-gray-900">
+                    {editingAccount ? 'Edit Bank Account' : 'Add Bank Account'}
+                  </h3>
+                  <Button variant="ghost" size="sm" onClick={() => { setIsAddingBank(false); resetBankForm(); }}>
+                    ✕
+                  </Button>
                 </div>
-                {bankData.country === 'NG' && (
-                  <p className="text-xs text-gray-500 mt-1">Nigerian account numbers are 10 digits</p>
-                )}
-              </div>
 
-              {/* Account Holder Name - Always show input field */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Account Holder Name</label>
-                <Input
-                  value={bankData.accountName}
-                  onChange={(e) => handleBankInputChange('accountName', e.target.value)}
-                  placeholder="Enter account holder name"
-                  className="w-full"
-                />
-                <p className="text-xs text-gray-500 mt-1">Enter the name as it appears on the bank account</p>
-              </div>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Country</label>
+                    <Select value={bankData.country} onValueChange={(value) => handleBankInputChange('country', value)}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select country" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="NG">🇳🇬 Nigeria</SelectItem>
+                        <SelectItem value="US">🇺🇸 United States</SelectItem>
+                        <SelectItem value="GB">🇬🇧 United Kingdom</SelectItem>
+                        <SelectItem value="CA">🇨🇦 Canada</SelectItem>
+                        <SelectItem value="KE">🇰🇪 Kenya</SelectItem>
+                        <SelectItem value="ZA">🇿🇦 South Africa</SelectItem>
+                        <SelectItem value="GH">🇬🇭 Ghana</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-              {!accountVerified && bankData.accountNumber && bankData.bankCode && (
-                <div className="flex items-center p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                  <AlertCircle size={16} className="text-yellow-600 mr-2" />
-                  <span className="text-yellow-800 text-sm">
-                    Please verify your account number before adding
-                  </span>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Bank Name</label>
+                    <Select value={bankData.bankCode} onValueChange={(value) => {
+                      const selectedBank = availableBanks.find(bank => bank.code === value);
+                      if (selectedBank) {
+                        handleBankInputChange('bankCode', value);
+                        handleBankInputChange('bankName', selectedBank.name);
+                      }
+                    }}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select your bank" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {availableBanks.map((bank) => (
+                          <SelectItem key={bank.id} value={bank.code}>
+                            {bank.name} {bank.ussd && `(${bank.ussd})`}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Account Number</label>
+                    <Input
+                      value={bankData.accountNumber}
+                      onChange={(e) => handleBankInputChange('accountNumber', e.target.value.replace(/\D/g, ''))}
+                      placeholder={bankData.country === 'NG' ? '1234567890' : 'Account number'}
+                      maxLength={bankData.country === 'NG' ? 10 : 20}
+                    />
+                    {bankData.country === 'NG' && (
+                      <p className="text-xs text-gray-500 mt-1">Nigerian account numbers are 10 digits</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Account Holder Name</label>
+                    <Input
+                      value={bankData.accountName}
+                      onChange={(e) => handleBankInputChange('accountName', e.target.value)}
+                      placeholder="Enter account holder name"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">Enter the name as it appears on the bank account</p>
+                  </div>
+
+                  <div className="flex space-x-3">
+                    <Button
+                      variant="outline"
+                      className="flex-1"
+                      onClick={() => { setIsAddingBank(false); resetBankForm(); }}
+                      disabled={saving}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      className="flex-1"
+                      onClick={editingAccount ? handleUpdateBankAccount : handleAddBankAccount}
+                      disabled={
+                        !bankData.accountNumber ||
+                        !bankData.accountName ||
+                        !bankData.bankCode ||
+                        saving
+                      }
+                    >
+                      {saving ? 'Saving...' : (editingAccount ? 'Update' : 'Add Account')}
+                    </Button>
+                  </div>
                 </div>
-              )}
-
-              <Button
-                className="w-full"
-                onClick={editingAccount ? handleUpdateBankAccount : handleAddBankAccount}
-                disabled={
-                  !bankData.accountNumber ||
-                  !bankData.accountName ||
-                  !bankData.bankCode ||
-                  saving
-                }
-              >
-                {editingAccount ? 'Update Bank Account' : 'Add Bank Account'}
-              </Button>
+              </div>
             </div>
-          </Card>
+          </div>
         )}
 
         {/* Security Notice */}

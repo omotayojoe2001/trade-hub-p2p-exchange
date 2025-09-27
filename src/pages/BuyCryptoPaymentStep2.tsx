@@ -113,22 +113,31 @@ const BuyCryptoPaymentStep2 = () => {
 
   const fetchMerchantBankDetails = async (sellerId: string, trade: any) => {
     try {
-      console.log('Fetching payment method for seller:', sellerId);
+      console.log('=== DEBUGGING PAYMENT METHOD FETCH ===');
+      console.log('Seller ID:', sellerId);
+      console.log('Trade object:', trade);
+      console.log('Selected merchant:', selectedMerchant);
       
-      // Use vendors table to get payment method
-      const { data: paymentMethods } = await (supabase as any)
-        .from('vendors')
-        .select('bank_name, account_number, account_name')
-        .eq('user_id', sellerId);
+      // In buy crypto flow, sellerId is the merchant's user_id directly
+      const merchantUserId = sellerId;
+      console.log('Merchant user_id:', merchantUserId);
+      
+      // Use the dedicated function to get merchant payment method (bypasses RLS)
+      const { data: paymentMethodData, error: pmError } = await supabase
+        .rpc('get_merchant_payment_method', { merchant_id: merchantUserId });
         
-      console.log('Payment method response:', { paymentMethods });
-      const paymentMethod = paymentMethods?.[0]; // Get first row from table result
+      console.log('Payment method RPC response:', paymentMethodData);
+      console.log('Payment method RPC error:', pmError);
+      
+      const paymentMethod = paymentMethodData?.[0];
 
-      if (!paymentMethod) {
-        console.error('No payment method found, using mock data');
+      if (!paymentMethod || pmError) {
+        console.error('No payment method found via RPC');
+        
         // Use mock merchant bank details for demo
+        console.log('Using mock data as fallback');
         setMerchantBankDetails({
-          bank_name: 'GTBank',
+          bank_name: 'GTBank (Demo)',
           account_number: '0123456789',
           account_name: selectedMerchant?.display_name || 'Merchant Name',
           reference: `PAY-${trade.id.slice(-8)}`,
@@ -137,7 +146,7 @@ const BuyCryptoPaymentStep2 = () => {
         return;
       }
 
-      console.log('Fetched payment method:', paymentMethod);
+      console.log('Successfully found payment method via RPC:', paymentMethod);
       
       setMerchantBankDetails({
         bank_name: paymentMethod.bank_name || 'Bank Account',
@@ -148,6 +157,14 @@ const BuyCryptoPaymentStep2 = () => {
       });
     } catch (error) {
       console.error('Error fetching merchant bank details:', error);
+      // Fallback to mock data on error
+      setMerchantBankDetails({
+        bank_name: 'GTBank (Error Fallback)',
+        account_number: '0123456789',
+        account_name: selectedMerchant?.display_name || 'Merchant Name',
+        reference: `PAY-${trade.id.slice(-8)}`,
+        amount_naira: cashAmount
+      });
     }
   };
 
@@ -317,7 +334,7 @@ const BuyCryptoPaymentStep2 = () => {
     <div className="min-h-screen bg-background">
       {/* Header */}
       <div className="sticky top-0 bg-background border-b p-4 flex items-center justify-between">
-        <Button variant="ghost" size="icon" onClick={() => navigate('/buy-crypto-payment-step1', { state: location.state })}>
+        <Button variant="ghost" size="icon" onClick={() => navigate('/buy-sell')}>
           <ArrowLeft className="w-5 h-5" />
         </Button>
         <h1 className="text-lg font-semibold">Buy {coinType} - Step 2</h1>
@@ -344,23 +361,27 @@ const BuyCryptoPaymentStep2 = () => {
             
             {/* Demo: Simulate merchant acceptance */}
             {tradeStatus === 'searching' && tradeId && (
-              <Button 
-                onClick={async () => {
-                  try {
-                    const { error } = await supabase.from('trades').update({ status: 'completed' }).eq('id', tradeId);
-                    if (error) console.error('Error:', error);
-                  } catch (err) {
-                    console.error('Demo error:', err);
-                  }
-                }}
-                className="mt-4"
-                size="sm"
-              >
-                [Demo] Simulate Merchant Accept
-              </Button>
+              <div className="mt-4 space-y-2">
+                <Button 
+                  onClick={async () => {
+                    try {
+                      const { error } = await supabase.from('trades').update({ status: 'completed' }).eq('id', tradeId);
+                      if (error) console.error('Error:', error);
+                    } catch (err) {
+                      console.error('Demo error:', err);
+                    }
+                  }}
+                  size="sm"
+                >
+                  [Demo] Simulate Merchant Accept
+                </Button>
+                
+
+              </div>
             )}
           </CardContent>
         </Card>
+
 
         {/* Bank Details (shown when escrow is funded) */}
         {tradeStatus === 'escrow_funded' && merchantBankDetails && (
@@ -418,7 +439,7 @@ const BuyCryptoPaymentStep2 = () => {
                   
                   <div className="flex justify-between items-center">
                     <span className="text-sm text-muted-foreground">Amount</span>
-                    <span className="font-semibold text-lg text-primary">₦{cashAmount?.toLocaleString()}</span>
+                    <span className="font-semibold text-lg text-primary">NGN {cashAmount?.toLocaleString()}</span>
                   </div>
                   
                   <div className="flex justify-between items-center">

@@ -159,20 +159,83 @@ const SellCryptoTradeRequestDetails = () => {
           }
         }
       } else {
-        // For regular trades, get user bank details
+        // For sell crypto trades - merchant sends payment to user who deposited crypto
+        console.log('🔍 DEBUG: Fetching bank details using bank_account_id:', request.bank_account_id);
+        console.log('🔍 DEBUG: User ID:', request.user_id);
+        
+        // For sell crypto trades - get real user bank account
+        console.log('🔍 DEBUG: Fetching real bank account for bank_account_id:', request.bank_account_id);
+        
         if (request.bank_account_id) {
-          const { data: bankAccount } = await supabase
-            .from('bank_accounts')
-            .select('*')
+          const { data: bankAccount, error: bankError } = await supabase
+            .from('user_bank_accounts')
+            .select('account_name, bank_name, account_number, bank_code')
             .eq('id', request.bank_account_id)
-            .single();
+            .maybeSingle();
+            
+          console.log('🔍 DEBUG: Bank account query result:', { bankAccount, bankError });
           
-          setUserBankAccount(bankAccount);
+          if (bankAccount) {
+            setUserBankAccount({
+              account_name: bankAccount.account_name,
+              bank_name: bankAccount.bank_name,
+              account_number: bankAccount.account_number
+            });
+            console.log('✅ DEBUG: Successfully loaded real bank account');
+          } else {
+            // Bank account ID doesn't exist, try to get user's default account
+            console.log('❌ DEBUG: Bank account ID not found, trying user default');
+            
+            const { data: defaultAccount, error: defaultError } = await supabase
+              .from('user_bank_accounts')
+              .select('account_name, bank_name, account_number, bank_code')
+              .eq('user_id', request.user_id)
+              .eq('is_default', true)
+              .maybeSingle();
+              
+            console.log('🔍 DEBUG: Default account result:', { defaultAccount, defaultError });
+            
+            if (defaultAccount) {
+              setUserBankAccount({
+                account_name: defaultAccount.account_name,
+                bank_name: defaultAccount.bank_name,
+                account_number: defaultAccount.account_number
+              });
+              console.log('✅ DEBUG: Using user default bank account');
+            } else {
+              // Try any bank account for this user
+              const { data: anyAccount } = await supabase
+                .from('user_bank_accounts')
+                .select('account_name, bank_name, account_number, bank_code')
+                .eq('user_id', request.user_id)
+                .limit(1)
+                .maybeSingle();
+                
+              console.log('🔍 DEBUG: Any account result:', anyAccount);
+              
+              if (anyAccount) {
+                setUserBankAccount({
+                  account_name: anyAccount.account_name,
+                  bank_name: anyAccount.bank_name,
+                  account_number: anyAccount.account_number
+                });
+                console.log('✅ DEBUG: Using any available bank account');
+              } else {
+                console.error('❌ DEBUG: No bank accounts found for user');
+                setUserBankAccount({
+                  account_name: 'No bank account found',
+                  bank_name: 'User has no payment methods',
+                  account_number: 'Ask user to add bank account'
+                });
+              }
+            }
+          }
         } else {
+          console.log('❌ DEBUG: No bank_account_id in trade request');
           setUserBankAccount({
-            account_name: 'User Account',
-            bank_name: 'User Bank',
-            account_number: 'User Account Number'
+            account_name: 'No bank account selected',
+            bank_name: 'Payment method not specified',
+            account_number: 'Contact user'
           });
         }
       }
@@ -200,13 +263,20 @@ const SellCryptoTradeRequestDetails = () => {
     try {
       // Upload payment proof with unique filename
       const fileExt = paymentProof.name.split('.').pop();
-      const fileName = `${tradeRequestId}_merchant_${Date.now()}.${fileExt}`;
+      const fileName = `sell-crypto-payment-${tradeRequestId}-${Date.now()}.${fileExt}`;
       
-      const { error: uploadError } = await supabase.storage
+      const { data: uploadData, error: uploadError } = await supabase.storage
         .from('payment-proofs')
         .upload(fileName, paymentProof);
 
       if (uploadError) throw uploadError;
+      
+      // Get the public URL for the uploaded file
+      const { data: urlData } = supabase.storage
+        .from('payment-proofs')
+        .getPublicUrl(fileName);
+        
+      console.log('📄 DEBUG: Payment proof uploaded:', { fileName, url: urlData.publicUrl });
 
       // First assign merchant to trade request
       const { error: assignError } = await supabase
@@ -222,7 +292,7 @@ const SellCryptoTradeRequestDetails = () => {
         .update({
           status: 'payment_sent',
           merchant_wallet_address: merchantWalletAddress,
-          merchant_payment_proof: fileName
+          merchant_payment_proof: urlData.publicUrl
         })
         .eq('id', tradeRequestId);
 
@@ -277,24 +347,28 @@ const SellCryptoTradeRequestDetails = () => {
           console.log('❌ DEBUG: No vendor found for notification');
         }
       } else {
-        // For regular trades, notify user
+        // For regular sell crypto trades, notify user
         await supabase
           .from('notifications')
           .insert({
             user_id: tradeRequest.user_id,
-            type: 'payment_sent',
-            title: 'Payment Sent',
-            message: `Merchant has sent payment. Please confirm receipt.`,
+            type: 'payment_received',
+            title: 'Payment Received - Confirm to Release Crypto',
+            message: `Merchant has sent NGN ${(tradeRequest.amount_fiat || 0).toLocaleString()} to your bank account. Please confirm receipt to release your ${tradeRequest.crypto_type}.`,
             data: {
               trade_request_id: tradeRequestId,
-              amount_fiat: tradeRequest.amount_fiat
+              amount_fiat: tradeRequest.amount_fiat,
+              payment_proof_url: urlData.publicUrl,
+              crypto_amount: tradeRequest.amount_crypto,
+              crypto_type: tradeRequest.crypto_type
             }
           });
       }
 
       toast({
-        title: "Payment Sent!",
-        description: "User will be notified to confirm receipt and release crypto to your wallet."
+        title: "Payment Confirmed!",
+        description: `Payment of NGN ${tradeRequest.amount_fiat?.toLocaleString()} sent. User will be notified to release ${tradeRequest.amount_crypto} ${tradeRequest.crypto_type} to your wallet.`,
+        duration: 5000
       });
 
       setStep('completed');
@@ -459,7 +533,7 @@ const SellCryptoTradeRequestDetails = () => {
                 <div className="border-2 border-dashed border-border rounded-lg p-4">
                   <input
                     type="file"
-                    accept="image/*"
+                    accept="image/*,application/pdf"
                     onChange={(e) => setPaymentProof(e.target.files?.[0] || null)}
                     className="hidden"
                     id="payment-proof"
@@ -468,11 +542,26 @@ const SellCryptoTradeRequestDetails = () => {
                     <div className="text-center">
                       <Upload className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
                       <p className="text-sm text-muted-foreground">
-                        {paymentProof ? paymentProof.name : 'Upload bank transfer receipt'}
+                        {paymentProof ? paymentProof.name : 'Upload bank transfer receipt or screenshot'}
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Supported: JPG, PNG, PDF
                       </p>
                     </div>
                   </label>
                 </div>
+                
+                {/* Preview uploaded receipt */}
+                {paymentProof && paymentProof.type.startsWith('image/') && (
+                  <div className="mt-3">
+                    <p className="text-sm font-medium mb-2">Receipt Preview:</p>
+                    <img 
+                      src={URL.createObjectURL(paymentProof)} 
+                      alt="Payment receipt preview" 
+                      className="max-w-full h-32 object-contain border rounded"
+                    />
+                  </div>
+                )}
               </div>
 
               <Button
@@ -511,12 +600,34 @@ const SellCryptoTradeRequestDetails = () => {
             <CardContent className="p-6 text-center">
               <CheckCircle className="w-12 h-12 text-blue-600 mx-auto mb-4" />
               <h2 className="text-xl font-semibold mb-2">Payment Confirmed!</h2>
+              <div className="bg-white p-4 rounded-lg border mb-4">
+                <p className="text-sm text-muted-foreground mb-2">Payment Summary:</p>
+                <div className="space-y-1 text-sm">
+                  <div className="flex justify-between">
+                    <span>Amount Sent:</span>
+                    <span className="font-semibold">NGN {tradeRequest.amount_fiat?.toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>To Receive:</span>
+                    <span className="font-semibold">{tradeRequest.amount_crypto} {tradeRequest.crypto_type}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Your Wallet:</span>
+                    <span className="font-mono text-xs">{merchantWalletAddress.slice(0, 10)}...{merchantWalletAddress.slice(-6)}</span>
+                  </div>
+                </div>
+              </div>
               <p className="text-muted-foreground mb-4">
                 User has been notified to confirm receipt. Crypto will be released to your wallet once confirmed.
               </p>
-              <Button onClick={() => navigate('/trade-requests')}>
-                Back to Dashboard
-              </Button>
+              <div className="space-y-2">
+                <Button onClick={() => navigate('/trade-requests')} className="w-full">
+                  Back to Dashboard
+                </Button>
+                <Button variant="outline" onClick={() => setStep('payment')} className="w-full">
+                  View Payment Details
+                </Button>
+              </div>
             </CardContent>
           </Card>
         )}
