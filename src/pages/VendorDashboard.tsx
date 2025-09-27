@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { DollarSign, Package, TrendingUp, Clock, CheckCircle, Truck } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
+import { useNavigate } from 'react-router-dom';
 import VendorBottomNavigation from '@/components/vendor/VendorBottomNavigation';
+import { cashOrderService } from '@/services/cashOrderService';
 import AnimatedCard from '@/components/animations/AnimatedCard';
 import FloatingElement from '@/components/animations/FloatingElement';
 import PageTransition from '@/components/animations/PageTransition';
@@ -29,6 +32,7 @@ interface CashDeliveryRequest {
 }
 
 const VendorDashboard = () => {
+  const navigate = useNavigate();
   const [requests, setRequests] = useState<CashDeliveryRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [vendorId, setVendorId] = useState<string | null>(null);
@@ -64,8 +68,9 @@ const VendorDashboard = () => {
         .from('cash_trades')
         .select('*')
         .eq('vendor_id', vendorId)
-        .in('status', ['vendor_paid', 'payment_confirmed', 'delivery_in_progress', 'cash_delivered']) // Only show after merchant pays
-        .order('created_at', { ascending: false });
+        .in('status', ['vendor_paid', 'payment_confirmed', 'delivery_in_progress', 'cash_delivered'])
+        .order('created_at', { ascending: false })
+        .limit(50);
 
       console.log('Cash trades result:', { cashTrades, error });
 
@@ -84,7 +89,7 @@ const VendorDashboard = () => {
         customer_phone: trade.seller_phone || 'Not provided',
         status: trade.status,
         created_at: trade.created_at,
-        seller_name: 'Customer',
+        seller_name: trade.merchant_name === 'Send Naira Customer' ? 'Send Naira Customer' : 'Customer',
         buyer_name: trade.merchant_name || 'Merchant'
       }));
 
@@ -250,7 +255,7 @@ const VendorDashboard = () => {
               </div>
             ) : (
               <div className="space-y-3">
-                {requests.slice(0, 5).map((request) => {
+                {requests.slice(0, 10).map((request) => {
                   const getCardBgColor = (status: string) => {
                     switch (status) {
                       case 'vendor_paid':
@@ -282,7 +287,7 @@ const VendorDashboard = () => {
                   };
                   
                   return (
-                    <div key={request.id} className={`${getCardBgColor(request.status)} p-4 rounded-lg cursor-pointer hover:shadow-md transition-shadow`} onClick={() => window.location.href = `/vendor/payment-confirmation/${request.id}`}>
+                    <div key={request.id} className={`${getCardBgColor(request.status)} p-4 rounded-lg cursor-pointer transition-shadow`} onClick={() => window.location.href = `/vendor/payment-confirmation/${request.id}`}>
                       <div className="flex items-center justify-between mb-3">
                         <div className="flex items-center">
                           <div className="p-2 bg-white rounded-lg mr-3">
@@ -305,9 +310,15 @@ const VendorDashboard = () => {
                   );
                 })}
                 
-                {requests.length > 5 && (
+                {requests.length > 10 && (
                   <div className="text-center pt-4">
-                    <p className="text-sm text-gray-500">Showing 5 of {requests.length} requests</p>
+                    <p className="text-sm text-gray-500 mb-2">Showing 10 of {requests.length} requests</p>
+                    <Button
+                      onClick={() => navigate('/vendor/transactions')}
+                      className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
+                    >
+                      View All Transactions
+                    </Button>
                   </div>
                 )}
               </div>

@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Crown, CheckCircle, Star, Gift, ArrowRight, Key, Copy } from 'lucide-react';
+import { CheckCircle, Star, ArrowRight, Key, Copy } from 'lucide-react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -98,56 +98,47 @@ const CashOrderThankYou = () => {
                 <CheckCircle size={24} className="mr-2 text-green-600" />
                 Order Confirmed
               </h1>
-              <p className="text-gray-600 text-sm">Thank you for your premium order</p>
+              <p className="text-gray-600 text-sm">Thank you for your order</p>
             </div>
           </div>
-          <div className="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-xs font-medium flex items-center">
-            <Crown size={12} className="mr-1" />
-            Premium
-          </div>
+
         </div>
       </div>
 
       <div className="p-4 space-y-6">
         {/* Success Animation */}
-        <Card className="p-8 bg-gradient-to-r from-green-100 to-emerald-100 border-green-200 text-center">
-          <div className="w-20 h-20 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4 animate-bounce">
+        <Card className="p-8 bg-white border-gray-200 text-center">
+          <div className="w-20 h-20 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
             <CheckCircle size={40} className="text-white" />
           </div>
-          <h2 className="text-2xl font-bold text-green-900 mb-2">🎉 Thank You!</h2>
-          <p className="text-green-700 mb-4">
+          <h2 className="text-2xl font-bold text-green-900 mb-2">Thank You!</h2>
+          <p className="text-gray-700 mb-4">
             Your {getOrderTypeDisplay()} order has been confirmed successfully.
           </p>
           
-          <div className="bg-white rounded-lg p-4 inline-block">
-            <div className="flex items-center justify-center space-x-2">
-              <Crown size={16} className="text-yellow-500" />
-              <span className="font-semibold text-gray-900">Premium Service Activated</span>
-            </div>
-          </div>
+
         </Card>
 
         {/* Quote Code - Most Important */}
         <Card className="p-4 bg-white border-gray-200">
           <h3 className="font-semibold text-gray-900 mb-4 flex items-center">
-            <Key size={20} className="mr-2 text-yellow-600" />
+            <Key size={20} className="mr-2 text-gray-600" />
             Your Quote Code (Give this to the vendor)
           </h3>
-          <div className="bg-yellow-50 border-2 border-yellow-300 rounded-lg p-4 text-center">
-            <div className="text-4xl font-bold text-yellow-900 mb-2 tracking-wider">
+          <div className="bg-gray-50 border-2 border-gray-300 rounded-lg p-4 text-center">
+            <div className="text-4xl font-bold text-gray-900 mb-2 tracking-wider">
               {code}
             </div>
-            <p className="text-sm text-yellow-700 mb-3">
+            <p className="text-sm text-gray-700 mb-3">
               Show this 6-digit code to the vendor when they deliver your cash
             </p>
             <Button
               onClick={() => {
                 navigator.clipboard.writeText(code);
-                // You could add a toast notification here
               }}
               variant="outline"
               size="sm"
-              className="border-yellow-300 text-yellow-700 hover:bg-yellow-100"
+              className="border-gray-300 text-gray-700 hover:bg-gray-100"
             >
               <Copy size={16} className="mr-2" />
               Copy Code
@@ -171,13 +162,13 @@ const CashOrderThankYou = () => {
               <span className="text-gray-600">Tracking Code:</span>
               <span className="font-medium text-gray-900">{trackingCode || 'N/A'}</span>
             </div>
-            <div className="flex justify-between items-center p-3 bg-yellow-50 rounded-lg border border-yellow-200">
-              <span className="text-yellow-700">Your Quote Code:</span>
-              <span className="font-bold text-yellow-900 text-lg">{code}</span>
+            <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+              <span className="text-gray-600">Your Quote Code:</span>
+              <span className="font-bold text-gray-900 text-lg">{code}</span>
             </div>
-            <div className="flex justify-between items-center p-3 bg-yellow-50 rounded-lg border border-yellow-200">
-              <span className="text-yellow-700">Estimated Time:</span>
-              <span className="font-medium text-yellow-900">{getEstimatedTimeDisplay()}</span>
+            <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+              <span className="text-gray-600">Estimated Time:</span>
+              <span className="font-medium text-gray-900">{getEstimatedTimeDisplay()}</span>
             </div>
           </div>
         </Card>
@@ -187,28 +178,28 @@ const CashOrderThankYou = () => {
           <h3 className="font-semibold text-gray-900 mb-4">What Happens Next?</h3>
           <div className="space-y-4">
             <div className="flex items-start space-x-3">
-              <div className="w-6 h-6 bg-yellow-500 text-white rounded-full flex items-center justify-center text-xs font-bold">1</div>
+              <div className="w-6 h-6 bg-gray-500 text-white rounded-full flex items-center justify-center text-xs font-bold">1</div>
               <div>
                 <div className="font-medium text-gray-900">Payment Verification</div>
                 <div className="text-sm text-gray-600">Vendor is verifying your payment receipt</div>
               </div>
             </div>
             <div className="flex items-start space-x-3">
-              <div className="w-6 h-6 bg-yellow-500 text-white rounded-full flex items-center justify-center text-xs font-bold">2</div>
+              <div className="w-6 h-6 bg-gray-500 text-white rounded-full flex items-center justify-center text-xs font-bold">2</div>
               <div>
                 <div className="font-medium text-gray-900">Payment Confirmation</div>
                 <div className="text-sm text-gray-600">You'll receive confirmation once payment is verified</div>
               </div>
             </div>
             <div className="flex items-start space-x-3">
-              <div className="w-6 h-6 bg-yellow-500 text-white rounded-full flex items-center justify-center text-xs font-bold">3</div>
+              <div className="w-6 h-6 bg-gray-500 text-white rounded-full flex items-center justify-center text-xs font-bold">3</div>
               <div>
                 <div className="font-medium text-gray-900">Cash Delivery/Pickup</div>
                 <div className="text-sm text-gray-600">Vendor will contact you for delivery or pickup</div>
               </div>
             </div>
             <div className="flex items-start space-x-3">
-              <div className="w-6 h-6 bg-yellow-500 text-white rounded-full flex items-center justify-center text-xs font-bold">4</div>
+              <div className="w-6 h-6 bg-gray-500 text-white rounded-full flex items-center justify-center text-xs font-bold">4</div>
               <div>
                 <div className="font-medium text-gray-900">Code Verification</div>
                 <div className="text-sm text-gray-600">Show your code to receive your USD cash</div>
@@ -218,12 +209,12 @@ const CashOrderThankYou = () => {
         </Card>
 
         {/* Important Notice */}
-        <Card className="p-4 bg-blue-50 border-blue-200">
+        <Card className="p-4 bg-gray-50 border-gray-200">
           <div className="flex items-start space-x-3">
-            <Star size={20} className="text-blue-600 mt-0.5" />
+            <Star size={20} className="text-gray-600 mt-0.5" />
             <div>
-              <h4 className="font-medium text-blue-900">Important Notice</h4>
-              <ul className="text-sm text-blue-700 mt-2 space-y-1">
+              <h4 className="font-medium text-gray-900">Important Notice</h4>
+              <ul className="text-sm text-gray-700 mt-2 space-y-1">
                 <li>• Keep your code safe and don't share it with anyone</li>
                 <li>• You'll receive notifications when payment is confirmed</li>
                 <li>• Our vendor will contact you before delivery/pickup</li>
@@ -237,29 +228,19 @@ const CashOrderThankYou = () => {
         {/* Action Buttons */}
         <div className="space-y-3">
           <Button
-            onClick={() => navigate('/premium-trades')}
-            className="w-full bg-yellow-600 hover:bg-yellow-700 text-white h-12"
+            onClick={() => navigate('/my-orders')}
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white h-12"
           >
-            <Crown size={16} className="mr-2" />
-            View My Premium Orders
+            View My Orders
           </Button>
           
           <Button
-            onClick={() => navigate('/premium-trade')}
+            onClick={() => navigate('/send-naira-get-usd')}
             variant="outline"
-            className="w-full border-yellow-300 text-yellow-700 hover:bg-yellow-50 h-12"
+            className="w-full border-gray-300 text-gray-700 hover:bg-gray-50 h-12"
           >
             Start Another Order
             <ArrowRight size={16} className="ml-2" />
-          </Button>
-          
-          <Button
-            onClick={() => navigate('/premium-referral')}
-            variant="outline"
-            className="w-full h-12"
-          >
-            <Gift size={16} className="mr-2" />
-            Refer Friends & Earn Premium Rewards
           </Button>
         </div>
 

@@ -169,6 +169,8 @@ export class CashOrderService {
   // For vendors: Get cash orders assigned to them
   async getVendorCashOrders(vendorUserId: string): Promise<any[]> {
     try {
+      console.log('🔍 DEBUG: Getting vendor cash orders for user:', vendorUserId);
+      
       // Get vendor ID first
       const { data: vendor, error: vendorError } = await supabase
         .from('vendors')
@@ -177,9 +179,11 @@ export class CashOrderService {
         .single();
 
       if (vendorError) {
-        console.error('Vendor not found:', vendorError);
+        console.error('❌ Vendor not found:', vendorError);
         return [];
       }
+      
+      console.log('✅ Found vendor:', vendor);
 
       const { data, error } = await supabase
         .from('vendor_jobs')
@@ -217,14 +221,65 @@ export class CashOrderService {
         .order('created_at', { ascending: false });
 
       if (error) {
-        console.error('Error fetching vendor jobs:', error);
+        console.error('❌ Error fetching vendor jobs:', error);
         return [];
       }
       
+      console.log('📦 Vendor jobs found:', data?.length || 0, data);
       return data || [];
     } catch (error: any) {
-      console.error('Error fetching vendor cash orders:', error);
+      console.error('❌ Error fetching vendor cash orders:', error);
       return [];
+    }
+  }
+
+  // Debug function to check vendor jobs
+  async debugVendorJobs(vendorUserId: string): Promise<void> {
+    try {
+      console.log('🔍 DEBUG: Starting vendor jobs debug for:', vendorUserId);
+      
+      // Check if vendor exists
+      const { data: vendor, error: vendorError } = await supabase
+        .from('vendors')
+        .select('*')
+        .eq('user_id', vendorUserId)
+        .single();
+        
+      console.log('👤 Vendor check:', vendor, vendorError);
+      
+      if (!vendor) {
+        console.log('❌ No vendor found for user:', vendorUserId);
+        return;
+      }
+      
+      // Check all vendor jobs for this vendor
+      const { data: allJobs, error: jobsError } = await supabase
+        .from('vendor_jobs')
+        .select('*')
+        .eq('vendor_id', vendor.id);
+        
+      console.log('📋 All vendor jobs:', allJobs, jobsError);
+      
+      // Check naira_to_usd jobs specifically
+      const { data: nairaJobs, error: nairaError } = await supabase
+        .from('vendor_jobs')
+        .select('*')
+        .eq('vendor_id', vendor.id)
+        .eq('order_type', 'naira_to_usd');
+        
+      console.log('💰 Naira to USD jobs:', nairaJobs, nairaError);
+      
+      // Check cash order tracking
+      const { data: cashOrders, error: cashError } = await supabase
+        .from('cash_order_tracking')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(5);
+        
+      console.log('📦 Recent cash orders:', cashOrders, cashError);
+      
+    } catch (error) {
+      console.error('❌ Debug error:', error);
     }
   }
 

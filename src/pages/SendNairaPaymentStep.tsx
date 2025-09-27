@@ -161,6 +161,37 @@ const SendNairaPaymentStep = () => {
     try {
       setSubmitting(true);
       
+      // Calculate credits required
+      const creditsRequired = Math.ceil(parseFloat(orderData.usdAmount) / 10);
+      
+      // Check if user has enough credits
+      const hasEnoughCredits = await creditsService.hasEnoughCredits(user.id, creditsRequired);
+      if (!hasEnoughCredits) {
+        toast({
+          title: "Insufficient Credits",
+          description: `You need ${creditsRequired} credits for this transaction. Please purchase more credits.`,
+          variant: "destructive",
+        });
+        navigate('/credits/purchase');
+        return;
+      }
+      
+      // Charge credits first
+      const creditsCharged = await creditsService.spendCredits(
+        user.id, 
+        creditsRequired, 
+        `Send Naira Get USD - $${orderData.usdAmount}`
+      );
+      
+      if (!creditsCharged) {
+        toast({
+          title: "Credit charge failed",
+          description: "Unable to charge credits. Please try again.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
       console.log('Creating cash order with data:', {
         userId: user.id,
         nairaAmount: parseFloat(orderData.nairaAmount),
@@ -173,7 +204,7 @@ const SendNairaPaymentStep = () => {
       const orderId = await cashOrderService.createCashOrder(user.id, {
         nairaAmount: parseFloat(orderData.nairaAmount),
         usdAmount: parseFloat(orderData.usdAmount),
-        serviceFee: orderData.serviceFee || 0,
+        serviceFee: 0,
         orderType: orderData.deliveryMethod === 'pickup' ? 'naira_to_usd_pickup' : 'naira_to_usd_delivery',
         deliveryDetails: orderData.deliveryMethod === 'pickup' 
           ? { pickup_location: orderData.pickupLocation }
@@ -208,26 +239,29 @@ const SendNairaPaymentStep = () => {
       
       toast({
         title: "Payment submitted successfully",
-        description: `Your order ${orderDetails.tracking_code} has been created and payment submitted`,
+        description: `Your order ${orderDetails.tracking_code} has been created. ${creditsRequired} credits charged.`,
       });
       
-      // Get the verification code from the vendor job
-      const { data: vendorJobData, error: vendorJobError } = await supabase
-        .from('vendor_jobs')
-        .select('verification_code')
-        .eq('cash_order_id', orderId)
+      // Get the verification code from the cash_trades table
+      const { data: cashTradeData, error: cashTradeError } = await supabase
+        .from('cash_trades')
+        .select('delivery_code')
+        .eq('seller_id', user.id)
+        .eq('merchant_name', 'Send Naira Customer')
+        .order('created_at', { ascending: false })
+        .limit(1)
         .single();
         
-      if (vendorJobError) {
-        console.error('Failed to fetch verification code:', vendorJobError);
-        throw new Error('Failed to retrieve verification code');
+      if (cashTradeError) {
+        console.error('Failed to fetch delivery code:', cashTradeError);
+        throw new Error('Failed to retrieve delivery code');
       }
       
       // Navigate to thank you page
       navigate('/cash-order-thank-you', {
         state: {
           orderType: orderData.deliveryMethod === 'pickup' ? 'usd-pickup' : 'usd-delivery',
-          code: vendorJobData.verification_code, // This is the 6-digit code for the vendor
+          code: cashTradeData.delivery_code, // This is the 6-digit code for the vendor
           trackingCode: orderDetails.tracking_code, // This is the tracking code
           amount: orderData.usdAmount,
           currency: 'USD',
@@ -301,13 +335,13 @@ const SendNairaPaymentStep = () => {
                 <span className="font-semibold text-blue-900">${orderData.usdAmount}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-blue-800">Service Fee:</span>
-                <span className="font-semibold text-blue-900">₦{orderData.serviceFee.toLocaleString()}</span>
+                <span className="text-blue-800">Credits Charged:</span>
+                <span className="font-semibold text-red-600">{orderData.creditsRequired || Math.ceil(parseFloat(orderData.usdAmount) / 10)} credits</span>
               </div>
               <hr className="border-blue-200" />
               <div className="flex justify-between text-lg">
                 <span className="text-blue-800 font-medium">Total to Pay:</span>
-                <span className="font-bold text-blue-900">₦{(parseFloat(orderData.nairaAmount) + orderData.serviceFee).toLocaleString()}</span>
+                <span className="font-bold text-blue-900">₦{parseFloat(orderData.nairaAmount).toLocaleString()}</span>
               </div>
             </CardContent>
           </Card>
@@ -398,13 +432,13 @@ const SendNairaPaymentStep = () => {
                   <div>
                     <p className="text-sm text-green-700">Total Amount to Transfer</p>
                     <p className="font-bold text-2xl text-green-800">
-                      ₦{(parseFloat(orderData.nairaAmount) + orderData.serviceFee).toLocaleString()}
+                      ₦{parseFloat(orderData.nairaAmount).toLocaleString()}
                     </p>
                   </div>
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => copyToClipboard((parseFloat(orderData.nairaAmount) + orderData.serviceFee).toString(), 'amount')}
+                    onClick={() => copyToClipboard(parseFloat(orderData.nairaAmount).toString(), 'amount')}
                     className="ml-2 border-green-300 text-green-700"
                   >
                     {copied === 'amount' ? <CheckCircle className="w-4 h-4" /> : <Copy className="w-4 h-4" />}

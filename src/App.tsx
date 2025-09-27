@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import GlobalNotifications from "@/components/GlobalNotifications";
 import QuickAuthScreen from "@/components/QuickAuthScreen";
+import CreditAlert from "@/components/CreditAlert";
 import useInactivityDetector from "@/hooks/useInactivityDetector";
 import { useAuthStorage } from "@/hooks/useAuthStorage";
 import { QuickAuthProvider, useQuickAuth } from "@/hooks/useQuickAuth";
@@ -124,6 +125,7 @@ import VendorBankDetails from "./pages/VendorBankDetails";
 import VendorProfile from "./pages/VendorProfile";
 import VendorMessages from "./pages/VendorMessages";
 import SendNairaPaymentStep from "./pages/SendNairaPaymentStep";
+import SendNairaDetailsStep from "./pages/SendNairaDetailsStep";
 import VendorCashOrderDetails from "./pages/VendorCashOrderDetails";
 import VendorTransactions from "./pages/VendorTransactions";
 
@@ -216,6 +218,7 @@ const AppContent = () => {
     <>
       {/* Only show notifications if not on auth pages */}
       {!isOnAuthPage && <GlobalNotifications />}
+      {!isOnAuthPage && <CreditAlert />}
       
       {/* Show quick auth if user was logged out due to inactivity */}
       {!user && storedUser && !isOnAuthPage && (
@@ -326,6 +329,7 @@ const AppContent = () => {
             <Route path="/cash-pickup-confirmation" element={<CashPickupConfirmation />} />
             <Route path="/cash-delivery-confirmation" element={<CashDeliveryConfirmation />} />
             <Route path="/send-naira-get-usd" element={<SendNairaGetUSD />} />
+            <Route path="/send-naira-details-step" element={<SendNairaDetailsStep />} />
             <Route path="/cash-order-thank-you" element={<CashOrderThankYou />} />
             <Route path="/delivery-status" element={<DeliveryStatus />} />
         <Route path="/trade-requests" element={<TradeRequests />} />

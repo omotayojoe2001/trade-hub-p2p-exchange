@@ -134,11 +134,13 @@ const VendorTransactions = () => {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'payment_pending':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'payment_submitted':
-        return 'bg-blue-100 text-blue-800';
+      case 'vendor_paid':
+        return 'bg-orange-100 text-orange-800';
       case 'payment_confirmed':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'delivery_in_progress':
+        return 'bg-blue-100 text-blue-800';
+      case 'cash_delivered':
         return 'bg-green-100 text-green-800';
       case 'completed':
         return 'bg-green-100 text-green-800';
@@ -151,14 +153,16 @@ const VendorTransactions = () => {
 
   const getStatusIcon = (status: string) => {
     switch (status) {
+      case 'vendor_paid':
+        return <DollarSign className="w-4 h-4" />;
+      case 'payment_confirmed':
+        return <Clock className="w-4 h-4" />;
+      case 'delivery_in_progress':
+        return <Clock className="w-4 h-4" />;
+      case 'cash_delivered':
+        return <CheckCircle className="w-4 h-4" />;
       case 'completed':
         return <CheckCircle className="w-4 h-4" />;
-      case 'payment_confirmed':
-        return <CheckCircle className="w-4 h-4" />;
-      case 'payment_submitted':
-        return <Clock className="w-4 h-4" />;
-      case 'payment_pending':
-        return <Clock className="w-4 h-4" />;
       case 'cancelled':
         return <XCircle className="w-4 h-4" />;
       default:
@@ -297,7 +301,11 @@ const VendorTransactions = () => {
                       <div className="flex items-center space-x-2">
                         {getStatusIcon(transaction.status)}
                         <Badge className={getStatusColor(transaction.status)}>
-                          {transaction.status.replace('_', ' ').toUpperCase()}
+                          {transaction.status === 'vendor_paid' ? 'PAYMENT RECEIVED' :
+                           transaction.status === 'payment_confirmed' ? 'PENDING' :
+                           transaction.status === 'delivery_in_progress' ? 'OUT FOR DELIVERY' :
+                           transaction.status === 'cash_delivered' ? 'DELIVERED' :
+                           transaction.status.replace('_', ' ').toUpperCase()}
                         </Badge>
                       </div>
                       <div>

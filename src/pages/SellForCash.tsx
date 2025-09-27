@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { creditsService, CREDIT_COSTS, calculatePlatformFeeCredits, calculateTotalCreditsForCash } from '@/services/creditsService';
+import { useToast } from '@/hooks/use-toast';
 import NotesSection from '@/components/sell-crypto/NotesSection';
 import SecurityNotice from '@/components/sell-crypto/SecurityNotice';
 import LocationSelector from '@/components/LocationSelector';
@@ -30,6 +31,7 @@ const SellForCash = () => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { toast } = useToast();
 
   const cryptoOptions = [
     { value: 'BTC', label: 'Bitcoin', rate: 105000, icon: '₿' },
@@ -135,7 +137,11 @@ const SellForCash = () => {
     // Check platform fee credits only (service fees calculated later)
     const platformFee = getPlatformFee();
     if (userCredits < platformFee) {
-      alert(`You need ${platformFee} credits for platform fee ($${getUsdValue().toFixed(2)} USD). You have ${userCredits} credits.`);
+      toast({
+        title: "Insufficient Credits",
+        description: `You need ${platformFee} credits for this transaction. You have ${userCredits} credits. Please purchase more credits to continue.`,
+        variant: "destructive",
+      });
       return;
     }
 
