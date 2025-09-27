@@ -99,6 +99,7 @@ import TradeRequests from "./pages/TradeRequests";
 import TradeRequestDetails from "./pages/TradeRequestDetails";
 import MerchantTradeFlow from "./pages/MerchantTradeFlow";
 import Messages from "./pages/Messages";
+import Inbox from "./pages/Messages"; // Alias for inbox
 import EscrowFlow from "./pages/EscrowFlow";
 import EscrowTradeFlow from "./pages/EscrowTradeFlow";
 import CashEscrowFlow from "./pages/CashEscrowFlow";
@@ -111,7 +112,6 @@ import TradeRequestNotifications from "./pages/TradeRequestNotifications";
 import SellCryptoTradeRequestDetails from "./pages/SellCryptoTradeRequestDetails";
 import AutoMerchantMatch from "./pages/AutoMerchantMatch";
 import VendorLogin from "./pages/VendorLogin";
-import SimpleVendorDashboard from "./pages/SimpleVendorDashboard";
 import CreditsPurchase from "./pages/CreditsPurchase";
 import CreditsHistory from "./pages/CreditsHistory";
 import AdminCredits from "./pages/AdminCredits";
@@ -126,6 +126,13 @@ import VendorMessages from "./pages/VendorMessages";
 import SendNairaPaymentStep from "./pages/SendNairaPaymentStep";
 import VendorCashOrderDetails from "./pages/VendorCashOrderDetails";
 import VendorTransactions from "./pages/VendorTransactions";
+
+import VendorDeliveryDetails from "./pages/VendorDeliveryDetails";
+import UserCashTradeStatus from "./pages/UserCashTradeStatus";
+import VendorTradeRequests from "./pages/VendorTradeRequests";
+import VendorPaymentConfirmationNew from "./pages/VendorPaymentConfirmation";
+import VendorDeliveryDetailsPage from "./pages/VendorDeliveryDetailsPage";
+import MyOrders from "./pages/MyOrders";
 
 
 
@@ -231,6 +238,7 @@ const AppContent = () => {
       <Routes>
             <Route path="/" element={<SplashScreen />} />
             <Route path="/home" element={<Index />} />
+            <Route path="/my-orders" element={<MyOrders />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/profile-setup" element={<ProfileSetup />} />
             <Route path="/coins" element={<Coins />} />
@@ -326,7 +334,8 @@ const AppContent = () => {
         <Route path="/receipt" element={<ReceiptPage />} />
         <Route path="/receipt-page" element={<ReceiptPage />} />
         <Route path="/trade-requests" element={<TradeRequests />} />
-            <Route path="/messages" element={<Messages />} />
+            <Route path="/inbox" element={<Messages />} />
+            <Route path="/messages" element={<Messages />} /> {/* Legacy route */}
         <Route path="/blog" element={<Blog />} />
         {/* Removed blog detail route - not needed */}
         <Route path="/thank-you" element={<ThankYouPage />} />
@@ -343,7 +352,7 @@ const AppContent = () => {
         <Route path="/vendor/login" element={<VendorLogin />} />
         <Route path="/vendor/dashboard" element={
           <VendorAuthGuard>
-            <SimpleVendorDashboard />
+            <VendorDashboard />
           </VendorAuthGuard>
         } />
         <Route path="/vendor/profile" element={
@@ -358,7 +367,7 @@ const AppContent = () => {
         } />
         <Route path="/vendor/notifications" element={
           <VendorAuthGuard>
-            <SimpleVendorDashboard />
+            <VendorDashboard />
           </VendorAuthGuard>
         } />
         <Route path="/vendor/settings" element={
@@ -388,12 +397,35 @@ const AppContent = () => {
             <VendorTransactions />
           </VendorAuthGuard>
         } />
+        <Route path="/vendor/delivery/:deliveryId" element={
+          <VendorAuthGuard>
+            <VendorDeliveryDetails />
+          </VendorAuthGuard>
+        } />
+        <Route path="/vendor/trade-requests" element={
+          <VendorAuthGuard>
+            <VendorTradeRequests />
+          </VendorAuthGuard>
+        } />
+        <Route path="/vendor/payment-confirmation/:deliveryId" element={
+          <VendorAuthGuard>
+            <VendorPaymentConfirmationNew />
+          </VendorAuthGuard>
+        } />
+        <Route path="/vendor/delivery-details/:deliveryId" element={
+          <VendorAuthGuard>
+            <VendorDeliveryDetailsPage />
+          </VendorAuthGuard>
+        } />
+        <Route path="/cash-trade-status/:tradeId" element={<UserCashTradeStatus />} />
         {/* Removed demo/test routes - not needed */}
             {/* Referral Route */}
             <Route path="/refer/:userId" element={<ReferralLanding />} />
             
             {/* Test Route for debugging trade completion */}
             <Route path="/test-trade-completion" element={<TestTradeCompletion />} />
+            
+
             
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />

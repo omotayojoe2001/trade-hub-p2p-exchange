@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
+import VendorNotificationService from '@/services/vendorNotificationService';
 
 const CashTradeFlow = () => {
   const [step, setStep] = useState(1);
@@ -142,8 +143,8 @@ const CashTradeFlow = () => {
         })
         .eq('id', tradeId);
 
-      // Create or update cash trade record
-      await supabase
+      // Create or update cash trade record with proper vendor notification
+      const { data: cashTradeData, error: cashTradeError } = await supabase
         .from('cash_trades')
         .upsert({
           trade_request_id: request.id,
@@ -153,86 +154,68 @@ const CashTradeFlow = () => {
           usd_amount: usdAmount,
           delivery_type: deliveryType,
           delivery_address: deliveryAddress,
+          pickup_location: deliveryType === 'pickup' ? vendor.location : null,
           vendor_payment_proof_url: paymentProof.url,
           delivery_code: deliveryCode,
           seller_phone: request.user_phone || 'Not provided',
-          status: 'vendor_paid'
+          status: 'vendor_paid',
+          updated_at: new Date().toISOString()
         }, {
           onConflict: 'trade_request_id'
-        });
+        })
+        .select()
+        .single();
+
+      if (cashTradeError) {
+        console.error('❌ MERCHANT DEBUG: Error creating cash trade:', cashTradeError);
+        throw cashTradeError;
+      }
+
+      console.log('✅ MERCHANT DEBUG: Cash trade created/updated:', cashTradeData);
 
       // Create delivery code record
       await supabase
         .from('delivery_codes')
         .insert({
-          cash_trade_id: tradeId,
+          cash_trade_id: cashTradeData.id,
           code: deliveryCode,
           seller_phone: user.phone || 'Not provided',
           vendor_id: vendor.id
         });
 
-      // Create cash delivery job for vendor and notify them
-      await supabase
-        .from('cash_trades')
-        .update({
-          buyer_id: user.id,
-          vendor_payment_proof_url: paymentProof.url,
-          delivery_code: deliveryCode,
-          status: 'vendor_paid',
-          seller_phone: request.user_phone || 'Not provided',
-          updated_at: new Date().toISOString()
-        })
-        .eq('trade_request_id', request.id);
-
       console.log('🔔 MERCHANT DEBUG: Starting vendor notification process...');
-      console.log('🔔 Vendor details:', vendor);
       
-      // Get vendor's user_id for notification
-      const { data: vendorProfile, error: profileError } = await supabase
-        .from('profiles')
-        .select('user_id')
-        .eq('email', vendor.email)
-        .single();
+      // Use the vendor notification service to send payment notification
+      const notificationSuccess = await VendorNotificationService.notifyVendorPaymentReceived({
+        vendorId: vendor.id,
+        cashTradeId: cashTradeData.id,
+        usdAmount: usdAmount,
+        deliveryType: deliveryType,
+        deliveryAddress: deliveryAddress,
+        pickupLocation: deliveryType === 'pickup' ? vendor.location : undefined,
+        deliveryCode: deliveryCode,
+        sellerPhone: request.user_phone || 'Not provided',
+        customerName: 'Customer',
+        tradeRequestId: request.id
+      });
       
-      console.log('🔔 MERCHANT DEBUG: Vendor profile lookup:', { vendorProfile, profileError });
-
-      // Notify vendor about payment received
-      if (vendorProfile?.user_id) {
-        console.log('🔔 MERCHANT DEBUG: Sending notification to vendor user_id:', vendorProfile.user_id);
-        
-        const { data: notificationResult, error: notificationError } = await supabase
-          .from('notifications')
-          .insert({
-            user_id: vendorProfile.user_id,
-            type: 'vendor_payment_received',
-            title: 'Payment Received - Cash Delivery Required',
-            message: `You received ₦${(usdAmount * 1650)?.toLocaleString()} for delivering $${usdAmount} USD cash. Check your dashboard for delivery details.`,
-            data: {
-              trade_request_id: request.id,
-              cash_trade_id: tradeId,
-              usd_amount: usdAmount,
-              delivery_code: deliveryCode,
-              seller_phone: request.user_phone || 'Not provided',
-              delivery_type: deliveryType,
-              delivery_address: deliveryAddress
-            }
-          });
-          
-        console.log('🔔 MERCHANT DEBUG: Notification result:', { notificationResult, notificationError });
-        
-        if (notificationError) {
-          console.error('❌ MERCHANT DEBUG: Failed to send notification:', notificationError);
-        } else {
-          console.log('✅ MERCHANT DEBUG: Notification sent successfully!');
-        }
+      if (notificationSuccess) {
+        console.log('✅ MERCHANT DEBUG: Vendor notification sent successfully!');
       } else {
-        console.error('❌ MERCHANT DEBUG: No vendor profile found for email:', vendor.email);
+        console.error('❌ MERCHANT DEBUG: Failed to send vendor notification');
       }
 
       // Show success message with debugging info
       console.log('🎉 MERCHANT DEBUG: Payment process completed successfully!');
-      console.log('🎯 MERCHANT DEBUG: Summary - Vendor ID:', vendor.id, 'should now see delivery request');
-      alert('✅ Payment confirmed! Vendor has been notified and will deliver cash to seller.');
+      console.log('🎯 MERCHANT DEBUG: Summary:');
+      console.log('  - Vendor ID:', vendor.id);
+      console.log('  - Cash Trade ID:', cashTradeData?.id);
+      console.log('  - Status set to: vendor_paid');
+      console.log('  - Delivery Code:', deliveryCode);
+      console.log('  - Vendor notification sent:', notificationSuccess);
+      console.log('  - Vendor should now see BIG POPUP notification with payment details');
+      
+      alert(`✅ Payment confirmed! Vendor has been notified and will deliver $${usdAmount} USD cash to seller.\n\nDelivery Code: ${deliveryCode}`);
       setStep(2);
     } catch (error) {
       console.error('Error confirming payment:', error);

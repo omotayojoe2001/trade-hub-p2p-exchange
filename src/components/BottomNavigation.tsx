@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Home, ArrowUpDown, Briefcase, Settings, Newspaper, MessageCircle } from 'lucide-react';
+import { Home, ArrowUpDown, Briefcase, Settings, Newspaper, MessageCircle, Package } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -76,21 +76,21 @@ const BottomNavigation = () => {
 
   const navItems = [
     { path: '/home', icon: Home, label: 'Home' },
+    { path: '/my-orders', icon: Package, label: 'Orders' },
     { path: '/buy-sell', icon: ArrowUpDown, label: 'Trade' },
-    { path: '/news', icon: Newspaper, label: 'News' },
     { path: '/my-trades', icon: Briefcase, label: 'Trades' },
-    { path: '/messages', icon: MessageCircle, label: 'Messages' },
+    { path: '/inbox', icon: MessageCircle, label: 'Inbox' },
     { path: '/settings', icon: Settings, label: 'Settings' }
   ];
 
 
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-card/95 backdrop-blur-md border-t border-border px-4 py-2 z-50 shadow-lg">
+    <div className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-gray-200 px-4 py-2 z-[9999] shadow-lg">
       <div className="flex justify-around items-center max-w-md mx-auto">
         {navItems.map((item) => {
           const isActive = location.pathname === item.path;
-          const showBadge = (item.path === '/buy-sell' || item.path === '/messages') && notificationCount > 0;
+          const showBadge = (item.path === '/buy-sell' || item.path === '/inbox') && notificationCount > 0;
           
           return (
             <Link

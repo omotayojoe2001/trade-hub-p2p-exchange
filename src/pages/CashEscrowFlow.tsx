@@ -22,6 +22,8 @@ const CashEscrowFlow = () => {
     usdAmount,
     deliveryType,
     deliveryAddress,
+    pickupLocation,
+    phoneNumber,
     serviceFee,
     platformFee,
     totalFee
@@ -176,8 +178,13 @@ const CashEscrowFlow = () => {
         throw new Error(`No vendors available for cash ${deliveryType}${locationMsg}. Found ${allVendors?.length || 0} total vendors.`);
       }
 
+      // Generate delivery code
+      const deliveryCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+      
       // Store cash-specific data with vendor assignment
       console.log('💰 CASH ESCROW DEBUG: Creating cash trade with vendor ID:', selectedVendorId);
+      console.log('💰 CASH ESCROW DEBUG: Phone number from form:', phoneNumber);
+      console.log('💰 CASH ESCROW DEBUG: Delivery/pickup location:', deliveryType === 'delivery' ? deliveryAddress : pickupLocation);
       const cashTradeData = {
         trade_request_id: tradeRequest.id,
         seller_id: user.id,
@@ -185,10 +192,14 @@ const CashEscrowFlow = () => {
         usd_amount: usdAmount,
         delivery_type: deliveryType,
         delivery_address: deliveryType === 'delivery' ? deliveryAddress : null,
-        pickup_location: deliveryType === 'pickup' ? (deliveryAddress || 'Ikeja') : null,
+        pickup_location: deliveryType === 'pickup' ? (pickupLocation || deliveryAddress || 'Ikeja') : null,
+        delivery_code: deliveryCode,
+        seller_phone: phoneNumber || '+234-000-000-0000',
+        customer_phone: phoneNumber || '+234-000-000-0000',
+        customer_name: user.user_metadata?.full_name || user.email || 'Customer',
         escrow_address: cryptoAddress,
         payment_proof_url: paymentProof.url,
-        status: 'pending_acceptance'
+        status: 'pending_merchant_acceptance' // Vendor won't see until merchant pays
       };
 
       // Insert into cash trades table
@@ -206,6 +217,9 @@ const CashEscrowFlow = () => {
         }
         
         console.log('Cash trade created successfully:', cashTrade);
+        
+        // Store the cash trade ID for the status page
+        setTradeId(cashTrade.id);
       } catch (cashError) {
         console.error('Cash trades table error:', {
           error: cashError,
@@ -238,7 +252,7 @@ const CashEscrowFlow = () => {
         throw new Error('Failed to process platform fee');
       }
 
-      setTradeId(tradeRequest.id);
+      // TradeId is already set above when cash trade is created
       setStep(3);
 
       // Broadcast to merchants (NOT vendors)
@@ -496,7 +510,7 @@ const CashEscrowFlow = () => {
           </div>
 
             <Button
-              onClick={() => navigate('/my-trades')}
+              onClick={() => navigate(`/cash-trade-status/${tradeId}`)}
               className="w-full bg-blue-600 hover:bg-blue-700 text-white py-4"
             >
               View Trade Status

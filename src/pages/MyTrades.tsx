@@ -40,24 +40,45 @@ const MyTrades = () => {
     try {
       setLoading(true);
       
-      const { data, error } = await supabase
+      // Fetch regular trades
+      const { data: tradesData, error: tradesError } = await supabase
         .from('trades')
         .select('*')
         .or(`buyer_id.eq.${user.id},seller_id.eq.${user.id}`)
         .order('created_at', { ascending: false });
 
-      if (error) {
-        console.error('Error fetching trades:', error);
-        toast({
-          title: "Error",
-          description: "Failed to fetch trades",
-          variant: "destructive"
-        });
-        return;
+      // Fetch cash orders
+      const { data: cashOrders, error: cashError } = await supabase
+        .from('cash_trades')
+        .select('*')
+        .eq('seller_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (tradesError) {
+        console.error('Error fetching trades:', tradesError);
+      }
+      
+      if (cashError) {
+        console.error('Error fetching cash orders:', cashError);
       }
 
-      console.log('Fetched trades:', data);
-      setTrades(data || []);
+      // Combine and format data
+      const allTrades = [
+        ...(tradesData || []),
+        ...(cashOrders || []).map(order => ({
+          ...order,
+          trade_type: 'cash_order',
+          crypto_type: 'USD',
+          coin_type: 'USD',
+          amount: order.usd_amount,
+          amount_crypto: order.usd_amount,
+          naira_amount: order.usd_amount * 1650,
+          rate: 1650
+        }))
+      ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+      console.log('Fetched all trades:', allTrades);
+      setTrades(allTrades);
     } catch (error) {
       console.error('Error in fetchTrades:', error);
     } finally {
@@ -151,11 +172,10 @@ const MyTrades = () => {
     if (activeTab === 'All') return trades;
     
     const statusMap = {
-      'Ongoing': ['pending', 'in_progress', 'payment_proof_uploaded'],
-      'Completed': ['completed'],
+      'Ongoing': ['pending', 'in_progress', 'payment_proof_uploaded', 'vendor_paid', 'payment_confirmed', 'delivery_in_progress'],
+      'Completed': ['completed', 'cash_delivered'],
       'Cancelled': ['cancelled'],
-      'Disputes': ['disputed', 'under_review'],
-      'Escrow': ['escrow_pending', 'escrow_funded']
+      'Disputes': ['disputed', 'under_review']
     };
     
     return trades.filter(trade => {
@@ -194,7 +214,7 @@ const MyTrades = () => {
   const filteredTrades = filterTradesByDate(filterTrades(trades));
 
   return (
-    <div className="min-h-screen bg-background font-['Poppins']">
+    <div className="min-h-screen bg-white font-['Poppins'] pb-24">
       <div className="px-4 pt-6 pb-20 max-w-7xl mx-auto">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-2xl font-bold text-foreground">My Trades</h1>
@@ -233,7 +253,7 @@ const MyTrades = () => {
 
         {/* Filter Tabs */}
         <div className="flex space-x-2 mb-6">
-          {['All', 'Ongoing', 'Completed', 'Cancelled', 'Disputes', 'Escrow'].map((status) => (
+          {['All', 'Ongoing', 'Completed', 'Cancelled', 'Disputes'].map((status) => (
             <button
               key={status}
               onClick={() => setActiveTab(status)}
@@ -323,8 +343,8 @@ const MyTrades = () => {
                   {/* Action Buttons */}
                   <div className="flex space-x-2">
                     <Link
-                      to={`/trade-details/${trade.id}`}
-                      className="flex-1 py-1.5 px-3 bg-secondary text-secondary-foreground rounded-md text-xs font-medium hover:bg-secondary/80 transition-colors text-center"
+                      to={trade.trade_type === 'cash_order' ? `/cash-trade-status/${trade.id}` : `/trade-details/${trade.id}`}
+                      className="flex-1 py-1.5 px-3 bg-blue-100 text-blue-700 rounded-md text-xs font-medium hover:bg-blue-200 transition-colors text-center"
                     >
                       View Details
                     </Link>

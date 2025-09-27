@@ -31,6 +31,12 @@ const GlobalNotifications = () => {
   const [showDetailPopup, setShowDetailPopup] = useState(false);
   const [selectedNotification, setSelectedNotification] = useState<Notification | null>(null);
 
+  // Disable notifications for vendor users
+  const isVendorUser = localStorage.getItem('vendor_id') || window.location.pathname.startsWith('/vendor');
+  if (isVendorUser) {
+    return null;
+  }
+
   // Load notifications from Supabase
   useEffect(() => {
     const loadNotifications = async () => {

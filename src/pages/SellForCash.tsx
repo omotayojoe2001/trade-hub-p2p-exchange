@@ -8,6 +8,12 @@ import NotesSection from '@/components/sell-crypto/NotesSection';
 import SecurityNotice from '@/components/sell-crypto/SecurityNotice';
 import LocationSelector from '@/components/LocationSelector';
 import DeliveryAddressForm from '@/components/DeliveryAddressForm';
+import AnimatedCard from '@/components/animations/AnimatedCard';
+import FloatingElement from '@/components/animations/FloatingElement';
+import PageTransition from '@/components/animations/PageTransition';
+import PulseGlow from '@/components/animations/PulseGlow';
+import Button3D from '@/components/animations/Button3D';
+import LoadingSpinner3D from '@/components/animations/LoadingSpinner3D';
 
 const SellForCash = () => {
   console.log('SellForCash component rendered at:', new Date().toISOString());
@@ -121,8 +127,8 @@ const SellForCash = () => {
       return;
     }
 
-    if (selectedPayment === 'delivery' && !phoneNumber.trim()) {
-      alert('Please enter your phone number for delivery');
+    if (!phoneNumber.trim()) {
+      alert('Please enter your phone number');
       return;
     }
 
@@ -146,7 +152,7 @@ const SellForCash = () => {
           deliveryType: selectedPayment,
           deliveryAddress: selectedPayment === 'delivery' ? deliveryAddress : null,
           pickupLocation: selectedPayment === 'pickup' ? pickupLocation : null,
-          phoneNumber: selectedPayment === 'delivery' ? phoneNumber : null,
+          phoneNumber: phoneNumber,
           serviceFee: 0, // Will be calculated later
           platformFee: getPlatformFee(),
           totalFee: platformFee
@@ -161,24 +167,31 @@ const SellForCash = () => {
   };
 
   return (
-    <div className="min-h-screen bg-white">
+    <PageTransition>
+      <div className="min-h-screen bg-white pb-24">
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-gray-100">
+      <AnimatedCard className="flex items-center justify-between p-4 border-b border-gray-100" hover3D={false}>
         <div className="flex items-center">
           <button onClick={() => navigate(-1)}>
             <ArrowLeft size={24} className="text-gray-700 mr-4" />
           </button>
-          <h1 className="text-lg font-semibold text-gray-900">Sell Crypto for Cash</h1>
+          <FloatingElement intensity="low">
+            <h1 className="text-lg font-semibold text-gray-900">Sell Crypto for Cash</h1>
+          </FloatingElement>
         </div>
         <MoreVertical size={24} className="text-gray-700" />
-      </div>
+      </AnimatedCard>
 
       <div className="p-4 space-y-6">
         {/* Credits Display */}
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <AnimatedCard delay={0.1} className="bg-blue-50 border border-blue-200 rounded-lg p-4">
           <div className="flex justify-between items-center">
             <span className="text-sm font-medium text-blue-800">Your Credits</span>
-            <span className="text-lg font-bold text-blue-900">{userCredits}</span>
+            <PulseGlow color="blue" intensity="medium">
+              <FloatingElement intensity="low">
+                <span className="text-lg font-bold text-blue-900">{userCredits}</span>
+              </FloatingElement>
+            </PulseGlow>
           </div>
           <div className="text-xs text-blue-600 mt-2 space-y-1">
             <div className="flex justify-between">
@@ -189,7 +202,7 @@ const SellForCash = () => {
               Service fees will be calculated after location selection
             </div>
           </div>
-        </div>
+        </AnimatedCard>
 
         {/* Crypto Selection */}
         <div className="space-y-2 relative">
@@ -239,7 +252,7 @@ const SellForCash = () => {
         </div>
 
         {/* Amount Input */}
-        <div className="space-y-2">
+        <AnimatedCard delay={0.3} className="space-y-2">
           <h3 className="text-sm font-medium text-gray-700">Amount to Sell</h3>
           <div className="relative">
             <input
@@ -259,9 +272,13 @@ const SellForCash = () => {
           </div>
           <div className="flex justify-between items-center mt-2">
             <span className="text-xs text-gray-500">Rate: ${currentRate.toLocaleString()}/{selectedCrypto}</span>
-            <span className="text-sm font-bold text-green-600">${calculateUSDValue().toLocaleString()}</span>
+            <PulseGlow color="green" intensity="medium">
+              <FloatingElement intensity="low">
+                <span className="text-sm font-bold text-green-600">${calculateUSDValue().toLocaleString()}</span>
+              </FloatingElement>
+            </PulseGlow>
           </div>
-        </div>
+        </AnimatedCard>
 
         {/* Delivery Method */}
         <div className="space-y-3">
@@ -320,12 +337,24 @@ const SellForCash = () => {
           </div>
         </div>
 
-        {/* Pickup Location */}
+        {/* Pickup Location and Phone */}
         {selectedPayment === 'pickup' && (
-          <LocationSelector
-            selectedLocation={pickupLocation}
-            onLocationChange={setPickupLocation}
-          />
+          <>
+            <LocationSelector
+              selectedLocation={pickupLocation}
+              onLocationChange={setPickupLocation}
+            />
+            <div className="space-y-2">
+              <h3 className="text-sm font-medium text-gray-700">Phone Number</h3>
+              <input
+                type="tel"
+                value={phoneNumber}
+                onChange={(e) => setPhoneNumber(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                placeholder="Enter your phone number"
+              />
+            </div>
+          </>
         )}
 
         {/* Delivery Address and Phone */}
@@ -348,8 +377,10 @@ const SellForCash = () => {
         <SecurityNotice />
 
         {/* Info Banner */}
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-          <h4 className="font-medium text-yellow-800 mb-2">How it works:</h4>
+        <AnimatedCard delay={0.5} className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+          <FloatingElement intensity="low">
+            <h4 className="font-medium text-yellow-800 mb-2">How it works:</h4>
+          </FloatingElement>
           <ul className="text-sm text-yellow-700 space-y-1">
             <li>• You deposit crypto into secure escrow first</li>
             <li>• After deposit, trade request goes to all users</li>
@@ -357,25 +388,33 @@ const SellForCash = () => {
             <li>• Vendor delivers cash to you</li>
             <li>• Crypto released to buyer</li>
           </ul>
-        </div>
+        </AnimatedCard>
 
         {/* Send Trade Request Button */}
-        <Button
-          onClick={handleSendTradeRequest}
-          disabled={
-            loading ||
-            !amount ||
-            parseFloat(amount) <= 0 ||
-            (selectedPayment === 'delivery' && (!deliveryAddress.trim() || !phoneNumber.trim())) ||
-            (selectedPayment === 'pickup' && (!pickupLocation.trim() || pickupLocation === 'Other (specify below)')) ||
-            userCredits < getPlatformFee()
-          }
-          className="w-full bg-blue-600 hover:bg-blue-700 text-white py-4 rounded-lg text-lg font-medium disabled:bg-gray-400"
-        >
-          {loading ? 'Processing...' : 'Continue to Escrow'}
-        </Button>
+        {loading ? (
+          <div className="w-full py-4 flex justify-center">
+            <LoadingSpinner3D size="md" color="blue" text="Processing..." />
+          </div>
+        ) : (
+          <Button3D
+            onClick={handleSendTradeRequest}
+            disabled={
+              !amount ||
+              parseFloat(amount) <= 0 ||
+              (selectedPayment === 'delivery' && (!deliveryAddress.trim() || !phoneNumber.trim())) ||
+              (selectedPayment === 'pickup' && (!pickupLocation.trim() || pickupLocation === 'Other (specify below)' || !phoneNumber.trim())) ||
+              userCredits < getPlatformFee()
+            }
+            variant="primary"
+            size="lg"
+            className="w-full py-4 text-lg font-medium"
+          >
+            Continue to Escrow
+          </Button3D>
+        )}
       </div>
-    </div>
+      </div>
+    </PageTransition>
   );
 };
 

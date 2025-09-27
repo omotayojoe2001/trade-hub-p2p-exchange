@@ -53,12 +53,11 @@ const BuySell = () => {
     try {
       setLoadingRequests(true);
 
-      // Fetch trade requests meant for current user as merchant
+      // Fetch open trade requests for merchants
       const { data: requests, error } = await supabase
         .from('trade_requests')
         .select('*')
         .eq('status', 'open')
-        .eq('merchant_id', user.id)
         .gte('expires_at', new Date().toISOString()) // Only non-expired
         .order('created_at', { ascending: false })
         .limit(2);
@@ -87,15 +86,15 @@ const BuySell = () => {
 
   const displayName = profile?.display_name || user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'User';
   const userInitials = displayName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
-  const profilePicture = profile?.profile_picture_url;
+  const profilePicture = profile?.avatar_url;
 
   return (
     <div className="min-h-screen bg-white pb-20 font-['Poppins']">
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-4 h-[60px]">
         <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center overflow-hidden">
-          {profilePicture ? (
-            <img src={profilePicture} alt={displayName} className="w-full h-full object-cover" />
+          {profile?.avatar_url ? (
+            <img src={profile.avatar_url} alt={displayName} className="w-full h-full object-cover" />
           ) : (
             <span className="text-blue-600 font-medium text-sm">{userInitials}</span>
           )}
@@ -234,17 +233,17 @@ const BuySell = () => {
             <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
           </div>
         ) : tradeRequests.length > 0 ? (
-          <div className="space-y-3">
-            {tradeRequests.map((request) => (
+          <div className="grid grid-cols-1 gap-3">
+            {tradeRequests.slice(0, 2).map((request) => (
               <div key={request.id} className="w-full bg-white border border-[#E5E7EB] rounded-xl p-4">
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center">
                     <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-2">
-                      <span className="text-blue-600 text-xs font-bold">T</span>
+                      <span className="text-blue-600 text-xs font-bold">{request.crypto_type?.charAt(0) || 'T'}</span>
                     </div>
                     <div>
-                      <p className="font-medium text-gray-900 text-sm">Trader</p>
-                      <span className="text-yellow-500 text-xs">★ 4.5</span>
+                      <p className="font-medium text-gray-900 text-sm">Trade Request</p>
+                      <span className="text-green-500 text-xs">★ New</span>
                     </div>
                   </div>
                   <p className="text-xs text-gray-500">
@@ -254,27 +253,32 @@ const BuySell = () => {
                 <div className="grid grid-cols-2 gap-2 text-xs mb-3">
                   <div>
                     <span className="text-gray-500">
-                      {request.trade_type === 'buy' ? 'Buying:' : 'Selling:'}
+                      {request.trade_type === 'buy' ? 'Wants to Buy:' : 'Wants to Sell:'}
                     </span>
-                    <p className="font-medium">{request.amount_crypto} {request.crypto_type}</p>
+                    <p className="font-medium">{request.amount_crypto || request.amount} {request.crypto_type}</p>
                   </div>
                   <div>
-                    <span className="text-gray-500">Amount:</span>
-                    <p className="font-medium">₦{request.amount_fiat?.toLocaleString()}</p>
+                    <span className="text-gray-500">For:</span>
+                    <p className="font-medium">₦{(request.amount_fiat || request.naira_amount || 0).toLocaleString()}</p>
                   </div>
                 </div>
                 <Button
                   className="w-full bg-[#0052FF] text-white rounded-full h-8 text-xs font-bold"
-                  onClick={() => navigate('/trade-request-details', { state: { request: request } })}
+                  onClick={() => navigate(`/trade-request-details/${request.id}`)}
                 >
-                  View Request
+                  Accept Request
                 </Button>
               </div>
             ))}
           </div>
         ) : (
-          <div className="w-full h-20 bg-[#F8F9FA] rounded-xl flex items-center justify-center">
-            <p className="text-sm text-[#6B7280]">No active trade requests</p>
+          <div className="grid grid-cols-1 gap-3">
+            <div className="w-full h-16 bg-[#F8F9FA] rounded-xl flex items-center justify-center">
+              <p className="text-sm text-[#6B7280]">No trade requests available</p>
+            </div>
+            <div className="w-full h-16 bg-[#F8F9FA] rounded-xl flex items-center justify-center border-2 border-dashed border-gray-300">
+              <p className="text-xs text-[#9CA3AF]">Waiting for new requests...</p>
+            </div>
           </div>
         )}
       </div>

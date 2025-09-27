@@ -44,49 +44,137 @@ const SellCryptoTradeRequestDetails = () => {
 
       if (error) throw error;
       
-      // Get user profile separately
+      // Get user profile and phone separately
       const { data: profile } = await supabase
         .from('profiles')
         .select('display_name')
         .eq('user_id', request.user_id)
         .single();
       
+      const { data: userProfile } = await supabase
+        .from('user_profiles')
+        .select('phone')
+        .eq('user_id', request.user_id)
+        .single();
+      
       (request as any).profiles = profile;
+      (request as any).user_phone = userProfile?.phone;
 
-      console.log('Trade request data:', request);
-      console.log('Bank account ID:', (request as any).bank_account_id);
+      console.log('🔍 DEBUG: Trade request data:', request);
+      console.log('🔍 DEBUG: Bank account ID:', (request as any).bank_account_id);
+      console.log('🔍 DEBUG: Payment method:', request.payment_method);
       setTradeRequest(request);
 
-      // This is WRONG - should get VENDOR bank details for cash trades
-      // For cash trades, merchant pays VENDOR, not user
+      // For cash trades, get vendor bank details and delivery code
       if (request.payment_method === 'cash_delivery') {
-        // Get vendor details from cash_trades table
-        const { data: cashTrade } = await supabase
+        console.log('🔍 DEBUG: Fetching vendor details for cash trade');
+        console.log('🔍 DEBUG: Trade request ID:', request.id);
+        
+        // Try to get vendor details and delivery code from cash_trades table
+        const { data: cashTrade, error: cashTradeError } = await supabase
           .from('cash_trades')
           .select(`
             vendor_id,
+            delivery_code,
             vendors!inner(bank_name, bank_account, account_name, display_name)
           `)
           .eq('trade_request_id', request.id)
-          .single();
+          .maybeSingle();
+
+        console.log('🔍 DEBUG: Cash trade query result:', { cashTrade, cashTradeError });
+        console.log('🔍 DEBUG: Vendor data:', cashTrade?.vendors);
+        
+        // Check if cash trade exists at all
+        const { data: allCashTrades } = await supabase
+          .from('cash_trades')
+          .select('*')
+          .eq('trade_request_id', request.id);
+        
+        console.log('🔍 DEBUG: All cash trades for this request:', allCashTrades);
+        
+        // Skip creating cash trade here due to RLS issues - it should be created in CashEscrowFlow
+        if (!cashTrade && (!allCashTrades || allCashTrades.length === 0)) {
+          console.log('⚠️ DEBUG: No cash trade found - should be created in CashEscrowFlow');
+        }
 
         if (cashTrade?.vendors) {
+          console.log('✅ DEBUG: Vendor found, setting bank details');
           setUserBankAccount({
             account_name: cashTrade.vendors.account_name,
             bank_name: cashTrade.vendors.bank_name,
             account_number: cashTrade.vendors.bank_account,
             vendor_name: cashTrade.vendors.display_name
           });
+          // Add delivery code to trade request for display
+          request.delivery_code = cashTrade.delivery_code;
+          console.log('🔍 DEBUG: Set bank account:', {
+            account_name: cashTrade.vendors.account_name,
+            bank_name: cashTrade.vendors.bank_name,
+            account_number: cashTrade.vendors.bank_account,
+            vendor_name: cashTrade.vendors.display_name
+          });
         } else {
-          throw new Error('No vendor assigned to this cash trade');
+          console.log('❌ DEBUG: No vendor found, using placeholder');
+          console.log('🔍 DEBUG: Checking if we need to assign a vendor...');
+          
+          // Try to assign a vendor if none exists
+          const { data: availableVendors } = await supabase
+            .from('vendors')
+            .select('*')
+            .eq('is_active', true)
+            .limit(1);
+          
+          console.log('🔍 DEBUG: Available vendors:', availableVendors);
+          
+          if (availableVendors && availableVendors.length > 0) {
+            const vendor = availableVendors[0];
+            console.log('🔧 DEBUG: Assigning vendor:', vendor);
+            
+            // Update cash trade with vendor
+            await supabase
+              .from('cash_trades')
+              .update({ 
+                vendor_id: vendor.id,
+                status: 'vendor_assigned'
+              })
+              .eq('trade_request_id', request.id);
+            
+            // Set vendor bank details
+            setUserBankAccount({
+              account_name: vendor.account_name,
+              bank_name: vendor.bank_name,
+              account_number: vendor.bank_account,
+              vendor_name: vendor.display_name
+            });
+            
+            console.log('✅ DEBUG: Vendor assigned and bank details set');
+          } else {
+            // No vendor assigned yet - use placeholder
+            setUserBankAccount({
+              account_name: 'Vendor will be assigned',
+              bank_name: 'Please wait...',
+              account_number: 'Vendor assignment in progress',
+              vendor_name: 'TBD'
+            });
+          }
         }
       } else {
         // For regular trades, get user bank details
-        setUserBankAccount({
-          account_name: 'User Account',
-          bank_name: 'User Bank',
-          account_number: 'User Account Number'
-        });
+        if (request.bank_account_id) {
+          const { data: bankAccount } = await supabase
+            .from('bank_accounts')
+            .select('*')
+            .eq('id', request.bank_account_id)
+            .single();
+          
+          setUserBankAccount(bankAccount);
+        } else {
+          setUserBankAccount({
+            account_name: 'User Account',
+            bank_name: 'User Bank',
+            account_number: 'User Account Number'
+          });
+        }
       }
     } catch (error) {
       console.error('Error fetching trade request:', error);
@@ -142,28 +230,51 @@ const SellCryptoTradeRequestDetails = () => {
 
       // For cash trades, notify VENDOR (not user) that payment was sent
       if (tradeRequest.payment_method === 'cash_delivery') {
-        // Get vendor ID from cash_trades
+        console.log('💰 DEBUG: Processing cash delivery payment notification');
+        
+        // Get vendor details from cash_trades
         const { data: cashTrade } = await supabase
           .from('cash_trades')
-          .select('vendor_id')
+          .select('vendor_id, vendors!inner(user_id)')
           .eq('trade_request_id', tradeRequestId)
-          .single();
+          .maybeSingle();
 
-        if (cashTrade?.vendor_id) {
-          // Notify vendor that merchant paid them
+        console.log('💰 DEBUG: Cash trade for notification:', cashTrade);
+
+        if (cashTrade?.vendors?.user_id) {
+          // Update cash trade status to vendor_paid
+          await supabase
+            .from('cash_trades')
+            .update({ 
+              status: 'vendor_paid',
+              buyer_id: user.id,
+              updated_at: new Date().toISOString()
+            })
+            .eq('trade_request_id', tradeRequestId);
+
+          console.log('💰 DEBUG: Updated cash trade status to vendor_paid');
+          
+          // Send notification to VENDOR (not user)
+          const vendorUserId = cashTrade.vendors.user_id;
+          console.log('💰 DEBUG: Sending notification to vendor user_id:', vendorUserId);
+          
           await supabase
             .from('notifications')
             .insert({
-              user_id: cashTrade.vendor_id,
-              type: 'vendor_payment_received',
-              title: 'Payment Received from Merchant',
-              message: `Merchant paid ₦${tradeRequest.amount_fiat?.toLocaleString()}. Confirm payment and deliver cash to customer.`,
+              user_id: vendorUserId, // Send to VENDOR
+              type: 'payment_received',
+              title: 'PAYMENT RECEIVED!',
+              message: `Merchant paid ₦${(tradeRequest.amount_fiat || 0).toLocaleString()} for cash delivery. Confirm receipt in your dashboard.`,
               data: {
+                cash_trade_id: cashTrade.vendor_id,
                 trade_request_id: tradeRequestId,
-                amount_fiat: tradeRequest.amount_fiat,
-                seller_id: tradeRequest.user_id
+                amount_fiat: tradeRequest.amount_fiat
               }
             });
+            
+          console.log('✅ DEBUG: Notification sent to vendor successfully');
+        } else {
+          console.log('❌ DEBUG: No vendor found for notification');
         }
       } else {
         // For regular trades, notify user
@@ -291,6 +402,12 @@ const SellCryptoTradeRequestDetails = () => {
             )}
           </CardHeader>
           <CardContent className="space-y-2">
+            {userBankAccount?.vendor_name && (
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Vendor Name:</span>
+                <span className="font-semibold">{userBankAccount.vendor_name}</span>
+              </div>
+            )}
             <div className="flex justify-between">
               <span className="text-muted-foreground">Account Name:</span>
               <span className="font-semibold">{userBankAccount?.account_name}</span>
@@ -303,14 +420,10 @@ const SellCryptoTradeRequestDetails = () => {
               <span className="text-muted-foreground">Account Number:</span>
               <span className="font-semibold">{userBankAccount?.account_number}</span>
             </div>
-            {userBankAccount?.vendor_name && (
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Vendor:</span>
-                <span className="font-semibold">{userBankAccount.vendor_name}</span>
-              </div>
-            )}
           </CardContent>
         </Card>
+
+
 
         {step === 'details' && (
           <Button 

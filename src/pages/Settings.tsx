@@ -42,7 +42,7 @@ const Settings = () => {
   const displayName = profile?.display_name || user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'AJ Johnson';
   const userEmail = user?.email || 'aj@cryptoapp.com';
   const userInitials = displayName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
-  const profilePicture = profile?.profile_picture_url;
+  const profilePicture = profile?.avatar_url;
 
   const handleTwoFactorToggle = async (enabled: boolean) => {
     if (enabled) {
@@ -128,8 +128,8 @@ const Settings = () => {
       <div className="bg-white px-4 py-8 text-center">
         {/* Avatar */}
         <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4 overflow-hidden">
-          {profilePicture ? (
-            <img src={profilePicture} alt={displayName} className="w-full h-full object-cover" />
+          {profile?.avatar_url ? (
+            <img src={profile.avatar_url} alt={displayName} className="w-full h-full object-cover" />
           ) : (
             <span className="text-[#1A73E8] font-semibold text-xl">{userInitials}</span>
           )}

@@ -151,146 +151,144 @@ const VendorMessages = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-20">
-      {/* Header */}
-      <div className="bg-white border-b border-gray-200 p-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-xl font-semibold text-gray-900">Messages</h1>
-            <p className="text-sm text-gray-600">Chat with customers about deliveries</p>
-          </div>
-          <MessageCircle className="w-6 h-6 text-blue-600" />
-        </div>
-      </div>
-
-      <div className="flex h-[calc(100vh-140px)]">
-        {/* Conversations List */}
-        <div className="w-1/3 bg-white border-r border-gray-200 overflow-y-auto">
-          {conversations.length === 0 ? (
-            <div className="p-4 text-center text-gray-500">
-              <MessageCircle className="w-12 h-12 mx-auto mb-2 text-gray-300" />
-              <p>No conversations yet</p>
+    <div className="min-h-screen bg-white flex flex-col">
+      {/* Mobile-first design */}
+      <div className="md:hidden">
+        {!selectedJobId ? (
+          /* Conversations List - Mobile */
+          <>
+            <div className="bg-blue-600 text-white p-4">
+              <h1 className="text-lg font-semibold">Messages</h1>
+              <p className="text-blue-100 text-sm">Customer conversations</p>
             </div>
-          ) : (
-            conversations.map((conversation) => (
-              <button
-                key={conversation.job_id}
-                onClick={() => setSelectedJobId(conversation.job_id)}
-                className={`w-full p-4 text-left border-b border-gray-100 hover:bg-gray-50 ${
-                  selectedJobId === conversation.job_id ? 'bg-blue-50 border-blue-200' : ''
-                }`}
-              >
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center space-x-2">
-                    <User className="w-4 h-4 text-gray-500" />
-                    <span className="font-medium text-sm">{conversation.job_details.customer_name}</span>
-                  </div>
-                  {conversation.unread_count > 0 && (
-                    <div className="w-5 h-5 bg-red-500 rounded-full flex items-center justify-center">
-                      <span className="text-xs text-white">{conversation.unread_count}</span>
-                    </div>
-                  )}
+            <div className="flex-1 overflow-y-auto">
+              {conversations.length === 0 ? (
+                <div className="p-8 text-center text-gray-500">
+                  <MessageCircle className="w-16 h-16 mx-auto mb-4 text-gray-300" />
+                  <p>No conversations yet</p>
                 </div>
-                <div className="flex items-center space-x-2 text-xs text-gray-600 mb-1">
-                  <Package className="w-3 h-3" />
-                  <span>${conversation.job_details.amount_usd} {conversation.job_details.delivery_type}</span>
-                </div>
-                <p className="text-xs text-gray-500 truncate">
-                  {conversation.messages.length > 0 
-                    ? conversation.messages[conversation.messages.length - 1].message
-                    : 'No messages yet'
-                  }
-                </p>
-              </button>
-            ))
-          )}
-        </div>
-
-        {/* Chat Area */}
-        <div className="flex-1 flex flex-col">
-          {selectedConversation ? (
-            <>
-              {/* Chat Header */}
-              <div className="bg-white border-b border-gray-200 p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="font-medium">{selectedConversation.job_details.customer_name}</h3>
-                    <p className="text-sm text-gray-600">
-                      ${selectedConversation.job_details.amount_usd} {selectedConversation.job_details.delivery_type}
-                    </p>
-                  </div>
-                  {selectedConversation.job_details.customer_phone && (
-                    <a
-                      href={`tel:${selectedConversation.job_details.customer_phone}`}
-                      className="flex items-center space-x-1 text-blue-600 hover:text-blue-700"
-                    >
-                      <Phone className="w-4 h-4" />
-                      <span className="text-sm">Call</span>
-                    </a>
-                  )}
-                </div>
-              </div>
-
-              {/* Messages */}
-              <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                {selectedConversation.messages.length === 0 ? (
-                  <div className="text-center text-gray-500 mt-8">
-                    <MessageCircle className="w-12 h-12 mx-auto mb-2 text-gray-300" />
-                    <p>No messages yet. Start the conversation!</p>
-                  </div>
-                ) : (
-                  selectedConversation.messages.map((message) => (
-                    <div
-                      key={message.id}
-                      className={`flex ${message.sender_type === 'vendor' ? 'justify-end' : 'justify-start'}`}
-                    >
-                      <div
-                        className={`max-w-xs px-4 py-2 rounded-lg ${
-                          message.sender_type === 'vendor'
-                            ? 'bg-blue-600 text-white'
-                            : 'bg-gray-200 text-gray-900'
-                        }`}
-                      >
-                        <p className="text-sm">{message.message}</p>
-                        <p className={`text-xs mt-1 ${
-                          message.sender_type === 'vendor' ? 'text-blue-100' : 'text-gray-500'
-                        }`}>
-                          {new Date(message.created_at).toLocaleTimeString()}
+              ) : (
+                conversations.map((conversation) => (
+                  <button
+                    key={conversation.job_id}
+                    onClick={() => setSelectedJobId(conversation.job_id)}
+                    className="w-full p-4 text-left border-b border-gray-100 hover:bg-gray-50 active:bg-gray-100"
+                  >
+                    <div className="flex items-center space-x-3">
+                      <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                        <User className="w-6 h-6 text-blue-600" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between">
+                          <p className="font-medium text-gray-900 truncate">{conversation.job_details.customer_name}</p>
+                          {conversation.unread_count > 0 && (
+                            <div className="w-5 h-5 bg-blue-600 rounded-full flex items-center justify-center ml-2">
+                              <span className="text-xs text-white">{conversation.unread_count}</span>
+                            </div>
+                          )}
+                        </div>
+                        <p className="text-sm text-gray-600">${conversation.job_details.amount_usd} • {conversation.job_details.delivery_type}</p>
+                        <p className="text-sm text-gray-500 truncate">
+                          {conversation.messages.length > 0 
+                            ? conversation.messages[conversation.messages.length - 1].message
+                            : 'No messages yet'
+                          }
                         </p>
                       </div>
                     </div>
-                  ))
-                )}
+                  </button>
+                ))
+              )}
+            </div>
+          </>
+        ) : (
+          /* Chat View - Mobile */
+          <div className="flex flex-col h-screen">
+            {/* Chat Header */}
+            <div className="bg-blue-600 text-white p-4 flex items-center space-x-3">
+              <button onClick={() => setSelectedJobId('')} className="text-white">
+                ←
+              </button>
+              <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center">
+                <User className="w-5 h-5" />
               </div>
+              <div className="flex-1">
+                <p className="font-medium">{selectedConversation?.job_details.customer_name}</p>
+                <p className="text-blue-100 text-sm">${selectedConversation?.job_details.amount_usd}</p>
+              </div>
+              {selectedConversation?.job_details.customer_phone && (
+                <a href={`tel:${selectedConversation.job_details.customer_phone}`} className="text-white">
+                  <Phone className="w-5 h-5" />
+                </a>
+              )}
+            </div>
 
-              {/* Message Input */}
-              <div className="bg-white border-t border-gray-200 p-4">
-                <div className="flex space-x-2">
-                  <Input
-                    value={newMessage}
-                    onChange={(e) => setNewMessage(e.target.value)}
-                    placeholder="Type your message..."
-                    onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
-                    className="flex-1"
-                  />
-                  <Button
-                    onClick={sendMessage}
-                    disabled={sending || !newMessage.trim()}
-                    className="bg-blue-600 hover:bg-blue-700"
-                  >
-                    <Send className="w-4 h-4" />
-                  </Button>
+            {/* Messages */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-gray-50">
+              {selectedConversation?.messages.length === 0 ? (
+                <div className="text-center text-gray-500 mt-16">
+                  <MessageCircle className="w-16 h-16 mx-auto mb-4 text-gray-300" />
+                  <p>Start the conversation!</p>
                 </div>
-              </div>
-            </>
-          ) : (
-            <div className="flex-1 flex items-center justify-center text-gray-500">
-              <div className="text-center">
-                <MessageCircle className="w-16 h-16 mx-auto mb-4 text-gray-300" />
-                <p>Select a conversation to start messaging</p>
+              ) : (
+                selectedConversation?.messages.map((message) => (
+                  <div
+                    key={message.id}
+                    className={`flex ${message.sender_type === 'vendor' ? 'justify-end' : 'justify-start'}`}
+                  >
+                    <div
+                      className={`max-w-[80%] px-4 py-2 rounded-2xl ${
+                        message.sender_type === 'vendor'
+                          ? 'bg-blue-600 text-white rounded-br-md'
+                          : 'bg-white text-gray-900 rounded-bl-md shadow-sm'
+                      }`}
+                    >
+                      <p className="text-sm">{message.message}</p>
+                      <p className={`text-xs mt-1 ${
+                        message.sender_type === 'vendor' ? 'text-blue-100' : 'text-gray-500'
+                      }`}>
+                        {new Date(message.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                      </p>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+
+            {/* Message Input */}
+            <div className="bg-white border-t p-4">
+              <div className="flex space-x-2">
+                <Input
+                  value={newMessage}
+                  onChange={(e) => setNewMessage(e.target.value)}
+                  placeholder="Type a message..."
+                  onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
+                  className="flex-1 rounded-full border-gray-300"
+                />
+                <Button
+                  onClick={sendMessage}
+                  disabled={sending || !newMessage.trim()}
+                  className="bg-blue-600 hover:bg-blue-700 rounded-full w-10 h-10 p-0"
+                >
+                  <Send className="w-4 h-4" />
+                </Button>
               </div>
             </div>
-          )}
+          </div>
+        )}
+      </div>
+
+      {/* Desktop view */}
+      <div className="hidden md:flex h-screen">
+        {/* Same desktop layout but hidden on mobile */}
+        <div className="w-1/3 bg-white border-r border-gray-200 overflow-y-auto">
+          <div className="bg-blue-600 text-white p-4">
+            <h1 className="text-lg font-semibold">Messages</h1>
+          </div>
+          {/* Desktop conversations list */}
+        </div>
+        <div className="flex-1 flex flex-col">
+          {/* Desktop chat area */}
         </div>
       </div>
 
@@ -302,8 +300,8 @@ const VendorMessages = () => {
         </Alert>
       )}
 
-      {/* Bottom Navigation */}
-      <VendorBottomNavigation />
+      {/* Bottom Navigation - only show on conversations list */}
+      {!selectedJobId && <VendorBottomNavigation />}
     </div>
   );
 };
