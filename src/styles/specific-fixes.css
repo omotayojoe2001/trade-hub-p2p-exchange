@@ -1,0 +1,42 @@
+/* Specific UI Fixes - Only Create Account button blue */
+
+/* Only Create Account and Sign In buttons should be blue */
+button[type="submit"] {
+  background-color: #007AFF !important;
+  color: white !important;
+}
+
+/* Remove background from input fields */
+input, textarea, select {
+  background-color: transparent !important;
+  border: 1px solid #E5E5EA !important;
+}
+
+/* Remove background from location form container */
+.p-4 {
+  background-color: transparent !important;
+}
+
+/* Credits section */
+.bg-blue-50 {
+  background-color: #007AFF !important;
+  color: white !important;
+}
+
+/* Remove all animations */
+* {
+  animation-duration: 0s !important;
+  animation-delay: 0s !important;
+  transition-duration: 0s !important;
+}
+
+/* Remove notification backgrounds */
+svg {
+  background-color: transparent !important;
+}
+
+/* Vendor specific */
+.bg-gradient-to-r {
+  background: #007AFF !important;
+  color: white !important;
+}

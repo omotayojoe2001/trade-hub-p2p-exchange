@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Eye, EyeOff, User, Mail, Lock, Database, MapPin, Shield, Zap } from 'lucide-react';
+import { Eye, EyeOff, User, Mail, Lock } from 'lucide-react';
 import TwoFactorLogin from '@/components/TwoFactorLogin';
 import { useAuth } from '@/hooks/useAuth';
 import LocationSelectionForm from '@/components/LocationSelectionForm';
@@ -37,7 +37,6 @@ const Auth = () => {
   const { user } = useAuth();
 
   useEffect(() => {
-    // Check if user is already logged in
     const checkSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
@@ -46,11 +45,10 @@ const Auth = () => {
     };
     checkSession();
     
-    // Check for referral code from localStorage or set default
     const storedReferralCode = localStorage.getItem('referral_code');
     if (storedReferralCode) {
       setReferralCode(storedReferralCode);
-      setIsLogin(false); // Switch to signup mode
+      setIsLogin(false);
     } else {
       setReferralCode('centralexchange');
     }
@@ -74,15 +72,12 @@ const Auth = () => {
       }
 
       if (data.user && data.session) {
-        // Check if user has 2FA enabled
         const has2FA = localStorage.getItem(`2fa_enabled_${data.user.id}`) === 'true';
 
         if (has2FA) {
-          // Show 2FA verification screen
           setPendingUser(data.user);
           setShow2FA(true);
         } else {
-          // Direct login without 2FA
           toast({
             title: "Welcome back!",
             description: "You have successfully signed in.",
@@ -110,7 +105,6 @@ const Auth = () => {
   const handle2FABack = () => {
     setShow2FA(false);
     setPendingUser(null);
-    // Sign out the pending session
     supabase.auth.signOut();
   };
 
@@ -150,9 +144,7 @@ const Auth = () => {
       }
 
       if (data.user) {
-        // Create profile and handle referral
         try {
-          // Create profile first
           const countryData = countries.find(c => c.code === country);
           const stateData = countryData?.states.find(s => s.code === state);
           
@@ -166,33 +158,23 @@ const Auth = () => {
             city: city
           });
           
-          // Handle referral if provided
           if (referralCode && referralCode !== 'centralexchange') {
-            console.log('Processing referral code:', referralCode);
-            
             const { data: referrerProfiles } = await supabase
               .from('profiles')
               .select('user_id, display_name')
               .not('user_id', 'eq', data.user.id);
             
-            console.log('Found profiles:', referrerProfiles);
-            
             const referrer = referrerProfiles?.find(profile => {
               const displayName = profile.display_name?.toLowerCase().replace(/[^a-z0-9]/g, '');
               const code = referralCode.toLowerCase();
-              console.log('Checking:', { displayName, code });
               return displayName === code;
             });
             
-            console.log('Found referrer:', referrer);
-            
             if (referrer) {
-              const { error: updateError } = await supabase
+              await supabase
                 .from('profiles')
                 .update({ referred_by: referrer.user_id })
                 .eq('user_id', data.user.id);
-              
-              console.log('Referral update result:', updateError);
             }
           }
         } catch (error) {
@@ -200,14 +182,12 @@ const Auth = () => {
         }
         
         if (!data.session) {
-          // Email confirmation required
           setMessage('Please check your email for a confirmation link to complete your registration.');
           toast({
             title: "Account created!",
             description: "Please check your email to confirm your account.",
           });
         } else {
-          // Auto-confirmed
           toast({
             title: "Account created!",
             description: "Welcome to Central Exchange!",
@@ -222,9 +202,6 @@ const Auth = () => {
     }
   };
 
-
-
-  // Show 2FA verification if needed
   if (show2FA && pendingUser) {
     return (
       <TwoFactorLogin
@@ -237,30 +214,27 @@ const Auth = () => {
 
   if (isLogin) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 px-4 py-8">
+      <div className="min-h-screen bg-white px-4 py-8">
         <div className="max-w-sm mx-auto">
           <div className="text-center mb-8">
-            <div className="w-20 h-20 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-lg">
-              <Shield size={36} className="text-white" />
-            </div>
             <h1 className="text-3xl font-bold text-gray-900 mb-3">
               Welcome Back
             </h1>
             <p className="text-gray-600 leading-relaxed">
-              Sign in to your Central Exchange account and continue trading crypto securely
+              Sign in to your Central Exchange account
             </p>
           </div>
 
-          <div className="bg-white rounded-2xl shadow-xl p-6 space-y-6">
+          <div className="bg-white p-6 space-y-6">
             {error && (
-              <Alert variant="destructive" className="border-red-200 bg-red-50">
-                <AlertDescription className="text-red-700">{error}</AlertDescription>
+              <Alert variant="destructive">
+                <AlertDescription>{error}</AlertDescription>
               </Alert>
             )}
 
             <form onSubmit={handleLogin} className="space-y-5">
               <div className="space-y-2">
-                <Label htmlFor="email" className="text-sm font-semibold text-gray-800">
+                <Label htmlFor="email" className="text-sm font-medium text-gray-800">
                   Email Address
                 </Label>
                 <div className="relative">
@@ -270,7 +244,7 @@ const Auth = () => {
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="h-14 bg-gray-50 border-2 border-gray-200 rounded-xl pl-12 pr-4 text-gray-900 focus:border-blue-500 focus:bg-white transition-all duration-200"
+                    className="h-12 pl-12 pr-4"
                     placeholder="your.email@example.com"
                     required
                   />
@@ -278,7 +252,7 @@ const Auth = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="password" className="text-sm font-semibold text-gray-800">
+                <Label htmlFor="password" className="text-sm font-medium text-gray-800">
                   Password
                 </Label>
                 <div className="relative">
@@ -288,14 +262,14 @@ const Auth = () => {
                     type={showPassword ? "text" : "password"}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="h-14 bg-gray-50 border-2 border-gray-200 rounded-xl pl-12 pr-14 text-gray-900 focus:border-blue-500 focus:bg-white transition-all duration-200"
+                    className="h-12 pl-12 pr-14"
                     placeholder="Enter your password"
                     required
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                    className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400"
                   >
                     {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                   </button>
@@ -304,23 +278,11 @@ const Auth = () => {
 
               <Button
                 type="submit"
-                className="w-full h-14 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold rounded-xl text-lg shadow-lg hover:shadow-xl transition-all duration-200"
+                className="w-full h-12"
                 disabled={loading}
               >
-                {loading ? (
-                  <div className="flex items-center">
-                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                    Signing in...
-                  </div>
-                ) : (
-                  <div className="flex items-center">
-                    <Zap size={20} className="mr-2" />
-                    Sign In
-                  </div>
-                )}
+                {loading ? 'Signing in...' : 'Sign In'}
               </Button>
-
-
 
               <div className="text-center">
                 <p className="text-gray-600">
@@ -328,7 +290,7 @@ const Auth = () => {
                   <button
                     type="button"
                     onClick={() => setIsLogin(false)}
-                    className="text-blue-600 font-semibold hover:text-blue-700 transition-colors"
+                    className="text-blue-600 font-medium"
                   >
                     Create one
                   </button>
@@ -337,12 +299,11 @@ const Auth = () => {
             </form>
           </div>
 
-          {/* Vendor Login Link */}
-          <div className="text-center mt-6 pt-4 border-t border-gray-200">
+          <div className="text-center mt-6 pt-4">
             <button
               type="button"
               onClick={() => navigate('/vendor/login')}
-              className="text-sm text-gray-500 hover:text-blue-600 font-medium transition-colors"
+              className="text-sm text-gray-500 font-medium"
             >
               Are you a vendor? Login here
             </button>
@@ -353,36 +314,33 @@ const Auth = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-100 px-4 py-6">
+    <div className="min-h-screen bg-white px-4 py-6">
       <div className="max-w-md mx-auto">
         <div className="text-center mb-8">
-          <div className="w-20 h-20 bg-gradient-to-r from-green-600 to-emerald-600 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-lg">
-            <User size={36} className="text-white" />
-          </div>
           <h1 className="text-3xl font-bold text-gray-900 mb-3">
             Join Central Exchange
           </h1>
           <p className="text-gray-600 leading-relaxed">
-            Create your account and start trading crypto with confidence
+            Create your account and start trading crypto
           </p>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-xl p-6 space-y-6">
+        <div className="bg-white p-6 space-y-6">
           {error && (
-            <Alert variant="destructive" className="border-red-200 bg-red-50">
-              <AlertDescription className="text-red-700">{error}</AlertDescription>
+            <Alert variant="destructive">
+              <AlertDescription>{error}</AlertDescription>
             </Alert>
           )}
 
           {message && (
-            <Alert className="border-green-200 bg-green-50">
-              <AlertDescription className="text-green-700">{message}</AlertDescription>
+            <Alert>
+              <AlertDescription>{message}</AlertDescription>
             </Alert>
           )}
 
           <form onSubmit={handleSignUp} className="space-y-5">
             <div className="space-y-2">
-              <Label htmlFor="fullName" className="text-sm font-semibold text-gray-800">
+              <Label htmlFor="fullName" className="text-sm font-medium text-gray-800">
                 Full Name
               </Label>
               <div className="relative">
@@ -392,7 +350,7 @@ const Auth = () => {
                   type="text"
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
-                  className="h-14 bg-gray-50 border-2 border-gray-200 rounded-xl pl-12 pr-4 text-gray-900 focus:border-green-500 focus:bg-white transition-all duration-200"
+                  className="h-12 pl-12 pr-4"
                   placeholder="Enter your full name"
                   required
                 />
@@ -400,7 +358,7 @@ const Auth = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-sm font-semibold text-gray-800">
+              <Label htmlFor="email" className="text-sm font-medium text-gray-800">
                 Email Address
               </Label>
               <div className="relative">
@@ -410,7 +368,7 @@ const Auth = () => {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="h-14 bg-gray-50 border-2 border-gray-200 rounded-xl pl-12 pr-4 text-gray-900 focus:border-green-500 focus:bg-white transition-all duration-200"
+                  className="h-12 pl-12 pr-4"
                   placeholder="your.email@example.com"
                   required
                 />
@@ -418,7 +376,7 @@ const Auth = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password" className="text-sm font-semibold text-gray-800">
+              <Label htmlFor="password" className="text-sm font-medium text-gray-800">
                 Password
               </Label>
               <div className="relative">
@@ -428,14 +386,14 @@ const Auth = () => {
                   type={showPassword ? "text" : "password"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="h-14 bg-gray-50 border-2 border-gray-200 rounded-xl pl-12 pr-14 text-gray-900 focus:border-green-500 focus:bg-white transition-all duration-200"
-                  placeholder="Create a strong password (min 6 characters)"
+                  className="h-12 pl-12 pr-14"
+                  placeholder="Create a password (min 6 characters)"
                   required
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                  className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400"
                 >
                   {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                 </button>
@@ -443,7 +401,7 @@ const Auth = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="confirmPassword" className="text-sm font-semibold text-gray-800">
+              <Label htmlFor="confirmPassword" className="text-sm font-medium text-gray-800">
                 Confirm Password
               </Label>
               <div className="relative">
@@ -453,26 +411,25 @@ const Auth = () => {
                   type={showConfirmPassword ? "text" : "password"}
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="h-14 bg-gray-50 border-2 border-gray-200 rounded-xl pl-12 pr-14 text-gray-900 focus:border-green-500 focus:bg-white transition-all duration-200"
+                  className="h-12 pl-12 pr-14"
                   placeholder="Confirm your password"
                   required
                 />
                 <button
                   type="button"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                  className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400"
                 >
                   {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                 </button>
               </div>
             </div>
 
-            {/* Location Selection */}
             <div className="space-y-2">
-              <Label className="text-sm font-semibold text-gray-800">
+              <Label className="text-sm font-medium text-gray-800">
                 Location
               </Label>
-              <div className="bg-gray-50 border-2 border-gray-200 rounded-xl p-4 focus-within:border-green-500 transition-all duration-200">
+              <div className="p-4">
                 <LocationSelectionForm
                   selectedCountry={country}
                   selectedState={state}
@@ -485,7 +442,7 @@ const Auth = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="referralCode" className="text-sm font-semibold text-gray-800">
+              <Label htmlFor="referralCode" className="text-sm font-medium text-gray-800">
                 Referral Code (Optional)
               </Label>
               <Input
@@ -493,30 +450,18 @@ const Auth = () => {
                 type="text"
                 value={referralCode}
                 onChange={(e) => setReferralCode(e.target.value)}
-                className="h-14 bg-gray-50 border-2 border-gray-200 rounded-xl px-4 text-gray-900 focus:border-green-500 focus:bg-white transition-all duration-200"
+                className="h-12 px-4"
                 placeholder="Enter referral code"
               />
             </div>
 
             <Button
               type="submit"
-              className="w-full h-14 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-semibold rounded-xl text-lg shadow-lg hover:shadow-xl transition-all duration-200"
+              className="w-full h-12"
               disabled={loading || !country || !state}
             >
-              {loading ? (
-                <div className="flex items-center">
-                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                  Creating Account...
-                </div>
-              ) : (
-                <div className="flex items-center">
-                  <User size={20} className="mr-2" />
-                  Create My Account
-                </div>
-              )}
+              {loading ? 'Creating Account...' : 'Create Account'}
             </Button>
-
-
 
             <div className="text-center">
               <p className="text-gray-600">
@@ -524,7 +469,7 @@ const Auth = () => {
                 <button
                   type="button"
                   onClick={() => setIsLogin(true)}
-                  className="text-green-600 font-semibold hover:text-green-700 transition-colors"
+                  className="text-blue-600 font-medium"
                 >
                   Sign In
                 </button>

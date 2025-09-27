@@ -39,24 +39,45 @@ body {
 button {
   font-weight: 500 !important;
   border-radius: var(--radius) !important;
-  transition: all 0.2s ease !important;
   border: none !important;
 }
 
-button:not([class*="outline"]):not([class*="ghost"]) {
+/* Primary buttons - blue background with white text */
+button:not([class*="outline"]):not([class*="ghost"]),
+.bg-primary,
+.bg-blue-600,
+.bg-\[\#1A73E8\],
+.bg-blue-500 {
   background-color: var(--brand-color) !important;
   color: white !important;
 }
 
+/* Outline buttons */
 [class*="outline"] {
   background-color: transparent !important;
   border: 1px solid var(--border-light) !important;
   color: var(--text-primary) !important;
 }
 
+/* Ghost buttons */
 [class*="ghost"] {
   background-color: transparent !important;
   color: var(--text-secondary) !important;
+}
+
+/* Remove animations */
+.animate-pulse,
+.animate-bounce,
+.animate-fade-in {
+  animation: none !important;
+}
+
+/* Smaller border radius for compact buttons */
+.text-xs button,
+button.text-xs,
+.size-sm,
+button[class*="sm"] {
+  border-radius: 6px !important;
 }
 
 input, textarea, select {
@@ -92,4 +113,75 @@ input, textarea, select {
 
 .text-red-600 {
   color: var(--error-color) !important;
+}
+
+/* Fix specific button text colors */
+.bg-blue-600 *,
+.bg-primary *,
+.bg-\[\#1A73E8\] * {
+  color: white !important;
+}
+
+/* Remove green colors from signup */
+.bg-green-600,
+.bg-green-500 {
+  background-color: var(--brand-color) !important;
+}
+
+.text-green-600,
+.text-green-500 {
+  color: var(--brand-color) !important;
+}
+
+/* Remove gradients */
+.bg-gradient-to-r,
+.bg-gradient-to-b,
+.bg-gradient-to-t {
+  background: var(--background-primary) !important;
+}
+
+/* Specific button fixes */
+button:contains("Create Account"),
+button:contains("Sign In"),
+button:contains("Start"),
+button:contains("start trading") {
+  background-color: var(--brand-color) !important;
+  color: white !important;
+}
+
+/* Credits section */
+.credits-section {
+  background-color: var(--brand-color) !important;
+  color: white !important;
+}
+
+/* Low credits - red background */
+.credits-low {
+  background-color: var(--error-color) !important;
+  color: white !important;
+}
+
+/* Remove notification icon backgrounds */
+.notification-icon {
+  background-color: transparent !important;
+}
+
+/* Remove all bounce and fade animations */
+.animate-bounce,
+.animate-fade-in,
+.animate-fadeIn,
+.fade-in {
+  animation: none !important;
+  opacity: 1 !important;
+}
+
+/* Vendor dashboard top section */
+.vendor-dashboard-header {
+  background-color: var(--brand-color) !important;
+  color: white !important;
+}
+
+/* Vendor navigation - no background */
+.vendor-nav {
+  background-color: transparent !important;
 }
