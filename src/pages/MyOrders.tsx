@@ -177,8 +177,8 @@ const MyOrders = () => {
         )}
       </div>
       
-      <BottomNavigation />
       </div>
+      <BottomNavigation />
     </PageTransition>
   );
 };

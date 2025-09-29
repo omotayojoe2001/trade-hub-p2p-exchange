@@ -1,0 +1,79 @@
+/* Remove ALL animations and fix notifications */
+
+/* Kill all animations globally */
+*,
+*::before,
+*::after {
+  animation: none !important;
+  animation-duration: 0s !important;
+  animation-delay: 0s !important;
+  animation-fill-mode: none !important;
+  transition: none !important;
+  transition-duration: 0s !important;
+  transition-delay: 0s !important;
+  transform: none !important;
+}
+
+/* Remove specific animation classes */
+.animate-in,
+.animate-out,
+.animate-fade-in,
+.animate-fade-out,
+.animate-slide-in,
+.animate-slide-out,
+.animate-bounce,
+.animate-pulse,
+.animate-spin,
+.fade-in,
+.fade-out,
+.slide-in,
+.slide-out,
+.pop-in,
+.bounce-in,
+.scale-in {
+  animation: none !important;
+  opacity: 1 !important;
+  transform: none !important;
+  visibility: visible !important;
+}
+
+/* Fix toast/notification styling */
+.toast,
+.notification,
+[data-sonner-toast],
+[data-toast] {
+  background-color: white !important;
+  border: 1px solid #E5E5EA !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+  opacity: 1 !important;
+  backdrop-filter: none !important;
+}
+
+/* Fix notification popup background */
+.fixed.top-4.left-4.right-4 {
+  background-color: white !important;
+  border: 1px solid #E5E5EA !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+}
+
+/* Ensure bottom navigation is always visible */
+.fixed.bottom-0 {
+  display: flex !important;
+  visibility: visible !important;
+  z-index: 9999 !important;
+  background-color: white !important;
+}
+
+/* Hide auto-popup notifications */
+.auto-popup,
+.welcome-popup,
+.home-popup {
+  display: none !important;
+}
+
+/* Bottom nav white background */
+.bottom-nav,
+.fixed.bottom-0 {
+  background-color: white !important;
+  border-top: 1px solid #E5E5EA !important;
+}

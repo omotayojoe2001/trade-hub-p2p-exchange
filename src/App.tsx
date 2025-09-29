@@ -149,6 +149,8 @@ import UploadPaymentProof from "./pages/UploadPaymentProof";
 import ReferralLanding from "./pages/ReferralLanding";
 import TestTradeCompletion from "./pages/TestTradeCompletion";
 import React from 'react';
+import PageLoader from './components/PageLoader';
+import { usePageLoader } from './hooks/usePageLoader';
 
 const queryClient = new QueryClient();
 
@@ -158,6 +160,7 @@ const AppContent = () => {
   const { storedUser, saveUser, clearStoredUser } = useAuthStorage();
   const { setQuickAuthActive } = useQuickAuth();
   const location = useLocation();
+  const isLoading = usePageLoader();
 
   // Check if user is on auth-related pages
   const isOnAuthPage = ['/auth', '/onboarding', '/splash', '/email-verification', '/forgot-password', '/reset-password'].includes(location.pathname);
@@ -216,6 +219,7 @@ const AppContent = () => {
 
   return (
     <>
+      {isLoading && <PageLoader />}
       {/* Only show notifications if not on auth pages */}
       {!isOnAuthPage && <GlobalNotifications />}
       {!isOnAuthPage && <CreditAlert />}

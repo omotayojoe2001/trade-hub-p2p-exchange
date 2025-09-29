@@ -23,11 +23,41 @@ input, textarea, select {
   color: white !important;
 }
 
-/* Remove all animations */
+/* Remove all animations including home page sections */
 * {
   animation-duration: 0s !important;
   animation-delay: 0s !important;
   transition-duration: 0s !important;
+}
+
+/* Remove specific home page animations */
+.animate-fade-in,
+.animate-slide-up,
+.animate-bounce-in,
+.fade-in,
+.slide-up {
+  animation: none !important;
+  transform: none !important;
+  opacity: 1 !important;
+}
+
+/* Bottom navigation fixes */
+.bottom-nav,
+.fixed.bottom-0,
+[class*="bottom-nav"] {
+  background-color: white !important;
+  position: fixed !important;
+  bottom: 0 !important;
+  z-index: 50 !important;
+  display: block !important;
+  visibility: visible !important;
+}
+
+/* Ensure bottom nav is always visible */
+nav[class*="bottom"],
+.navigation-bottom {
+  background-color: white !important;
+  border-top: 1px solid #E5E5EA !important;
 }
 
 /* Remove notification backgrounds */

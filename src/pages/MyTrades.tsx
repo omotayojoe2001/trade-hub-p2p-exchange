@@ -365,7 +365,7 @@ const MyTrades = () => {
         )}
       </div>
 
-      {!isQuickAuthActive && <BottomNavigation />}
+      <BottomNavigation />
     </div>
   );
 };
