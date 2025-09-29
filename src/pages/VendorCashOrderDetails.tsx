@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, CheckCircle, AlertCircle, Phone, MapPin, User, DollarSign, Key, FileText } from 'lucide-react';
+import { ArrowLeft, CheckCircle, AlertCircle, Phone, MapPin, User, DollarSign, Key, FileText, MessageCircle } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { isPdfFile, isImageFile, downloadFile } from '@/utils/fileUtils';
+import MessageThread from '@/components/MessageThread';
 
 interface CashOrderDetails {
   id: string;
@@ -36,6 +37,7 @@ const VendorCashOrderDetails = () => {
   const [error, setError] = useState('');
   const [verificationCode, setVerificationCode] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [showMessage, setShowMessage] = useState(false);
   
   const navigate = useNavigate();
   const { orderId } = useParams();
@@ -484,14 +486,26 @@ const VendorCashOrderDetails = () => {
             {/* Action Buttons */}
             <div className="space-y-3">
               {orderDetails.status === 'payment_submitted' && (
-                <Button
-                  onClick={handleConfirmPayment}
-                  disabled={submitting}
-                  className="w-full h-12"
-                  size="lg"
-                >
-                  {submitting ? 'Confirming...' : 'Confirm Payment Received'}
-                </Button>
+                <>
+                  <Button
+                    onClick={handleConfirmPayment}
+                    disabled={submitting}
+                    className="w-full h-12"
+                    size="lg"
+                  >
+                    {submitting ? 'Confirming...' : 'Confirm Payment Received'}
+                  </Button>
+                  
+                  <Button
+                    onClick={() => setShowMessage(true)}
+                    variant="outline"
+                    className="w-full"
+                    size="lg"
+                  >
+                    <MessageCircle className="w-4 h-4 mr-2" />
+                    Message Customer
+                  </Button>
+                </>
               )}
 
               {orderDetails.status === 'payment_confirmed' && (
@@ -529,6 +543,18 @@ const VendorCashOrderDetails = () => {
           </>
         )}
       </div>
+      
+      {/* Message Thread */}
+      {showMessage && orderDetails && (
+        <MessageThread
+          otherUserId={orderDetails.user_id}
+          otherUserName="Customer"
+          cashTradeId={orderDetails.id}
+          contextType="cash_delivery"
+          isOpen={showMessage}
+          onClose={() => setShowMessage(false)}
+        />
+      )}
     </div>
   );
 };

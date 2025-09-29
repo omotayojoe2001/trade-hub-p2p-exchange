@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, CheckCircle, Clock, MapPin, Phone, User, AlertTriangle, Copy, DollarSign, Truck, PartyPopper, Lock } from 'lucide-react';
+import { ArrowLeft, CheckCircle, Clock, MapPin, Phone, User, AlertTriangle, Copy, DollarSign, Truck, PartyPopper, Lock, MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useNavigate, useParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { AnimatedCard, FloatingElement, PageTransition, PulseGlow, StaggeredList, Button3D, LoadingSpinner3D } from '@/components/animations';
+import MessageThread from '@/components/MessageThread';
 
 interface CashTradeStatus {
   id: string;
@@ -31,6 +32,7 @@ const UserCashTradeStatus = () => {
   const [trade, setTrade] = useState<CashTradeStatus | null>(null);
   const [loading, setLoading] = useState(true);
   const [showDeliveryCode, setShowDeliveryCode] = useState(false);
+  const [showMessage, setShowMessage] = useState(false);
 
   useEffect(() => {
     loadTradeStatus();
@@ -336,13 +338,23 @@ const UserCashTradeStatus = () => {
                   <p className="font-medium">{trade.vendor_name || 'Delivery Vendor'}</p>
                   <p className="text-sm text-gray-600">{trade.vendor_phone}</p>
                 </div>
-                <Button
-                  onClick={() => window.open(`tel:${trade.vendor_phone}`)}
-                  size="sm"
-                  className="bg-green-600 hover:bg-green-700"
-                >
-                  Call Vendor
-                </Button>
+                <div className="flex space-x-2">
+                  <Button
+                    onClick={() => setShowMessage(true)}
+                    size="sm"
+                    variant="outline"
+                  >
+                    <MessageCircle className="w-4 h-4 mr-1" />
+                    Message
+                  </Button>
+                  <Button
+                    onClick={() => window.open(`tel:${trade.vendor_phone}`)}
+                    size="sm"
+                    className="bg-green-600 hover:bg-green-700"
+                  >
+                    Call Vendor
+                  </Button>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -366,6 +378,18 @@ const UserCashTradeStatus = () => {
           </CardContent>
         </Card>
       </div>
+      
+      {/* Message Thread */}
+      {showMessage && trade && (
+        <MessageThread
+          otherUserId={trade.vendor_name || 'vendor'}
+          otherUserName={trade.vendor_name || 'Vendor'}
+          cashTradeId={trade.id}
+          contextType="cash_delivery"
+          isOpen={showMessage}
+          onClose={() => setShowMessage(false)}
+        />
+      )}
       </div>
     </PageTransition>
   );

@@ -99,6 +99,10 @@ const CashEscrowFlow = () => {
       return;
     }
 
+    if (loading) {
+      return; // Prevent multiple clicks
+    }
+
     setLoading(true);
     try {
       // Create trade request that others can accept
@@ -252,7 +256,10 @@ const CashEscrowFlow = () => {
         throw new Error('Failed to process platform fee');
       }
 
-      // TradeId is already set above when cash trade is created
+      // Set the trade ID for status tracking
+      if (tradeId) {
+        console.log('✅ Trade created successfully with ID:', tradeId);
+      }
       setStep(3);
 
       // Broadcast to merchants (NOT vendors)
@@ -298,6 +305,7 @@ const CashEscrowFlow = () => {
         hint: error.hint
       });
       alert(`Failed to create trade request: ${error.message || 'Unknown error'}`);
+      // Don't reset step on error - let user try again
     } finally {
       setLoading(false);
     }
@@ -425,28 +433,40 @@ const CashEscrowFlow = () => {
               Upload a screenshot of your transaction or transaction hash as proof of payment.
             </p>
 
-            <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+            <div className={`border-2 border-dashed rounded-lg p-6 text-center relative ${
+              paymentProof ? 'border-green-300 bg-green-50' : 'border-gray-300'
+            }`}>
               {paymentProof ? (
                 <div className="space-y-2">
                   <CheckCircle className="mx-auto text-green-500" size={48} />
                   <p className="text-sm font-medium text-green-600">File uploaded successfully</p>
                   <p className="text-xs text-gray-500">{paymentProof.name}</p>
+                  <Button
+                    onClick={() => setPaymentProof(null)}
+                    variant="outline"
+                    size="sm"
+                    className="mt-2"
+                  >
+                    Upload Different File
+                  </Button>
                 </div>
               ) : (
-                <div className="space-y-2">
-                  <Upload className="mx-auto text-gray-400" size={48} />
-                  <p className="text-sm text-gray-600">Click to upload payment proof</p>
-                  <p className="text-xs text-gray-400">PNG, JPG, PDF up to 10MB</p>
-                </div>
+                <>
+                  <div className="space-y-2">
+                    <Upload className="mx-auto text-gray-400" size={48} />
+                    <p className="text-sm text-gray-600">Click to upload payment proof</p>
+                    <p className="text-xs text-gray-400">PNG, JPG, PDF up to 10MB</p>
+                  </div>
+                  
+                  <input
+                    type="file"
+                    accept="image/*,.pdf"
+                    onChange={handleFileUpload}
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                    disabled={uploading}
+                  />
+                </>
               )}
-              
-              <input
-                type="file"
-                accept="image/*,.pdf"
-                onChange={handleFileUpload}
-                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                disabled={uploading}
-              />
             </div>
 
             {uploading && (

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Package, MapPin, Clock, CheckCircle, Copy, Phone, ArrowRight, Lock } from 'lucide-react';
+import { Package, MapPin, Clock, CheckCircle, Copy, Phone, ArrowRight, Lock, MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -8,6 +8,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import BottomNavigation from '@/components/BottomNavigation';
 import PageTransition from '@/components/animations/PageTransition';
+import MessageThread from '@/components/MessageThread';
 
 interface CashOrder {
   id: string;
@@ -27,6 +28,11 @@ const MyOrders = () => {
   const { user } = useAuth();
   const [orders, setOrders] = useState<CashOrder[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedMessage, setSelectedMessage] = useState<{
+    otherUserId: string;
+    otherUserName: string;
+    cashTradeId: string;
+  } | null>(null);
 
   useEffect(() => {
     loadOrders();
@@ -160,15 +166,45 @@ const MyOrders = () => {
                   )}
 
                   {/* Action Button */}
-                  <Button
-                    onClick={() => navigate(`/cash-trade-status/${order.id}`)}
-                    variant="outline"
-                    size="sm"
-                    className="w-full h-8 text-xs"
-                  >
-                    View Details
-                    <ArrowRight className="w-3 h-3 ml-1" />
-                  </Button>
+                  <div className="grid grid-cols-2 gap-2">
+                    <Button
+                      onClick={() => navigate(`/cash-trade-status/${order.id}`)}
+                      variant="outline"
+                      size="sm"
+                      className="h-8 text-xs"
+                    >
+                      View Details
+                    </Button>
+                    <Button
+                      onClick={async () => {
+                        // Get real vendor user_id from cash_trades table
+                        const { data: cashTrade } = await supabase
+                          .from('cash_trades')
+                          .select('vendor_id, vendors!inner(user_id, display_name)')
+                          .eq('id', order.id)
+                          .single();
+                        
+                        const vendorUserId = cashTrade?.vendors?.user_id;
+                        const vendorName = cashTrade?.vendors?.display_name || 'Vendor';
+                        
+                        if (vendorUserId) {
+                          setSelectedMessage({
+                            otherUserId: vendorUserId,
+                            otherUserName: vendorName,
+                            cashTradeId: order.id
+                          });
+                        } else {
+                          alert('Vendor not found for this order');
+                        }
+                      }}
+                      variant="outline"
+                      size="sm"
+                      className="h-8 text-xs"
+                    >
+                      <MessageCircle className="w-3 h-3 mr-1" />
+                      Message
+                    </Button>
+                  </div>
                   </CardContent>
                 </Card>
               );
@@ -179,6 +215,18 @@ const MyOrders = () => {
       
       </div>
       <BottomNavigation />
+      
+      {/* Message Thread */}
+      {selectedMessage && (
+        <MessageThread
+          otherUserId={selectedMessage.otherUserId}
+          otherUserName={selectedMessage.otherUserName}
+          cashTradeId={selectedMessage.cashTradeId}
+          contextType="cash_delivery"
+          isOpen={true}
+          onClose={() => setSelectedMessage(null)}
+        />
+      )}
     </PageTransition>
   );
 };

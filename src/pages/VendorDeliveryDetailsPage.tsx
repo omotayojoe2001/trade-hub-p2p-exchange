@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, CheckCircle, MapPin, Phone, User, Lock, Truck } from 'lucide-react';
+import { ArrowLeft, CheckCircle, MapPin, Phone, User, Lock, Truck, MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
+import MessageThread from '@/components/MessageThread';
 
 interface DeliveryDetails {
   id: string;
@@ -24,6 +25,7 @@ const VendorDeliveryDetailsPage = () => {
   const [processing, setProcessing] = useState(false);
   const [enteredCode, setEnteredCode] = useState('');
   const [codeValidated, setCodeValidated] = useState(false);
+  const [showMessage, setShowMessage] = useState(false);
 
   useEffect(() => {
     loadDeliveryDetails();
@@ -222,9 +224,20 @@ const VendorDeliveryDetailsPage = () => {
               <span className="text-blue-600">Name:</span>
               <span className="font-medium">{delivery.customer_name || 'Customer'}</span>
             </div>
-            <div className="flex justify-between">
+            <div className="flex justify-between items-center">
               <span className="text-blue-600">Phone:</span>
-              <span className="font-medium">{delivery.customer_phone || 'Not provided'}</span>
+              <div className="flex items-center space-x-2">
+                <span className="font-medium">{delivery.customer_phone || 'Not provided'}</span>
+                <Button
+                  onClick={() => setShowMessage(true)}
+                  size="sm"
+                  variant="outline"
+                  className="h-6 px-2 text-xs"
+                >
+                  <MessageCircle className="w-3 h-3 mr-1" />
+                  Message
+                </Button>
+              </div>
             </div>
             <div className="flex justify-between">
               <span className="text-blue-600">Type:</span>
@@ -334,6 +347,18 @@ const VendorDeliveryDetailsPage = () => {
           </Button>
         </div>
       </div>
+      
+      {/* Message Thread */}
+      {showMessage && delivery && (
+        <MessageThread
+          otherUserId={delivery.seller_id || 'customer'}
+          otherUserName={delivery.customer_name || 'Customer'}
+          cashTradeId={delivery.id}
+          contextType="cash_delivery"
+          isOpen={showMessage}
+          onClose={() => setShowMessage(false)}
+        />
+      )}
     </div>
   );
 };

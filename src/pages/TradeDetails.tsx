@@ -12,6 +12,7 @@ import { TradeTemplate } from '@/components/TradeTemplate';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
+import MessageThread from '@/components/MessageThread';
 
 const TradeDetails = () => {
   const { tradeId } = useParams();
@@ -30,6 +31,7 @@ const TradeDetails = () => {
   // Dialog states
   const [showReportDialog, setShowReportDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showMessageDialog, setShowMessageDialog] = useState(false);
   const [reportReason, setReportReason] = useState('');
   const [isReporting, setIsReporting] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -393,7 +395,11 @@ const TradeDetails = () => {
                   </div>
                 </div>
               </div>
-              <Button variant="outline" size="sm">
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => setShowMessageDialog(true)}
+              >
                 <MessageSquare size={16} className="mr-2" />
                 Message
               </Button>
@@ -595,6 +601,18 @@ const TradeDetails = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Message Thread */}
+      {showMessageDialog && transactionDetails.merchant && (
+        <MessageThread
+          otherUserId={transactionDetails.merchant.name || 'merchant'}
+          otherUserName={transactionDetails.merchant.name || 'Merchant'}
+          tradeId={transactionDetails.id}
+          contextType="crypto_trade"
+          isOpen={showMessageDialog}
+          onClose={() => setShowMessageDialog(false)}
+        />
+      )}
     </div>
   );
 };

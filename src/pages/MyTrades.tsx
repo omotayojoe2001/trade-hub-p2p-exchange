@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ChevronRight, AlertCircle, Clock, Calendar, ChevronDown } from 'lucide-react';
+import { ChevronRight, AlertCircle, Clock, Calendar, ChevronDown, MessageCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -7,6 +7,7 @@ import { useQuickAuth } from '@/hooks/useQuickAuth';
 import BottomNavigation from '@/components/BottomNavigation';
 import CryptoIcon from '@/components/CryptoIcon';
 import { toast } from '@/hooks/use-toast';
+import MessageThread from '@/components/MessageThread';
 
 interface Trade {
   id: string;
@@ -33,6 +34,13 @@ const MyTrades = () => {
   const [activeTab, setActiveTab] = useState('All');
   const [dateFilter, setDateFilter] = useState('All Time');
   const [showDateFilter, setShowDateFilter] = useState(false);
+  const [selectedMessage, setSelectedMessage] = useState<{
+    otherUserId: string;
+    otherUserName: string;
+    tradeId?: string;
+    cashTradeId?: string;
+    contextType: 'crypto_trade' | 'cash_delivery';
+  } | null>(null);
 
   const fetchTrades = async () => {
     if (!user) return;
@@ -349,6 +357,27 @@ const MyTrades = () => {
                       View Details
                     </Link>
                     
+                    <button
+                      onClick={() => {
+                        const otherUserId = userRole === 'buyer' ? trade.seller_id : trade.buyer_id;
+                        if (otherUserId && otherUserId !== 'other-user') {
+                          setSelectedMessage({
+                            otherUserId,
+                            otherUserName: userRole === 'buyer' ? 'Seller' : 'Buyer',
+                            tradeId: trade.trade_type === 'cash_order' ? undefined : trade.id,
+                            cashTradeId: trade.trade_type === 'cash_order' ? trade.id : undefined,
+                            contextType: trade.trade_type === 'cash_order' ? 'cash_delivery' : 'crypto_trade'
+                          });
+                        } else {
+                          alert('Other user not found for this trade');
+                        }
+                      }}
+                      className="px-3 py-1.5 bg-gray-100 text-gray-700 rounded-md text-xs font-medium hover:bg-gray-200 transition-colors flex items-center"
+                    >
+                      <MessageCircle className="w-3 h-3 mr-1" />
+                      Message
+                    </button>
+                    
                     {shouldShowComplete && (
                       <button
                         onClick={() => handleCompleteTrade(trade.id)}
@@ -366,6 +395,19 @@ const MyTrades = () => {
       </div>
 
       <BottomNavigation />
+      
+      {/* Message Thread */}
+      {selectedMessage && (
+        <MessageThread
+          otherUserId={selectedMessage.otherUserId}
+          otherUserName={selectedMessage.otherUserName}
+          tradeId={selectedMessage.tradeId}
+          cashTradeId={selectedMessage.cashTradeId}
+          contextType={selectedMessage.contextType}
+          isOpen={true}
+          onClose={() => setSelectedMessage(null)}
+        />
+      )}
     </div>
   );
 };
