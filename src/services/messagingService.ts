@@ -1,4 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
+import { notificationService } from './notificationService';
 
 export interface Conversation {
   id: string;
@@ -27,9 +28,13 @@ export interface Message {
   conversation_id: string;
   sender_id: string;
   content: string;
-  message_type: 'text' | 'image' | 'file';
+  message_type: 'text' | 'image' | 'file' | 'video';
   is_read: boolean;
   created_at: string;
+  file_url?: string;
+  file_name?: string;
+  file_size?: number;
+  mime_type?: string;
 }
 
 class MessagingService {
@@ -85,11 +90,53 @@ class MessagingService {
     }
   }
 
+  // Upload file to Supabase storage
+  async uploadFile(file: File): Promise<{ data: { url: string } | null; error: any }> {
+    try {
+      console.log('Starting file upload:', file.name, file.size);
+      
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+      const filePath = fileName; // Simplified path
+
+      console.log('Uploading to path:', filePath);
+
+      const { data, error } = await supabase.storage
+        .from('message-files')
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: false
+        });
+
+      if (error) {
+        console.error('Upload error:', error);
+        return { data: null, error };
+      }
+
+      console.log('Upload successful:', data);
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('message-files')
+        .getPublicUrl(filePath);
+
+      console.log('Public URL:', publicUrl);
+
+      return { data: { url: publicUrl }, error: null };
+    } catch (error) {
+      console.error('Upload exception:', error);
+      return { data: null, error };
+    }
+  }
+
   // Send a message
   async sendMessage(
     conversationId: string,
     content: string,
-    messageType: 'text' | 'image' | 'file' = 'text'
+    messageType: 'text' | 'image' | 'file' | 'video' = 'text',
+    fileUrl?: string,
+    fileName?: string,
+    fileSize?: number,
+    mimeType?: string
   ): Promise<{ data: Message | null; error: any }> {
     try {
       const currentUser = await supabase.auth.getUser();
@@ -103,10 +150,50 @@ class MessagingService {
           conversation_id: conversationId,
           sender_id: currentUser.data.user.id,
           content,
-          message_type: messageType
+          message_type: messageType,
+          file_url: fileUrl,
+          file_name: fileName,
+          file_size: fileSize,
+          mime_type: mimeType
         })
         .select()
         .single();
+
+      // Send notification to recipient
+      if (data && !error) {
+        try {
+          // Get conversation details to find recipient
+          const { data: conversation } = await supabase
+            .from('conversations')
+            .select('participant_1_id, participant_2_id')
+            .eq('id', conversationId)
+            .single();
+
+          if (conversation) {
+            const recipientId = conversation.participant_1_id === currentUser.data.user.id 
+              ? conversation.participant_2_id 
+              : conversation.participant_1_id;
+
+            // Get sender name
+            const { data: senderProfile } = await supabase
+              .from('profiles')
+              .select('display_name')
+              .eq('user_id', currentUser.data.user.id)
+              .single();
+
+            const senderName = senderProfile?.display_name || 'Someone';
+            
+            await notificationService.createMessageNotification(
+              recipientId,
+              senderName,
+              content,
+              conversationId
+            );
+          }
+        } catch (notificationError) {
+          console.error('Error sending notification:', notificationError);
+        }
+      }
 
       return { data, error };
     } catch (error) {
@@ -250,18 +337,47 @@ class MessagingService {
   }
 
   // Subscribe to conversation updates
-  subscribeToConversations(userId: string, callback: (conversation: Conversation) => void) {
-    return supabase
+  subscribeToConversations(userId: string, callback: () => void) {
+    const conversationChannel = supabase
       .channel(`conversations:${userId}`)
       .on('postgres_changes', {
         event: '*',
         schema: 'public',
         table: 'conversations',
         filter: `or(participant_1_id.eq.${userId},participant_2_id.eq.${userId})`
-      }, (payload) => {
-        callback(payload.new as Conversation);
+      }, () => {
+        callback();
       })
       .subscribe();
+    
+    // Also subscribe to new messages to update conversation list
+    const messageChannel = supabase
+      .channel(`messages:${userId}`)
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'messages'
+      }, async (payload) => {
+        // Check if this message belongs to user's conversation
+        const { data: conversation } = await supabase
+          .from('conversations')
+          .select('*')
+          .eq('id', payload.new.conversation_id)
+          .or(`participant_1_id.eq.${userId},participant_2_id.eq.${userId}`)
+          .single();
+        
+        if (conversation) {
+          callback();
+        }
+      })
+      .subscribe();
+    
+    return {
+      unsubscribe: () => {
+        conversationChannel.unsubscribe();
+        messageChannel.unsubscribe();
+      }
+    };
   }
 }
 

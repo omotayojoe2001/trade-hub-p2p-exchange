@@ -130,10 +130,10 @@ const VendorDashboard = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center pb-20">
+      <div className="min-h-screen bg-white flex items-center justify-center pb-20">
         <div className="text-center">
           <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading delivery requests...</p>
+          <p className="text-black">Loading delivery requests...</p>
         </div>
       </div>
     );
@@ -141,114 +141,89 @@ const VendorDashboard = () => {
 
   return (
     <PageTransition>
-      <div className="min-h-screen bg-gray-50 pb-24">
+      <div className="min-h-screen bg-white pb-24">
       {/* Header */}
-      <AnimatedCard className="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-6" hover3D={false}>
-        <FloatingElement intensity="low">
-          <h1 className="text-2xl font-bold mb-2">Vendor Dashboard</h1>
-        </FloatingElement>
+      <div className="bg-blue-600 text-white p-6">
+        <h1 className="text-2xl font-bold mb-2 text-white">Vendor Dashboard</h1>
         <p className="text-blue-100">Manage your cash delivery operations</p>
-      </AnimatedCard>
+      </div>
       
       {/* Stats Cards */}
       <div className="p-4 -mt-8">
-        <StaggeredList className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6" staggerDelay={0.1}>
-          <AnimatedCard>
-            <Card className="bg-white shadow-lg">
-              <CardContent className="p-4">
-                <div className="flex items-center">
-                  <PulseGlow color="green" intensity="medium">
-                    <div className="p-2 bg-green-100 rounded-lg">
-                      <DollarSign className="w-6 h-6 text-green-600" />
-                    </div>
-                  </PulseGlow>
-                  <div className="ml-3">
-                    <p className="text-sm text-gray-600">Earnings</p>
-                    <FloatingElement intensity="low">
-                      <p className="text-lg font-bold text-gray-900">₦{stats.totalEarnings.toLocaleString()}</p>
-                    </FloatingElement>
-                  </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+          <Card className="bg-white shadow-lg">
+            <CardContent className="p-4">
+              <div className="flex items-center">
+                <div className="p-2 bg-green-100 rounded-lg">
+                  <DollarSign className="w-6 h-6 text-green-600" />
                 </div>
-              </CardContent>
-            </Card>
-          </AnimatedCard>
+                <div className="ml-3">
+                  <p className="text-sm text-gray-600">Earnings</p>
+                  <p className="text-lg font-bold text-black">NGN {stats.totalEarnings.toLocaleString()}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
           
-          <AnimatedCard>
-            <Card className="bg-white shadow-lg">
-              <CardContent className="p-4">
-                <div className="flex items-center">
-                  <PulseGlow color="blue" intensity="medium">
-                    <div className="p-2 bg-blue-100 rounded-lg">
-                      <CheckCircle className="w-6 h-6 text-blue-600" />
-                    </div>
-                  </PulseGlow>
-                  <div className="ml-3">
-                    <p className="text-sm text-gray-600">Completed</p>
-                    <FloatingElement intensity="low">
-                      <p className="text-lg font-bold text-gray-900">{stats.completedDeliveries}</p>
-                    </FloatingElement>
-                  </div>
+          <Card className="bg-white shadow-lg">
+            <CardContent className="p-4">
+              <div className="flex items-center">
+                <div className="p-2 bg-blue-100 rounded-lg">
+                  <CheckCircle className="w-6 h-6 text-blue-600" />
                 </div>
-              </CardContent>
-            </Card>
-          </AnimatedCard>
+                <div className="ml-3">
+                  <p className="text-sm text-gray-600">Completed</p>
+                  <p className="text-lg font-bold text-black">{stats.completedDeliveries}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
           
-          <AnimatedCard>
-            <Card className="bg-white shadow-lg">
-              <CardContent className="p-4">
-                <div className="flex items-center">
-                  <div className="p-2 bg-orange-100 rounded-lg">
-                    <Clock className="w-6 h-6 text-orange-600" />
-                  </div>
-                  <div className="ml-3">
-                    <p className="text-sm text-gray-600">Pending</p>
-                    <FloatingElement intensity="low">
-                      <p className="text-lg font-bold text-gray-900">{stats.pendingDeliveries}</p>
-                    </FloatingElement>
-                  </div>
+          <Card className="bg-white shadow-lg">
+            <CardContent className="p-4">
+              <div className="flex items-center">
+                <div className="p-2 bg-orange-100 rounded-lg">
+                  <Clock className="w-6 h-6 text-orange-600" />
                 </div>
-              </CardContent>
-            </Card>
-          </AnimatedCard>
+                <div className="ml-3">
+                  <p className="text-sm text-gray-600">Pending</p>
+                  <p className="text-lg font-bold text-black">{stats.pendingDeliveries}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
           
-          <AnimatedCard>
-            <Card className="bg-white shadow-lg">
-              <CardContent className="p-4">
-                <div className="flex items-center">
-                  <div className="p-2 bg-purple-100 rounded-lg">
-                    <Truck className="w-6 h-6 text-purple-600" />
-                  </div>
-                  <div className="ml-3">
-                    <p className="text-sm text-gray-600">Today</p>
-                    <FloatingElement intensity="low">
-                      <p className="text-lg font-bold text-gray-900">{stats.todayDeliveries}</p>
-                    </FloatingElement>
-                  </div>
+          <Card className="bg-white shadow-lg">
+            <CardContent className="p-4">
+              <div className="flex items-center">
+                <div className="p-2 bg-purple-100 rounded-lg">
+                  <Truck className="w-6 h-6 text-purple-600" />
                 </div>
-              </CardContent>
-            </Card>
-          </AnimatedCard>
-        </StaggeredList>
+                <div className="ml-3">
+                  <p className="text-sm text-gray-600">Today</p>
+                  <p className="text-lg font-bold text-black">{stats.todayDeliveries}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
       
       {/* Delivery Requests Section */}
       <div className="px-4">
-        <AnimatedCard delay={0.3}>
-          <Card className="bg-white shadow-lg">
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <FloatingElement intensity="low">
-                  <Package className="w-5 h-5 mr-2" />
-                </FloatingElement>
-                Recent Delivery Requests
-              </CardTitle>
-            </CardHeader>
+        <Card className="bg-white shadow-lg">
+          <CardHeader>
+            <CardTitle className="flex items-center text-black">
+              <Package className="w-5 h-5 mr-2 text-black" />
+              Recent Delivery Requests
+            </CardTitle>
+          </CardHeader>
             <CardContent>
 
             {requests.length === 0 ? (
               <div className="text-center py-12">
                 <Package className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">No delivery requests</h3>
+                <h3 className="text-lg font-medium text-black mb-2">No delivery requests</h3>
                 <p className="text-gray-500">
                   You'll see cash delivery requests here when customers need deliveries in your area.
                 </p>
@@ -294,7 +269,7 @@ const VendorDashboard = () => {
                             <DollarSign className="w-5 h-5 text-green-600" />
                           </div>
                           <div>
-                            <p className="font-bold text-lg text-gray-900">₦{(request.usd_amount * 1650).toLocaleString()}</p>
+                            <p className="font-bold text-lg text-black">NGN {(request.usd_amount * 1650).toLocaleString()}</p>
                             <p className="text-sm text-gray-600">From: {request.buyer_name || 'Merchant'}</p>
                           </div>
                         </div>
@@ -325,7 +300,6 @@ const VendorDashboard = () => {
             )}
           </CardContent>
         </Card>
-        </AnimatedCard>
       </div>
 
       {/* Bottom Navigation */}

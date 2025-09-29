@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { creditsService, calculatePlatformFeeCredits } from '@/services/creditsService';
+import { exchangeRateService } from '@/services/exchangeRateService';
 
 const SendNairaGetUSD = () => {
   const navigate = useNavigate();
@@ -16,8 +17,8 @@ const SendNairaGetUSD = () => {
   const [selectedOption, setSelectedOption] = useState<'pickup' | 'delivery' | null>(null);
   const [userCredits, setUserCredits] = useState(0);
   const [loading, setLoading] = useState(true);
-  
-  const usdRate = 1650; // ₦1,650 per $1
+  const [usdRate, setUsdRate] = useState(1650);
+  const [rateLoading, setRateLoading] = useState(true);
   const usdAmount = nairaAmount ? (parseFloat(nairaAmount) / usdRate).toFixed(2) : '0.00';
   const creditsRequired = nairaAmount ? calculatePlatformFeeCredits(parseFloat(usdAmount)) : 0;
 
@@ -25,7 +26,20 @@ const SendNairaGetUSD = () => {
     if (user) {
       loadUserCredits();
     }
+    loadExchangeRate();
   }, [user]);
+
+  const loadExchangeRate = async () => {
+    try {
+      setRateLoading(true);
+      const rate = await exchangeRateService.getUSDToNGNRate();
+      setUsdRate(Math.round(rate));
+    } catch (error) {
+      console.error('Error loading exchange rate:', error);
+    } finally {
+      setRateLoading(false);
+    }
+  };
 
   const loadUserCredits = async () => {
     try {
@@ -106,7 +120,19 @@ const SendNairaGetUSD = () => {
                 </div>
                 <div className="flex justify-between items-center mt-1">
                   <span className="text-sm text-gray-600">Rate:</span>
-                  <span className="text-sm text-gray-900">₦{usdRate.toLocaleString()} per $1</span>
+                  <div className="flex items-center space-x-2">
+                    <span className="text-sm text-gray-900">₦{usdRate.toLocaleString()} per $1</span>
+                    {rateLoading && (
+                      <div className="w-3 h-3 border border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                    )}
+                    <button 
+                      onClick={loadExchangeRate}
+                      className="text-xs text-blue-600 hover:text-blue-800"
+                      disabled={rateLoading}
+                    >
+                      ↻
+                    </button>
+                  </div>
                 </div>
                 <div className="flex justify-between items-center mt-1">
                   <span className="text-sm text-gray-600">Credits required:</span>

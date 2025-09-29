@@ -193,20 +193,20 @@ const VendorDeliveryDetailsPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-white">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200 p-4">
+      <div className="bg-white p-4 border-b border-gray-200">
         <div className="flex items-center">
           <Button
             variant="ghost"
             size="sm"
             onClick={() => navigate('/vendor/dashboard')}
-            className="mr-3"
+            className="mr-3 text-black hover:bg-gray-100"
           >
             <ArrowLeft className="w-4 h-4" />
           </Button>
           <div>
-            <h1 className="text-xl font-semibold text-gray-900">Customer Delivery</h1>
+            <h1 className="text-xl font-semibold text-black">Customer Delivery</h1>
             <p className="text-sm text-gray-600">${delivery.usd_amount.toLocaleString()} USD Cash</p>
           </div>
         </div>
@@ -214,48 +214,51 @@ const VendorDeliveryDetailsPage = () => {
 
       <div className="p-4 space-y-4">
         {/* Customer Details */}
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <div className="flex items-center mb-3">
-            <User className="w-4 h-4 text-blue-600 mr-2" />
-            <span className="text-sm font-medium text-blue-800">Customer Details</span>
-          </div>
-          <div className="space-y-2 text-sm">
-            <div className="flex justify-between">
-              <span className="text-blue-600">Name:</span>
-              <span className="font-medium">{delivery.customer_name || 'Customer'}</span>
+        <div className="bg-white rounded-lg shadow-sm border p-6">
+          <div className="flex items-center mb-4">
+            <div className="p-2 bg-gray-100 rounded-lg mr-3">
+              <User className="w-5 h-5 text-gray-600" />
             </div>
-            <div className="flex justify-between items-center">
-              <span className="text-blue-600">Phone:</span>
+            <span className="text-lg font-semibold text-gray-900">Customer Details</span>
+          </div>
+          <div className="space-y-3">
+            <div className="flex items-center justify-between py-3">
+              <span className="text-gray-600 font-medium">Name:</span>
+              <span className="text-gray-900 font-semibold">{delivery.customer_name || 'Customer'}</span>
+            </div>
+            <div className="flex items-center justify-between py-3">
+              <span className="text-gray-600 font-medium">Phone:</span>
               <div className="flex items-center space-x-2">
-                <span className="font-medium">{delivery.customer_phone || 'Not provided'}</span>
+                <span className="text-gray-900 font-semibold">{delivery.customer_phone || 'Not provided'}</span>
                 <Button
                   onClick={() => setShowMessage(true)}
                   size="sm"
-                  variant="outline"
-                  className="h-6 px-2 text-xs"
+                  className="bg-blue-600 text-white hover:bg-blue-700 h-7 px-3 text-xs"
                 >
                   <MessageCircle className="w-3 h-3 mr-1" />
                   Message
                 </Button>
               </div>
             </div>
-            <div className="flex justify-between">
-              <span className="text-blue-600">Type:</span>
-              <span className="font-medium flex items-center">
+            <div className="flex items-center justify-between py-3">
+              <span className="text-gray-600 font-medium">Service:</span>
+              <span className="text-gray-900 font-semibold flex items-center">
                 {delivery.delivery_type === 'delivery' ? (
-                  <><Truck className="w-4 h-4 mr-1" /> Home Delivery</>
+                  <><Truck className="w-4 h-4 mr-2 text-gray-600" /> Home Delivery</>
                 ) : (
-                  <><MapPin className="w-4 h-4 mr-1" /> Pickup</>
+                  <><MapPin className="w-4 h-4 mr-2 text-gray-600" /> Pickup Service</>
                 )}
               </span>
             </div>
-            <div className="flex justify-between">
-              <span className="text-blue-600">Amount:</span>
-              <span className="font-medium text-green-600">${delivery.usd_amount.toLocaleString()} USD</span>
+            <div className="bg-blue-600 rounded-lg p-3 mt-3">
+              <div className="flex items-center justify-between">
+                <span className="text-white font-medium">Cash Amount:</span>
+                <span className="text-white font-bold text-lg">${delivery.usd_amount.toLocaleString()} USD</span>
+              </div>
             </div>
-            <div className="flex items-start justify-between">
-              <span className="text-blue-600">{delivery.delivery_type === 'delivery' ? 'Address:' : 'Location:'}:</span>
-              <span className="font-medium text-right flex-1 ml-2">
+            <div className="py-3 mt-3">
+              <span className="text-gray-600 font-medium block mb-2">{delivery.delivery_type === 'delivery' ? 'Delivery Address:' : 'Pickup Location:'}:</span>
+              <span className="text-gray-900 font-semibold">
                 {delivery.delivery_type === 'delivery' 
                   ? delivery.delivery_address || 'Address not provided'
                   : delivery.pickup_location || 'Pickup location not provided'
@@ -265,64 +268,82 @@ const VendorDeliveryDetailsPage = () => {
           </div>
         </div>
 
-        {/* Action Buttons */}
-        {delivery.status === 'payment_confirmed' && (
-          <Button
-            onClick={handleStartDelivery}
-            disabled={processing}
-            className="w-full bg-orange-600 hover:bg-orange-700 text-white py-4 text-lg font-semibold"
-          >
-            {processing ? (
-              <div className="flex items-center">
-                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-                Starting Delivery...
-              </div>
-            ) : (
-              <div className="flex items-center">
-                <Truck className="w-5 h-5 mr-2" />
-                Start Delivery Process
-              </div>
-            )}
-          </Button>
-        )}
+        {/* Instructions */}
+        <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+          <div className="flex items-start">
+            <div className="p-1 bg-orange-100 rounded-full mr-3 mt-0.5">
+              <span className="block w-2 h-2 bg-orange-500 rounded-full"></span>
+            </div>
+            <div>
+              <h3 className="text-orange-800 font-semibold mb-2">Important Instructions</h3>
+              <ul className="text-gray-700 text-sm space-y-1">
+                <li>• Contact customer using phone number or message button</li>
+                <li>• Meet customer at the address shown above</li>
+                <li>• Ask for their 6-digit delivery code</li>
+                <li>• Only give cash after code is validated</li>
+                <li>• Count the cash carefully before handing over</li>
+              </ul>
+            </div>
+          </div>
+        </div>
 
         {/* Always show code validation section */}
         <div className="space-y-4">
-          <div className="bg-green-50 border-2 border-green-300 rounded-xl p-4">
-            <div className="flex items-center mb-3">
-              <Lock className="w-5 h-5 text-green-600 mr-3" />
-              <span className="text-lg font-bold text-green-800">Delivery Code Validation</span>
+          <div className="bg-white rounded-lg shadow-sm border p-6">
+            <div className="flex items-center mb-4">
+              <div className="p-2 bg-green-100 rounded-lg mr-3">
+                <Lock className="w-5 h-5 text-green-600" />
+              </div>
+              <span className="text-lg font-semibold text-gray-900">Step 1: Get Customer Code</span>
             </div>
             
-            <div className="bg-white border border-green-200 rounded-lg p-3 mb-3">
-              <p className="text-sm text-green-700 mb-3">
-                <strong>Ask customer for their delivery code:</strong>
-              </p>
+            <div className="bg-gray-50 rounded-lg p-4 mb-4">
+              <div className="flex items-center mb-3">
+                <div className="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center mr-3">
+                  <span className="text-white font-bold text-sm">1</span>
+                </div>
+                <p className="text-gray-900 font-medium">
+                  Ask customer: "What is your delivery code?"
+                </p>
+              </div>
               
-              <div className="flex space-x-2 mb-3">
+              <div className="space-y-3">
                 <input
                   type="text"
                   value={enteredCode}
                   onChange={(e) => setEnteredCode(e.target.value.toUpperCase())}
-                  placeholder="Enter customer's code"
-                  className="flex-1 px-3 py-3 border-2 border-green-300 rounded-lg text-center font-mono text-lg tracking-wider uppercase font-bold"
+                  placeholder="ENTER CODE"
+                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg text-center font-mono text-xl tracking-wider uppercase font-bold bg-white text-gray-900 focus:border-green-500 focus:outline-none"
                   maxLength={6}
                   disabled={codeValidated}
                 />
                 <Button
                   onClick={validateDeliveryCode}
                   disabled={!enteredCode || codeValidated}
-                  className="bg-green-600 hover:bg-green-700 text-white px-6"
+                  className="w-full bg-green-600 text-white hover:bg-green-700 py-3 font-semibold"
                 >
-                  {codeValidated ? 'Valid' : 'Validate'}
+                  {codeValidated ? (
+                    <><CheckCircle className="w-4 h-4 mr-1" /> Valid</>
+                  ) : (
+                    'Check Code'
+                  )}
                 </Button>
               </div>
               
               {codeValidated && (
-                <div className="bg-green-100 border-2 border-green-400 rounded-lg p-3">
-                  <p className="text-sm text-green-800 font-bold">
-                    ✅ Code validated! Give ${delivery.usd_amount.toLocaleString()} USD to customer.
-                  </p>
+                <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                  <div className="flex items-center mb-2">
+                    <CheckCircle className="w-5 h-5 text-green-600 mr-2" />
+                    <p className="text-green-800 font-semibold">Code is correct!</p>
+                  </div>
+                  <div className="flex items-center">
+                    <div className="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center mr-3">
+                      <span className="text-white font-bold text-sm">2</span>
+                    </div>
+                    <p className="text-green-800 font-medium">
+                      Give ${delivery.usd_amount.toLocaleString()} USD cash to customer
+                    </p>
+                  </div>
                 </div>
               )}
             </div>

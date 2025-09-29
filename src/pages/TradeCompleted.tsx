@@ -16,35 +16,17 @@ const TradeCompleted = () => {
   const [rating, setRating] = useState(0);
   const [feedback, setFeedback] = useState('');
 
-  // Get trade data from location state or use default
-  const tradeData = location.state || {
-    tradeId: `TXN-${Date.now()}`,
-    date: new Date().toLocaleString(),
-    amountSold: '0.001',
-    coin: 'BTC',
-    rate: '₦1,500,000/BTC',
-    totalReceived: '₦1,500',
-    platformFee: '₦7.50',
-    netAmount: '₦1,492.50',
-    merchant: 'Demo Merchant',
-    bankAccount: 'Demo Bank Account',
-    status: 'completed'
-  };
+  // Get real trade data from location state
+  const tradeData = location.state;
+  
+  // If no trade data provided, redirect to home
+  if (!tradeData) {
+    navigate('/home');
+    return null;
+  }
 
-  // Ensure all values are defined for the receipt
-  const safeTradeData = {
-    tradeId: tradeData.tradeId || `TXN-${Date.now()}`,
-    date: tradeData.date || new Date().toLocaleString(),
-    amountSold: tradeData.amountSold || '0.001',
-    coin: tradeData.coin || 'BTC',
-    rate: tradeData.rate || '₦1,500,000/BTC',
-    totalReceived: tradeData.totalReceived || '₦1,500',
-    platformFee: tradeData.platformFee || '₦7.50',
-    netAmount: tradeData.netAmount || '₦1,492.50',
-    merchant: tradeData.merchant || 'Central Exchange',
-    bankAccount: tradeData.bankAccount || 'Demo Trade',
-    status: tradeData.status || 'completed'
-  };
+  // Use the actual trade data passed from EscrowFlow
+  const safeTradeData = tradeData;
 
   const handleRateMerchant = () => {
     setShowRatingModal(true);

@@ -1,13 +1,31 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Star, Clock } from 'lucide-react';
+import { ArrowLeft, Star, Clock, Wifi, WifiOff } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { merchantSearchService } from '@/services/merchantSearchService';
 
 const BuyCryptoMerchantSelection = () => {
   const [selectedOption, setSelectedOption] = useState('');
+  const [onlineMerchants, setOnlineMerchants] = useState(0);
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const location = useLocation();
-  const { nairaAmount, btcAmount } = location.state || {};
+  const { nairaAmount, btcAmount, cryptoType = 'BTC' } = location.state || {};
+
+  useEffect(() => {
+    loadOnlineMerchants();
+  }, [cryptoType]);
+
+  const loadOnlineMerchants = async () => {
+    try {
+      const merchants = await merchantSearchService.getOnlineMerchants(cryptoType);
+      setOnlineMerchants(merchants.length);
+    } catch (error) {
+      console.error('Error loading merchants:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleContinue = () => {
     if (selectedOption === 'auto') {
@@ -101,6 +119,12 @@ const BuyCryptoMerchantSelection = () => {
               <div className="flex items-center text-sm text-primary">
                 <Star className="w-4 h-4 mr-2" />
                 <span>Based on rates, trust score, and speed</span>
+              </div>
+              <div className="flex items-center text-sm text-primary">
+                <Wifi className="w-4 h-4 mr-2" />
+                <span>
+                  {loading ? 'Loading...' : `${onlineMerchants} merchants online now`}
+                </span>
               </div>
               <div className="flex items-center text-sm text-primary">
                 <Clock className="w-4 h-4 mr-2" />

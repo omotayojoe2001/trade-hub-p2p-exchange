@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { ArrowLeft, Shield, Wallet, CheckCircle, Upload, MessageCircle } from 'lucide-react';
+import { ArrowLeft, Shield, Wallet, CheckCircle, Upload, MessageCircle, Copy, Check } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -24,6 +24,7 @@ const SellCryptoTradeRequestDetails = () => {
   const [paymentProof, setPaymentProof] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState<'details' | 'payment' | 'completed'>('details');
+  const [copiedAccount, setCopiedAccount] = useState(false);
 
   const fireblocksService = new FireblocksEscrowService();
 
@@ -406,6 +407,22 @@ const SellCryptoTradeRequestDetails = () => {
     }
   };
 
+  const copyAccountNumber = async () => {
+    if (userBankAccount?.account_number) {
+      try {
+        await navigator.clipboard.writeText(userBankAccount.account_number);
+        setCopiedAccount(true);
+        toast({
+          title: "Copied!",
+          description: "Account number copied to clipboard"
+        });
+        setTimeout(() => setCopiedAccount(false), 2000);
+      } catch (error) {
+        console.error('Failed to copy:', error);
+      }
+    }
+  };
+
   if (!tradeRequest) {
     return <div className="min-h-screen bg-background flex items-center justify-center">Loading...</div>;
   }
@@ -490,9 +507,23 @@ const SellCryptoTradeRequestDetails = () => {
               <span className="text-muted-foreground">Bank:</span>
               <span className="font-semibold">{userBankAccount?.bank_name}</span>
             </div>
-            <div className="flex justify-between">
+            <div className="flex justify-between items-center">
               <span className="text-muted-foreground">Account Number:</span>
-              <span className="font-semibold">{userBankAccount?.account_number}</span>
+              <div className="flex items-center space-x-2">
+                <span className="font-semibold">{userBankAccount?.account_number}</span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={copyAccountNumber}
+                  className="h-6 w-6 p-0"
+                >
+                  {copiedAccount ? (
+                    <Check className="w-3 h-3 text-green-600" />
+                  ) : (
+                    <Copy className="w-3 h-3" />
+                  )}
+                </Button>
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -624,7 +655,7 @@ const SellCryptoTradeRequestDetails = () => {
                 <Button onClick={() => navigate('/trade-requests')} className="w-full">
                   Back to Dashboard
                 </Button>
-                <Button variant="outline" onClick={() => setStep('payment')} className="w-full">
+                <Button variant="outline" onClick={() => navigate(`/payment-details/${tradeRequestId}`)} className="w-full">
                   View Payment Details
                 </Button>
               </div>

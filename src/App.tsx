@@ -135,6 +135,7 @@ import VendorTradeRequests from "./pages/VendorTradeRequests";
 import VendorPaymentConfirmationNew from "./pages/VendorPaymentConfirmation";
 import VendorDeliveryDetailsPage from "./pages/VendorDeliveryDetailsPage";
 import MyOrders from "./pages/MyOrders";
+import PaymentDetails from "./pages/PaymentDetails";
 
 
 
@@ -282,6 +283,7 @@ const AppContent = () => {
         <Route path="/incoming-trade-requests" element={<IncomingTradeRequests />} />
         <Route path="/trade-notifications" element={<TradeRequestNotifications />} />
         <Route path="/sell-crypto-trade-request-details" element={<SellCryptoTradeRequestDetails />} />
+        <Route path="/payment-details/:tradeRequestId" element={<PaymentDetails />} />
             <Route path="/auto-merchant-match" element={<AutoMerchantMatch />} />
             <Route path="/merchant-list" element={<MerchantList />} />
             <Route path="/select-coin" element={<SelectCoin />} />

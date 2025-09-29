@@ -264,7 +264,7 @@ const BuySell = () => {
                 </div>
                 <Button
                   className="w-full bg-[#0052FF] text-white rounded-full h-8 text-xs font-bold"
-                  onClick={() => navigate(`/trade-request-details/${request.id}`)}
+                  onClick={() => navigate('/trade-requests')}
                 >
                   Accept Request
                 </Button>

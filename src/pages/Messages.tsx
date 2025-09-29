@@ -1,11 +1,12 @@
-import React, { useState, useEffect } from 'react';
-import { ArrowLeft, MessageCircle, User, Send } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { ArrowLeft, MessageCircle, User, Send, Paperclip, Image, FileText, Video } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import BottomNavigation from '@/components/BottomNavigation';
 import { messagingService, type Conversation, type Message } from '@/services/messagingService';
+import { notificationService } from '@/services/notificationService';
 import { useAuth } from '@/hooks/useAuth';
 
 const Messages = () => {
@@ -16,10 +17,24 @@ const Messages = () => {
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     loadConversations();
-  }, []);
+    
+    // Request notification permission
+    notificationService.requestPermission();
+    
+    // Subscribe to conversation updates for real-time inbox updates
+    if (user?.id) {
+      const channel = messagingService.subscribeToConversations(user.id, () => {
+        loadConversations();
+      });
+      
+      return () => channel.unsubscribe();
+    }
+  }, [user?.id]);
 
   useEffect(() => {
     if (selectedConversation) {
@@ -27,14 +42,27 @@ const Messages = () => {
       
       // Subscribe to new messages
       const channel = messagingService.subscribeToMessages(selectedConversation.id, (newMessage) => {
-        console.log('📨 Received new message in UI:', newMessage);
         setMessages(prev => {
-          // Check if message already exists
+          // Replace temp message with real one, or add new message
+          const tempIndex = prev.findIndex(m => 
+            m.id.startsWith('temp-') && 
+            m.content === newMessage.content && 
+            m.sender_id === newMessage.sender_id
+          );
+          
+          if (tempIndex !== -1) {
+            // Replace temp message with real one
+            const updated = [...prev];
+            updated[tempIndex] = newMessage;
+            return updated;
+          }
+          
+          // Check if real message already exists
           if (prev.find(m => m.id === newMessage.id)) {
-            console.log('Message already exists, skipping');
             return prev;
           }
-          console.log('Adding new message to UI');
+          
+          // Add new message
           return [...prev, newMessage];
         });
       });
@@ -76,7 +104,20 @@ const Messages = () => {
 
     setSending(true);
     const messageContent = newMessage.trim();
-    setNewMessage(''); // Clear input immediately for better UX
+    setNewMessage('');
+    
+    // Optimistic update - add message immediately to UI
+    const tempMessage: Message = {
+      id: `temp-${Date.now()}`,
+      conversation_id: selectedConversation.id,
+      sender_id: user?.id || '',
+      content: messageContent,
+      message_type: 'text',
+      is_read: false,
+      created_at: new Date().toISOString()
+    };
+    
+    setMessages(prev => [...prev, tempMessage]);
     
     try {
       const { data, error } = await messagingService.sendMessage(
@@ -85,18 +126,207 @@ const Messages = () => {
       );
 
       if (error) {
+        setMessages(prev => prev.filter(m => m.id !== tempMessage.id));
+        setNewMessage(messageContent);
         console.error('Error sending message:', error);
-        setNewMessage(messageContent); // Restore message on error
-      } else {
-        console.log('Message sent successfully:', data);
-        // Message will be added via real-time subscription
       }
     } catch (error) {
+      setMessages(prev => prev.filter(m => m.id !== tempMessage.id));
+      setNewMessage(messageContent);
       console.error('Error sending message:', error);
-      setNewMessage(messageContent); // Restore message on error
     } finally {
       setSending(false);
     }
+  };
+
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !selectedConversation) return;
+
+    // Check file size (10MB limit)
+    if (file.size > 10 * 1024 * 1024) {
+      alert('File size must be less than 10MB');
+      return;
+    }
+
+    setUploading(true);
+    
+    // Determine message type based on file type
+    let messageType: 'image' | 'video' | 'file' = 'file';
+    if (file.type.startsWith('image/')) messageType = 'image';
+    else if (file.type.startsWith('video/')) messageType = 'video';
+
+    // Optimistic update
+    const tempMessage: Message = {
+      id: `temp-${Date.now()}`,
+      conversation_id: selectedConversation.id,
+      sender_id: user?.id || '',
+      content: file.name,
+      message_type: messageType,
+      is_read: false,
+      created_at: new Date().toISOString(),
+      file_name: file.name,
+      file_size: file.size,
+      mime_type: file.type
+    };
+    
+    setMessages(prev => [...prev, tempMessage]);
+
+    try {
+      console.log('Starting file upload process...');
+      
+      // Upload file
+      const { data: uploadData, error: uploadError } = await messagingService.uploadFile(file);
+      if (uploadError) {
+        console.error('Upload failed:', uploadError);
+        throw uploadError;
+      }
+
+      console.log('File uploaded, sending message...');
+
+      // Send message with file URL
+      const { data, error } = await messagingService.sendMessage(
+        selectedConversation.id,
+        file.name,
+        messageType,
+        uploadData?.url,
+        file.name,
+        file.size,
+        file.type
+      );
+
+      if (error) {
+        console.error('Error sending message:', error);
+        setMessages(prev => prev.filter(m => m.id !== tempMessage.id));
+        alert('Failed to send file: ' + (error.message || 'Unknown error'));
+      } else {
+        console.log('File message sent successfully');
+      }
+    } catch (error: any) {
+      console.error('File upload process failed:', error);
+      setMessages(prev => prev.filter(m => m.id !== tempMessage.id));
+      alert('Failed to upload file: ' + (error.message || 'Unknown error'));
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
+  const renderMessage = (message: Message) => {
+    const isOwn = message.sender_id === user?.id;
+    const isPending = message.id.startsWith('temp-');
+
+    if (message.message_type === 'image' && message.file_url) {
+      return (
+        <div className={`max-w-[75%] rounded-lg overflow-hidden ${
+          isOwn ? (isPending ? 'opacity-70' : '') : ''
+        }`}>
+          <img 
+            src={message.file_url} 
+            alt={message.file_name}
+            className="max-w-full h-auto rounded-lg"
+            style={{ maxHeight: '300px' }}
+          />
+          <div className={`px-3 py-2 ${
+            isOwn ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-900'
+          }`}>
+            <p className={`text-xs ${
+              isOwn ? 'text-blue-100' : 'text-gray-500'
+            }`}>
+              {formatTime(message.created_at)}
+              {isPending && isOwn && (
+                <span className="w-2 h-2 bg-current rounded-full animate-pulse ml-1 inline-block" />
+              )}
+            </p>
+          </div>
+        </div>
+      );
+    }
+
+    if (message.message_type === 'video' && message.file_url) {
+      return (
+        <div className={`max-w-[75%] rounded-lg overflow-hidden ${
+          isOwn ? (isPending ? 'opacity-70' : '') : ''
+        }`}>
+          <video 
+            src={message.file_url} 
+            controls
+            className="max-w-full h-auto rounded-lg"
+            style={{ maxHeight: '300px' }}
+          />
+          <div className={`px-3 py-2 ${
+            isOwn ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-900'
+          }`}>
+            <p className={`text-xs ${
+              isOwn ? 'text-blue-100' : 'text-gray-500'
+            }`}>
+              {formatTime(message.created_at)}
+              {isPending && isOwn && (
+                <span className="w-2 h-2 bg-current rounded-full animate-pulse ml-1 inline-block" />
+              )}
+            </p>
+          </div>
+        </div>
+      );
+    }
+
+    if (message.message_type === 'file' && message.file_url) {
+      return (
+        <div className={`max-w-[75%] rounded-lg px-3 py-2 ${
+          isOwn
+            ? isPending 
+              ? 'bg-blue-400 text-white opacity-70'
+              : 'bg-blue-600 text-white'
+            : 'bg-gray-100 text-gray-900'
+        }`}>
+          <div className="flex items-center space-x-2">
+            <FileText className="w-4 h-4" />
+            <div className="flex-1">
+              <a 
+                href={message.file_url} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-sm font-medium underline"
+              >
+                {message.file_name}
+              </a>
+              <p className="text-xs opacity-75">
+                {message.file_size ? `${(message.file_size / 1024 / 1024).toFixed(1)} MB` : ''}
+              </p>
+            </div>
+          </div>
+          <p className={`text-xs mt-1 flex items-center gap-1 ${
+            isOwn ? 'text-blue-100' : 'text-gray-500'
+          }`}>
+            {formatTime(message.created_at)}
+            {isPending && isOwn && (
+              <span className="w-2 h-2 bg-current rounded-full animate-pulse" />
+            )}
+          </p>
+        </div>
+      );
+    }
+
+    // Text message
+    return (
+      <div className={`max-w-[75%] rounded-lg px-3 py-2 ${
+        isOwn
+          ? isPending 
+            ? 'bg-blue-400 text-white opacity-70'
+            : 'bg-blue-600 text-white'
+          : 'bg-gray-100 text-gray-900'
+      }`}>
+        <p className="text-sm">{message.content}</p>
+        <p className={`text-xs mt-1 flex items-center gap-1 ${
+          isOwn ? 'text-blue-100' : 'text-gray-500'
+        }`}>
+          {formatTime(message.created_at)}
+          {isPending && isOwn && (
+            <span className="w-2 h-2 bg-current rounded-full animate-pulse" />
+          )}
+        </p>
+      </div>
+    );
   };
 
   const formatTime = (timestamp: string) => {
@@ -235,55 +465,59 @@ const Messages = () => {
             <p className="text-gray-600 text-sm">No messages yet. Start the conversation!</p>
           </div>
         ) : (
-          messages.map((message) => {
-            const isOwn = message.sender_id === user?.id;
-            return (
-              <div
-                key={message.id}
-                className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}
-              >
-                <div
-                  className={`max-w-[75%] rounded-lg px-3 py-2 ${
-                    isOwn
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-gray-100 text-gray-900'
-                  }`}
-                >
-                  <p className="text-sm">{message.content}</p>
-                  <p
-                    className={`text-xs mt-1 ${
-                      isOwn ? 'text-blue-100' : 'text-gray-500'
-                    }`}
-                  >
-                    {formatTime(message.created_at)}
-                  </p>
-                </div>
-              </div>
-            );
-          })
+          messages.map((message) => (
+            <div
+              key={message.id}
+              className={`flex ${message.sender_id === user?.id ? 'justify-end' : 'justify-start'}`}
+            >
+              {renderMessage(message)}
+            </div>
+          ))
         )}
       </div>
 
       {/* Message Input */}
       <div className="bg-white border-t border-gray-200 p-4">
         <div className="flex space-x-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={uploading || sending}
+            className="px-2"
+          >
+            <Paperclip className="w-4 h-4" />
+          </Button>
           <Input
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
             onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
             placeholder="Type a message..."
-            disabled={sending}
+            disabled={sending || uploading}
             className="flex-1"
           />
           <Button
             onClick={handleSendMessage}
-            disabled={!newMessage.trim() || sending}
+            disabled={!newMessage.trim() || sending || uploading}
             size="sm"
             className="px-4"
           >
             <Send className="w-4 h-4" />
           </Button>
         </div>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*,video/*,.pdf,.doc,.docx,.txt"
+          onChange={handleFileUpload}
+          className="hidden"
+        />
+        {uploading && (
+          <div className="mt-2 text-sm text-gray-600 flex items-center gap-2">
+            <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+            Uploading file...
+          </div>
+        )}
       </div>
     </div>
   );

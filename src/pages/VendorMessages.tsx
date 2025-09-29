@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { MessageCircle, Send, User, ArrowLeft } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { MessageCircle, Send, User, ArrowLeft, Paperclip, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -15,11 +15,22 @@ const VendorMessages = () => {
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     loadConversations();
-  }, []);
+    
+    // Subscribe to conversation updates for real-time inbox updates
+    if (user?.id) {
+      const channel = messagingService.subscribeToConversations(user.id, () => {
+        loadConversations();
+      });
+      
+      return () => channel.unsubscribe();
+    }
+  }, [user?.id]);
 
   useEffect(() => {
     if (selectedConversation) {
@@ -28,6 +39,19 @@ const VendorMessages = () => {
       // Subscribe to new messages
       const channel = messagingService.subscribeToMessages(selectedConversation.id, (newMessage) => {
         setMessages(prev => {
+          // Replace temp message with real one, or add new message
+          const tempIndex = prev.findIndex(m => 
+            m.id.startsWith('temp-') && 
+            m.content === newMessage.content && 
+            m.sender_id === newMessage.sender_id
+          );
+          
+          if (tempIndex !== -1) {
+            const updated = [...prev];
+            updated[tempIndex] = newMessage;
+            return updated;
+          }
+          
           if (prev.find(m => m.id === newMessage.id)) return prev;
           return [...prev, newMessage];
         });
@@ -76,6 +100,18 @@ const VendorMessages = () => {
     const messageContent = newMessage.trim();
     setNewMessage('');
     
+    const tempMessage: Message = {
+      id: `temp-${Date.now()}`,
+      conversation_id: selectedConversation.id,
+      sender_id: user?.id || '',
+      content: messageContent,
+      message_type: 'text',
+      is_read: false,
+      created_at: new Date().toISOString()
+    };
+    
+    setMessages(prev => [...prev, tempMessage]);
+    
     try {
       const { data, error } = await messagingService.sendMessage(
         selectedConversation.id,
@@ -83,15 +119,148 @@ const VendorMessages = () => {
       );
 
       if (error) {
-        console.error('Error sending message:', error);
+        setMessages(prev => prev.filter(m => m.id !== tempMessage.id));
         setNewMessage(messageContent);
+        console.error('Error sending message:', error);
       }
     } catch (error) {
-      console.error('Error sending message:', error);
+      setMessages(prev => prev.filter(m => m.id !== tempMessage.id));
       setNewMessage(messageContent);
+      console.error('Error sending message:', error);
     } finally {
       setSending(false);
     }
+  };
+
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !selectedConversation) return;
+
+    if (file.size > 10 * 1024 * 1024) {
+      alert('File size must be less than 10MB');
+      return;
+    }
+
+    setUploading(true);
+    
+    let messageType: 'image' | 'video' | 'file' = 'file';
+    if (file.type.startsWith('image/')) messageType = 'image';
+    else if (file.type.startsWith('video/')) messageType = 'video';
+
+    const tempMessage: Message = {
+      id: `temp-${Date.now()}`,
+      conversation_id: selectedConversation.id,
+      sender_id: user?.id || '',
+      content: file.name,
+      message_type: messageType,
+      is_read: false,
+      created_at: new Date().toISOString(),
+      file_name: file.name,
+      file_size: file.size,
+      mime_type: file.type
+    };
+    
+    setMessages(prev => [...prev, tempMessage]);
+
+    try {
+      const { data: uploadData, error: uploadError } = await messagingService.uploadFile(file);
+      if (uploadError) {
+        console.error('Upload failed:', uploadError);
+        throw uploadError;
+      }
+
+      const { data, error } = await messagingService.sendMessage(
+        selectedConversation.id,
+        file.name,
+        messageType,
+        uploadData?.url,
+        file.name,
+        file.size,
+        file.type
+      );
+
+      if (error) {
+        console.error('Error sending message:', error);
+        setMessages(prev => prev.filter(m => m.id !== tempMessage.id));
+        alert('Failed to send file: ' + (error.message || 'Unknown error'));
+      }
+    } catch (error: any) {
+      console.error('File upload process failed:', error);
+      setMessages(prev => prev.filter(m => m.id !== tempMessage.id));
+      alert('Failed to upload file: ' + (error.message || 'Unknown error'));
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
+  const renderMessage = (message: Message) => {
+    const isOwn = message.sender_id === user?.id;
+    const isPending = message.id.startsWith('temp-');
+
+    if (message.message_type === 'image' && message.file_url) {
+      return (
+        <div className={`max-w-[75%] rounded-lg overflow-hidden ${isOwn ? (isPending ? 'opacity-70' : '') : ''}`}>
+          <img src={message.file_url} alt={message.file_name} className="max-w-full h-auto rounded-lg" style={{ maxHeight: '300px' }} />
+          <div className={`px-3 py-2 ${isOwn ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-900'}`}>
+            <p className={`text-xs ${isOwn ? 'text-blue-100' : 'text-gray-500'}`}>
+              {formatTime(message.created_at)}
+              {isPending && isOwn && <span className="w-2 h-2 bg-current rounded-full animate-pulse ml-1 inline-block" />}
+            </p>
+          </div>
+        </div>
+      );
+    }
+
+    if (message.message_type === 'video' && message.file_url) {
+      return (
+        <div className={`max-w-[75%] rounded-lg overflow-hidden ${isOwn ? (isPending ? 'opacity-70' : '') : ''}`}>
+          <video src={message.file_url} controls className="max-w-full h-auto rounded-lg" style={{ maxHeight: '300px' }} />
+          <div className={`px-3 py-2 ${isOwn ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-900'}`}>
+            <p className={`text-xs ${isOwn ? 'text-blue-100' : 'text-gray-500'}`}>
+              {formatTime(message.created_at)}
+              {isPending && isOwn && <span className="w-2 h-2 bg-current rounded-full animate-pulse ml-1 inline-block" />}
+            </p>
+          </div>
+        </div>
+      );
+    }
+
+    if (message.message_type === 'file' && message.file_url) {
+      return (
+        <div className={`max-w-[75%] rounded-lg px-3 py-2 ${
+          isOwn ? isPending ? 'bg-blue-400 text-white opacity-70' : 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-900'
+        }`}>
+          <div className="flex items-center space-x-2">
+            <FileText className="w-4 h-4" />
+            <div className="flex-1">
+              <a href={message.file_url} target="_blank" rel="noopener noreferrer" className="text-sm font-medium underline">
+                {message.file_name}
+              </a>
+              <p className="text-xs opacity-75">
+                {message.file_size ? `${(message.file_size / 1024 / 1024).toFixed(1)} MB` : ''}
+              </p>
+            </div>
+          </div>
+          <p className={`text-xs mt-1 flex items-center gap-1 ${isOwn ? 'text-blue-100' : 'text-gray-500'}`}>
+            {formatTime(message.created_at)}
+            {isPending && isOwn && <span className="w-2 h-2 bg-current rounded-full animate-pulse" />}
+          </p>
+        </div>
+      );
+    }
+
+    return (
+      <div className={`max-w-[75%] rounded-lg px-3 py-2 ${
+        isOwn ? isPending ? 'bg-blue-400 text-white opacity-70' : 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-900'
+      }`}>
+        <p className="text-sm">{message.content}</p>
+        <p className={`text-xs mt-1 flex items-center gap-1 ${isOwn ? 'text-blue-100' : 'text-gray-500'}`}>
+          {formatTime(message.created_at)}
+          {isPending && isOwn && <span className="w-2 h-2 bg-current rounded-full animate-pulse" />}
+        </p>
+      </div>
+    );
   };
 
   const formatTime = (timestamp: string) => {
@@ -122,16 +291,16 @@ const VendorMessages = () => {
     return (
       <div className="min-h-screen bg-white pb-20">
         {/* Header */}
-        <div className="bg-white border-b border-gray-200 px-4 py-4">
-          <h1 className="text-lg font-semibold text-gray-900">Messages</h1>
-          <p className="text-sm text-gray-600">Cash delivery conversations</p>
+        <div className="bg-blue-600 px-4 py-4">
+          <h1 className="text-lg font-semibold text-white">Messages</h1>
+          <p className="text-sm text-blue-100">Cash delivery conversations</p>
         </div>
 
         <div className="">
           {conversations.length === 0 ? (
             <div className="p-6 text-center">
               <MessageCircle className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">No Messages Yet</h3>
+              <h3 className="text-lg font-semibold text-black mb-2">No Messages Yet</h3>
               <p className="text-gray-600 mb-4">
                 Customer messages will appear here when you have active deliveries.
               </p>
@@ -150,7 +319,7 @@ const VendorMessages = () => {
                   <div className="flex-1">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="font-medium text-gray-900">
+                        <p className="font-medium text-black">
                           {conversation.other_user?.display_name || 'Customer'}
                         </p>
                         <p className="text-sm text-gray-600 mt-1">
@@ -181,8 +350,8 @@ const VendorMessages = () => {
         </div>
 
         {error && (
-          <Alert className="m-4 border-red-200 bg-red-50">
-            <AlertDescription className="text-red-800">
+          <Alert className="m-4 border-red-200 bg-white">
+            <AlertDescription className="text-red-700">
               {error}
             </AlertDescription>
           </Alert>
@@ -197,24 +366,24 @@ const VendorMessages = () => {
   return (
     <div className="min-h-screen bg-white flex flex-col">
       {/* Chat Header */}
-      <div className="bg-white border-b border-gray-200 px-4 py-3">
+      <div className="bg-blue-600 px-4 py-3">
         <div className="flex items-center">
           <Button
             variant="ghost"
             size="sm"
             onClick={() => setSelectedConversation(null)}
-            className="mr-3 p-1"
+            className="mr-3 p-1 text-white hover:bg-blue-500"
           >
-            <ArrowLeft size={20} className="text-gray-600" />
+            <ArrowLeft size={20} className="text-white" />
           </Button>
-          <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mr-3">
-            <User className="w-5 h-5 text-blue-600" />
+          <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center mr-3">
+            <User className="w-5 h-5 text-white" />
           </div>
           <div>
-            <p className="font-medium text-gray-900">
+            <p className="font-medium text-white">
               {selectedConversation.other_user?.display_name || 'Customer'}
             </p>
-            <p className="text-xs text-gray-500">Cash Delivery</p>
+            <p className="text-xs text-blue-100">Cash Delivery</p>
           </div>
         </div>
       </div>
@@ -227,55 +396,56 @@ const VendorMessages = () => {
             <p className="text-gray-600 text-sm">No messages yet. Start the conversation!</p>
           </div>
         ) : (
-          messages.map((message) => {
-            const isOwn = message.sender_id === user?.id;
-            return (
-              <div
-                key={message.id}
-                className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}
-              >
-                <div
-                  className={`max-w-[75%] rounded-lg px-3 py-2 ${
-                    isOwn
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-gray-100 text-gray-900'
-                  }`}
-                >
-                  <p className="text-sm">{message.content}</p>
-                  <p
-                    className={`text-xs mt-1 ${
-                      isOwn ? 'text-blue-100' : 'text-gray-500'
-                    }`}
-                  >
-                    {formatTime(message.created_at)}
-                  </p>
-                </div>
-              </div>
-            );
-          })
+          messages.map((message) => (
+            <div key={message.id} className={`flex ${message.sender_id === user?.id ? 'justify-end' : 'justify-start'}`}>
+              {renderMessage(message)}
+            </div>
+          ))
         )}
       </div>
 
       {/* Message Input */}
       <div className="bg-white border-t border-gray-200 p-4">
         <div className="flex space-x-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={uploading || sending}
+            className="px-2"
+          >
+            <Paperclip className="w-4 h-4" />
+          </Button>
           <Input
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
             onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
             placeholder="Type a message..."
-            disabled={sending}
+            disabled={sending || uploading}
             className="flex-1"
           />
           <Button
             onClick={handleSendMessage}
-            disabled={!newMessage.trim() || sending}
+            disabled={!newMessage.trim() || sending || uploading}
             size="sm"
             className="px-4"
           >
             <Send className="w-4 h-4" />
           </Button>
         </div>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*,video/*,.pdf,.doc,.docx,.txt"
+          onChange={handleFileUpload}
+          className="hidden"
+        />
+        {uploading && (
+          <div className="mt-2 text-sm text-gray-600 flex items-center gap-2">
+            <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+            Uploading file...
+          </div>
+        )}
       </div>
 
       {error && (

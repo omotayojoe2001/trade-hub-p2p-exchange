@@ -4,6 +4,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { Home, ArrowUpDown, Briefcase, Settings, Newspaper, MessageCircle, Package } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { messagingService } from '@/services/messagingService';
 
 
 const BottomNavigation = () => {
@@ -12,6 +13,8 @@ const BottomNavigation = () => {
   const [hasNewTradeRequest, setHasNewTradeRequest] = useState(false);
   const [notificationCount, setNotificationCount] = useState(0);
   const [isMerchant, setIsMerchant] = useState(false);
+  const [unreadMessages, setUnreadMessages] = useState(0);
+  const [activeTrades, setActiveTrades] = useState(0);
 
   // Check merchant status and notifications
   useEffect(() => {
@@ -55,13 +58,50 @@ const BottomNavigation = () => {
       }
     };
 
+    const checkUnreadMessages = async () => {
+      try {
+        if (!user) return;
+        
+        const { data: conversations } = await messagingService.getConversations();
+        const totalUnread = conversations?.reduce((sum, conv) => sum + (conv.unread_count || 0), 0) || 0;
+        setUnreadMessages(totalUnread);
+      } catch (error) {
+        console.error('Error checking messages:', error);
+        setUnreadMessages(0);
+      }
+    };
+
+    const checkActiveTrades = async () => {
+      try {
+        if (!user) return;
+        
+        const { data: trades } = await supabase
+          .from('trades')
+          .select('id')
+          .or(`buyer_id.eq.${user.id},seller_id.eq.${user.id}`)
+          .in('status', ['pending', 'in_progress', 'payment_proof_uploaded']);
+        
+        const { data: cashTrades } = await supabase
+          .from('cash_trades')
+          .select('id')
+          .eq('seller_id', user.id)
+          .in('status', ['vendor_paid', 'payment_confirmed', 'delivery_in_progress']);
+        
+        const totalActive = (trades?.length || 0) + (cashTrades?.length || 0);
+        setActiveTrades(totalActive);
+      } catch (error) {
+        console.error('Error checking active trades:', error);
+        setActiveTrades(0);
+      }
+    };
+
     checkMerchantStatus();
     checkNotifications();
+    checkUnreadMessages();
+    checkActiveTrades();
 
-    checkNotifications();
-
-    // Set up real-time subscription for new notifications
-    const channel = supabase
+    // Set up real-time subscriptions
+    const notificationChannel = supabase
       .channel('notification-updates')
       .on('postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'notifications' },
@@ -69,8 +109,26 @@ const BottomNavigation = () => {
       )
       .subscribe();
 
+    const messageSubscription = messagingService.subscribeToConversations(user?.id || '', () => {
+      checkUnreadMessages();
+    });
+
+    const tradeChannel = supabase
+      .channel('trade-updates')
+      .on('postgres_changes',
+        { event: '*', schema: 'public', table: 'trades' },
+        () => checkActiveTrades()
+      )
+      .on('postgres_changes',
+        { event: '*', schema: 'public', table: 'cash_trades' },
+        () => checkActiveTrades()
+      )
+      .subscribe();
+
     return () => {
-      supabase.removeChannel(channel);
+      supabase.removeChannel(notificationChannel);
+      supabase.removeChannel(tradeChannel);
+      messageSubscription?.unsubscribe();
     };
   }, []);
 
@@ -90,7 +148,17 @@ const BottomNavigation = () => {
       <div className="flex justify-around items-center max-w-md mx-auto">
         {navItems.map((item) => {
           const isActive = location.pathname === item.path;
-          const showBadge = (item.path === '/buy-sell' || item.path === '/inbox') && notificationCount > 0;
+          let badgeCount = 0;
+          
+          if (item.path === '/my-trades') {
+            badgeCount = activeTrades;
+          } else if (item.path === '/inbox') {
+            badgeCount = unreadMessages;
+          } else if (item.path === '/buy-sell' && profile?.is_merchant) {
+            badgeCount = notificationCount;
+          }
+          
+          const showBadge = badgeCount > 0;
           
           return (
             <Link
@@ -112,7 +180,7 @@ const BottomNavigation = () => {
                 {showBadge && (
                   <div className="absolute -top-1 -right-1 w-4 h-4 bg-destructive rounded-full flex items-center justify-center animate-pulse">
                     <span className="text-[10px] text-destructive-foreground font-bold">
-                      {notificationCount > 9 ? '9+' : notificationCount}
+                      {badgeCount > 9 ? '9+' : badgeCount}
                     </span>
                   </div>
                 )}

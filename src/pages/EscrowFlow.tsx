@@ -231,8 +231,42 @@ const EscrowFlow = () => {
     setCurrentStep(3); // Move to waiting for merchant confirmation
   };
 
-  const handleCashReceived = () => {
-    setShowConfirmDialog(true);
+  const handleCashReceived = async () => {
+    // Check if buyer has uploaded payment proof first
+    try {
+      const { data: trade, error } = await supabase
+        .from('trades')
+        .select('status, payment_proof_url')
+        .eq('trade_request_id', transactionId)
+        .single();
+        
+      if (error || !trade) {
+        toast({
+          title: "Error",
+          description: "Could not verify payment status. Please try again.",
+          variant: "destructive"
+        });
+        return;
+      }
+      
+      if (trade.status !== 'payment_sent' || !trade.payment_proof_url) {
+        toast({
+          title: "Payment Not Confirmed",
+          description: "Buyer has not uploaded payment proof yet. Please wait for confirmation.",
+          variant: "destructive"
+        });
+        return;
+      }
+      
+      setShowConfirmDialog(true);
+    } catch (error) {
+      console.error('Error checking payment status:', error);
+      toast({
+        title: "Error",
+        description: "Could not verify payment status. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
   
   const confirmRelease = async () => {
@@ -580,26 +614,27 @@ const EscrowFlow = () => {
 
               {bankDetails && systemConfirmedCrypto && (
                 <div className="space-y-4">
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <div className="bg-blue-600 rounded-lg p-4">
                     <div className="flex items-center mb-3">
-                      <CreditCard size={20} className="text-blue-600 mr-2" />
-                      <h3 className="font-medium text-blue-800">
+                      <CreditCard size={20} className="text-white mr-2" />
+                      <h3 className="font-medium text-white">
                         {userRole === 'buyer' ? 'Send Payment To:' : 'Your Bank Details (shown to buyer):'}
                       </h3>
                     </div>
                     <div className="space-y-2">
                       <div className="flex justify-between">
-                        <span className="text-blue-700">Account Name:</span>
-                        <span className="font-medium text-blue-900">{bankDetails.accountName}</span>
+                        <span className="text-white">Account Name:</span>
+                        <span className="font-medium text-white">{bankDetails.accountName}</span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-blue-700">Account Number:</span>
+                        <span className="text-white">Account Number:</span>
                         <div className="flex items-center space-x-2">
-                          <span className="font-medium text-blue-900">{bankDetails.accountNumber}</span>
+                          <span className="font-medium text-white">{bankDetails.accountNumber}</span>
                           {userRole === 'buyer' && (
                             <Button
                               size="sm"
                               variant="ghost"
+                              className="text-white hover:bg-blue-500"
                               onClick={() => copyToClipboard(bankDetails.accountNumber, 'Account number')}
                             >
                               <Copy size={14} />
@@ -608,12 +643,12 @@ const EscrowFlow = () => {
                         </div>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-blue-700">Bank Name:</span>
-                        <span className="font-medium text-blue-900">{bankDetails.bankName}</span>
+                        <span className="text-white">Bank Name:</span>
+                        <span className="font-medium text-white">{bankDetails.bankName}</span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-blue-700">Amount {userRole === 'buyer' ? 'to Send' : 'Expected'}:</span>
-                        <span className="font-bold text-blue-900 text-lg">₦{fiatAmount.toLocaleString()}</span>
+                        <span className="text-white">Amount {userRole === 'buyer' ? 'to Send' : 'Expected'}:</span>
+                        <span className="font-bold text-white text-lg">₦{fiatAmount.toLocaleString()}</span>
                       </div>
                     </div>
                   </div>

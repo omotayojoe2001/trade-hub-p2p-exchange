@@ -9,6 +9,7 @@ import CryptoTicker from '@/components/CryptoTicker';
 import BottomNavigation from '@/components/BottomNavigation';
 import { creditsService } from '@/services/creditsService';
 import { mockCreditsService, isDemoMode } from '@/services/mockCreditsService';
+import { exchangeRateService } from '@/services/exchangeRateService';
 import AnimatedCard from '@/components/animations/AnimatedCard';
 import FloatingElement from '@/components/animations/FloatingElement';
 import PageTransition from '@/components/animations/PageTransition';
@@ -39,6 +40,7 @@ const Index = () => {
   const [unreadNotifications, setUnreadNotifications] = useState(0);
   const [selectedTab, setSelectedTab] = useState('All');
   const [userCredits, setUserCredits] = useState(0);
+  const [usdToNgnRate, setUsdToNgnRate] = useState(1650);
 
   const navigate = useNavigate();
 
@@ -72,11 +74,21 @@ const Index = () => {
     }
   };
 
+  const loadExchangeRate = async () => {
+    try {
+      const rate = await exchangeRateService.getUSDToNGNRate();
+      setUsdToNgnRate(Math.round(rate));
+    } catch (error) {
+      console.error('Error loading exchange rate:', error);
+    }
+  };
+
   useEffect(() => {
     if (user) {
       fetchUnreadNotifications();
       fetchUserCredits();
       fetchTotalTraders();
+      loadExchangeRate();
       
       // Subscribe to credit changes with cleanup
       let subscription: any = null;
@@ -225,7 +237,7 @@ const Index = () => {
               </AnimatedCard>
             </Link>
             
-            <Link to="/sell-crypto">
+            <Link to="/buy-sell">
               <AnimatedCard className="bg-white rounded-xl p-3 shadow-sm border border-gray-100 h-full">
                 <div className="flex items-center">
                   <FloatingElement intensity="low">
@@ -338,8 +350,14 @@ const Index = () => {
             <div className="bg-white rounded-xl p-3 shadow-sm border border-gray-100">
               <div className="text-gray-600 text-xs mb-1">USD → NGN Rate</div>
               <div className="flex items-center space-x-1">
-                <span className="text-gray-900 font-semibold text-base">{Math.round(1547 + Math.random() * 20 - 10)}</span>
+                <span className="text-gray-900 font-semibold text-base">{usdToNgnRate.toLocaleString()}</span>
                 <span className="text-sm text-gray-500 font-medium">NGN</span>
+                <button 
+                  onClick={loadExchangeRate}
+                  className="text-xs text-blue-600 hover:text-blue-800 ml-1"
+                >
+                  ↻
+                </button>
               </div>
             </div>
             <div className="bg-white rounded-xl p-3 shadow-sm border border-gray-100">
@@ -396,11 +414,11 @@ const Index = () => {
         </div>
 
         {/* Platform Updates */}
-        <div className="mb-8">
+        <div>
           <h2 className="text-lg font-medium text-gray-900 mb-3">Platform Updates</h2>
           
           {/* Tab Selector */}
-          <div className="flex space-x-2 mb-4">
+          <div className="flex space-x-2 mb-3">
             {['All', 'Favorites', 'DeFi', 'NFT'].map((tab) => (
               <button
                 key={tab}
@@ -417,7 +435,7 @@ const Index = () => {
           </div>
 
           {/* Update Cards */}
-          <div className="space-y-3">
+          <div className="space-y-2">
             <div className="bg-[#F8F9FA] rounded-xl p-3">
               <div className="flex items-start">
                 <div className="w-6 h-6 bg-gray-200 rounded flex items-center justify-center mr-3 mt-0.5">
