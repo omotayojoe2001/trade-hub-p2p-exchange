@@ -1,0 +1,66 @@
+/* Dialog positioning fixes */
+
+/* Ensure dialogs are always centered */
+[data-radix-dialog-content] {
+  position: fixed !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  z-index: 9999 !important;
+  background-color: white !important;
+  border-radius: 12px !important;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15) !important;
+  max-width: 90vw !important;
+  max-height: 90vh !important;
+  overflow-y: auto !important;
+}
+
+/* Ensure dialog overlay covers full screen */
+[data-radix-dialog-overlay] {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  z-index: 9998 !important;
+  background-color: rgba(0, 0, 0, 0.5) !important;
+}
+
+/* Ensure dialog portal is at root level */
+[data-radix-portal] {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  z-index: 9997 !important;
+}
+
+/* Fix for specific dialog classes */
+.dialog-content,
+[role="dialog"] {
+  position: fixed !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  z-index: 9999 !important;
+}
+
+/* Override any conflicting positioning */
+.fixed.left-\\[50\\%\\].top-\\[50\\%\\] {
+  left: 50% !important;
+  top: 50% !important;
+  transform: translate(-50%, -50%) !important;
+}
+
+/* Remove blue backgrounds from location selector */
+.hover\:bg-blue-50:hover {
+  background-color: #f9fafb !important;
+}
+
+/* Force white text in 2FA and merchant choice sections */
+.bg-blue-50 h4,
+.bg-blue-50 p,
+.bg-blue-50 li,
+.bg-blue-50 .text-blue-800,
+.bg-blue-50 .text-blue-700 {
+  color: white !important;
+}

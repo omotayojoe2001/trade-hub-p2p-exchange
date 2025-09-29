@@ -151,12 +151,13 @@ import ReferralLanding from "./pages/ReferralLanding";
 import TestTradeCompletion from "./pages/TestTradeCompletion";
 import React from 'react';
 import PageLoader from './components/PageLoader';
+import GlobalLoader from './components/GlobalLoader';
 import { usePageLoader } from './hooks/usePageLoader';
 
 const queryClient = new QueryClient();
 
 const AppContent = () => {
-  const { user, signOut } = useAuth();
+  const { user, signOut, loading: authLoading } = useAuth();
   const { isInactive, resetTimer } = useInactivityDetector();
   const { storedUser, saveUser, clearStoredUser } = useAuthStorage();
   const { setQuickAuthActive } = useQuickAuth();
@@ -217,6 +218,11 @@ const AppContent = () => {
     clearStoredUser();
     resetTimer();
   };
+
+  // Show global loader during initial auth check
+  if (authLoading && !user && !storedUser) {
+    return <GlobalLoader />;
+  }
 
   return (
     <>

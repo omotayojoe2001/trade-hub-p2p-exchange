@@ -83,12 +83,54 @@ const Index = () => {
     }
   };
 
+  const fetchUserTrades = async () => {
+    if (!user) return;
+    
+    try {
+      const { data: trades } = await supabase
+        .from('trades')
+        .select('*')
+        .or(`buyer_id.eq.${user.id},seller_id.eq.${user.id}`)
+        .order('created_at', { ascending: false })
+        .limit(3);
+      
+      const { data: cashTrades } = await supabase
+        .from('cash_trades')
+        .select('*')
+        .eq('seller_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(2);
+      
+      const formattedTrades = [
+        ...(trades || []).map(trade => ({
+          id: trade.id,
+          text: `${trade.amount_crypto || trade.amount} ${trade.crypto_type} → ₦${(trade.naira_amount || 0).toLocaleString()}`,
+          date: new Date(trade.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }),
+          status: trade.status === 'completed' ? 'Completed' : 'In Progress',
+          statusColor: trade.status === 'completed' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
+        })),
+        ...(cashTrades || []).map(trade => ({
+          id: trade.id,
+          text: `$${trade.usd_amount} USD → ₦${(trade.usd_amount * usdToNgnRate).toLocaleString()}`,
+          date: new Date(trade.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }),
+          status: trade.status === 'cash_delivered' ? 'Completed' : 'In Progress',
+          statusColor: trade.status === 'cash_delivered' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
+        }))
+      ].slice(0, 3);
+      
+      setRecentTradesData(formattedTrades);
+    } catch (error) {
+      console.error('Error fetching user trades:', error);
+    }
+  };
+
   useEffect(() => {
     if (user) {
       fetchUnreadNotifications();
       fetchUserCredits();
       fetchTotalTraders();
       loadExchangeRate();
+      fetchUserTrades();
       
       // Subscribe to credit changes with cleanup
       let subscription: any = null;
@@ -102,8 +144,16 @@ const Index = () => {
       // Delay subscription to avoid conflicts
       const timer = setTimeout(setupSubscription, 1000);
 
+      // Auto-refresh exchange rate every 5 minutes
+      const rateInterval = setInterval(loadExchangeRate, 5 * 60 * 1000);
+      
+      // Auto-refresh user trades every 30 seconds
+      const tradesInterval = setInterval(fetchUserTrades, 30 * 1000);
+
       return () => {
         clearTimeout(timer);
+        clearInterval(rateInterval);
+        clearInterval(tradesInterval);
         if (subscription) {
           subscription.unsubscribe();
         }
@@ -143,30 +193,7 @@ const Index = () => {
   const userInitials = displayName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
   const profilePicture = profile?.avatar_url;
 
-  // Real recent trades data
-  const recentTradesData = [
-    {
-      id: 1,
-      text: '0.5 BTC → ₦75,234,500',
-      date: 'Dec 15, 2:34 PM',
-      status: 'Completed',
-      statusColor: 'bg-green-100 text-green-800'
-    },
-    {
-      id: 2,
-      text: '$1,200 USDT → ₦1,856,400',
-      date: 'Dec 15, 1:22 PM',
-      status: 'Completed',
-      statusColor: 'bg-green-100 text-green-800'
-    },
-    {
-      id: 3,
-      text: '2.3 ETH → ₦12,345,670',
-      date: 'Dec 15, 11:45 AM',
-      status: 'In Progress',
-      statusColor: 'bg-yellow-100 text-yellow-800'
-    }
-  ];
+  const [recentTradesData, setRecentTradesData] = useState([]);
 
   return (
     <PageTransition>
@@ -352,12 +379,6 @@ const Index = () => {
               <div className="flex items-center space-x-1">
                 <span className="text-gray-900 font-semibold text-base">{usdToNgnRate.toLocaleString()}</span>
                 <span className="text-sm text-gray-500 font-medium">NGN</span>
-                <button 
-                  onClick={loadExchangeRate}
-                  className="text-xs text-blue-600 hover:text-blue-800 ml-1"
-                >
-                  ↻
-                </button>
               </div>
             </div>
             <div className="bg-white rounded-xl p-3 shadow-sm border border-gray-100">

@@ -9,7 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Eye, EyeOff, User, Mail, Lock } from 'lucide-react';
 import TwoFactorLogin from '@/components/TwoFactorLogin';
 import { useAuth } from '@/hooks/useAuth';
-import LocationSelectionForm from '@/components/LocationSelectionForm';
+import EnhancedLocationSelector from '@/components/EnhancedLocationSelector';
 import { countries } from '@/data/countries';
 
 const Auth = () => {
@@ -429,16 +429,14 @@ const Auth = () => {
               <Label className="text-sm font-medium text-gray-800">
                 Location
               </Label>
-              <div className="p-4">
-                <LocationSelectionForm
-                  selectedCountry={country}
-                  selectedState={state}
-                  selectedCity={city}
-                  onCountryChange={setCountry}
-                  onStateChange={setState}
-                  onCityChange={setCity}
-                />
-              </div>
+              <EnhancedLocationSelector
+                selectedCountry={country}
+                selectedState={state}
+                selectedCity={city}
+                onCountryChange={setCountry}
+                onStateChange={setState}
+                onCityChange={setCity}
+              />
             </div>
 
             <div className="space-y-2">

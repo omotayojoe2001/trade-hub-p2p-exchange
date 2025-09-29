@@ -60,9 +60,9 @@ const MerchantMatchingChoice = () => {
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
           <div className="flex items-start">
             <Shield size={16} className="text-blue-600 mr-2 mt-0.5" />
-            <div className="text-sm text-blue-800">
-              <p className="font-medium mb-1">How would you like to find a merchant?</p>
-              <p>Choose between automatic matching for speed or manual selection for control.</p>
+            <div className="text-sm">
+              <p className="font-medium mb-1 text-white">How would you like to find a merchant?</p>
+              <p className="text-white">Choose between automatic matching for speed or manual selection for control.</p>
             </div>
           </div>
         </div>

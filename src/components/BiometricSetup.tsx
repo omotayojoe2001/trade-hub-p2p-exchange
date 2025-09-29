@@ -121,8 +121,8 @@ const BiometricSetup: React.FC<BiometricSetupProps> = ({ onComplete, onSkip }) =
               <div className="flex items-start">
                 <Shield size={20} className="text-blue-600 mr-3 mt-0.5" />
                 <div>
-                  <h4 className="font-medium text-blue-800 mb-1">Security Benefits</h4>
-                  <ul className="text-blue-700 text-sm space-y-1">
+                  <h4 className="font-medium text-white mb-1">Recommended Apps</h4>
+                  <ul className="text-white text-sm space-y-1">
                     <li>• Faster login without passwords</li>
                     <li>• Enhanced account security</li>
                     <li>• Secure transaction verification</li>

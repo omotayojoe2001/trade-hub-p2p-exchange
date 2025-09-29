@@ -45,13 +45,15 @@ const LocationSelectionForm: React.FC<LocationSelectionFormProps> = ({
           Country
         </Label>
         <Select value={selectedCountry} onValueChange={handleCountryChange}>
-          <SelectTrigger className="h-12 bg-background border-border">
-            <SelectValue placeholder="Select your country" />
+          <SelectTrigger className="h-12 bg-white border-2 border-gray-200 rounded-xl shadow-sm hover:border-blue-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all">
+            <SelectValue placeholder="Select your country" className="text-gray-700" />
           </SelectTrigger>
-          <SelectContent className="bg-background border-border">
+          <SelectContent className="bg-white border border-gray-200 rounded-xl shadow-lg max-h-60 overflow-auto">
             {countries.map((country) => (
-              <SelectItem key={country.code} value={country.code} className="hover:bg-accent">
-                {country.name}
+              <SelectItem key={country.code} value={country.code} className="py-3 px-4 hover:bg-blue-50 focus:bg-blue-50 cursor-pointer transition-colors">
+                <div className="flex items-center space-x-2">
+                  <span className="font-medium text-gray-900">{country.name}</span>
+                </div>
               </SelectItem>
             ))}
           </SelectContent>
@@ -66,13 +68,15 @@ const LocationSelectionForm: React.FC<LocationSelectionFormProps> = ({
             State/Region
           </Label>
           <Select value={selectedState} onValueChange={handleStateChange}>
-            <SelectTrigger className="h-12 bg-background border-border">
-              <SelectValue placeholder="Select your state/region" />
+            <SelectTrigger className="h-12 bg-white border-2 border-gray-200 rounded-xl shadow-sm hover:border-blue-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all">
+              <SelectValue placeholder="Select your state/region" className="text-gray-700" />
             </SelectTrigger>
-            <SelectContent className="bg-background border-border">
+            <SelectContent className="bg-white border border-gray-200 rounded-xl shadow-lg max-h-60 overflow-auto">
               {availableStates.map((state) => (
-                <SelectItem key={state.code} value={state.code} className="hover:bg-accent">
-                  {state.name}
+                <SelectItem key={state.code} value={state.code} className="py-3 px-4 hover:bg-blue-50 focus:bg-blue-50 cursor-pointer transition-colors">
+                  <div className="flex items-center space-x-2">
+                    <span className="font-medium text-gray-900">{state.name}</span>
+                  </div>
                 </SelectItem>
               ))}
             </SelectContent>
@@ -90,7 +94,7 @@ const LocationSelectionForm: React.FC<LocationSelectionFormProps> = ({
             type="text"
             value={selectedCity}
             onChange={(e) => onCityChange(e.target.value)}
-            className="h-12 bg-background border-border"
+            className="h-12 bg-white border-2 border-gray-200 rounded-xl shadow-sm hover:border-blue-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all px-4"
             placeholder="Enter your city or local area"
           />
         </div>

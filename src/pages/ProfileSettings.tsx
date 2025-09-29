@@ -372,14 +372,14 @@ const ProfileSettings = () => {
       <div className="p-4 space-y-6">
         {/* Profile Photo */}
         <Card className="bg-white p-6">
-          <div className="flex items-center justify-center mb-4">
-            <div className="relative">
-              <div className="w-24 h-24 bg-blue-500 rounded-full flex items-center justify-center overflow-hidden">
+          <div className="flex flex-col items-center mb-4">
+            <div className="relative mb-4">
+              <div className="w-24 h-24 bg-blue-500 rounded-full flex items-center justify-center overflow-hidden mx-auto">
                 {profilePicture ? (
                   <img
                     src={profilePicture}
                     alt="Profile"
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-cover object-center"
                   />
                 ) : (
                   <User size={40} className="text-white" />
@@ -387,7 +387,7 @@ const ProfileSettings = () => {
               </div>
               <button
                 onClick={() => setShowProfilePictureDialog(true)}
-                className="absolute bottom-0 right-0 w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center hover:bg-blue-700 transition-colors"
+                className="absolute -bottom-1 -right-1 w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center hover:bg-blue-700 transition-colors shadow-lg border-2 border-white"
               >
                 <Camera size={16} className="text-white" />
               </button>
@@ -612,7 +612,7 @@ const ProfileSettings = () => {
                   <img
                     src={profilePicture}
                     alt="Profile"
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-cover object-center"
                   />
                 ) : (
                   <User size={48} className="text-gray-400" />

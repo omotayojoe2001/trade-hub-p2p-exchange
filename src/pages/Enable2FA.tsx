@@ -17,17 +17,24 @@ const Enable2FA = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background p-6 flex items-center justify-center">
-      <div className="relative w-full max-w-md">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => navigate("/security")}
-          className="absolute -top-12 left-0 z-10"
-        >
-          <ArrowLeft className="w-5 h-5" />
-        </Button>
-        <BiometricSetup onComplete={handleComplete} onSkip={handleSkip} />
+    <div className="min-h-screen bg-white">
+      <div className="sticky top-0 bg-white border-b border-gray-200 p-4 z-10">
+        <div className="flex items-center">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => navigate("/security")}
+            className="mr-3"
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </Button>
+          <h1 className="text-lg font-semibold">Enable 2FA</h1>
+        </div>
+      </div>
+      <div className="p-4">
+        <div className="w-full max-w-md mx-auto">
+          <BiometricSetup onComplete={handleComplete} onSkip={handleSkip} />
+        </div>
       </div>
     </div>
   );

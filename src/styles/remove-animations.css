@@ -1,9 +1,9 @@
 /* Remove ALL animations and fix notifications */
 
-/* Kill all animations globally */
-*,
-*::before,
-*::after {
+/* Kill all animations globally except dialogs */
+*:not([data-radix-dialog-content]):not([data-radix-dialog-overlay]),
+*:not([data-radix-dialog-content]):not([data-radix-dialog-overlay])::before,
+*:not([data-radix-dialog-content]):not([data-radix-dialog-overlay])::after {
   animation: none !important;
   animation-duration: 0s !important;
   animation-delay: 0s !important;
@@ -11,6 +11,10 @@
   transition: none !important;
   transition-duration: 0s !important;
   transition-delay: 0s !important;
+}
+
+/* Don't remove transform from dialogs */
+*:not([data-radix-dialog-content]):not([role="dialog"]) {
   transform: none !important;
 }
 
