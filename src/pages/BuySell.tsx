@@ -4,7 +4,7 @@ import { ArrowDownRight, ArrowUpRight, DollarSign, Wallet, Bell, MessageCircle, 
 import { Button } from "@/components/ui/button";
 import { useNavigate } from 'react-router-dom';
 import BottomNavigation from '@/components/BottomNavigation';
-import { useQuickAuth } from '@/hooks/useQuickAuth';
+
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -13,7 +13,7 @@ const BuySell = () => {
   const [tradeRequests, setTradeRequests] = useState<any[]>([]);
   const [loadingRequests, setLoadingRequests] = useState(false);
   const [unreadMessages, setUnreadMessages] = useState(0);
-  const { isQuickAuthActive } = useQuickAuth();
+
 
   const { user, profile } = useAuth();
   const navigate = useNavigate();
@@ -30,18 +30,29 @@ const BuySell = () => {
     if (!user) return;
 
     try {
-      const { data: messages, error } = await supabase
-        .from('messages')
-        .select('id')
-        .eq('receiver_id', user.id)
-        .eq('read', false);
+      // Get conversations where user is participant and has unread messages
+      const { data: conversations, error } = await supabase
+        .from('conversations')
+        .select(`
+          id,
+          messages!inner(
+            id,
+            is_read,
+            sender_id
+          )
+        `)
+        .or(`participant_1_id.eq.${user.id},participant_2_id.eq.${user.id}`)
+        .eq('messages.is_read', false)
+        .neq('messages.sender_id', user.id);
 
       if (error) {
         console.error('Error fetching unread messages:', error);
         return;
       }
 
-      setUnreadMessages(messages?.length || 0);
+      // Count unique conversations with unread messages
+      const unreadCount = conversations?.length || 0;
+      setUnreadMessages(unreadCount);
     } catch (error) {
       console.error('Error in fetchUnreadMessages:', error);
     }
@@ -284,7 +295,7 @@ const BuySell = () => {
       </div>
 
 
-      {!isQuickAuthActive && <BottomNavigation />}
+      <BottomNavigation />
     </div>
   );
 };

@@ -5,11 +5,8 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import GlobalNotifications from "@/components/GlobalNotifications";
-import QuickAuthScreen from "@/components/QuickAuthScreen";
 import CreditAlert from "@/components/CreditAlert";
-import useInactivityDetector from "@/hooks/useInactivityDetector";
 import { useAuthStorage } from "@/hooks/useAuthStorage";
-import { QuickAuthProvider, useQuickAuth } from "@/hooks/useQuickAuth";
 import { AuthProvider, useAuth } from "./hooks/useAuth";
 
 // Removed ThemeProvider to disable dark mode by default
@@ -56,6 +53,7 @@ import Enable2FA from "./pages/Enable2FA";
 import IdentityVerification from "./pages/IdentityVerification";
 import FaceVerification from "./pages/FaceVerification";
 import VerificationSuccess from "./pages/VerificationSuccess";
+import VerifyEmail from "./pages/VerifyEmail";
 import CoinDetail from "./pages/CoinDetail";
 
 import BuyCryptoMatch from "./pages/BuyCryptoMatch";
@@ -158,65 +156,35 @@ const queryClient = new QueryClient();
 
 const AppContent = () => {
   const { user, signOut, loading: authLoading } = useAuth();
-  const { isInactive, resetTimer } = useInactivityDetector();
   const { storedUser, saveUser, clearStoredUser } = useAuthStorage();
-  const { setQuickAuthActive } = useQuickAuth();
   const location = useLocation();
   const isLoading = usePageLoader();
 
   // Check if user is on auth-related pages
   const isOnAuthPage = ['/auth', '/onboarding', '/splash', '/email-verification', '/forgot-password', '/reset-password'].includes(location.pathname);
   
-  // Save user data when they're active and logged in
+  // Save user data when logged in
   React.useEffect(() => {
-    if (user && !isInactive) {
+    if (user) {
       saveUser({
         id: user.id,
         email: user.email || '',
         displayName: user.user_metadata?.display_name || user.email || ''
       });
     }
-  }, [user, isInactive, saveUser]);
+  }, [user, saveUser]);
 
-  // Handle inactivity - log user out for timeout
-  React.useEffect(() => {
-    if (isInactive && user) {
-      setQuickAuthActive(true);
-      signOut();
-    }
-  }, [isInactive, user, signOut, setQuickAuthActive]);
-
-  // Set quick auth active when showing the screen
+  // Clear logout reason on page load
   React.useEffect(() => {
     const logoutReason = localStorage.getItem('logout-reason');
-
-    if (!user && storedUser && !isOnAuthPage) {
-      // Only show quick auth for timeout, not manual logout
-      if (logoutReason === 'timeout' || logoutReason === null) {
-        setQuickAuthActive(true);
-      } else {
-        // Manual logout - clear stored user and don't show quick auth
-        clearStoredUser();
-        setQuickAuthActive(false);
-      }
-    } else {
-      setQuickAuthActive(false);
-    }
-
-    // Clear logout reason after handling
     if (logoutReason) {
       localStorage.removeItem('logout-reason');
     }
-  }, [user, storedUser, isOnAuthPage, setQuickAuthActive, clearStoredUser]);
-
-  const handleQuickAuthSuccess = () => {
-    resetTimer();
-  };
+  }, []);
 
   const handleSignOut = async () => {
     await signOut();
     clearStoredUser();
-    resetTimer();
   };
 
   // Show global loader during initial auth check
@@ -231,23 +199,7 @@ const AppContent = () => {
       {!isOnAuthPage && <GlobalNotifications />}
       {!isOnAuthPage && <CreditAlert />}
       
-      {/* Show quick auth if user was logged out due to inactivity */}
-      {!user && storedUser && !isOnAuthPage && (
-        <QuickAuthScreen
-          user={{
-            email: storedUser.email,
-            displayName: storedUser.displayName
-          }}
-          onSuccess={() => {
-            setQuickAuthActive(false);
-            handleQuickAuthSuccess();
-          }}
-          onCancel={() => {
-            setQuickAuthActive(false);
-            handleSignOut();
-          }}
-        />
-      )}
+
       <GlobalCodeTracker />
       <Routes>
             <Route path="/" element={<SplashScreen />} />
@@ -274,6 +226,7 @@ const AppContent = () => {
           <Route path="/identity-verification" element={<IdentityVerification />} />
           <Route path="/face-verification" element={<FaceVerification />} />
           <Route path="/verification-success" element={<VerificationSuccess />} />
+          <Route path="/verify-email" element={<VerifyEmail />} />
             <Route path="/coin/:coinId" element={<CoinDetail />} />
             
           <Route path="/buy-crypto-merchant-selection" element={<BuyCryptoMerchantSelection />} />
@@ -456,13 +409,11 @@ const App = () => (
     <BrowserRouter>
         <div className="light" style={{ colorScheme: 'light' }}>
           <AuthProvider>
-              <QuickAuthProvider>
                 <TooltipProvider>
                   <AppContent />
                   <Toaster />
                   <Sonner />
                 </TooltipProvider>
-              </QuickAuthProvider>
           </AuthProvider>
         </div>
     </BrowserRouter>

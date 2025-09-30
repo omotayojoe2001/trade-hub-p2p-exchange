@@ -308,7 +308,7 @@ const PaymentMethods = () => {
             >
               <ArrowLeft size={24} className="text-gray-600" />
             </button>
-            <h1 className="text-xl font-semibold text-gray-900">Payment Methods</h1>
+            <h1 className="text-xl font-semibold text-gray-900">Bank Accounts</h1>
           </div>
           <Button size="sm" onClick={() => setIsAddingBank(true)}>
             <Plus size={16} className="mr-2" />
@@ -536,11 +536,7 @@ const PaymentMethods = () => {
             </div>
           </div>
 
-          <div className="mt-4 p-3 bg-yellow-50 rounded-lg">
-            <p className="text-sm text-yellow-800">
-              <span className="font-medium">Want higher limits?</span> Upgrade to Premium to increase your daily and monthly limits.
-            </p>
-          </div>
+
         </Card>
       </div>
     </div>

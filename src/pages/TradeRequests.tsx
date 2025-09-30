@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent } from '@/components/ui/card';
 import BottomNavigation from '@/components/BottomNavigation';
-import { useQuickAuth } from '@/hooks/useQuickAuth';
+
 import { useAuth } from '@/hooks/useAuth';
 import { tradeRequestService } from '@/services/supabaseService';
 import { useToast } from '@/hooks/use-toast';
@@ -15,7 +15,7 @@ import CryptoIcon from '@/components/CryptoIcon';
 
 const TradeRequests = () => {
   const navigate = useNavigate();
-  const { isQuickAuthActive } = useQuickAuth();
+
   const { user } = useAuth();
   const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState('');
@@ -393,7 +393,7 @@ const TradeRequests = () => {
         )}
       </div>
 
-      {!isQuickAuthActive && <BottomNavigation />}
+      <BottomNavigation />
     </div>
   );
 };

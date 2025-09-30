@@ -42,6 +42,9 @@ const GlobalNotifications = () => {
     const loadNotifications = async () => {
       if (!user) return;
 
+      const timestamp = new Date().toISOString();
+      console.log(`🔔 [${timestamp}] GlobalNotifications: Loading notifications for user ${user.id}`);
+
       try {
         // Get real notifications from Supabase
         const { data: dbNotifications, error } = await supabase
@@ -52,6 +55,44 @@ const GlobalNotifications = () => {
           .limit(20);
 
         if (error) throw error;
+
+        console.log(`📊 Found ${dbNotifications?.length || 0} notifications in database`);
+        
+        // Auto-mark old notifications as read (older than 1 minute) - ALL types
+        const oneMinuteAgo = new Date(Date.now() - 60 * 1000);
+        const oldNotifications = (dbNotifications || []).filter(notif => 
+          !notif.read && 
+          new Date(notif.created_at) < oneMinuteAgo
+        );
+        
+        if (oldNotifications.length > 0) {
+          console.log(`🧹 Auto-marking ${oldNotifications.length} old notifications as read (older than 1 minute)`);
+          
+          const oldNotificationIds = oldNotifications.map(n => n.id);
+          await supabase
+            .from('notifications')
+            .update({ read: true })
+            .in('id', oldNotificationIds);
+          
+          // Update the data to reflect the changes
+          dbNotifications?.forEach(notif => {
+            if (oldNotificationIds.includes(notif.id)) {
+              notif.read = true;
+            }
+          });
+        }
+        
+        // Log each notification for debugging
+        (dbNotifications || []).forEach((notif, index) => {
+          const ageMinutes = Math.round((Date.now() - new Date(notif.created_at).getTime()) / 1000 / 60);
+          console.log(`   ${index + 1}. [${notif.type}] ${notif.title} - Read: ${notif.read} - Created: ${notif.created_at}`);
+          console.log(`      🕰️ Age: ${ageMinutes} minutes ${ageMinutes > 1 ? '(AUTO-MARKED READ)' : ''}`);
+          if (notif.type === 'new_message') {
+            console.log(`      💬 Message notification - Conversation: ${notif.data?.conversation_id}`);
+          } else if (notif.type.includes('trade')) {
+            console.log(`      📈 Trade notification - Trade ID: ${notif.data?.trade_id || 'N/A'}`);
+          }
+        });
 
         // Transform Supabase data to our format
         const transformedNotifications = (dbNotifications || []).map((notif: any) => ({
@@ -69,13 +110,25 @@ const GlobalNotifications = () => {
 
         setNotifications(transformedNotifications);
 
-        // Show notification if there are unread ones
-        const unreadCount = transformedNotifications.filter(n => !n.isRead).length;
-        if (unreadCount > 0) {
+        // Show notification only for recent unread ones (within last minute)
+        const recentUnread = transformedNotifications.filter(n => 
+          !n.isRead && 
+          (Date.now() - n.timestamp.getTime()) < 60 * 1000 // 1 minute
+        );
+        const totalUnreadCount = transformedNotifications.filter(n => !n.isRead).length;
+        
+        console.log(`🔴 Total unread notifications: ${totalUnreadCount}`);
+        console.log(`🆕 Recent unread notifications (last minute): ${recentUnread.length}`);
+        
+        if (recentUnread.length > 0) {
+          const latestUnread = recentUnread[0];
+          console.log(`🔔 Showing notification popup for recent: ${latestUnread?.title}`);
           showNewNotification();
+        } else if (totalUnreadCount > 0) {
+          console.log(`⏰ ${totalUnreadCount} unread notifications exist but all are older than 1 minute - not showing popup`);
         }
       } catch (error) {
-        console.error('Error loading notifications:', error);
+        console.error('❌ Error loading notifications:', error);
         // Create sample notification for new users
         setNotifications([{
           id: 'welcome',
@@ -98,8 +151,27 @@ const GlobalNotifications = () => {
   useEffect(() => {
     if (!user) return;
 
+    const timestamp = new Date().toISOString();
+    console.log(`📡 [${timestamp}] GlobalNotifications: Setting up real-time subscription for user ${user.id}`);
+
     const subscription = realtimeService.subscribeToNotifications(user.id, (payload) => {
+      const realtimeTimestamp = new Date().toISOString();
+      console.log(`🔔 [${realtimeTimestamp}] Real-time notification received:`, payload.eventType);
+      
       if (payload.eventType === 'INSERT') {
+        console.log(`   🆕 New notification: ${payload.new.id}`);
+        console.log(`   📋 Type: ${payload.new.type}`);
+        console.log(`   📋 Title: ${payload.new.title}`);
+        console.log(`   📖 Read: ${payload.new.read}`);
+        console.log(`   🕰️ Created: ${payload.new.created_at}`);
+        
+        if (payload.new.type === 'new_message') {
+          console.log(`   💬 Message notification details:`);
+          console.log(`      Conversation: ${payload.new.data?.conversation_id}`);
+          console.log(`      Sender: ${payload.new.data?.sender_name}`);
+          console.log(`      Debug ID: ${payload.new.data?.debug_id}`);
+        }
+        
         const newNotification = {
           id: payload.new.id,
           type: payload.new.type as any,
@@ -111,9 +183,13 @@ const GlobalNotifications = () => {
           tradeId: payload.new.trade_id
         };
         
+        console.log(`   ➕ Adding to notifications list`);
         setNotifications(prev => [newNotification, ...prev]);
+        
+        console.log(`   🔔 Showing notification popup`);
         showNewNotification();
         
+        console.log(`   🍞 Showing toast notification`);
         toast({
           title: newNotification.title,
           description: newNotification.message,
@@ -122,13 +198,20 @@ const GlobalNotifications = () => {
     });
 
     return () => {
+      console.log(`📡 [${new Date().toISOString()}] GlobalNotifications: Unsubscribing from real-time notifications for user ${user.id}`);
       subscription.unsubscribe();
     };
   }, [user, toast]);
 
   const showNewNotification = () => {
+    const timestamp = new Date().toISOString();
+    console.log(`🔔 [${timestamp}] GlobalNotifications: Showing notification popup`);
+    console.log(`   📊 Current notifications count: ${notifications.length}`);
+    console.log(`   👁️ Currently visible: ${isVisible}`);
+    
     setIsVisible(true);
     setTimeout(() => {
+      console.log(`🔔 [${new Date().toISOString()}] GlobalNotifications: Hiding notification popup after 6 seconds`);
       setIsVisible(false);
     }, 6000);
   };

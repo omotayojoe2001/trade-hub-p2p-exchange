@@ -37,8 +37,10 @@ export const merchantService = {
           phone_number,
           is_merchant,
           user_type,
+          role,
           created_at
-        `);
+        `)
+        .neq('role', 'vendor'); // Exclude vendors from merchant list
 
       // CRITICAL: Always exclude current user from merchant list
       if (excludeUserId) {

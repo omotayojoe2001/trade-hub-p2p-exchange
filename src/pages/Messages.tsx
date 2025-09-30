@@ -88,6 +88,7 @@ const Messages = () => {
 
   const loadMessages = async (conversationId: string) => {
     try {
+      setMessages([]); // Clear messages first for better UX
       const { data, error } = await messagingService.getMessages(conversationId);
       if (error) throw error;
       setMessages(data || []);
@@ -387,8 +388,16 @@ const Messages = () => {
                   onClick={() => setSelectedConversation(conversation)}
                 >
                   <div className="flex items-center space-x-3">
-                    <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                      <User className="w-6 h-6 text-blue-600" />
+                    <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center overflow-hidden">
+                      {conversation.other_user?.avatar_url ? (
+                        <img 
+                          src={conversation.other_user.avatar_url} 
+                          alt={conversation.other_user.display_name || 'User'} 
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <User className="w-6 h-6 text-blue-600" />
+                      )}
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center justify-between">
@@ -443,8 +452,16 @@ const Messages = () => {
           >
             <ArrowLeft size={20} className="text-gray-600" />
           </Button>
-          <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mr-3">
-            <User className="w-5 h-5 text-blue-600" />
+          <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mr-3 overflow-hidden">
+            {selectedConversation.other_user?.avatar_url ? (
+              <img 
+                src={selectedConversation.other_user.avatar_url} 
+                alt={selectedConversation.other_user.display_name || 'User'} 
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <User className="w-5 h-5 text-blue-600" />
+            )}
           </div>
           <div>
             <p className="font-medium text-gray-900">
@@ -458,7 +475,7 @@ const Messages = () => {
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-3 pb-20">
+      <div className="flex-1 overflow-y-auto p-4 space-y-3 pb-24">
         {messages.length === 0 ? (
           <div className="text-center py-8">
             <MessageCircle className="w-8 h-8 text-gray-400 mx-auto mb-2" />
@@ -476,9 +493,9 @@ const Messages = () => {
         )}
       </div>
 
-      {/* Message Input */}
-      <div className="bg-white border-t border-gray-200 p-4">
-        <div className="flex space-x-2">
+      {/* Message Input - Fixed at bottom */}
+      <div className="fixed bottom-0 left-0 right-0 w-full bg-white border-t border-gray-200 p-4 z-10">
+        <div className="flex space-x-2 w-full">
           <Button
             variant="ghost"
             size="sm"

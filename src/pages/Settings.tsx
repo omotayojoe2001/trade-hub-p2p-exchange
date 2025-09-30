@@ -4,16 +4,16 @@ import { Settings as SettingsIcon, User, Shield, Lock, CreditCard, FileCheck, St
 import { Link, useNavigate } from 'react-router-dom';
 import BottomNavigation from '@/components/BottomNavigation';
 import { useAuth } from '@/hooks/useAuth';
-import { useQuickAuth } from '@/hooks/useQuickAuth';
+
 import { Switch } from '@/components/ui/switch';
 import { creditsService } from '@/services/creditsService';
 import TwoFactorSetup from '@/components/TwoFactorSetup';
-import { getTwoFactorData, enableTwoFactor, disableTwoFactor } from '@/services/twoFactorAuth';
+import { twoFactorAuthService } from '@/services/twoFactorAuthService';
 import { useToast } from '@/hooks/use-toast';
 
 const Settings = () => {
   const { signOut, user, profile } = useAuth();
-  const { isQuickAuthActive } = useQuickAuth();
+
   const navigate = useNavigate();
   const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
   const [userCredits, setUserCredits] = useState(0);
@@ -24,10 +24,15 @@ const Settings = () => {
     if (user) {
       fetchUserCredits();
       // Check 2FA status
-      const twoFactorData = getTwoFactorData();
-      setTwoFactorEnabled(twoFactorData.isEnabled);
+      check2FAStatus();
     }
   }, [user]);
+
+  const check2FAStatus = async () => {
+    if (!user) return;
+    const isEnabled = await twoFactorAuthService.is2FAEnabled(user.id);
+    setTwoFactorEnabled(isEnabled);
+  };
 
   const fetchUserCredits = async () => {
     if (!user) return;
@@ -45,15 +50,25 @@ const Settings = () => {
   const profilePicture = profile?.avatar_url;
 
   const handleTwoFactorToggle = async (enabled: boolean) => {
+    if (!user) return;
+    
     if (enabled) {
       setShowTwoFactorSetup(true);
     } else {
-      disableTwoFactor();
-      setTwoFactorEnabled(false);
-      toast({
-        title: "2FA Disabled",
-        description: "Two-factor authentication has been disabled.",
-      });
+      const result = await twoFactorAuthService.disable2FA(user.id);
+      if (result.success) {
+        setTwoFactorEnabled(false);
+        toast({
+          title: "2FA Disabled",
+          description: "Two-factor authentication has been disabled.",
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: result.error || "Failed to disable 2FA",
+          variant: "destructive"
+        });
+      }
     }
   };
 
@@ -102,12 +117,7 @@ const Settings = () => {
       description: 'Configure rates and trading preferences',
       link: '/merchant-settings'
     },
-    {
-      icon: <Bell size={20} className="text-[#1A73E8]" />,
-      title: 'Notifications',
-      description: 'Push notifications and email alerts',
-      link: '/notifications'
-    },
+
     {
       icon: <Users size={20} className="text-[#1A73E8]" />,
       title: 'Referrals',
@@ -197,7 +207,7 @@ const Settings = () => {
         </button>
       </div>
 
-      {!isQuickAuthActive && <BottomNavigation />}
+      <BottomNavigation />
       
       {/* Two Factor Setup Dialog */}
       {user && (

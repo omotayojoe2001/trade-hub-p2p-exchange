@@ -12,6 +12,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { bitgoEscrow } from '@/services/bitgoEscrow';
 import { creditsService, MIN_CREDIT_PURCHASE } from '@/services/creditsService';
 import { cryptoPriceService } from '@/services/cryptoPriceService';
+import CreditReceiptGenerator from '@/components/CreditReceiptGenerator';
 
 // Credit packages with real-time pricing
 const CREDIT_PACKAGES_BASE = [
@@ -146,7 +147,7 @@ const CreditsPurchase = () => {
         .insert({
           user_id: user.id,
           credits_amount: currentPackage.credits,
-          price_paid_naira: currentPackage.price,
+          price_paid_naira: currentPackage.usd * 1650, // Convert USD to NGN
           status: 'pending'
         })
         .select()
@@ -277,12 +278,14 @@ const CreditsPurchase = () => {
   return (
     <div className="min-h-screen bg-white">
       {/* Header */}
-      <div className="sticky top-0 bg-white border-b p-4 flex items-center justify-between">
-        <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
-          <ArrowLeft className="w-5 h-5" />
-        </Button>
-        <h1 className="text-lg font-semibold">Purchase Credits</h1>
-        <div className="w-10" />
+      <div className="sticky top-0 bg-white border-b shadow-sm z-[99999] w-full">
+        <div className="p-4 flex items-center justify-between bg-white w-full relative z-[99999]">
+          <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="bg-white hover:bg-gray-50 relative z-[99999]">
+            <ArrowLeft className="w-5 h-5" />
+          </Button>
+          <h1 className="text-lg font-semibold bg-white px-4 py-2 rounded relative z-[99999]">Purchase Credits</h1>
+          <div className="w-10" />
+        </div>
       </div>
 
       {/* Progress Bar */}
@@ -522,15 +525,15 @@ const CreditsPurchase = () => {
                   
                   {/* Address */}
                   <div className="flex items-center space-x-2">
-                    <div className="flex-1 p-3 bg-white rounded font-mono text-sm break-all">
+                    <div className="flex-1 p-3 bg-white rounded font-mono text-sm break-all text-black">
                       {paymentAddress}
                     </div>
                     <Button
                       size="sm"
-                      variant="outline"
+                      className="bg-blue-600 hover:bg-blue-700 text-white"
                       onClick={() => copyToClipboard(paymentAddress)}
                     >
-                      <Copy size={16} />
+                      <Copy size={16} className="text-white" />
                     </Button>
                   </div>
                 </div>
@@ -623,6 +626,26 @@ const CreditsPurchase = () => {
                 </div>
               </CardContent>
             </Card>
+
+            {/* Receipt Generator */}
+            {user && (
+              <CreditReceiptGenerator
+                purchaseData={{
+                  id: purchaseId,
+                  credits: getCurrentPackage().credits,
+                  usdAmount: getCurrentPackage().usd || 0,
+                  cryptoAmount: selectedCrypto === 'BTC' ? (getCurrentPackage().btc || 0) : (getCurrentPackage().eth || 0),
+                  cryptoType: selectedCrypto,
+                  paymentAddress: paymentAddress,
+                  transactionHash: transactionHash,
+                  createdAt: new Date().toISOString()
+                }}
+                userInfo={{
+                  name: user.user_metadata?.display_name || user.email?.split('@')[0] || 'User',
+                  email: user.email || ''
+                }}
+              />
+            )}
 
             <div className="grid grid-cols-2 gap-4">
               <Button variant="outline" onClick={() => navigate('/credits-history')}>

@@ -37,6 +37,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .single();
 
       if (!profileError && profileData) {
+        // Check if user role matches current app context
+        const isVendorApp = window.location.pathname.startsWith('/vendor');
+        const isVendor = profileData.role === 'vendor';
+        
+        if (isVendorApp && !isVendor) {
+          // User trying to access vendor app
+          await supabase.auth.signOut();
+          window.location.href = '/auth';
+          return;
+        } else if (!isVendorApp && isVendor) {
+          // Vendor trying to access user app
+          await supabase.auth.signOut();
+          window.location.href = '/vendor/login';
+          return;
+        }
+        
         setProfile(profileData);
         return;
       }

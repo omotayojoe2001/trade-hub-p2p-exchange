@@ -32,7 +32,7 @@ interface BlogPost {
 export const Blog: React.FC = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const isQuickAuthActive = false;
+
   const [posts, setPosts] = useState<BlogPost[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
@@ -284,7 +284,7 @@ export const Blog: React.FC = () => {
         </Card>
       </div>
 
-      {!isQuickAuthActive && <BottomNavigation />}
+      <BottomNavigation />
     </div>
   );
 };

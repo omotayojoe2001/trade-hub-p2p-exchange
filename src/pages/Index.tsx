@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Bell, TrendingUp, CheckCircle, Plus, ArrowUpRight, ArrowDownLeft, DollarSign, RefreshCw, Send, Settings, Wrench, Coins, Home, BarChart3, Newspaper, CreditCard, User, TrendingUpIcon, MoveRight } from 'lucide-react';
+import { formatDateWAT } from '@/utils/dateUtils';
 import { useAuth } from '@/hooks/useAuth';
-import { useQuickAuth } from '@/hooks/useQuickAuth';
+
 import { supabase } from '@/integrations/supabase/client';
 import { useCryptoData } from '@/hooks/useCryptoData';
 import CryptoTicker from '@/components/CryptoTicker';
@@ -18,17 +19,17 @@ import StaggeredList from '@/components/animations/StaggeredList';
 
 const Index = () => {
   const { user, profile, loading } = useAuth();
-  const { isQuickAuthActive } = useQuickAuth();
+
   const { cryptoData, loading: cryptoLoading } = useCryptoData(2);
   const [recentTrades, setRecentTrades] = useState<any[]>([]);
+  const [recentTradesData, setRecentTradesData] = useState([]);
   const [totalUsers, setTotalUsers] = useState(20);
 
   const fetchTotalTraders = async () => {
     try {
       const { count } = await supabase
         .from('profiles')
-        .select('*', { count: 'exact', head: true })
-        .eq('is_merchant', true);
+        .select('*', { count: 'exact', head: true });
       
       if (count !== null) {
         setTotalUsers(count);
@@ -105,20 +106,25 @@ const Index = () => {
         ...(trades || []).map(trade => ({
           id: trade.id,
           text: `${trade.amount_crypto || trade.amount} ${trade.crypto_type} → ₦${(trade.naira_amount || 0).toLocaleString()}`,
-          date: new Date(trade.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }),
+          date: formatDateWAT(trade.created_at, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }),
           status: trade.status === 'completed' ? 'Completed' : 'In Progress',
           statusColor: trade.status === 'completed' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
         })),
         ...(cashTrades || []).map(trade => ({
           id: trade.id,
           text: `$${trade.usd_amount} USD → ₦${(trade.usd_amount * usdToNgnRate).toLocaleString()}`,
-          date: new Date(trade.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }),
+          date: formatDateWAT(trade.created_at, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }),
           status: trade.status === 'cash_delivered' ? 'Completed' : 'In Progress',
           statusColor: trade.status === 'cash_delivered' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
         }))
-      ].slice(0, 3);
+      ];
       
-      setRecentTradesData(formattedTrades);
+      // Remove duplicates based on ID and limit to 3
+      const uniqueTrades = formattedTrades.filter((trade, index, self) => 
+        index === self.findIndex(t => t.id === trade.id)
+      ).slice(0, 3);
+      
+      setRecentTradesData(uniqueTrades);
     } catch (error) {
       console.error('Error fetching user trades:', error);
     }
@@ -193,11 +199,9 @@ const Index = () => {
   const userInitials = displayName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
   const profilePicture = profile?.avatar_url;
 
-  const [recentTradesData, setRecentTradesData] = useState([]);
-
   return (
     <PageTransition>
-      <div className="w-full min-h-screen bg-white font-['Poppins'] max-w-4xl mx-auto lg:max-w-md pb-24">
+      <div className="w-full min-h-screen bg-white font-['Poppins'] max-w-4xl mx-auto lg:max-w-md pb-20">
       {/* Header */}
       <div className="px-4 py-4">
         <div className="flex justify-between items-center">
@@ -222,7 +226,7 @@ const Index = () => {
         </div>
       </div>
 
-      <div className="px-4 pb-20">
+      <div className="px-4 pb-4">
         {/* Credits Card */}
         <div className="mb-6">
           <AnimatedCard delay={0.1} className="bg-gradient-to-r from-[#0052FF] to-[#006BFF] rounded-xl px-4 py-3">
@@ -390,33 +394,51 @@ const Index = () => {
 
         {/* Recent Trades */}
         <div className="mb-6">
-          <h2 className="text-lg font-medium text-gray-900 mb-3">Recent Trades</h2>
+          <div className="flex justify-between items-center mb-3">
+            <h2 className="text-lg font-medium text-gray-900">Recent Trades</h2>
+            <Link to="/my-trades" className="text-blue-600 text-sm font-medium">See All</Link>
+          </div>
           
           <div className="space-y-3">
-            {recentTradesData.map((trade) => (
-              <div key={trade.id} className="bg-white rounded-xl p-3 shadow-sm border border-gray-100">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <div className="flex items-center space-x-2 mb-1">
-                      {trade.text.includes('→') ? (
-                        <>
-                          <span className="text-gray-900 font-semibold text-base">{trade.text.split(' → ')[0]}</span>
-                          <MoveRight size={14} className="text-gray-400" />
-                          <span className="text-gray-900 font-semibold text-base">{trade.text.split(' → ')[1].replace('₦', '')}</span>
-                          <span className="text-sm text-gray-500 font-medium">NGN</span>
-                        </>
-                      ) : (
-                        <span className="text-gray-900 font-semibold text-base">{trade.text}</span>
-                      )}
+            {recentTradesData.length === 0 ? (
+              <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 text-center">
+                <div className="text-gray-400 mb-3">
+                  <svg className="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v4" />
+                  </svg>
+                </div>
+                <h3 className="text-lg font-medium text-gray-900 mb-2">No trades yet</h3>
+                <p className="text-gray-600 mb-4">Start your first trade to see your transaction history here.</p>
+                <Link to="/buy-sell" className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                  Start Trading
+                </Link>
+              </div>
+            ) : (
+              recentTradesData.map((trade) => (
+                <div key={trade.id} className="bg-white rounded-xl p-3 shadow-sm border border-gray-100">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <div className="flex items-center space-x-2 mb-1">
+                        {trade.text.includes('→') ? (
+                          <>
+                            <span className="text-gray-900 font-semibold text-base">{trade.text.split(' → ')[0]}</span>
+                            <MoveRight size={14} className="text-gray-400" />
+                            <span className="text-gray-900 font-semibold text-base">{trade.text.split(' → ')[1].replace('₦', '')}</span>
+                            <span className="text-sm text-gray-500 font-medium">NGN</span>
+                          </>
+                        ) : (
+                          <span className="text-gray-900 font-semibold text-base">{trade.text}</span>
+                        )}
+                      </div>
+                      <div className="text-gray-500 text-xs">{trade.date}</div>
                     </div>
-                    <div className="text-gray-500 text-xs">{trade.date}</div>
-                  </div>
-                  <div className={`px-2 py-1 rounded text-xs font-medium ${trade.statusColor}`}>
-                    {trade.status}
+                    <div className={`px-2 py-1 rounded text-xs font-medium ${trade.statusColor}`}>
+                      {trade.status}
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </div>
 
@@ -493,7 +515,7 @@ const Index = () => {
       </div>
 
       {/* Bottom Navigation */}
-      {!isQuickAuthActive && <BottomNavigation />}
+      <BottomNavigation />
       </div>
     </PageTransition>
   );

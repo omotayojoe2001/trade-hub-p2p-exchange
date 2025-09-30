@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Bell, MessageCircle, Heart, MoreHorizontal, ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import BottomNavigation from '@/components/BottomNavigation';
-import { useQuickAuth } from '@/hooks/useQuickAuth';
+
 
 const featuredNews = {
   id: '1',
@@ -46,7 +46,7 @@ const newsItems = [
 const categories = ['For You', 'Crypto News', 'Market Updates', 'Regulations'];
 
 const CryptoNews: React.FC = () => {
-  const { isQuickAuthActive } = useQuickAuth();
+
   const navigate = useNavigate();
   const [activeCategory, setActiveCategory] = useState('For You');
   const [savedNews, setSavedNews] = useState<Set<string>>(new Set());
@@ -223,7 +223,7 @@ const CryptoNews: React.FC = () => {
         ))}
       </div>
 
-      {!isQuickAuthActive && <BottomNavigation />}
+      <BottomNavigation />
     </div>
   );
 };

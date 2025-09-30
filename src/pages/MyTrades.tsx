@@ -3,7 +3,7 @@ import { ChevronRight, AlertCircle, Clock, Calendar, ChevronDown, MessageCircle 
 import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { useQuickAuth } from '@/hooks/useQuickAuth';
+
 import BottomNavigation from '@/components/BottomNavigation';
 import CryptoIcon from '@/components/CryptoIcon';
 import { toast } from '@/hooks/use-toast';
@@ -28,7 +28,7 @@ interface Trade {
 
 const MyTrades = () => {
   const { user } = useAuth();
-  const { isQuickAuthActive } = useQuickAuth();
+
   const [trades, setTrades] = useState<Trade[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('All');

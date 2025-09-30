@@ -44,7 +44,8 @@ class MerchantSearchService {
           response_time_minutes
         `)
         .eq('is_merchant', true)
-        .eq('is_active', true);
+        .eq('is_active', true)
+        .neq('role', 'vendor');
 
       // Filter by online status
       if (filters.isOnline !== undefined) {

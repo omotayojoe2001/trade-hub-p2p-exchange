@@ -77,14 +77,18 @@ export const tradeRequestService = {
     }
   },
 
-  // Get all open trade requests
+  // Get all open trade requests (excluding vendors)
   async getOpenTradeRequests(): Promise<TradeRequest[]> {
     try {
       const { data: tradeRequests, error } = await supabase
         .from('trade_requests')
-        .select('*')
+        .select(`
+          *,
+          profiles!inner(user_type)
+        `)
         .in('status', ['pending', 'open'])
         .gt('expires_at', new Date().toISOString())
+        .neq('profiles.user_type', 'vendor')
         .order('created_at', { ascending: false });
 
       if (error) {

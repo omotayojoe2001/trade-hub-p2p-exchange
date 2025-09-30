@@ -138,11 +138,20 @@ class MessagingService {
     fileSize?: number,
     mimeType?: string
   ): Promise<{ data: Message | null; error: any }> {
+    const timestamp = new Date().toISOString();
+    console.log(`📤 [${timestamp}] Sending message:`);
+    console.log(`   🗨️ Conversation: ${conversationId}`);
+    console.log(`   💬 Content: ${content.substring(0, 50)}...`);
+    console.log(`   📎 Type: ${messageType}`);
+    
     try {
       const currentUser = await supabase.auth.getUser();
       if (!currentUser.data.user) {
+        console.log(`   ❌ User not authenticated`);
         return { data: null, error: 'Not authenticated' };
       }
+
+      console.log(`   👤 Sender: ${currentUser.data.user.id}`);
 
       const { data, error } = await supabase
         .from('messages')
@@ -159,44 +168,20 @@ class MessagingService {
         .select()
         .single();
 
-      // Send notification to recipient
-      if (data && !error) {
-        try {
-          // Get conversation details to find recipient
-          const { data: conversation } = await supabase
-            .from('conversations')
-            .select('participant_1_id, participant_2_id')
-            .eq('id', conversationId)
-            .single();
-
-          if (conversation) {
-            const recipientId = conversation.participant_1_id === currentUser.data.user.id 
-              ? conversation.participant_2_id 
-              : conversation.participant_1_id;
-
-            // Get sender name
-            const { data: senderProfile } = await supabase
-              .from('profiles')
-              .select('display_name')
-              .eq('user_id', currentUser.data.user.id)
-              .single();
-
-            const senderName = senderProfile?.display_name || 'Someone';
-            
-            await notificationService.createMessageNotification(
-              recipientId,
-              senderName,
-              content,
-              conversationId
-            );
-          }
-        } catch (notificationError) {
-          console.error('Error sending notification:', notificationError);
-        }
+      if (error) {
+        console.log(`   ❌ Error sending message:`, error);
+        return { data, error };
       }
+
+      console.log(`   ✅ Message sent successfully: ${data.id}`);
+      console.log(`   🕐 Created at: ${data.created_at}`);
+
+      // No automatic notifications - only send when explicitly requested
+      // Notifications are handled by the UI layer when needed
 
       return { data, error };
     } catch (error) {
+      console.log(`   ❌ Exception sending message:`, error);
       return { data: null, error };
     }
   }
@@ -298,26 +283,43 @@ class MessagingService {
 
   // Mark messages as read
   async markMessagesAsRead(conversationId: string): Promise<{ error: any }> {
+    const timestamp = new Date().toISOString();
+    console.log(`📖 [${timestamp}] Marking messages as read for conversation: ${conversationId}`);
+    
     try {
       const currentUser = await supabase.auth.getUser();
       if (!currentUser.data.user) {
+        console.log(`   ❌ User not authenticated`);
         return { error: 'Not authenticated' };
       }
 
-      const { error } = await supabase
+      console.log(`   👤 User: ${currentUser.data.user.id}`);
+
+      const { data, error } = await supabase
         .from('messages')
         .update({ is_read: true })
         .eq('conversation_id', conversationId)
-        .neq('sender_id', currentUser.data.user.id);
+        .neq('sender_id', currentUser.data.user.id)
+        .select('id, is_read');
 
-      return { error };
+      if (error) {
+        console.log(`   ❌ Error marking messages as read:`, error);
+        return { error };
+      }
+
+      console.log(`   ✅ Marked ${data?.length || 0} messages as read`);
+      return { error: null };
     } catch (error) {
+      console.log(`   ❌ Exception marking messages as read:`, error);
       return { error };
     }
   }
 
   // Subscribe to new messages in a conversation
   subscribeToMessages(conversationId: string, callback: (message: Message) => void) {
+    const timestamp = new Date().toISOString();
+    console.log(`📡 [${timestamp}] Setting up message subscription for conversation: ${conversationId}`);
+    
     const channel = supabase
       .channel(`messages:${conversationId}`)
       .on('postgres_changes', {
@@ -326,11 +328,19 @@ class MessagingService {
         table: 'messages',
         filter: `conversation_id=eq.${conversationId}`
       }, (payload) => {
-        console.log('📨 New message received:', payload.new);
+        const msgTimestamp = new Date().toISOString();
+        console.log(`📨 [${msgTimestamp}] New message received via subscription:`);
+        console.log(`   🆔 Message ID: ${payload.new.id}`);
+        console.log(`   👤 Sender: ${payload.new.sender_id}`);
+        console.log(`   💬 Content: ${payload.new.content?.substring(0, 50)}...`);
+        console.log(`   🕐 Created: ${payload.new.created_at}`);
+        console.log(`   📖 Read status: ${payload.new.is_read}`);
+        console.log(`   🗨️ Conversation: ${payload.new.conversation_id}`);
+        
         callback(payload.new as Message);
       })
       .subscribe((status) => {
-        console.log('📡 Subscription status:', status);
+        console.log(`📡 [${timestamp}] Message subscription status for ${conversationId}:`, status);
       });
     
     return channel;
@@ -338,6 +348,9 @@ class MessagingService {
 
   // Subscribe to conversation updates
   subscribeToConversations(userId: string, callback: () => void) {
+    const timestamp = new Date().toISOString();
+    console.log(`📡 [${timestamp}] Setting up conversation subscriptions for user: ${userId}`);
+    
     const conversationChannel = supabase
       .channel(`conversations:${userId}`)
       .on('postgres_changes', {
@@ -345,7 +358,8 @@ class MessagingService {
         schema: 'public',
         table: 'conversations',
         filter: `or(participant_1_id.eq.${userId},participant_2_id.eq.${userId})`
-      }, () => {
+      }, (payload) => {
+        console.log(`🗨️ [${new Date().toISOString()}] Conversation update for user ${userId}:`, payload.eventType);
         callback();
       })
       .subscribe();
@@ -358,6 +372,12 @@ class MessagingService {
         schema: 'public',
         table: 'messages'
       }, async (payload) => {
+        const msgTimestamp = new Date().toISOString();
+        console.log(`📨 [${msgTimestamp}] New message detected for user ${userId}:`);
+        console.log(`   🆔 Message ID: ${payload.new.id}`);
+        console.log(`   👤 Sender: ${payload.new.sender_id}`);
+        console.log(`   🗨️ Conversation: ${payload.new.conversation_id}`);
+        
         // Check if this message belongs to user's conversation
         const { data: conversation } = await supabase
           .from('conversations')
@@ -367,13 +387,17 @@ class MessagingService {
           .single();
         
         if (conversation) {
+          console.log(`   ✅ Message belongs to user ${userId}'s conversation`);
           callback();
+        } else {
+          console.log(`   ❌ Message does not belong to user ${userId}'s conversation`);
         }
       })
       .subscribe();
     
     return {
       unsubscribe: () => {
+        console.log(`📡 [${new Date().toISOString()}] Unsubscribing conversation channels for user: ${userId}`);
         conversationChannel.unsubscribe();
         messageChannel.unsubscribe();
       }
