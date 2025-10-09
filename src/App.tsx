@@ -115,6 +115,7 @@ import CreditsPurchase from "./pages/CreditsPurchase";
 import CreditsHistory from "./pages/CreditsHistory";
 import AdminCredits from "./pages/AdminCredits";
 import TestCredits from "./pages/TestCredits";
+import TestBitGo from "./pages/TestBitGo";
 import VendorAuthGuard from "./components/VendorAuthGuard";
 import VendorDashboard from "./pages/VendorDashboard";
 import ConfirmCashReceipt from "./pages/ConfirmCashReceipt";
@@ -350,6 +351,7 @@ const AppContent = () => {
         <Route path="/credits-history" element={<CreditsHistory />} />
         <Route path="/admin/credits" element={<AdminCredits />} />
         <Route path="/test-credits" element={<TestCredits />} />
+        <Route path="/test-bitgo" element={<TestBitGo />} />
 
         {/* Cash Services Routes */}
         <Route path="/vendor-bank-details/:jobId?" element={<VendorBankDetails />} />

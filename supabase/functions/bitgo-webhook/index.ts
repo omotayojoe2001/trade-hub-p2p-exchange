@@ -20,14 +20,25 @@ serve(async (req) => {
     const webhook = await req.json();
     console.log('BitGo webhook received:', webhook);
 
-    const { type, data } = webhook;
-    
-    if (type === 'transfer') {
-      const { coin, txid, outputs, confirmations } = data;
+    const { type, coin, wallet, transfer } = webhook;
+
+    // Handle confirmed transactions
+    if (type === 'transfer' && transfer?.state === 'confirmed') {
+      const { txid, outputs, value, valueString } = transfer;
       
-      for (const output of outputs) {
-        const { address, value } = output;
+      console.log('Processing confirmed transfer:', {
+        txid,
+        coin,
+        wallet,
+        value,
+        outputs: outputs?.length
+      });
+
+      // Check each output for escrow addresses
+      for (const output of outputs || []) {
+        const { address, value: outputValue } = output;
         
+        // Find matching escrow record
         const { data: escrowRecord } = await supabase
           .from('escrow_addresses')
           .select('*')
@@ -36,49 +47,45 @@ serve(async (req) => {
           .single();
 
         if (escrowRecord) {
-          console.log('Payment detected:', { address, value, confirmations });
+          console.log('Found matching escrow:', escrowRecord);
           
+          // Update escrow status
           await supabase
             .from('escrow_addresses')
             .update({
-              status: confirmations >= 1 ? 'confirmed' : 'unconfirmed',
-              amount_received: value,
+              status: 'confirmed',
               tx_hash: txid,
-              confirmations: confirmations,
-              received_at: new Date().toISOString()
+              received_amount: outputValue,
+              confirmed_at: new Date().toISOString()
             })
             .eq('id', escrowRecord.id);
 
-          if (escrowRecord.trade_id.startsWith('premium_') && confirmations >= 1) {
-            const parts = escrowRecord.trade_id.split('_');
-            if (parts.length >= 2) {
-              const userId = parts[1];
-              
-              // Validate payment amount
-              const expectedAmount = escrowRecord.expected_amount;
-              const receivedAmount = value;
-              const tolerance = expectedAmount * 0.01; // 1% tolerance for network fees
-              
-              if (receivedAmount >= (expectedAmount - tolerance)) {
-                await supabase
-                  .from('profiles')
-                  .update({
-                    is_premium: true,
-                    premium_expires_at: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString()
-                  })
-                  .eq('user_id', userId);
+          // Update trade request status
+          await supabase
+            .from('trade_requests')
+            .update({
+              status: 'crypto_confirmed',
+              updated_at: new Date().toISOString()
+            })
+            .eq('escrow_address', address);
 
-                console.log('Premium granted to user:', userId, 'Amount validated:', receivedAmount, 'Expected:', expectedAmount);
-              } else {
-                console.log('Payment amount insufficient:', receivedAmount, 'Expected:', expectedAmount);
-                
-                await supabase
-                  .from('escrow_addresses')
-                  .update({ status: 'insufficient_amount' })
-                  .eq('id', escrowRecord.id);
+          // Notify user
+          await supabase
+            .from('notifications')
+            .insert({
+              user_id: escrowRecord.user_id,
+              type: 'crypto_confirmed',
+              title: 'Crypto Deposit Confirmed',
+              message: `Your ${coin.toUpperCase()} deposit has been confirmed. Trade is now active.`,
+              data: {
+                trade_id: escrowRecord.trade_id,
+                txid,
+                amount: outputValue,
+                coin
               }
-            }
-          }
+            });
+
+          console.log('Escrow confirmed and notifications sent');
         }
       }
     }

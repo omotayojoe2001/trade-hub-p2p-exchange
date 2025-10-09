@@ -1,6 +1,6 @@
 import { supabase } from '@/integrations/supabase/client';
 
-const BITGO_BASE_URL = 'https://app.bitgo-test.com/api/v2';
+const BITGO_BASE_URL = 'https://app.bitgo.com/api/v2';
 const BITGO_ACCESS_TOKEN = 'v2x534d125c94f2c8e142c81d56cf28064772b15b51f75772292ef610a860db53b6';
 
 interface EscrowAddress {
@@ -18,13 +18,14 @@ interface BitGoWallet {
 
 // Testnet wallet IDs
 const ESCROW_WALLETS: BitGoWallet = {
-  BTC: '68c3107e4e3a88eabbaa707336d8245f', // TBTC testnet
-  ETH: '68c3152aa55fc893636939a9eaf44484', // HTETH testnet  
-  USDT: '68c3152aa55fc893636939a9eaf44484' // Use ETH wallet for USDT tokens
+  BTC: import.meta.env.VITE_BITGO_BTC_WALLET_ID || 'YOUR_PRODUCTION_BTC_WALLET',
+  ETH: import.meta.env.VITE_BITGO_ETH_WALLET_ID || 'YOUR_PRODUCTION_ETH_WALLET',
+  USDT: import.meta.env.VITE_BITGO_ETH_WALLET_ID || 'YOUR_PRODUCTION_ETH_WALLET'
 };
 
 // Production mode - using real BitGo API
 const MOCK_MODE = false;
+const PRODUCTION_MODE = true;
 
 // CORS headers for direct API calls
 const corsHeaders = {

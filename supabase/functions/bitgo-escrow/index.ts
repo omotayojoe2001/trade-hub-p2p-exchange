@@ -1,10 +1,12 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
-const BITGO_BASE_URL = 'https://app.bitgo-test.com/api/v2';
-const BITGO_ACCESS_TOKEN = Deno.env.get('BITGO_ACCESS_TOKEN') || 'v2x534d125c94f2c8e142c81d56cf28064772b15b51f75772292ef610a860db53b6';
-const BTC_WALLET_ID = Deno.env.get('BITGO_BTC_WALLET_ID') || '68c3107e4e3a88eabbaa707336d8245f';
-const ETH_WALLET_ID = Deno.env.get('BITGO_ETH_WALLET_ID') || '68c3152aa55fc893636939a9eaf44484';
+const BITGO_BASE_URL = 'https://app.bitgo.com/api/v2';
+const BITGO_ACCESS_TOKEN = Deno.env.get('BITGO_ACCESS_TOKEN') || 'v2x6dc774e0651de04e814d18bb30c36addaf7c75185670dacbf3679f49c25df8cf';
+const BTC_WALLET_ID = Deno.env.get('BITGO_BTC_WALLET_ID') || '68dd6fe94425f8b958244dcf157a6635';
+const ETH_WALLET_ID = Deno.env.get('BITGO_ETH_WALLET_ID') || '68dd72a44425f8b9582541296faadbda';
+const XRP_WALLET_ID = Deno.env.get('BITGO_XRP_WALLET_ID') || '68dd73b355ce73d00a762c69c94941e9';
+const POLYGON_WALLET_ID = Deno.env.get('BITGO_POLYGON_WALLET_ID') || '68dd731904bafab1d38eb9bb8061d12b';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -60,8 +62,10 @@ serve(async (req) => {
     
     if (action === 'release') {
       // Release funds from escrow
-      const walletId = coin === 'BTC' ? BTC_WALLET_ID : ETH_WALLET_ID;
-      const coinType = coin === 'BTC' ? 'tbtc' : 'hteth';
+      const walletMap = { BTC: BTC_WALLET_ID, ETH: ETH_WALLET_ID, XRP: XRP_WALLET_ID, POLYGON: POLYGON_WALLET_ID };
+      const coinTypeMap = { BTC: 'btc', ETH: 'eth', XRP: 'xrp', POLYGON: 'polygon' };
+      const walletId = walletMap[coin];
+      const coinType = coinTypeMap[coin];
       
       console.log('Releasing funds:', { walletId, coinType, toAddress, amount });
       
@@ -73,8 +77,7 @@ serve(async (req) => {
         },
         body: JSON.stringify({
           address: toAddress,
-          amount: amount.toString(),
-          walletPassphrase: Deno.env.get('BITGO_WALLET_PASSPHRASE') || ''
+          amount: amount.toString()
         })
       });
       
@@ -108,10 +111,43 @@ serve(async (req) => {
       });
     }
     
-    // Generate address (default)
-    const walletId = coin === 'BTC' ? BTC_WALLET_ID : ETH_WALLET_ID;
-    const coinType = coin === 'BTC' ? 'tbtc' : 'hteth';
+
     
+
+    
+    // Test wallet access first
+    const walletMap = { BTC: BTC_WALLET_ID, ETH: ETH_WALLET_ID, XRP: XRP_WALLET_ID, POLYGON: POLYGON_WALLET_ID };
+    const coinTypeMap = { BTC: 'btc', ETH: 'eth', XRP: 'xrp', POLYGON: 'polygon' };
+    const walletId = walletMap[coin];
+    const coinType = coinTypeMap[coin];
+    
+    console.log('Testing wallet access for:', { coin, coinType, walletId });
+    
+    // First test if we can access the wallet
+    const walletTestResponse = await fetch(`${BITGO_BASE_URL}/${coinType}/wallet/${walletId}`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${BITGO_ACCESS_TOKEN}`,
+        'Content-Type': 'application/json'
+      }
+    });
+    
+    console.log('Wallet access test:', {
+      status: walletTestResponse.status,
+      statusText: walletTestResponse.statusText,
+      ok: walletTestResponse.ok
+    });
+    
+    if (!walletTestResponse.ok) {
+      const walletErrorText = await walletTestResponse.text();
+      console.error('Wallet access failed:', walletErrorText);
+      throw new Error(`Wallet access failed for ${coin}: ${walletTestResponse.status} - ${walletErrorText}`);
+    }
+    
+    const walletInfo = await walletTestResponse.json();
+    console.log('Wallet info:', { id: walletInfo.id, coin: walletInfo.coin, label: walletInfo.label });
+    
+    // Generate address (default)
     console.log('Creating address with:', {
       url: `${BITGO_BASE_URL}/${coinType}/wallet/${walletId}/address`,
       coinType,
@@ -127,7 +163,8 @@ serve(async (req) => {
       },
       body: JSON.stringify({ 
         label: `escrow-${tradeId}-${Date.now()}`,
-        chain: coinType === 'tbtc' ? 0 : 1 // 0 for external chain, 1 for change chain
+        // ETH doesn't use chain parameter
+        ...(coinType === 'btc' ? { chain: 0 } : {})
       })
     });
     

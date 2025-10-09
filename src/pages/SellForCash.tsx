@@ -35,13 +35,9 @@ const SellForCash = () => {
 
   const cryptoOptions = [
     { value: 'BTC', label: 'Bitcoin', rate: 105000, icon: '₿' },
-    { value: 'USDT', label: 'Tether', rate: 1, icon: '₮' },
     { value: 'ETH', label: 'Ethereum', rate: 3500, icon: 'Ξ' },
     { value: 'XRP', label: 'Ripple', rate: 2.5, icon: '◉' },
-    { value: 'BNB', label: 'Binance Coin', rate: 650, icon: '🔶' },
-    { value: 'ADA', label: 'Cardano', rate: 1.2, icon: '₳' },
-    { value: 'SOL', label: 'Solana', rate: 250, icon: '◎' },
-    { value: 'DOGE', label: 'Dogecoin', rate: 0.4, icon: 'Ð' }
+    { value: 'POLYGON', label: 'Polygon', rate: 1.2, icon: '🔷' }
   ];
 
   // Load user credits
