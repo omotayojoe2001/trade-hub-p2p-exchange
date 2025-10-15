@@ -168,13 +168,18 @@ const Index = () => {
   }, [user]);
 
   useEffect(() => {
-    if (!loading && !user) {
-      console.log('No user found, redirecting to auth');
-      navigate('/auth');
-    } else if (user && profile && !profile.profile_completed) {
-      console.log('Profile incomplete, redirecting to setup');
-      navigate('/profile-setup');
-    }
+    // Add delay to prevent redirect loops on page reload
+    const timer = setTimeout(() => {
+      if (!loading && !user) {
+        console.log('No user found, redirecting to auth');
+        navigate('/auth', { replace: true });
+      } else if (user && profile && !profile.profile_completed) {
+        console.log('Profile incomplete, redirecting to setup');
+        navigate('/profile-setup', { replace: true });
+      }
+    }, 100);
+    
+    return () => clearTimeout(timer);
   }, [user, profile, loading, navigate]);
 
   if (loading) {
