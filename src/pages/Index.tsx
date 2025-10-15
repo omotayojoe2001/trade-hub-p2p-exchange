@@ -168,21 +168,20 @@ const Index = () => {
   }, [user]);
 
   useEffect(() => {
-    // Add delay to prevent redirect loops on page reload
-    const timer = setTimeout(() => {
+    // Prevent navigation errors in mobile apps
+    try {
       if (!loading && !user) {
-        console.log('No user found, redirecting to auth');
         navigate('/auth', { replace: true });
       } else if (user && profile && !profile.profile_completed) {
-        console.log('Profile incomplete, redirecting to setup');
         navigate('/profile-setup', { replace: true });
       }
-    }, 100);
-    
-    return () => clearTimeout(timer);
+    } catch (error) {
+      // Ignore navigation errors in mobile apps
+    }
   }, [user, profile, loading, navigate]);
 
-  if (loading) {
+  // Prevent crashes during loading
+  if (loading || !user) {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-center">
@@ -192,13 +191,6 @@ const Index = () => {
       </div>
     );
   }
-
-  if (!user) {
-    console.log('No user, returning null');
-    return null;
-  }
-
-  console.log('Rendering home page for user:', user.id);
 
   const displayName = profile?.display_name ||
                      user?.user_metadata?.full_name ||

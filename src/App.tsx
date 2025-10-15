@@ -153,6 +153,7 @@ import TestTradeCompletion from "./pages/TestTradeCompletion";
 import React from 'react';
 import PageLoader from './components/PageLoader';
 import GlobalLoader from './components/GlobalLoader';
+import ErrorBoundary from './utils/errorBoundary';
 import { usePageLoader } from './hooks/usePageLoader';
 
 const queryClient = new QueryClient();
@@ -177,11 +178,15 @@ const AppContent = () => {
     }
   }, [user, saveUser]);
 
-  // Clear logout reason on page load
+  // Clear logout reason on page load (with error handling)
   React.useEffect(() => {
-    const logoutReason = localStorage.getItem('logout-reason');
-    if (logoutReason) {
-      localStorage.removeItem('logout-reason');
+    try {
+      const logoutReason = localStorage.getItem('logout-reason');
+      if (logoutReason) {
+        localStorage.removeItem('logout-reason');
+      }
+    } catch (error) {
+      // Ignore localStorage errors in mobile apps
     }
   }, []);
 
@@ -191,7 +196,7 @@ const AppContent = () => {
   };
 
   // Show global loader during initial auth check
-  if (authLoading && !user && !storedUser) {
+  if (authLoading) {
     return <GlobalLoader />;
   }
 
@@ -411,19 +416,21 @@ const AppContent = () => {
 };
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <BrowserRouter>
-        <div className="light" style={{ colorScheme: 'light' }}>
-          <AuthProvider>
-                <TooltipProvider>
-                  <AppContent />
-                  <Toaster />
-                  <Sonner />
-                </TooltipProvider>
-          </AuthProvider>
-        </div>
-    </BrowserRouter>
-  </QueryClientProvider>
+  <ErrorBoundary>
+    <QueryClientProvider client={queryClient}>
+      <BrowserRouter>
+          <div className="light" style={{ colorScheme: 'light' }}>
+            <AuthProvider>
+                  <TooltipProvider>
+                    <AppContent />
+                    <Toaster />
+                    <Sonner />
+                  </TooltipProvider>
+            </AuthProvider>
+          </div>
+      </BrowserRouter>
+    </QueryClientProvider>
+  </ErrorBoundary>
 );
 
 export default App;
