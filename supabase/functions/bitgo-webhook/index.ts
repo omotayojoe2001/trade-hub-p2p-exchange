@@ -17,28 +17,19 @@ serve(async (req) => {
   );
 
   try {
-    const webhook = await req.json();
-    console.log('BitGo webhook received:', webhook);
+    const webhookData = await req.json();
+    console.log('BitGo webhook received:', webhookData);
 
-    const { type, coin, wallet, transfer } = webhook;
+    const { type, coin, wallet, transfer } = webhookData;
 
-    // Handle confirmed transactions
+    // Only process confirmed transfers
     if (type === 'transfer' && transfer?.state === 'confirmed') {
-      const { txid, outputs, value, valueString } = transfer;
-      
-      console.log('Processing confirmed transfer:', {
-        txid,
-        coin,
-        wallet,
-        value,
-        outputs: outputs?.length
-      });
+      const { txid, outputs, value } = transfer;
 
-      // Check each output for escrow addresses
+      // Find matching escrow address
       for (const output of outputs || []) {
         const { address, value: outputValue } = output;
-        
-        // Find matching escrow record
+
         const { data: escrowRecord } = await supabase
           .from('escrow_addresses')
           .select('*')
@@ -47,9 +38,7 @@ serve(async (req) => {
           .single();
 
         if (escrowRecord) {
-          console.log('Found matching escrow:', escrowRecord);
-          
-          // Update escrow status
+          // Update escrow status to confirmed
           await supabase
             .from('escrow_addresses')
             .update({
@@ -60,32 +49,18 @@ serve(async (req) => {
             })
             .eq('id', escrowRecord.id);
 
-          // Update trade request status
-          await supabase
-            .from('trade_requests')
-            .update({
-              status: 'crypto_confirmed',
-              updated_at: new Date().toISOString()
-            })
-            .eq('escrow_address', address);
-
-          // Notify user
+          // Notify trade participants
           await supabase
             .from('notifications')
             .insert({
-              user_id: escrowRecord.user_id,
-              type: 'crypto_confirmed',
-              title: 'Crypto Deposit Confirmed',
-              message: `Your ${coin.toUpperCase()} deposit has been confirmed. Trade is now active.`,
-              data: {
-                trade_id: escrowRecord.trade_id,
-                txid,
-                amount: outputValue,
-                coin
-              }
+              user_id: escrowRecord.trade_id, // Will need to get actual user IDs
+              type: 'payment_confirmed',
+              title: 'Payment Confirmed',
+              message: `${escrowRecord.coin} payment confirmed on blockchain`,
+              data: { txid, amount: outputValue, address }
             });
 
-          console.log('Escrow confirmed and notifications sent');
+          console.log('Payment confirmed:', { address, txid, amount: outputValue });
         }
       }
     }

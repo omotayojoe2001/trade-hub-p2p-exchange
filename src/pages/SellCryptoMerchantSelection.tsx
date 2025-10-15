@@ -8,6 +8,8 @@ import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { merchantSearchService } from '@/services/merchantSearchService';
+import { usePerformanceMonitor } from '@/hooks/usePerformanceMonitor';
 import BottomNavigation from '@/components/BottomNavigation';
 
 interface Merchant {
@@ -62,41 +64,36 @@ const SellCryptoMerchantSelection: React.FC = () => {
     setFilteredMerchants(filtered);
   }, [merchants, searchQuery]);
 
+  const { start: startTimer, end: endTimer } = usePerformanceMonitor('Merchant Search');
+
   const fetchMerchants = async () => {
     try {
       setLoading(true);
+      startTimer();
       
-      // Fetch active merchants who are in merchant mode
-      const { data: merchantsData, error } = await supabase
-        .from('profiles')
-        .select(`
-          user_id,
-          display_name,
-          rating,
-          is_premium,
-          merchant_mode,
-          is_merchant
-        `)
-        .eq('is_merchant', true)
-        .eq('merchant_mode', true)
-        .eq('is_active', true)
-        .neq('user_id', user!.id);
-
-      if (error) throw error;
-
-      // Transform merchant data
-      const transformedMerchants = merchantsData.map(merchant => ({
-        user_id: merchant.user_id,
-        display_name: merchant.display_name || 'Anonymous Merchant',
-        rating: merchant.rating || 5.0,
-        total_trades: Math.floor(Math.random() * 100) + 10, // Placeholder
-        success_rate: 95 + Math.random() * 5, // Placeholder
-        avg_response_time: Math.floor(Math.random() * 15) + 5, // Placeholder
-        is_premium: merchant.is_premium || false,
-        merchant_mode: merchant.merchant_mode
-      }));
+      // Use the optimized merchant search service
+      const merchantResults = await merchantSearchService.getOnlineMerchants(cryptoType);
+      
+      // Transform to component format
+      const transformedMerchants = merchantResults
+        .filter(merchant => merchant.id !== user!.id) // Exclude current user
+        .map(merchant => ({
+          user_id: merchant.id,
+          display_name: merchant.display_name,
+          rating: merchant.rating,
+          total_trades: merchant.total_trades,
+          success_rate: 95 + Math.random() * 5, // Placeholder
+          avg_response_time: merchant.response_time_minutes,
+          is_premium: false, // Will be updated when we have this data
+          merchant_mode: true
+        }));
 
       setMerchants(transformedMerchants);
+      
+      const duration = endTimer();
+      if (duration > 2000) {
+        console.warn(`Slow merchant loading: ${duration}ms`);
+      }
     } catch (error) {
       console.error('Error fetching merchants:', error);
       toast({

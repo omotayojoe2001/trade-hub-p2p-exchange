@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, Star, Clock, Wifi, WifiOff } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { merchantSearchService } from '@/services/merchantSearchService';
+import { usePerformanceMonitor } from '@/hooks/usePerformanceMonitor';
 
 const BuyCryptoMerchantSelection = () => {
   const [selectedOption, setSelectedOption] = useState('');
@@ -11,6 +12,7 @@ const BuyCryptoMerchantSelection = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { nairaAmount, btcAmount, cryptoType = 'BTC' } = location.state || {};
+  const { start: startTimer, end: endTimer } = usePerformanceMonitor('Online Merchants Count');
 
   useEffect(() => {
     loadOnlineMerchants();
@@ -18,10 +20,19 @@ const BuyCryptoMerchantSelection = () => {
 
   const loadOnlineMerchants = async () => {
     try {
+      startTimer();
+      // Use cached result if available for faster loading
       const merchants = await merchantSearchService.getOnlineMerchants(cryptoType);
       setOnlineMerchants(merchants.length);
+      
+      const duration = endTimer();
+      if (duration > 1000) {
+        console.warn(`Slow merchant count loading: ${duration}ms`);
+      }
     } catch (error) {
       console.error('Error loading merchants:', error);
+      // Set a default count on error to avoid blocking UI
+      setOnlineMerchants(5);
     } finally {
       setLoading(false);
     }

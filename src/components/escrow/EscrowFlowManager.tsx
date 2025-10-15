@@ -27,12 +27,14 @@ interface EscrowTransaction {
 interface EscrowFlowManagerProps {
   transactionId: string;
   tradeAmount?: number;
+  coinType?: 'BTC' | 'ETH' | 'USDT';
   onStatusChange?: (status: string) => void;
 }
 
 export const useEscrowFlowManager = ({ 
   transactionId, 
   tradeAmount,
+  coinType = 'BTC',
   onStatusChange 
 }: EscrowFlowManagerProps) => {
   const [transaction, setTransaction] = useState<EscrowTransaction | null>(null);
@@ -59,15 +61,21 @@ export const useEscrowFlowManager = ({
       // Get actual trade amount from props or default
       const actualAmount = tradeAmount || 0.001;
       
+      // Use coin type from props
+      
       // Create BitGo escrow address with expected amount
-      const escrowAddress = await bitgoEscrow.generateEscrowAddress(transactionId, 'BTC', actualAmount);
+      const escrowAddress = await bitgoEscrow.generateEscrowAddress(
+        transactionId, 
+        coinType as 'BTC' | 'ETH' | 'USDT', 
+        actualAmount
+      );
       
       // Create real escrow transaction
       const transaction: EscrowTransaction = {
         id: transactionId,
         amount: actualAmount,
-        coin: 'bitcoin',
-        network: 'testnet',
+        coin: coinType.toLowerCase(),
+        network: 'mainnet',
         escrowAddress,
         vaultId: transactionId,
         receiverBankDetails: {
@@ -183,7 +191,7 @@ export const useEscrowFlowManager = ({
         transactionId, 
         transaction.receiverWalletAddress,
         transaction.amount,
-        'BTC'
+        coinType
       );
       
       toast({

@@ -34,6 +34,34 @@ serve(async (req) => {
       throw new Error('BitGo access token not configured');
     }
     
+    if (action === 'setup_webhook') {
+      // Setup BitGo webhook for payment notifications
+      const walletMap = { BTC: BTC_WALLET_ID, ETH: ETH_WALLET_ID, XRP: XRP_WALLET_ID, POLYGON: POLYGON_WALLET_ID };
+      const coinTypeMap = { BTC: 'btc', ETH: 'eth', XRP: 'xrp', POLYGON: 'polygon' };
+      const walletId = walletMap[coin];
+      const coinType = coinTypeMap[coin];
+      
+      const webhookUrl = 'https://towffqxmmqyhbuyphkui.supabase.co/functions/v1/bitgo-webhook';
+      
+      const response = await fetch(`${BITGO_BASE_URL}/api/v2/${coinType}/wallet/${walletId}/webhooks`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${BITGO_ACCESS_TOKEN}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          type: 'transfer',
+          url: webhookUrl,
+          numConfirmations: 1
+        })
+      });
+      
+      const data = await response.json();
+      return new Response(JSON.stringify({ webhookId: data.id }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+    
     if (action === 'release') {
       // Release funds from escrow
       const walletMap = { BTC: BTC_WALLET_ID, ETH: ETH_WALLET_ID, XRP: XRP_WALLET_ID, POLYGON: POLYGON_WALLET_ID };
@@ -50,7 +78,8 @@ serve(async (req) => {
         body: JSON.stringify({
           address: toAddress,
           amount: amount.toString()
-        })
+        }),
+        signal: AbortSignal.timeout(30000) // 30 second timeout
       });
       
       if (!response.ok) {
@@ -100,7 +129,8 @@ serve(async (req) => {
       body: JSON.stringify({ 
         label: `escrow-${tradeId}-${Date.now()}`,
         ...(coinType === 'btc' ? { chain: 0 } : {})
-      })
+      }),
+      signal: AbortSignal.timeout(30000) // 30 second timeout
     });
     
     if (!response.ok) {
@@ -122,6 +152,25 @@ serve(async (req) => {
       created_at: new Date().toISOString()
     });
     
+    // Setup webhook for this wallet if not already done
+    try {
+      const webhookUrl = 'https://towffqxmmqyhbuyphkui.supabase.co/functions/v1/bitgo-webhook';
+      await fetch(`${BITGO_BASE_URL}/api/v2/${coinType}/wallet/${walletId}/webhooks`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${BITGO_ACCESS_TOKEN}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          type: 'transfer',
+          url: webhookUrl,
+          numConfirmations: 1
+        })
+      });
+    } catch (webhookError) {
+      console.log('Webhook setup (may already exist):', webhookError.message);
+    }
+    
 
     
     return new Response(JSON.stringify({ address: data.address }), {
@@ -130,8 +179,21 @@ serve(async (req) => {
     
   } catch (error) {
     console.error('Edge Function error:', error.message);
-    return new Response(JSON.stringify({ error: error.message }), {
-      status: 500,
+    
+    // Handle specific error types
+    let errorMessage = error.message;
+    let statusCode = 500;
+    
+    if (error.name === 'AbortError' || error.message.includes('timeout')) {
+      errorMessage = 'BitGo service timeout - please try again';
+      statusCode = 504;
+    } else if (error.message.includes('Failed to fetch') || error.message.includes('network')) {
+      errorMessage = 'Network connectivity issue - please try again';
+      statusCode = 503;
+    }
+    
+    return new Response(JSON.stringify({ error: errorMessage }), {
+      status: statusCode,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
   }

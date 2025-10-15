@@ -58,6 +58,7 @@ const EscrowFlow = () => {
   } = useEscrowFlowManager({
     transactionId,
     tradeAmount,
+    coinType: tradeCurrency as 'BTC' | 'ETH' | 'USDT',
     onStatusChange: (status) => {
       handleStatusUpdate(status);
     }
