@@ -114,6 +114,11 @@ const BuySell = () => {
         <h1 className="text-lg font-medium text-gray-900">Trade</h1>
         
         <div className="flex items-center space-x-2">
+          {profile?.role === 'admin' && (
+            <button onClick={() => navigate('/admin')} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
+              <Settings size={20} className="text-blue-600" />
+            </button>
+          )}
           <button onClick={() => navigate('/notifications')} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
             <Bell size={20} className="text-gray-600" />
           </button>

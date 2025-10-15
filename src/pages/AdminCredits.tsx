@@ -1,71 +1,82 @@
 import React, { useState, useEffect } from 'react';
+import { ArrowLeft, Check, X, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { supabase } from '@/integrations/supabase/client';
+import { Badge } from '@/components/ui/badge';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
-import { CheckCircle, Clock, XCircle } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+
+interface CreditPurchase {
+  id: string;
+  user_id: string;
+  credits_amount: number;
+  price_paid_naira: number;
+  status: string;
+  payment_proof_url?: string;
+  created_at: string;
+  profiles: {
+    display_name: string;
+    email: string;
+  };
+}
 
 const AdminCredits = () => {
-  const [purchases, setPurchases] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
+  const { user, profile } = useAuth();
   const { toast } = useToast();
+  const [purchases, setPurchases] = useState<CreditPurchase[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchPendingPurchases();
-  }, []);
+    if (!user || profile?.role !== 'admin') {
+      navigate('/');
+      return;
+    }
+    loadPurchases();
+  }, [user, profile]);
 
-  const fetchPendingPurchases = async () => {
+  const loadPurchases = async () => {
     try {
       const { data, error } = await supabase
         .from('credit_purchase_transactions')
         .select(`
           *,
-          profiles!inner(display_name, user_id)
+          profiles:user_id (
+            display_name,
+            email
+          )
         `)
-        .in('status', ['pending', 'paid'])
         .order('created_at', { ascending: false });
 
       if (error) throw error;
       setPurchases(data || []);
     } catch (error) {
-      console.error('Error fetching purchases:', error);
+      console.error('Error loading purchases:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  const confirmPurchase = async (purchaseId: string, userId: string, creditsAmount: number) => {
+  const approvePurchase = async (purchaseId: string) => {
     try {
-      // Add credits to user
-      const { error: addError } = await supabase.rpc('update_credit_balance', {
-        p_user_id: userId,
-        p_amount: creditsAmount
+      const { data, error } = await supabase.functions.invoke('process-credit-purchase', {
+        body: { purchaseId }
       });
 
-      if (addError) throw addError;
-
-      // Update purchase status
-      const { error: updateError } = await supabase
-        .from('credit_purchase_transactions')
-        .update({
-          status: 'completed',
-          confirmed_at: new Date().toISOString()
-        })
-        .eq('id', purchaseId);
-
-      if (updateError) throw updateError;
+      if (error) throw error;
 
       toast({
-        title: "Purchase Confirmed",
-        description: `${creditsAmount} credits added to user account`,
+        title: "Purchase Approved",
+        description: "Credits have been added to user account",
       });
 
-      fetchPendingPurchases();
+      loadPurchases();
     } catch (error) {
-      console.error('Error confirming purchase:', error);
       toast({
         title: "Error",
-        description: "Failed to confirm purchase",
+        description: "Failed to approve purchase",
         variant: "destructive"
       });
     }
@@ -75,19 +86,18 @@ const AdminCredits = () => {
     try {
       const { error } = await supabase
         .from('credit_purchase_transactions')
-        .update({ status: 'failed' })
+        .update({ status: 'rejected' })
         .eq('id', purchaseId);
 
       if (error) throw error;
 
       toast({
         title: "Purchase Rejected",
-        description: "Purchase has been marked as failed",
+        description: "Purchase has been rejected",
       });
 
-      fetchPendingPurchases();
+      loadPurchases();
     } catch (error) {
-      console.error('Error rejecting purchase:', error);
       toast({
         title: "Error",
         description: "Failed to reject purchase",
@@ -96,95 +106,84 @@ const AdminCredits = () => {
     }
   };
 
-  if (loading) {
-    return <div className="p-4">Loading...</div>;
-  }
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'completed': return 'bg-green-100 text-green-800';
+      case 'paid': return 'bg-yellow-100 text-yellow-800';
+      case 'rejected': return 'bg-red-100 text-red-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4">
-      <div className="max-w-4xl mx-auto">
-        <h1 className="text-2xl font-bold mb-6">Admin - Credit Purchases</h1>
-        
-        {purchases.length === 0 ? (
-          <Card>
-            <CardContent className="p-6 text-center">
-              <p className="text-gray-600">No pending purchases</p>
-            </CardContent>
-          </Card>
+    <div className="min-h-screen bg-gray-50 p-6">
+      <div className="max-w-6xl mx-auto">
+        <div className="flex items-center mb-6">
+          <Button variant="ghost" onClick={() => navigate('/admin')} className="mr-4">
+            <ArrowLeft size={20} />
+          </Button>
+          <h1 className="text-3xl font-bold">Credit Purchase Management</h1>
+        </div>
+
+        {loading ? (
+          <div className="text-center py-8">Loading purchases...</div>
         ) : (
           <div className="space-y-4">
             {purchases.map((purchase) => (
               <Card key={purchase.id}>
-                <CardHeader>
-                  <CardTitle className="flex items-center justify-between">
-                    <span>{purchase.credits_amount} Credits Purchase</span>
-                    <div className={`px-3 py-1 rounded-full text-sm font-medium ${
-                      purchase.status === 'completed' ? 'bg-green-100 text-green-800' :
-                      purchase.status === 'paid' ? 'bg-blue-100 text-blue-800' :
-                      purchase.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                      'bg-red-100 text-red-800'
-                    }`}>
-                      {purchase.status}
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center space-x-4 mb-2">
+                        <h3 className="font-semibold">
+                          {purchase.profiles?.display_name || 'Unknown User'}
+                        </h3>
+                        <Badge className={getStatusColor(purchase.status)}>
+                          {purchase.status.toUpperCase()}
+                        </Badge>
+                      </div>
+                      <div className="text-sm text-gray-600 space-y-1">
+                        <p>Email: {purchase.profiles?.email}</p>
+                        <p>Credits: {purchase.credits_amount}</p>
+                        <p>Amount: ₦{purchase.price_paid_naira?.toLocaleString()}</p>
+                        <p>Date: {new Date(purchase.created_at).toLocaleDateString()}</p>
+                      </div>
                     </div>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div>
-                      <strong>User:</strong> {purchase.profiles?.display_name || 'Unknown'}
-                    </div>
-                    <div>
-                      <strong>Amount:</strong> {purchase.crypto_amount} {purchase.crypto_type}
-                    </div>
-                    <div>
-                      <strong>USD Value:</strong> ${(purchase.credits_amount * 0.01).toFixed(2)}
-                    </div>
-                    <div>
-                      <strong>Created:</strong> {new Date(purchase.created_at).toLocaleString()}
+                    
+                    <div className="flex items-center space-x-2">
+                      {purchase.payment_proof_url && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => window.open(purchase.payment_proof_url, '_blank')}
+                        >
+                          <Eye size={16} className="mr-1" />
+                          View Proof
+                        </Button>
+                      )}
+                      
+                      {purchase.status === 'paid' && (
+                        <>
+                          <Button
+                            size="sm"
+                            onClick={() => approvePurchase(purchase.id)}
+                            className="bg-green-600 hover:bg-green-700"
+                          >
+                            <Check size={16} className="mr-1" />
+                            Approve
+                          </Button>
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => rejectPurchase(purchase.id)}
+                          >
+                            <X size={16} className="mr-1" />
+                            Reject
+                          </Button>
+                        </>
+                      )}
                     </div>
                   </div>
-                  
-                  <div className="bg-gray-50 p-3 rounded">
-                    <div className="text-xs text-gray-600 mb-1">Payment Address:</div>
-                    <div className="font-mono text-sm break-all">{purchase.payment_address}</div>
-                  </div>
-
-                  {purchase.transaction_hash && (
-                    <div className="bg-gray-50 p-3 rounded">
-                      <div className="text-xs text-gray-600 mb-1">Transaction Hash:</div>
-                      <div className="font-mono text-sm break-all">{purchase.transaction_hash}</div>
-                    </div>
-                  )}
-
-                  {purchase.payment_proof_url && (
-                    <div>
-                      <div className="text-xs text-gray-600 mb-2">Payment Proof:</div>
-                      <img 
-                        src={purchase.payment_proof_url} 
-                        alt="Payment proof" 
-                        className="max-w-xs rounded border"
-                      />
-                    </div>
-                  )}
-
-                  {(purchase.status === 'pending' || purchase.status === 'paid') && (
-                    <div className="flex space-x-2 pt-4">
-                      <Button
-                        onClick={() => confirmPurchase(purchase.id, purchase.user_id, purchase.credits_amount)}
-                        className="bg-green-600 hover:bg-green-700"
-                      >
-                        <CheckCircle size={16} className="mr-2" />
-                        Confirm & Add Credits
-                      </Button>
-                      <Button
-                        variant="destructive"
-                        onClick={() => rejectPurchase(purchase.id)}
-                      >
-                        <XCircle size={16} className="mr-2" />
-                        Reject
-                      </Button>
-                    </div>
-                  )}
                 </CardContent>
               </Card>
             ))}

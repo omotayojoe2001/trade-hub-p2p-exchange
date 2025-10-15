@@ -29,6 +29,10 @@ serve(async (req) => {
     
     console.log('Request received:', { tradeId, coin, action, hasToken: !!BITGO_ACCESS_TOKEN });
     
+    if (!tradeId || !coin) {
+      throw new Error('Missing required parameters: tradeId and coin');
+    }
+    
     if (!BITGO_ACCESS_TOKEN) {
       console.error('Missing BITGO_ACCESS_TOKEN');
       throw new Error('BitGo access token not configured');
@@ -36,8 +40,8 @@ serve(async (req) => {
     
     if (action === 'setup_webhook') {
       // Setup BitGo webhook for payment notifications
-      const walletMap = { BTC: BTC_WALLET_ID, ETH: ETH_WALLET_ID, XRP: XRP_WALLET_ID, POLYGON: POLYGON_WALLET_ID };
-      const coinTypeMap = { BTC: 'btc', ETH: 'eth', XRP: 'xrp', POLYGON: 'polygon' };
+      const walletMap = { BTC: BTC_WALLET_ID, USDT: ETH_WALLET_ID, XRP: XRP_WALLET_ID, POLYGON: POLYGON_WALLET_ID };
+      const coinTypeMap = { BTC: 'btc', USDT: 'eth', XRP: 'xrp', POLYGON: 'polygon' };
       const walletId = walletMap[coin];
       const coinType = coinTypeMap[coin];
       
@@ -64,8 +68,8 @@ serve(async (req) => {
     
     if (action === 'release') {
       // Release funds from escrow
-      const walletMap = { BTC: BTC_WALLET_ID, ETH: ETH_WALLET_ID, XRP: XRP_WALLET_ID, POLYGON: POLYGON_WALLET_ID };
-      const coinTypeMap = { BTC: 'btc', ETH: 'eth', XRP: 'xrp', POLYGON: 'polygon' };
+      const walletMap = { BTC: BTC_WALLET_ID, USDT: ETH_WALLET_ID, XRP: XRP_WALLET_ID, POLYGON: POLYGON_WALLET_ID };
+      const coinTypeMap = { BTC: 'btc', USDT: 'eth', XRP: 'xrp', POLYGON: 'polygon' };
       const walletId = walletMap[coin];
       const coinType = coinTypeMap[coin];
       
@@ -108,8 +112,8 @@ serve(async (req) => {
     
 
     
-    const walletMap = { BTC: BTC_WALLET_ID, ETH: ETH_WALLET_ID, XRP: XRP_WALLET_ID, POLYGON: POLYGON_WALLET_ID };
-    const coinTypeMap = { BTC: 'btc', ETH: 'eth', XRP: 'xrp', POLYGON: 'polygon' };
+    const walletMap = { BTC: BTC_WALLET_ID, USDT: ETH_WALLET_ID, XRP: XRP_WALLET_ID, POLYGON: POLYGON_WALLET_ID };
+    const coinTypeMap = { BTC: 'btc', USDT: 'eth', XRP: 'xrp', POLYGON: 'polygon' };
     const walletId = walletMap[coin];
     const coinType = coinTypeMap[coin];
     
@@ -135,7 +139,7 @@ serve(async (req) => {
     
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('BitGo API error:', { status: response.status, error: errorText });
+      console.error('BitGo API error:', { status: response.status, error: errorText, url: `${BITGO_BASE_URL}/api/v2/${coinType}/wallet/${walletId}/address` });
       throw new Error(`Address generation failed: ${response.status} - ${errorText}`);
     }
     
@@ -151,6 +155,10 @@ serve(async (req) => {
       expected_amount: expectedAmount,
       created_at: new Date().toISOString()
     });
+    
+    if (insertError) {
+      console.error('Database insert error:', insertError);
+    }
     
     // Setup webhook for this wallet if not already done
     try {

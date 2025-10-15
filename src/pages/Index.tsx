@@ -169,8 +169,10 @@ const Index = () => {
 
   useEffect(() => {
     if (!loading && !user) {
+      console.log('No user found, redirecting to auth');
       navigate('/auth');
     } else if (user && profile && !profile.profile_completed) {
+      console.log('Profile incomplete, redirecting to setup');
       navigate('/profile-setup');
     }
   }, [user, profile, loading, navigate]);
@@ -187,8 +189,11 @@ const Index = () => {
   }
 
   if (!user) {
+    console.log('No user, returning null');
     return null;
   }
+
+  console.log('Rendering home page for user:', user.id);
 
   const displayName = profile?.display_name ||
                      user?.user_metadata?.full_name ||
