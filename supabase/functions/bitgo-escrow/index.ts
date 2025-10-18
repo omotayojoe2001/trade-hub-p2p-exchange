@@ -7,6 +7,8 @@ const BTC_WALLET_ID = Deno.env.get('BITGO_BTC_WALLET_ID');
 const ETH_WALLET_ID = Deno.env.get('BITGO_ETH_WALLET_ID');
 const XRP_WALLET_ID = Deno.env.get('BITGO_XRP_WALLET_ID');
 const POLYGON_WALLET_ID = Deno.env.get('BITGO_POLYGON_WALLET_ID');
+const USDT_WALLET_ID = Deno.env.get('BITGO_USDT_WALLET_ID');
+const BNB_WALLET_ID = Deno.env.get('BITGO_BNB_WALLET_ID');
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -40,8 +42,8 @@ serve(async (req) => {
     
     if (action === 'setup_webhook') {
       // Setup BitGo webhook for payment notifications
-      const walletMap = { BTC: BTC_WALLET_ID, USDT: ETH_WALLET_ID, XRP: XRP_WALLET_ID, POLYGON: POLYGON_WALLET_ID };
-      const coinTypeMap = { BTC: 'btc', USDT: 'eth', XRP: 'xrp', POLYGON: 'polygon' };
+      const walletMap = { BTC: BTC_WALLET_ID, USDT: USDT_WALLET_ID, XRP: XRP_WALLET_ID, POLYGON: POLYGON_WALLET_ID, BNB: BNB_WALLET_ID };
+      const coinTypeMap = { BTC: 'btc', USDT: 'sol', XRP: 'xrp', POLYGON: 'polygon', BNB: 'bsc' };
       const walletId = walletMap[coin];
       const coinType = coinTypeMap[coin];
       
@@ -68,8 +70,8 @@ serve(async (req) => {
     
     if (action === 'release') {
       // Release funds from escrow
-      const walletMap = { BTC: BTC_WALLET_ID, USDT: ETH_WALLET_ID, XRP: XRP_WALLET_ID, POLYGON: POLYGON_WALLET_ID };
-      const coinTypeMap = { BTC: 'btc', USDT: 'eth', XRP: 'xrp', POLYGON: 'polygon' };
+      const walletMap = { BTC: BTC_WALLET_ID, USDT: USDT_WALLET_ID, XRP: XRP_WALLET_ID, POLYGON: POLYGON_WALLET_ID, BNB: BNB_WALLET_ID };
+      const coinTypeMap = { BTC: 'btc', USDT: 'sol', XRP: 'xrp', POLYGON: 'polygon', BNB: 'bsc' };
       const walletId = walletMap[coin];
       const coinType = coinTypeMap[coin];
       
@@ -108,21 +110,19 @@ serve(async (req) => {
       });
     }
     
-
-    
-
-    
-    const walletMap = { BTC: BTC_WALLET_ID, USDT: ETH_WALLET_ID, XRP: XRP_WALLET_ID, POLYGON: POLYGON_WALLET_ID };
-    const coinTypeMap = { BTC: 'btc', USDT: 'eth', XRP: 'xrp', POLYGON: 'polygon' };
+    const walletMap = { BTC: BTC_WALLET_ID, USDT: USDT_WALLET_ID, XRP: XRP_WALLET_ID, POLYGON: POLYGON_WALLET_ID, BNB: BNB_WALLET_ID };
+    const coinTypeMap = { BTC: 'btc', USDT: 'sol', XRP: 'xrp', POLYGON: 'polygon', BNB: 'bsc' };
     const walletId = walletMap[coin];
     const coinType = coinTypeMap[coin];
     
-    console.log('Wallet config:', { coin, walletId: walletId?.slice(0, 8) + '...', coinType });
+    console.log('Wallet config:', { coin, walletId: walletId?.slice(0, 8) + '...', coinType, fullRequest: { tradeId, coin, expectedAmount } });
     
     if (!walletId) {
       console.error(`Missing wallet ID for ${coin}`);
       throw new Error(`Wallet not configured for ${coin}`);
     }
+    
+    console.log('BitGo API URL:', `${BITGO_BASE_URL}/api/v2/${coinType}/wallet/${walletId}/address`);
     
     const response = await fetch(`${BITGO_BASE_URL}/api/v2/${coinType}/wallet/${walletId}/address`, {
       method: 'POST',
@@ -132,14 +132,24 @@ serve(async (req) => {
       },
       body: JSON.stringify({ 
         label: `escrow-${tradeId}-${Date.now()}`,
-        ...(coinType === 'btc' ? { chain: 0 } : {})
+        ...(coinType === 'btc' ? { chain: 0 } : {}),
+        ...(coinType === 'sol' && coin === 'USDT' ? { tokenName: 'usdt' } : {})
       }),
-      signal: AbortSignal.timeout(30000) // 30 second timeout
+      signal: AbortSignal.timeout(15000) // 15 second timeout
     });
     
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('BitGo API error:', { status: response.status, error: errorText, url: `${BITGO_BASE_URL}/api/v2/${coinType}/wallet/${walletId}/address` });
+      console.error('BitGo API error:', { 
+        status: response.status, 
+        error: errorText, 
+        url: `${BITGO_BASE_URL}/api/v2/${coinType}/wallet/${walletId}/address`,
+        requestBody: { 
+          label: `escrow-${tradeId}-${Date.now()}`,
+          ...(coinType === 'btc' ? { chain: 0 } : {}),
+          ...(coinType === 'sol' && coin === 'USDT' ? { tokenName: 'usdt' } : {})
+        }
+      });
       throw new Error(`Address generation failed: ${response.status} - ${errorText}`);
     }
     
@@ -179,8 +189,6 @@ serve(async (req) => {
       console.log('Webhook setup (may already exist):', webhookError.message);
     }
     
-
-    
     return new Response(JSON.stringify({ address: data.address }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
@@ -193,7 +201,7 @@ serve(async (req) => {
     let statusCode = 500;
     
     if (error.name === 'AbortError' || error.message.includes('timeout')) {
-      errorMessage = 'BitGo service timeout - please try again';
+      errorMessage = `BitGo ${coinType?.toUpperCase()} wallet timeout - wallet may need initialization`;
       statusCode = 504;
     } else if (error.message.includes('Failed to fetch') || error.message.includes('network')) {
       errorMessage = 'Network connectivity issue - please try again';

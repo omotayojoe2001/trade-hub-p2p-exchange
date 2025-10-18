@@ -13,7 +13,7 @@ const SelectCoin = () => {
   const location = useLocation();
   const { mode = 'sell' } = location.state || {}; // Default to sell mode
 
-  const coins = [
+  const allCoins = [
     {
       id: 'bitcoin',
       name: 'Bitcoin',
@@ -27,7 +27,8 @@ const SelectCoin = () => {
       avgRate: '₦1,755,000/BTC',
       speed: '~3 mins',
       demand: 'High',
-      demandColor: 'text-green-500'
+      demandColor: 'text-green-500',
+      visible: true
     },
     {
       id: 'tether',
@@ -42,7 +43,8 @@ const SelectCoin = () => {
       avgRate: '₦1,350/USD',
       speed: '~1 min',
       demand: 'High',
-      demandColor: 'text-green-500'
+      demandColor: 'text-green-500',
+      visible: true
     },
     {
       id: 'ethereum',
@@ -57,7 +59,8 @@ const SelectCoin = () => {
       avgRate: '₦5,850,000/ETH',
       speed: '~5 mins',
       demand: 'Medium',
-      demandColor: 'text-yellow-500'
+      demandColor: 'text-yellow-500',
+      visible: false
     },
     {
       id: 'bnb',
@@ -67,14 +70,49 @@ const SelectCoin = () => {
       iconBg: 'bg-yellow-100',
       iconColor: 'text-yellow-600',
       network: 'BEP20',
-      sellers: 7,
-      buyers: 12,
+      sellers: 12,
+      buyers: 18,
       avgRate: '₦850,000/BNB',
       speed: '~2 mins',
       demand: 'Low',
-      demandColor: 'text-red-500'
+      demandColor: 'text-red-500',
+      visible: false
+    },
+    {
+      id: 'ripple',
+      name: 'Ripple',
+      symbol: 'XRP',
+      icon: 'xrp',
+      iconBg: 'bg-blue-100',
+      iconColor: 'text-blue-600',
+      network: 'Native',
+      sellers: 8,
+      buyers: 15,
+      avgRate: '₦4,200/XRP',
+      speed: '~1 min',
+      demand: 'Medium',
+      demandColor: 'text-yellow-500',
+      visible: false
+    },
+    {
+      id: 'polygon',
+      name: 'Polygon',
+      symbol: 'POLYGON',
+      icon: 'polygon',
+      iconBg: 'bg-purple-100',
+      iconColor: 'text-purple-600',
+      network: 'Native',
+      sellers: 5,
+      buyers: 10,
+      avgRate: '₦1,800/POLYGON',
+      speed: '~30 secs',
+      demand: 'Low',
+      demandColor: 'text-red-500',
+      visible: false
     }
   ];
+
+  const coins = allCoins.filter(coin => coin.visible);
 
   const filteredCoins = coins.filter(coin =>
     coin.name.toLowerCase().includes(searchTerm.toLowerCase()) ||

@@ -142,7 +142,7 @@ const TradeStatus = () => {
       case 'completed':
         return <CheckCircle className="h-5 w-5 text-green-500" />;
       case 'current':
-        return <Clock className="h-5 w-5 text-blue-500 animate-pulse" />;
+        return <Clock className="h-5 w-5 text-blue-500" />;
       default:
         return <AlertCircle className="h-5 w-5 text-gray-300" />;
     }
@@ -249,7 +249,7 @@ const TradeStatus = () => {
           <Card>
             <CardContent className="pt-6">
               <div className="text-center">
-                <Clock className="h-12 w-12 text-blue-500 mx-auto mb-4 animate-pulse" />
+                <Clock className="h-12 w-12 text-blue-500 mx-auto mb-4" />
                 <h3 className="text-lg font-semibold mb-2">Waiting for {merchantData.display_name}</h3>
                 <p className="text-gray-600 mb-4">
                   Your trade request has been sent. The merchant will respond shortly.

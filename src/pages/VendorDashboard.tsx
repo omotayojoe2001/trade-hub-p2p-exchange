@@ -6,11 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import VendorBottomNavigation from '@/components/vendor/VendorBottomNavigation';
 import { cashOrderService } from '@/services/cashOrderService';
-import AnimatedCard from '@/components/animations/AnimatedCard';
-import FloatingElement from '@/components/animations/FloatingElement';
-import PageTransition from '@/components/animations/PageTransition';
-import PulseGlow from '@/components/animations/PulseGlow';
-import StaggeredList from '@/components/animations/StaggeredList';
+
 
 
 
@@ -132,7 +128,6 @@ const VendorDashboard = () => {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center pb-20">
         <div className="text-center">
-          <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-black">Loading delivery requests...</p>
         </div>
       </div>
@@ -140,7 +135,6 @@ const VendorDashboard = () => {
   }
 
   return (
-    <PageTransition>
       <div className="min-h-screen bg-white pb-24">
       {/* Header */}
       <div className="bg-blue-600 text-white p-6">
@@ -305,7 +299,6 @@ const VendorDashboard = () => {
       {/* Bottom Navigation */}
       <VendorBottomNavigation />
       </div>
-    </PageTransition>
   );
 };
 

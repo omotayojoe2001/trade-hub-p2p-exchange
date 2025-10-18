@@ -34,7 +34,7 @@ const SellCryptoPaymentStep2 = () => {
     try {
       const { bitgoEscrow } = await import('@/services/bitgoEscrow');
       const tradeId = `trade_${Date.now()}`;
-      const address = await bitgoEscrow.generateEscrowAddress(tradeId, coinType as 'BTC' | 'ETH' | 'USDT', parseFloat(cryptoAmount));
+      const address = await bitgoEscrow.generateEscrowAddress(tradeId, coinType as 'BTC' | 'USDT' | 'XRP', parseFloat(cryptoAmount));
       
       setEscrowAddress(address);
       setVaultId(tradeId);

@@ -7,7 +7,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import BottomNavigation from '@/components/BottomNavigation';
-import PageTransition from '@/components/animations/PageTransition';
+
 import MessageThread from '@/components/MessageThread';
 
 interface CashOrder {
@@ -77,16 +77,10 @@ const MyOrders = () => {
     alert('Delivery code copied!');
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-      </div>
-    );
-  }
+
 
   return (
-    <PageTransition>
+    <>
       <div className="min-h-screen bg-gray-50 pb-24">
       {/* Header */}
       <div className="bg-white border-b border-gray-200 p-4">
@@ -95,7 +89,7 @@ const MyOrders = () => {
       </div>
 
       <div className="p-4 space-y-3">
-        {orders.length === 0 ? (
+        {orders.length === 0 && !loading ? (
           <Card>
             <CardContent className="text-center py-8">
               <Package className="w-12 h-12 text-gray-400 mx-auto mb-4" />
@@ -106,7 +100,7 @@ const MyOrders = () => {
               </Button>
             </CardContent>
           </Card>
-        ) : (
+        ) : !loading && (
           <div className="space-y-3">
             {orders.map((order) => {
               const statusInfo = getStatusInfo(order.status);
@@ -227,7 +221,7 @@ const MyOrders = () => {
           onClose={() => setSelectedMessage(null)}
         />
       )}
-    </PageTransition>
+    </>
   );
 };
 

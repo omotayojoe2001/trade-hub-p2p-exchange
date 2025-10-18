@@ -8,6 +8,8 @@ import { ArrowLeft, CheckCircle, Building2, AlertCircle } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { cryptoPriceService } from '@/services/cryptoPriceService';
+import ConfirmDialog from '@/components/ConfirmDialog';
 
 const SellCryptoPaymentStep1 = () => {
   const navigate = useNavigate();
@@ -22,10 +24,24 @@ const SellCryptoPaymentStep1 = () => {
   const [selectedAccount, setSelectedAccount] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [liveRate, setLiveRate] = useState(0);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+
 
   useEffect(() => {
     fetchUserBankAccounts();
-  }, [user]);
+    fetchLiveRate();
+  }, [user, coinType]);
+
+  const fetchLiveRate = async () => {
+    try {
+      const ngnPrice = await cryptoPriceService.getPriceInNgn(coinType as any);
+      setLiveRate(ngnPrice);
+    } catch (error) {
+      console.error('Error fetching live rate:', error);
+      setLiveRate(0); // No fallback - show error if API fails
+    }
+  };
 
   // Navigation confirmation for active trade
   useEffect(() => {
@@ -67,17 +83,26 @@ const SellCryptoPaymentStep1 = () => {
   };
 
   const getMerchantRate = () => {
-    if (!selectedMerchant) return 0;
+    if (!selectedMerchant) return liveRate;
     
+    // Use merchant's custom rate if available, otherwise use live rate
     switch (coinType) {
       case 'BTC':
-        return selectedMerchant.btc_rate || 150000000;
+        return selectedMerchant.btc_rate || liveRate;
       case 'ETH':
-        return selectedMerchant.eth_rate || 5000000;
+        return selectedMerchant.eth_rate || liveRate;
       case 'USDT':
-        return selectedMerchant.usdt_rate || 1650;
+        return selectedMerchant.usdt_rate || liveRate;
+      case 'ETH':
+        return selectedMerchant.eth_rate || liveRate;
+      case 'BNB':
+        return selectedMerchant.bnb_rate || liveRate;
+      case 'XRP':
+        return selectedMerchant.xrp_rate || liveRate;
+      case 'POLYGON':
+        return selectedMerchant.polygon_rate || liveRate;
       default:
-        return 0;
+        return liveRate;
     }
   };
 
@@ -143,10 +168,7 @@ const SellCryptoPaymentStep1 = () => {
       <div className="sticky top-0 bg-white border-b border-[#EAEAEA] p-4 flex items-center justify-between">
         <Button variant="ghost" size="icon" onClick={() => {
           if (hasUnsavedChanges) {
-            const confirmed = window.confirm('You have unsaved changes. Are you sure you want to go back?');
-            if (confirmed) {
-              navigate(-1);
-            }
+            setShowConfirmDialog(true);
           } else {
             navigate(-1);
           }
@@ -352,6 +374,20 @@ const SellCryptoPaymentStep1 = () => {
           </div>
         </div>
       </div>
+      
+      <ConfirmDialog
+        isOpen={showConfirmDialog}
+        title="Unsaved Changes"
+        message="You have unsaved changes. Are you sure you want to go back?"
+        confirmText="Yes, Go Back"
+        cancelText="Stay Here"
+        variant="destructive"
+        onConfirm={() => {
+          setShowConfirmDialog(false);
+          navigate(-1);
+        }}
+        onCancel={() => setShowConfirmDialog(false)}
+      />
     </div>
   );
 };

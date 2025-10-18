@@ -177,22 +177,75 @@ const TradeDetails = () => {
   };
 
   const handleResumeTrade = () => {
-    if (!currentTrade) return;
+    if (!transactionDetails) return;
 
-    // Navigate to appropriate payment step to resume the trade
-    const tradeType = currentTrade.type === 'buy' ? 'buy-crypto' : 'sell-crypto';
-    navigate(`/${tradeType}-payment-step2`, {
-      state: {
-        tradeId: currentTrade.id,
-        amount: currentTrade.amount,
-        nairaAmount: currentTrade.naira_amount,
-        mode: currentTrade.trade_type,
-        selectedMerchant: { name: 'Merchant' },
-        coinType: currentTrade.coin_type,
-        activeStep: getResumeStep(currentTrade.status),
-        resumeTrade: true
-      }
-    });
+    const tradeData = {
+      tradeId: transactionDetails.id,
+      amount: transactionDetails.amount,
+      nairaAmount: transactionDetails.nairaAmount,
+      coinType: transactionDetails.coin,
+      rate: transactionDetails.rate,
+      merchant: transactionDetails.merchant,
+      resumeTrade: true
+    };
+
+    // Navigate based on trade status to exact step
+    switch (transactionDetails.status) {
+      case 'pending':
+      case 'waiting_payment':
+        // User needs to upload payment proof
+        if (transactionDetails.type === 'buy') {
+          navigate('/buy-crypto-payment-step2', { state: { ...tradeData, activeStep: 2 } });
+        } else {
+          navigate('/sell-crypto-payment-step2', { state: { ...tradeData, activeStep: 2 } });
+        }
+        break;
+      
+      case 'payment_proof_uploaded':
+      case 'waiting_confirmation':
+        // Waiting for merchant confirmation
+        if (transactionDetails.type === 'buy') {
+          navigate('/buy-crypto-payment-step3', { state: { ...tradeData, activeStep: 3 } });
+        } else {
+          navigate('/sell-crypto-payment-step3', { state: { ...tradeData, activeStep: 3 } });
+        }
+        break;
+      
+      case 'merchant_accepted':
+        // Trade accepted, show escrow instructions
+        navigate('/trade-status', { 
+          state: {
+            tradeRequest: transactionDetails,
+            selectedMerchant: transactionDetails.merchant,
+            mode: transactionDetails.type,
+            step: 'merchant_accepted'
+          }
+        });
+        break;
+      
+      case 'in_progress':
+        // Trade in progress, show status
+        navigate('/trade-status', { 
+          state: {
+            tradeRequest: transactionDetails,
+            selectedMerchant: transactionDetails.merchant,
+            mode: transactionDetails.type,
+            step: 'escrow_pending'
+          }
+        });
+        break;
+      
+      default:
+        // Fallback to trade status page
+        navigate('/trade-status', { 
+          state: {
+            tradeRequest: transactionDetails,
+            selectedMerchant: transactionDetails.merchant,
+            mode: transactionDetails.type,
+            step: 'waiting_for_merchant'
+          }
+        });
+    }
   };
 
   const getResumeStep = (status: string) => {
@@ -208,28 +261,25 @@ const TradeDetails = () => {
   };
 
   // Find the transaction data based on URL tradeId
-  const foundTransaction = transactions.find(t => t.id === tradeId || t.txId === tradeId);
+  const foundTransaction = transactions.find(t => t.id === tradeId);
 
   // Use real transaction data or show not found
   const transactionDetails = foundTransaction ? {
-    id: foundTransaction.txId || foundTransaction.id,
-    amount: foundTransaction.amount,
-    nairaAmount: foundTransaction.nairaAmount,
-    total: foundTransaction.total,
-    date: foundTransaction.date,
-    time: foundTransaction.time,
+    id: foundTransaction.id,
+    amount: foundTransaction.amount || foundTransaction.crypto_amount,
+    nairaAmount: foundTransaction.naira_amount,
+    total: foundTransaction.naira_amount,
+    date: new Date(foundTransaction.created_at).toLocaleDateString(),
+    time: new Date(foundTransaction.created_at).toLocaleTimeString(),
     status: foundTransaction.status as 'completed' | 'cancelled' | 'pending' | 'failed',
-    coin: foundTransaction.coin,
-    type: foundTransaction.type as 'buy' | 'sell',
-    walletAddress: foundTransaction.walletAddress,
-    paymentStage: foundTransaction.paymentStage,
+    coin: foundTransaction.coin_type || foundTransaction.crypto_type || 'BTC',
+    type: foundTransaction.trade_type || (foundTransaction.buyer_id === user?.id ? 'buy' : 'sell') as 'buy' | 'sell',
+    rate: foundTransaction.rate || foundTransaction.exchange_rate,
     merchant: {
-      name: foundTransaction.merchant,
-      avatar: foundTransaction.merchantAvatar,
-      rating: foundTransaction.rating,
-      phone: foundTransaction.merchantPhone,
-      bankAccount: foundTransaction.bankAccount,
-      trades: Math.floor(Math.random() * 500) + 50
+      name: foundTransaction.merchant_name || 'Merchant',
+      phone: 'Not provided',
+      bankAccount: foundTransaction.merchant_bank_details || 'Not provided',
+      trades: 0
     }
   } : null;
 
@@ -256,7 +306,7 @@ const TradeDetails = () => {
       <div className="min-h-screen bg-gray-50 p-4">
         <div className="max-w-md mx-auto">
           <div className="text-center py-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+            <p>Loading...</p>
             <p className="text-gray-600 mt-4">Loading trade details...</p>
           </div>
         </div>
@@ -280,7 +330,7 @@ const TradeDetails = () => {
     navigate('/payment-status', { state: { step: transactionDetails.paymentStage } });
   };
 
-  const canResumeTrade = currentTrade && ['pending', 'waiting_payment', 'waiting_confirmation'].includes(currentTrade.status);
+  const canResumeTrade = transactionDetails && ['pending', 'waiting_payment', 'waiting_confirmation', 'payment_proof_uploaded', 'merchant_accepted', 'in_progress'].includes(transactionDetails.status);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 font-['Poppins']">
@@ -362,7 +412,7 @@ const TradeDetails = () => {
               <div className="text-center p-4 bg-blue-50 rounded-xl">
                 <DollarSign className="w-6 h-6 text-blue-600 mx-auto mb-2" />
                 <p className="text-sm text-gray-600">Exchange Rate</p>
-                <p className="font-semibold text-gray-900">{(1650000).toLocaleString()} NGN/{transactionDetails.coin}</p>
+                <p className="font-semibold text-gray-900">{transactionDetails.rate ? `₦${transactionDetails.rate.toLocaleString()}/${transactionDetails.coin}` : 'Not available'}</p>
               </div>
               <div className="text-center p-4 bg-green-50 rounded-xl">
                 <Calendar className="w-6 h-6 text-green-600 mx-auto mb-2" />
@@ -406,10 +456,6 @@ const TradeDetails = () => {
             </div>
             
             <div className="grid grid-cols-1 gap-3">
-              <div className="flex justify-between py-2 border-b border-gray-100">
-                <span className="text-gray-600">Phone</span>
-                <span className="font-medium text-gray-900">{transactionDetails.merchant.phone}</span>
-              </div>
               <div className="flex justify-between py-2">
                 <span className="text-gray-600">Bank Account</span>
                 <span className="font-medium text-gray-900">{transactionDetails.merchant.bankAccount}</span>
@@ -442,17 +488,17 @@ const TradeDetails = () => {
 
               <div className="flex justify-between py-3 border-b border-gray-100">
                 <span className="text-gray-600 font-medium">Naira Value</span>
-                <span className="font-semibold text-gray-900">{(transactionDetails.nairaAmount || 0).toLocaleString()} NGN</span>
+                <span className="font-semibold text-gray-900">₦{(transactionDetails.nairaAmount || 0).toLocaleString()}</span>
               </div>
 
               <div className="flex justify-between py-3 border-b border-gray-100">
                 <span className="text-gray-600 font-medium">Platform Fee (1%)</span>
-                <span className="font-semibold text-gray-900">{Math.round((transactionDetails.nairaAmount || 0) * 0.01).toLocaleString()} NGN</span>
+                <span className="font-semibold text-gray-900">₦{Math.round((transactionDetails.nairaAmount || 0) * 0.01).toLocaleString()}</span>
               </div>
 
               <div className="flex justify-between py-3 border-b border-gray-100">
                 <span className="text-gray-600 font-medium">Net Amount</span>
-                <span className="font-bold text-lg text-gray-900">{Math.round((transactionDetails.nairaAmount || 0) * 0.99).toLocaleString()} NGN</span>
+                <span className="font-bold text-lg text-gray-900">₦{Math.round((transactionDetails.nairaAmount || 0) * 0.99).toLocaleString()}</span>
               </div>
 
               <div className="flex justify-between py-3">
@@ -464,28 +510,24 @@ const TradeDetails = () => {
             {/* Action Buttons */}
             {transactionDetails.status === 'pending' && (
               <div className="mt-6 pt-4 border-t border-gray-200">
-                <Button
-                  className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold py-3"
-                  onClick={() => {
-                    navigate('/payment-status', {
-                      state: {
-                        tradeId: transactionDetails.id,
-                        amount: transactionDetails.amount,
-                        nairaAmount: transactionDetails.nairaAmount,
-                        mode: transactionDetails.type,
-                        selectedMerchant: { name: transactionDetails.merchant?.name || transactionDetails.merchant },
-                        coinType: transactionDetails.coin,
-                        activeStep: transactionDetails.status === 'pending' ? 2 : 3,
-                        resumeTrade: true
-                      }
-                    });
-                  }}
-                >
-                  <Play className="w-5 h-5 mr-2" />
-                  Resume Trade
-                </Button>
+                <div className="grid grid-cols-2 gap-3">
+                  <Button
+                    className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold py-3"
+                    onClick={handleResumeTrade}
+                  >
+                    <Play className="w-5 h-5 mr-2" />
+                    Resume Trade
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="border-red-200 text-red-600 hover:bg-red-50 font-semibold py-3"
+                    onClick={() => setShowDeleteDialog(true)}
+                  >
+                    Cancel Trade
+                  </Button>
+                </div>
                 <p className="text-sm text-gray-500 text-center mt-2">
-                  Continue from where you left off
+                  Continue from where you left off or cancel this trade
                 </p>
               </div>
             )}

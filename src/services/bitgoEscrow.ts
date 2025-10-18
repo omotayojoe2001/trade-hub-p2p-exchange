@@ -8,7 +8,7 @@ interface EscrowAddress {
 }
 
 class BitGoEscrowService {
-  async generateEscrowAddress(tradeId: string, coin: 'BTC' | 'USDT' | 'XRP', expectedAmount?: number): Promise<string> {
+  async generateEscrowAddress(tradeId: string, coin: 'BTC' | 'ETH' | 'USDT' | 'XRP' | 'BNB' | 'POLYGON', expectedAmount?: number): Promise<string> {
     try {
       const { data, error } = await supabase.functions.invoke('bitgo-escrow', {
         body: { tradeId, coin, expectedAmount }
@@ -25,7 +25,7 @@ class BitGoEscrowService {
     }
   }
 
-  async releaseFunds(tradeId: string, merchantAddress: string, amount: number, coin: 'BTC' | 'USDT' | 'XRP'): Promise<string> {
+  async releaseFunds(tradeId: string, merchantAddress: string, amount: number, coin: 'BTC' | 'ETH' | 'USDT' | 'XRP' | 'BNB' | 'POLYGON'): Promise<string> {
     try {
       const { data, error } = await supabase.functions.invoke('bitgo-escrow', {
         body: { 

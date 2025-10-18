@@ -122,7 +122,7 @@ const BuyCryptoFlow = () => {
 
             <div className="flex justify-center">
               <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
-                <div className="w-4 h-4 border-2 border-gray-400 border-t-blue-500 rounded-full animate-spin"></div>
+                <div className="w-4 h-4 bg-gray-400 rounded-full"></div>
               </div>
             </div>
 

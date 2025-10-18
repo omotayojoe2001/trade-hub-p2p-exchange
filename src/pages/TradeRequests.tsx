@@ -211,51 +211,52 @@ const TradeRequests = () => {
               <ArrowLeft size={24} className="text-gray-700" />
             </button>
             <div>
-              <h1 className="text-lg font-semibold text-gray-900">Trade Requests</h1>
-              <p className="text-sm text-gray-500">Incoming trade requests from users</p>
+              <h1 className="text-lg font-semibold text-gray-900">P2P Orders</h1>
+              <p className="text-sm text-gray-500">Available trading opportunities</p>
             </div>
+          </div>
+          <div className="text-xs text-gray-500">
+            {filteredRequests.length} orders
           </div>
         </div>
       </div>
 
       {/* Search and Filter */}
       <div className="p-4 bg-white border-b border-gray-200">
-        <div className="space-y-3">
-          <div className="relative">
-            <Search size={20} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+        <div className="flex space-x-3">
+          <div className="relative flex-1">
+            <Search size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
             <Input
-              placeholder="Search by user name..."
+              placeholder="Search orders..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
+              className="pl-10 bg-white border-gray-300 text-gray-900 placeholder-gray-400 h-10"
             />
           </div>
           
           <Select value={coinFilter} onValueChange={setCoinFilter}>
-            <SelectTrigger>
-              <SelectValue placeholder="Filter by coin" />
+            <SelectTrigger className="w-24 bg-white border-gray-300 text-gray-900 h-10">
+              <SelectValue />
             </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Coins</SelectItem>
-              <SelectItem value="BTC">Bitcoin</SelectItem>
-              <SelectItem value="USDT">Tether</SelectItem>
-              <SelectItem value="ETH">Ethereum</SelectItem>
-              <SelectItem value="BNB">BNB</SelectItem>
+            <SelectContent className="bg-white border-gray-300">
+              <SelectItem value="all" className="text-gray-900">All</SelectItem>
+              <SelectItem value="BTC" className="text-gray-900">BTC</SelectItem>
+              <SelectItem value="USDT" className="text-gray-900">USDT</SelectItem>
             </SelectContent>
           </Select>
         </div>
       </div>
 
       {/* Trade Requests List */}
-      <div className="p-4 space-y-4">
+      <div className="p-4 space-y-3">
         {filteredRequests.length === 0 ? (
-          <Card className="bg-white">
+          <Card className="bg-white border-gray-200">
             <CardContent className="p-8 text-center">
               <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <TrendingUp size={24} className="text-gray-400" />
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">No Trade Requests</h3>
-              <p className="text-gray-600">You don't have any pending trade requests at the moment.</p>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">No Orders Available</h3>
+              <p className="text-gray-600">Check back later for new trading opportunities.</p>
             </CardContent>
           </Card>
         ) : (
@@ -265,18 +266,18 @@ const TradeRequests = () => {
             const userAction = isUserBuyingCrypto ? 'Send Cash' : 'Send Crypto';
             
             return (
-              <Card key={request.id} className="bg-white hover:shadow-md transition-shadow">
+              <Card key={request.id} className="bg-white border-gray-200 hover:shadow-md transition-shadow">
                 <CardContent className="p-4">
                   {/* Header */}
-                  <div className="flex items-start justify-between mb-4">
+                  <div className="flex items-start justify-between mb-3">
                     <div className="flex items-center">
-                      <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mr-3">
-                        <ArrowUpDown size={16} className="text-blue-600" />
+                      <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-3">
+                        <CryptoIcon symbol={request.coin} size={14} />
                       </div>
                       <div>
                         <h4 className="font-medium text-gray-900 text-sm">{request.userName}</h4>
                         <div className="flex items-center">
-                          <span className="text-xs text-gray-500">{request.rating} ★</span>
+                          <span className="text-xs text-yellow-600">{request.rating.toFixed(1)} ★</span>
                         </div>
                       </div>
                     </div>
@@ -289,39 +290,33 @@ const TradeRequests = () => {
                   </div>
 
                   {/* Trade Direction */}
-                  <div className={`${request.isPremium ? 'bg-yellow-50 border-yellow-200' : 'bg-blue-50 border-blue-200'} border rounded-lg p-3 mb-4`}>
-                    <div className="flex items-center mb-2">
-                      {request.isPremium && <Crown size={16} className="text-yellow-600 mr-2" />}
-                      <ArrowUpDown size={16} className={`${request.isPremium ? 'text-yellow-600' : 'text-blue-600'} mr-2`} />
-                      <span className={`font-semibold ${request.isPremium ? 'text-yellow-800' : 'text-blue-800'} text-sm`}>{request.direction}</span>
+                  <div className={`${request.isPremium ? 'bg-yellow-50 border-yellow-200' : 'bg-blue-50 border-blue-200'} border rounded-lg p-3 mb-3`}>
+                    <div className="flex items-center mb-1">
+                      {request.isPremium && <Crown size={14} className="text-yellow-600 mr-2" />}
+                      <span className={`font-medium ${request.isPremium ? 'text-yellow-700' : 'text-blue-700'} text-xs`}>
+                        {request.type === 'buy' ? 'BUYING' : 'SELLING'} {request.coin}
+                      </span>
                     </div>
                     {request.isPremium && request.deliveryAreas && (
-                      <div className="text-xs text-yellow-700">
-                        Delivery Areas: {request.deliveryAreas.join(', ')}
+                      <div className="text-xs text-yellow-600">
+                        Areas: {request.deliveryAreas.join(', ')}
                       </div>
                     )}
                   </div>
 
                   {/* Trade Details */}
-                  <div className="grid grid-cols-2 gap-4 mb-4">
+                  <div className="grid grid-cols-3 gap-3 mb-3">
                     <div>
                       <p className="text-gray-500 text-xs mb-1">Amount</p>
-                      <div className="flex items-center">
-                        <CryptoIcon symbol={request.coin} size={16} className="mr-1" />
-                        <p className="font-semibold text-gray-900 text-sm">{request.amount} {request.coin}</p>
-                      </div>
+                      <p className="font-semibold text-gray-900 text-sm">{request.amount} {request.coin}</p>
                     </div>
                     <div>
-                      <p className="text-gray-500 text-xs mb-1">Rate</p>
-                      <p className="font-semibold text-gray-900 text-sm">{request.rate}</p>
+                      <p className="text-gray-500 text-xs mb-1">Price</p>
+                      <p className="font-semibold text-gray-900 text-sm">{request.rate.replace('NGN ', '₦')}</p>
                     </div>
                     <div>
-                      <p className="text-gray-500 text-xs mb-1">Total Value</p>
-                      <p className="font-semibold text-gray-900 text-sm">{request.nairaAmount}</p>
-                    </div>
-                    <div>
-                      <p className="text-gray-500 text-xs mb-1">Payment Methods</p>
-                      <p className="font-semibold text-gray-900 text-sm">{request.paymentMethods.length}</p>
+                      <p className="text-gray-500 text-xs mb-1">Total</p>
+                      <p className="font-semibold text-gray-900 text-sm">{request.nairaAmount.replace('₦', '₦')}</p>
                     </div>
                   </div>
 
@@ -362,9 +357,9 @@ const TradeRequests = () => {
                   )}
 
                   {/* Actions */}
-                  <div className="space-y-2">
+                  <div className="flex space-x-2">
                     <Button 
-                      className={`w-full ${request.isPremium ? 'bg-yellow-600 hover:bg-yellow-700' : 'bg-blue-600 hover:bg-blue-700'} text-white py-2 text-sm`}
+                      className={`flex-1 ${request.type === 'buy' ? 'bg-[#0ECB81] hover:bg-[#0BB574]' : 'bg-[#F6465D] hover:bg-[#E63946]'} text-white py-2 text-sm font-medium`}
                       onClick={() => {
                         if (request.isPremium) {
                           navigate(`/vendor-bank-details/${request.id}`);
@@ -375,15 +370,7 @@ const TradeRequests = () => {
                         }
                       }}
                     >
-                      {request.isPremium ? 'Accept Premium Request' : request.type === 'sell' ? 'Accept & Send Cash' : 'Review'}
-                    </Button>
-                    
-                    <Button 
-                      variant="outline"
-                      className="w-full border-red-300 text-red-600 hover:bg-red-50 py-2 text-sm"
-                      onClick={() => handleDeclineRequest(request.id)}
-                    >
-                      Decline
+                      {request.type === 'buy' ? 'Sell' : 'Buy'}
                     </Button>
                   </div>
                 </CardContent>

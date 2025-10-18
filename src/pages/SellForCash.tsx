@@ -9,12 +9,7 @@ import NotesSection from '@/components/sell-crypto/NotesSection';
 import SecurityNotice from '@/components/sell-crypto/SecurityNotice';
 import LocationSelector from '@/components/LocationSelector';
 import DeliveryAddressForm from '@/components/DeliveryAddressForm';
-import AnimatedCard from '@/components/animations/AnimatedCard';
-import FloatingElement from '@/components/animations/FloatingElement';
-import PageTransition from '@/components/animations/PageTransition';
-import PulseGlow from '@/components/animations/PulseGlow';
-import Button3D from '@/components/animations/Button3D';
-import LoadingSpinner3D from '@/components/animations/LoadingSpinner3D';
+
 
 const SellForCash = () => {
   console.log('SellForCash component rendered at:', new Date().toISOString());
@@ -169,31 +164,24 @@ const SellForCash = () => {
   };
 
   return (
-    <PageTransition>
       <div className="min-h-screen bg-white pb-24">
       {/* Header */}
-      <AnimatedCard className="flex items-center justify-between p-4 border-b border-gray-100" hover3D={false}>
+      <div className="flex items-center justify-between p-4 border-b border-gray-100">
         <div className="flex items-center">
           <button onClick={() => navigate(-1)}>
             <ArrowLeft size={24} className="text-gray-700 mr-4" />
           </button>
-          <FloatingElement intensity="low">
-            <h1 className="text-lg font-semibold text-gray-900">Sell Crypto for Cash</h1>
-          </FloatingElement>
+          <h1 className="text-lg font-semibold text-gray-900">Sell Crypto for Cash</h1>
         </div>
         <MoreVertical size={24} className="text-gray-700" />
-      </AnimatedCard>
+      </div>
 
       <div className="p-4 space-y-6">
         {/* Credits Display */}
-        <AnimatedCard delay={0.1} className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
           <div className="flex justify-between items-center">
             <span className="text-sm font-medium text-blue-800">Your Credits</span>
-            <PulseGlow color="blue" intensity="medium">
-              <FloatingElement intensity="low">
-                <span className="text-lg font-bold text-blue-900">{userCredits}</span>
-              </FloatingElement>
-            </PulseGlow>
+            <span className="text-lg font-bold text-blue-900">{userCredits}</span>
           </div>
           <div className="text-xs text-blue-600 mt-2 space-y-1">
             <div className="flex justify-between">
@@ -204,7 +192,7 @@ const SellForCash = () => {
               Service fees will be calculated after location selection
             </div>
           </div>
-        </AnimatedCard>
+        </div>
 
         {/* Crypto Selection */}
         <div className="space-y-2 relative">
@@ -254,7 +242,7 @@ const SellForCash = () => {
         </div>
 
         {/* Amount Input */}
-        <AnimatedCard delay={0.3} className="space-y-2">
+        <div className="space-y-2">
           <h3 className="text-sm font-medium text-gray-700">Amount to Sell</h3>
           <div className="relative">
             <input
@@ -274,13 +262,9 @@ const SellForCash = () => {
           </div>
           <div className="flex justify-between items-center mt-2">
             <span className="text-xs text-gray-500">Rate: ${currentRate.toLocaleString()}/{selectedCrypto}</span>
-            <PulseGlow color="green" intensity="medium">
-              <FloatingElement intensity="low">
-                <span className="text-sm font-bold text-green-600">${calculateUSDValue().toLocaleString()}</span>
-              </FloatingElement>
-            </PulseGlow>
+            <span className="text-sm font-bold text-green-600">${calculateUSDValue().toLocaleString()}</span>
           </div>
-        </AnimatedCard>
+        </div>
 
         {/* Delivery Method */}
         <div className="space-y-3">
@@ -379,10 +363,8 @@ const SellForCash = () => {
         <SecurityNotice />
 
         {/* Info Banner */}
-        <AnimatedCard delay={0.5} className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-          <FloatingElement intensity="low">
-            <h4 className="font-medium text-yellow-800 mb-2">How it works:</h4>
-          </FloatingElement>
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+          <h4 className="font-medium text-yellow-800 mb-2">How it works:</h4>
           <ul className="text-sm text-yellow-700 space-y-1">
             <li>• You deposit crypto into secure escrow first</li>
             <li>• After deposit, trade request goes to all users</li>
@@ -390,33 +372,25 @@ const SellForCash = () => {
             <li>• Vendor delivers cash to you</li>
             <li>• Crypto released to buyer</li>
           </ul>
-        </AnimatedCard>
+        </div>
 
         {/* Send Trade Request Button */}
-        {loading ? (
-          <div className="w-full py-4 flex justify-center">
-            <LoadingSpinner3D size="md" color="blue" text="Processing..." />
-          </div>
-        ) : (
-          <Button3D
-            onClick={handleSendTradeRequest}
-            disabled={
-              !amount ||
-              parseFloat(amount) <= 0 ||
-              (selectedPayment === 'delivery' && (!deliveryAddress.trim() || !phoneNumber.trim())) ||
-              (selectedPayment === 'pickup' && (!pickupLocation.trim() || pickupLocation === 'Other (specify below)' || !phoneNumber.trim())) ||
-              userCredits < getPlatformFee()
-            }
-            variant="primary"
-            size="lg"
-            className="w-full py-4 text-lg font-medium"
-          >
-            Continue to Escrow
-          </Button3D>
-        )}
+        <Button
+          onClick={handleSendTradeRequest}
+          disabled={
+            loading ||
+            !amount ||
+            parseFloat(amount) <= 0 ||
+            (selectedPayment === 'delivery' && (!deliveryAddress.trim() || !phoneNumber.trim())) ||
+            (selectedPayment === 'pickup' && (!pickupLocation.trim() || pickupLocation === 'Other (specify below)' || !phoneNumber.trim())) ||
+            userCredits < getPlatformFee()
+          }
+          className="w-full py-4 text-lg font-medium bg-blue-600 hover:bg-blue-700 text-white rounded-lg"
+        >
+          {loading ? 'Processing...' : 'Continue to Escrow'}
+        </Button>
       </div>
       </div>
-    </PageTransition>
   );
 };
 

@@ -11,11 +11,7 @@ import BottomNavigation from '@/components/BottomNavigation';
 import { creditsService } from '@/services/creditsService';
 import { mockCreditsService, isDemoMode } from '@/services/mockCreditsService';
 import { exchangeRateService } from '@/services/exchangeRateService';
-import AnimatedCard from '@/components/animations/AnimatedCard';
-import FloatingElement from '@/components/animations/FloatingElement';
-import PageTransition from '@/components/animations/PageTransition';
-import PulseGlow from '@/components/animations/PulseGlow';
-import StaggeredList from '@/components/animations/StaggeredList';
+
 
 const Index = () => {
   const { user, profile, loading } = useAuth();
@@ -202,7 +198,6 @@ const Index = () => {
   const profilePicture = profile?.avatar_url;
 
   return (
-    <PageTransition>
       <div className="w-full min-h-screen bg-white font-['Poppins'] max-w-4xl mx-auto lg:max-w-md pb-20">
       {/* Header */}
       <div className="px-4 py-4">
@@ -231,84 +226,72 @@ const Index = () => {
       <div className="px-4 pb-4">
         {/* Credits Card */}
         <div className="mb-6">
-          <AnimatedCard delay={0.1} className="bg-gradient-to-r from-[#0052FF] to-[#006BFF] rounded-xl px-4 py-3">
+          <div className="bg-gradient-to-r from-[#0052FF] to-[#006BFF] rounded-xl px-4 py-3">
             <div className="flex justify-between items-center">
               <div className="flex items-center">
-                <PulseGlow color="green" intensity="medium">
                   <div className="w-2 h-2 bg-green-400 rounded-full mr-2"></div>
-                </PulseGlow>
                 <span className="text-white text-base">Credits</span>
               </div>
               <div className="flex items-center space-x-3">
-                <FloatingElement intensity="low">
                   <div className="text-white text-2xl font-bold">
                     {userCredits}
                     <span className="text-xs text-white/70 ml-1">(Live)</span>
                   </div>
-                </FloatingElement>
                 <Link to="/credits-purchase" className="text-white/80 text-xs hover:text-white">
                   + Buy
                 </Link>
               </div>
             </div>
-          </AnimatedCard>
+          </div>
         </div>
 
         {/* Quick Actions Grid */}
         <div className="mb-6">
-          <StaggeredList className="grid grid-cols-2 gap-3" staggerDelay={0.1}>
+          <div className="grid grid-cols-2 gap-3">
             <Link to="/buy-sell">
-              <AnimatedCard className="bg-white rounded-xl p-3 shadow-sm border border-gray-100 h-full">
+              <div className="bg-white rounded-xl p-3 shadow-sm border border-gray-100 h-full">
                 <div className="flex items-center">
-                  <FloatingElement intensity="low">
                     <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-3">
                       <ArrowUpRight size={16} className="text-blue-600" />
                     </div>
-                  </FloatingElement>
                   <span className="text-black font-semibold text-base">Buy Crypto</span>
                 </div>
-              </AnimatedCard>
+              </div>
             </Link>
             
             <Link to="/buy-sell">
-              <AnimatedCard className="bg-white rounded-xl p-3 shadow-sm border border-gray-100 h-full">
+              <div className="bg-white rounded-xl p-3 shadow-sm border border-gray-100 h-full">
                 <div className="flex items-center">
-                  <FloatingElement intensity="low">
                     <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-3">
                       <ArrowDownLeft size={16} className="text-blue-600" />
                     </div>
-                  </FloatingElement>
                   <span className="text-black font-semibold text-base">Sell Crypto</span>
                 </div>
-              </AnimatedCard>
+              </div>
             </Link>
             
             <Link to="/sell-for-cash">
-              <AnimatedCard className="bg-white rounded-xl p-3 shadow-sm border border-gray-100 h-full">
+              <div className="bg-white rounded-xl p-3 shadow-sm border border-gray-100 h-full">
                 <div className="flex items-center">
-                  <FloatingElement intensity="low">
                     <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-3">
                       <DollarSign size={16} className="text-blue-600" />
                     </div>
-                  </FloatingElement>
                   <span className="text-black font-semibold text-base">Sell → USD Cash</span>
                 </div>
-              </AnimatedCard>
+              </div>
             </Link>
             
             <Link to="/send-naira-get-usd">
-              <AnimatedCard className="bg-white rounded-xl p-3 shadow-sm border border-gray-100 h-full">
+              <div className="bg-white rounded-xl p-3 shadow-sm border border-gray-100 h-full">
                 <div className="flex items-center">
-                  <FloatingElement intensity="low">
                     <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-3">
                       <Send size={16} className="text-blue-600" />
                     </div>
-                  </FloatingElement>
                   <span className="text-black font-semibold text-base">Send NGN → USD Cash</span>
                 </div>
-              </AnimatedCard>
+              </div>
             </Link>
-          </StaggeredList>
+          </div>
         </div>
 
         {/* Markets Section */}
@@ -320,13 +303,11 @@ const Index = () => {
           
           
           {/* Top Crypto Cards */}
-          <StaggeredList className="space-y-2 mb-4" staggerDelay={0.05}>
-            <AnimatedCard className="bg-white rounded-xl p-3 shadow-sm border border-gray-100">
+          <div className="space-y-2 mb-4">
+            <div className="bg-white rounded-xl p-3 shadow-sm border border-gray-100">
               <div className="flex items-center justify-between">
                 <div className="flex items-center">
-                  <FloatingElement intensity="low">
                     <span className="text-lg mr-2">₿</span>
-                  </FloatingElement>
                   <div>
                     <div className="text-gray-900 font-medium text-sm">Bitcoin</div>
                     <div className="text-gray-500 text-xs">BTC</div>
@@ -334,19 +315,15 @@ const Index = () => {
                 </div>
                 <div className="text-right">
                   <div className="text-gray-900 font-semibold text-sm">$105,234</div>
-                  <PulseGlow color="green" intensity="low">
                     <div className="text-green-600 text-xs">+2.34%</div>
-                  </PulseGlow>
                 </div>
               </div>
-            </AnimatedCard>
+            </div>
             
-            <AnimatedCard className="bg-white rounded-xl p-3 shadow-sm border border-gray-100">
+            <div className="bg-white rounded-xl p-3 shadow-sm border border-gray-100">
               <div className="flex items-center justify-between">
                 <div className="flex items-center">
-                  <FloatingElement intensity="low">
                     <span className="text-lg mr-2">Ξ</span>
-                  </FloatingElement>
                   <div>
                     <div className="text-gray-900 font-medium text-sm">Ethereum</div>
                     <div className="text-gray-500 text-xs">ETH</div>
@@ -357,14 +334,12 @@ const Index = () => {
                   <div className="text-red-600 text-xs">-1.23%</div>
                 </div>
               </div>
-            </AnimatedCard>
+            </div>
             
-            <AnimatedCard className="bg-white rounded-xl p-3 shadow-sm border border-gray-100">
+            <div className="bg-white rounded-xl p-3 shadow-sm border border-gray-100">
               <div className="flex items-center justify-between">
                 <div className="flex items-center">
-                  <FloatingElement intensity="low">
                     <span className="text-lg mr-2">⊎</span>
-                  </FloatingElement>
                   <div>
                     <div className="text-gray-900 font-medium text-sm">Tether</div>
                     <div className="text-gray-500 text-xs">USDT</div>
@@ -375,8 +350,8 @@ const Index = () => {
                   <div className="text-gray-600 text-xs">0.00%</div>
                 </div>
               </div>
-            </AnimatedCard>
-          </StaggeredList>
+            </div>
+          </div>
           
           {/* Rate Cards */}
           <div className="grid grid-cols-2 gap-3">
@@ -519,7 +494,6 @@ const Index = () => {
       {/* Bottom Navigation */}
       <BottomNavigation />
       </div>
-    </PageTransition>
   );
 };
 

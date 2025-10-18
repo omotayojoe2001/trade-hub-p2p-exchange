@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useNavigate, useParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { AnimatedCard, FloatingElement, PageTransition, PulseGlow, StaggeredList, Button3D, LoadingSpinner3D } from '@/components/animations';
+
 import MessageThread from '@/components/MessageThread';
 
 interface CashTradeStatus {
@@ -140,7 +140,9 @@ const UserCashTradeStatus = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+        <div className="text-center">
+          <p>Loading...</p>
+        </div>
       </div>
     );
   }
@@ -159,10 +161,9 @@ const UserCashTradeStatus = () => {
   const statusInfo = getStatusInfo(trade.status);
 
   return (
-    <PageTransition>
       <div className="min-h-screen bg-gray-50 pb-24">
       {/* Header */}
-      <AnimatedCard className="bg-white border-b border-gray-200 p-4" hover3D={false}>
+      <div className="bg-white border-b border-gray-200 p-4">
         <div className="flex items-center">
           <Button
             variant="ghost"
@@ -173,81 +174,62 @@ const UserCashTradeStatus = () => {
             <ArrowLeft className="w-4 h-4" />
           </Button>
           <div>
-            <FloatingElement intensity="low">
-              <h1 className="text-xl font-semibold text-gray-900">Cash Delivery Status</h1>
-            </FloatingElement>
-            <PulseGlow color="green" intensity="low">
-              <p className="text-sm text-gray-600">${trade.usd_amount.toLocaleString()} USD Cash</p>
-            </PulseGlow>
+            <h1 className="text-xl font-semibold text-gray-900">Cash Delivery Status</h1>
+            <p className="text-sm text-gray-600">${trade.usd_amount.toLocaleString()} USD Cash</p>
           </div>
         </div>
-      </AnimatedCard>
+      </div>
 
       <div className="p-4 space-y-4">
         {/* Current Status */}
-        <AnimatedCard delay={0.1}>
-          <Card className={`border-l-4 border-l-${statusInfo.color}-500`}>
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <PulseGlow color={statusInfo.color} intensity="medium">
-                  <FloatingElement intensity="low">
-                    <statusInfo.icon className={`w-5 h-5 mr-3 text-${statusInfo.color}-600`} />
-                  </FloatingElement>
-                </PulseGlow>
-                {statusInfo.title}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-gray-600">{statusInfo.description}</p>
-            </CardContent>
-          </Card>
-        </AnimatedCard>
+        <Card className={`border-l-4 border-l-${statusInfo.color}-500`}>
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <statusInfo.icon className={`w-5 h-5 mr-3 text-${statusInfo.color}-600`} />
+              {statusInfo.title}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-gray-600">{statusInfo.description}</p>
+          </CardContent>
+        </Card>
 
         {/* Progress Steps */}
-        <AnimatedCard delay={0.2}>
-          <Card>
-            <CardHeader>
-              <CardTitle>Delivery Progress</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <StaggeredList className="space-y-4" staggerDelay={0.1}>
-                {[
-                  { step: 1, title: 'Merchant Pays Vendor', status: 'vendor_paid' },
-                  { step: 2, title: 'Vendor Confirms Payment', status: 'payment_confirmed' },
-                  { step: 3, title: 'Delivery Started', status: 'delivery_in_progress' },
-                  { step: 4, title: 'Cash Delivered', status: 'cash_delivered' }
-                ].map((item) => {
-                  const isCompleted = statusInfo.step >= item.step;
-                  const isCurrent = statusInfo.step === item.step;
-                  
-                  return (
-                    <div key={item.step} className="flex items-center">
-                      <PulseGlow 
-                        color={isCompleted ? 'green' : isCurrent ? 'blue' : 'gray'} 
-                        intensity={isCurrent ? 'high' : 'low'}
-                      >
-                        <FloatingElement intensity={isCurrent ? 'medium' : 'low'}>
-                          <div className={`w-8 h-8 rounded-full flex items-center justify-center mr-3 ${
-                            isCompleted 
-                              ? 'bg-green-500 text-white' 
-                              : isCurrent 
-                              ? 'bg-blue-500 text-white' 
-                              : 'bg-gray-200 text-gray-500'
-                          }`}>
-                            {isCompleted ? <CheckCircle className="w-4 h-4" /> : item.step}
-                          </div>
-                        </FloatingElement>
-                      </PulseGlow>
-                      <span className={`${isCompleted ? 'text-green-700 font-medium' : isCurrent ? 'text-blue-700 font-medium' : 'text-gray-500'}`}>
-                        {item.title}
-                      </span>
+        <Card>
+          <CardHeader>
+            <CardTitle>Delivery Progress</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {[
+                { step: 1, title: 'Merchant Pays Vendor', status: 'vendor_paid' },
+                { step: 2, title: 'Vendor Confirms Payment', status: 'payment_confirmed' },
+                { step: 3, title: 'Delivery Started', status: 'delivery_in_progress' },
+                { step: 4, title: 'Cash Delivered', status: 'cash_delivered' }
+              ].map((item) => {
+                const isCompleted = statusInfo.step >= item.step;
+                const isCurrent = statusInfo.step === item.step;
+                
+                return (
+                  <div key={item.step} className="flex items-center">
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center mr-3 ${
+                      isCompleted 
+                        ? 'bg-green-500 text-white' 
+                        : isCurrent 
+                        ? 'bg-blue-500 text-white' 
+                        : 'bg-gray-200 text-gray-500'
+                    }`}>
+                      {isCompleted ? <CheckCircle className="w-4 h-4" /> : item.step}
                     </div>
-                  );
-                })}
-              </StaggeredList>
-            </CardContent>
-          </Card>
-        </AnimatedCard>
+                    <span className={`${isCompleted ? 'text-green-700 font-medium' : isCurrent ? 'text-blue-700 font-medium' : 'text-gray-500'}`}>
+                      {item.title}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Delivery Details */}
         <Card>
@@ -282,45 +264,35 @@ const UserCashTradeStatus = () => {
 
         {/* Delivery Code - Always show if exists */}
         {trade.delivery_code && (
-          <AnimatedCard delay={0.3}>
-            <PulseGlow color="yellow" intensity="high">
-              <Card className="bg-yellow-50 border-yellow-200">
-                <CardHeader>
-                  <CardTitle className="text-yellow-800 flex items-center">
-                    <FloatingElement intensity="medium">
-                      <Lock className="w-5 h-5 mr-2" />
-                    </FloatingElement>
-                    Your Delivery Code
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-center">
-                    <p className="text-sm text-yellow-700 mb-3">
-                      Show this code to the vendor when they arrive with your cash. Only give the code AFTER receiving the full amount.
-                    </p>
-                    <PulseGlow color="yellow" intensity="high">
-                      <div className="bg-white border-2 border-yellow-300 rounded-lg p-4 mb-3">
-                        <FloatingElement intensity="low">
-                          <p className="text-3xl font-mono font-bold text-yellow-900 tracking-wider">
-                            {trade.delivery_code}
-                          </p>
-                        </FloatingElement>
-                      </div>
-                    </PulseGlow>
-                    <Button3D
-                      onClick={copyDeliveryCode}
-                      variant="secondary"
-                      size="sm"
-                      className="border-yellow-300 text-yellow-700 hover:bg-yellow-100"
-                    >
-                      <Copy className="w-4 h-4 mr-2" />
-                      Copy Code
-                    </Button3D>
-                  </div>
-                </CardContent>
-              </Card>
-            </PulseGlow>
-          </AnimatedCard>
+          <Card className="bg-yellow-50 border-yellow-200">
+            <CardHeader>
+              <CardTitle className="text-yellow-800 flex items-center">
+                <Lock className="w-5 h-5 mr-2" />
+                Your Delivery Code
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-center">
+                <p className="text-sm text-yellow-700 mb-3">
+                  Show this code to the vendor when they arrive with your cash. Only give the code AFTER receiving the full amount.
+                </p>
+                <div className="bg-white border-2 border-yellow-300 rounded-lg p-4 mb-3">
+                  <p className="text-3xl font-mono font-bold text-yellow-900 tracking-wider">
+                    {trade.delivery_code}
+                  </p>
+                </div>
+                <Button
+                  onClick={copyDeliveryCode}
+                  variant="secondary"
+                  size="sm"
+                  className="border-yellow-300 text-yellow-700 hover:bg-yellow-100"
+                >
+                  <Copy className="w-4 h-4 mr-2" />
+                  Copy Code
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
         )}
 
         {/* Vendor Contact - Only show when delivery started */}
@@ -391,7 +363,6 @@ const UserCashTradeStatus = () => {
         />
       )}
       </div>
-    </PageTransition>
   );
 };
 
