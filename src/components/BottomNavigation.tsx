@@ -58,6 +58,30 @@ const BottomNavigation = () => {
       }
     };
 
+    const resetTradeNotifications = async () => {
+      try {
+        if (!user || !profile?.is_merchant) {
+          setNotificationCount(0);
+          setHasNewTradeRequest(false);
+          return;
+        }
+        
+        // Force refresh for merchants
+        const { data: tradeRequests } = await supabase
+          .from('trade_requests')
+          .select('id')
+          .eq('status', 'open');
+
+        const count = tradeRequests?.length || 0;
+        setHasNewTradeRequest(count > 0);
+        setNotificationCount(count);
+      } catch (error) {
+        console.error('Error resetting notifications:', error);
+        setHasNewTradeRequest(false);
+        setNotificationCount(0);
+      }
+    };
+
     const checkUnreadMessages = async () => {
       try {
         if (!user) return;
@@ -79,13 +103,15 @@ const BottomNavigation = () => {
           .from('trades')
           .select('id')
           .or(`buyer_id.eq.${user.id},seller_id.eq.${user.id}`)
-          .in('status', ['pending', 'in_progress', 'payment_proof_uploaded']);
+          .in('status', ['pending', 'in_progress', 'payment_proof_uploaded'])
+          .neq('status', 'cancelled');
         
         const { data: cashTrades } = await supabase
           .from('cash_trades')
           .select('id')
           .eq('seller_id', user.id)
-          .in('status', ['vendor_paid', 'payment_confirmed', 'delivery_in_progress']);
+          .in('status', ['vendor_paid', 'payment_confirmed', 'delivery_in_progress'])
+          .neq('status', 'cancelled');
         
         const totalActive = (trades?.length || 0) + (cashTrades?.length || 0);
         setActiveTrades(totalActive);
@@ -99,6 +125,16 @@ const BottomNavigation = () => {
     checkNotifications();
     checkUnreadMessages();
     checkActiveTrades();
+    
+    // Listen for manual trade updates
+    const handleTradesUpdated = () => {
+      checkActiveTrades();
+      checkNotifications();
+      checkUnreadMessages();
+      resetTradeNotifications();
+    };
+    
+    window.addEventListener('tradesUpdated', handleTradesUpdated);
 
     // Set up real-time subscriptions
     const notificationChannel = supabase
@@ -123,14 +159,19 @@ const BottomNavigation = () => {
         { event: '*', schema: 'public', table: 'cash_trades' },
         () => checkActiveTrades()
       )
+      .on('postgres_changes',
+        { event: '*', schema: 'public', table: 'trade_requests' },
+        () => checkNotifications()
+      )
       .subscribe();
 
     return () => {
       supabase.removeChannel(notificationChannel);
       supabase.removeChannel(tradeChannel);
       messageSubscription?.unsubscribe();
+      window.removeEventListener('tradesUpdated', handleTradesUpdated);
     };
-  }, []);
+  }, [user, profile]);
 
   const navItems = [
     { path: '/home', icon: Home, label: 'Home' },

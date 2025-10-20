@@ -6,6 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import VendorBottomNavigation from '@/components/vendor/VendorBottomNavigation';
 import { cashOrderService } from '@/services/cashOrderService';
+import { exchangeRateService } from '@/services/exchangeRateService';
 
 
 
@@ -38,14 +39,25 @@ const VendorDashboard = () => {
     pendingDeliveries: 0,
     todayDeliveries: 0
   });
+  const [usdToNgnRate, setUsdToNgnRate] = useState(1650);
 
   useEffect(() => {
     const storedVendorId = localStorage.getItem('vendor_id');
     if (storedVendorId) {
       setVendorId(storedVendorId);
     }
+    loadExchangeRate();
     loadDeliveryRequests();
   }, []);
+
+  const loadExchangeRate = async () => {
+    try {
+      const rate = await exchangeRateService.getUSDToNGNRate();
+      setUsdToNgnRate(Math.round(rate));
+    } catch (error) {
+      console.error('Error loading exchange rate:', error);
+    }
+  };
 
   const loadDeliveryRequests = async () => {
     try {
@@ -263,7 +275,7 @@ const VendorDashboard = () => {
                             <DollarSign className="w-5 h-5 text-green-600" />
                           </div>
                           <div>
-                            <p className="font-bold text-lg text-black">NGN {(request.usd_amount * 1650).toLocaleString()}</p>
+                            <p className="font-bold text-lg text-black">NGN {(request.usd_amount * usdToNgnRate).toLocaleString()}</p>
                             <p className="text-sm text-gray-600">From: {request.buyer_name || 'Merchant'}</p>
                           </div>
                         </div>

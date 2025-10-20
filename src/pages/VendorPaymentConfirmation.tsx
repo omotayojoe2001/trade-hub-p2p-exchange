@@ -3,6 +3,8 @@ import { ArrowLeft, CheckCircle, DollarSign, User, Phone, CreditCard } from 'luc
 import { Button } from '@/components/ui/button';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
+import ConfirmationDialog from '@/components/ConfirmationDialog';
+import { exchangeRateService } from '@/services/exchangeRateService';
 
 interface PaymentDetails {
   id: string;
@@ -20,10 +22,25 @@ const VendorPaymentConfirmation = () => {
   const [payment, setPayment] = useState<PaymentDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [confirming, setConfirming] = useState(false);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [showAlreadyConfirmedDialog, setShowAlreadyConfirmedDialog] = useState(false);
+  const [showSuccessDialog, setShowSuccessDialog] = useState(false);
+  const [showErrorDialog, setShowErrorDialog] = useState(false);
+  const [usdToNgnRate, setUsdToNgnRate] = useState(1650);
 
   useEffect(() => {
+    loadExchangeRate();
     loadPaymentDetails();
   }, [tradeId]);
+
+  const loadExchangeRate = async () => {
+    try {
+      const rate = await exchangeRateService.getUSDToNGNRate();
+      setUsdToNgnRate(Math.round(rate));
+    } catch (error) {
+      console.error('Error loading exchange rate:', error);
+    }
+  };
 
   const loadPaymentDetails = async () => {
     try {
@@ -108,12 +125,19 @@ const VendorPaymentConfirmation = () => {
     
     // Check if already confirmed
     if (payment.status === 'vendor_confirmed' || payment.status === 'completed') {
-      alert('Payment already confirmed!');
-      navigate(`/vendor/delivery-details/${payment.id}`);
+      setShowAlreadyConfirmedDialog(true);
       return;
     }
     
+    setShowConfirmDialog(true);
+  };
+
+  const confirmPaymentAction = async () => {
+    if (!payment) return;
+    
     setConfirming(true);
+    setShowConfirmDialog(false);
+    
     try {
       const { error } = await supabase.rpc('confirm_vendor_payment', {
         cash_trade_id: payment.id
@@ -121,11 +145,10 @@ const VendorPaymentConfirmation = () => {
       
       if (error) throw error;
       
-      alert('Payment confirmed! Crypto released to merchant.');
-      navigate(`/vendor/delivery-details/${payment.id}`);
+      setShowSuccessDialog(true);
     } catch (error) {
       console.error('Error confirming payment:', error);
-      alert('Failed to confirm payment');
+      setShowErrorDialog(true);
     } finally {
       setConfirming(false);
     }
@@ -181,7 +204,7 @@ const VendorPaymentConfirmation = () => {
           </div>
           <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 text-center">
             <p className="text-3xl font-bold text-black mb-1">
-              NGN {payment.naira_amount?.toLocaleString() || (payment.usd_amount * 1650).toLocaleString()}
+              NGN {payment.naira_amount?.toLocaleString() || (payment.usd_amount * usdToNgnRate).toLocaleString()}
             </p>
             <p className="text-sm text-black">
               (${payment.usd_amount.toLocaleString()} USD equivalent)
@@ -258,6 +281,63 @@ const VendorPaymentConfirmation = () => {
           </Button>
         )}
       </div>
+
+      {/* Confirmation Dialogs */}
+      <ConfirmationDialog
+        isOpen={showConfirmDialog}
+        onClose={() => setShowConfirmDialog(false)}
+        onConfirm={confirmPaymentAction}
+        title="Confirm Payment"
+        message="Are you sure you have received the payment? This will release crypto to the merchant and cannot be undone."
+        confirmText="Yes, I've Received Payment"
+        cancelText="Let Me Check Again"
+        type="warning"
+      />
+
+      <ConfirmationDialog
+        isOpen={showAlreadyConfirmedDialog}
+        onClose={() => {
+          setShowAlreadyConfirmedDialog(false);
+          navigate(`/vendor/delivery-details/${payment?.id}`);
+        }}
+        onConfirm={() => {
+          setShowAlreadyConfirmedDialog(false);
+          navigate(`/vendor/delivery-details/${payment?.id}`);
+        }}
+        title="Payment Already Confirmed"
+        message="This payment has already been confirmed and processed."
+        confirmText="View Delivery Details"
+        cancelText="Close"
+        type="info"
+      />
+
+      <ConfirmationDialog
+        isOpen={showSuccessDialog}
+        onClose={() => {
+          setShowSuccessDialog(false);
+          navigate(`/vendor/delivery-details/${payment?.id}`);
+        }}
+        onConfirm={() => {
+          setShowSuccessDialog(false);
+          navigate(`/vendor/delivery-details/${payment?.id}`);
+        }}
+        title="Payment Confirmed!"
+        message="Payment confirmed successfully! Crypto has been released to the merchant."
+        confirmText="View Delivery Details"
+        cancelText="Close"
+        type="success"
+      />
+
+      <ConfirmationDialog
+        isOpen={showErrorDialog}
+        onClose={() => setShowErrorDialog(false)}
+        onConfirm={() => setShowErrorDialog(false)}
+        title="Confirmation Failed"
+        message="Failed to confirm payment. Please try again or contact support."
+        confirmText="Try Again"
+        cancelText="Close"
+        type="warning"
+      />
     </div>
   );
 };

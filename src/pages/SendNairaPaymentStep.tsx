@@ -11,6 +11,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { creditsService } from '@/services/creditsService';
 import { cashOrderService } from '@/services/cashOrderService';
+import { exchangeRateService } from '@/services/exchangeRateService';
 
 interface VendorBankInfo {
   account_number: string;
@@ -48,14 +49,16 @@ const SendNairaPaymentStep = () => {
     try {
       setLoading(true);
       // Get the first available vendor's bank details
-      const { data: vendor, error } = await supabase
+      const { data: vendors, error } = await supabase
         .from('vendors')
         .select('bank_name, bank_account, display_name')
         .eq('active', true)
-        .limit(1)
-        .single();
+        .limit(1);
 
       if (error) throw error;
+      
+      const vendor = vendors?.[0];
+      if (!vendor) throw new Error('No active vendors available');
 
       setBankDetails({
         account_number: vendor.bank_account,
@@ -200,6 +203,9 @@ const SendNairaPaymentStep = () => {
         orderType: orderData.deliveryMethod === 'pickup' ? 'naira_to_usd_pickup' : 'naira_to_usd_delivery'
       });
       
+      // Get current exchange rate
+      const currentRate = await exchangeRateService.getUSDToNGNRate();
+      
       // Create cash order with vendor assignment using the service
       const orderId = await cashOrderService.createCashOrder(user.id, {
         nairaAmount: parseFloat(orderData.nairaAmount),
@@ -215,7 +221,8 @@ const SendNairaPaymentStep = () => {
           preferredDate: orderData.preferredDate,
           preferredTime: orderData.preferredTime,
           additionalNotes: orderData.additionalNotes
-        }
+        },
+        exchangeRate: Math.round(currentRate)
       });
       
       console.log('Cash order created successfully, ID:', orderId);
@@ -286,7 +293,6 @@ const SendNairaPaymentStep = () => {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-gray-600">Loading payment details...</p>
         </div>
       </div>
@@ -481,7 +487,6 @@ const SendNairaPaymentStep = () => {
             
             {uploading && (
               <div className="flex items-center space-x-2 text-blue-600">
-                <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
                 <span>Uploading...</span>
               </div>
             )}
@@ -502,14 +507,7 @@ const SendNairaPaymentStep = () => {
             disabled={!paymentProofUrl || submitting}
             className="w-full h-12 bg-green-600 hover:bg-green-700 disabled:bg-gray-400"
           >
-            {submitting ? (
-              <div className="flex items-center space-x-2">
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                <span>Processing...</span>
-              </div>
-            ) : (
-              'I Have Made Payment'
-            )}
+            {submitting ? 'Processing...' : 'I Have Made Payment'}
           </Button>
           
           <Button

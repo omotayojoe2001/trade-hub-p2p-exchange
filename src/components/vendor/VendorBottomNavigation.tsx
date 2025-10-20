@@ -98,8 +98,8 @@ const VendorBottomNavigation = () => {
               onClick={() => navigate(item.path)}
               className={`flex flex-col items-center space-y-1 p-2 rounded-lg min-w-[60px] ${
                 active 
-                  ? 'text-blue-600' 
-                  : 'text-gray-500 hover:text-blue-600'
+                  ? 'text-black' 
+                  : 'text-gray-600 hover:text-black'
               }`}
             >
               <div className="relative">
@@ -113,7 +113,7 @@ const VendorBottomNavigation = () => {
                 )}
               </div>
               <span className={`text-[10px] font-medium ${
-                active ? 'text-blue-600' : 'text-gray-500'
+                active ? 'text-black' : 'text-gray-600'
               }`}>
                 {item.label}
               </span>

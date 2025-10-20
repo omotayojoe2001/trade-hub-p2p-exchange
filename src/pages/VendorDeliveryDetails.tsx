@@ -4,6 +4,8 @@ import { ArrowLeft, CheckCircle, MapPin, Phone, User, DollarSign, Clock, AlertTr
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
+import ConfirmationDialog from '@/components/ConfirmationDialog';
+import { exchangeRateService } from '@/services/exchangeRateService';
 
 interface DeliveryDetails {
   id: string;
@@ -34,10 +36,28 @@ const VendorDeliveryDetails = () => {
   const [processing, setProcessing] = useState(false);
   const [enteredCode, setEnteredCode] = useState('');
   const [codeValidated, setCodeValidated] = useState(false);
+  const [showPaymentSuccessDialog, setShowPaymentSuccessDialog] = useState(false);
+  const [showPaymentErrorDialog, setShowPaymentErrorDialog] = useState(false);
+  const [showDeliveryErrorDialog, setShowDeliveryErrorDialog] = useState(false);
+  const [showCodeValidDialog, setShowCodeValidDialog] = useState(false);
+  const [showCodeInvalidDialog, setShowCodeInvalidDialog] = useState(false);
+  const [showCodeRequiredDialog, setShowCodeRequiredDialog] = useState(false);
+  const [showDeliveryFailedDialog, setShowDeliveryFailedDialog] = useState(false);
+  const [usdToNgnRate, setUsdToNgnRate] = useState(1650);
 
   useEffect(() => {
+    loadExchangeRate();
     loadDeliveryDetails();
   }, [deliveryId]);
+
+  const loadExchangeRate = async () => {
+    try {
+      const rate = await exchangeRateService.getUSDToNGNRate();
+      setUsdToNgnRate(Math.round(rate));
+    } catch (error) {
+      console.error('Error loading exchange rate:', error);
+    }
+  };
 
   const loadDeliveryDetails = async () => {
     try {
@@ -69,10 +89,10 @@ const VendorDeliveryDetails = () => {
       
       // Reload delivery details to show updated status
       await loadDeliveryDetails();
-      alert('✅ Payment confirmed! Crypto released to merchant. You can now proceed with delivery.');
+      setShowPaymentSuccessDialog(true);
     } catch (error) {
       console.error('Error confirming payment:', error);
-      alert('Failed to confirm payment');
+      setShowPaymentErrorDialog(true);
     } finally {
       setProcessing(false);
     }
@@ -92,7 +112,7 @@ const VendorDeliveryDetails = () => {
       await loadDeliveryDetails();
     } catch (error) {
       console.error('Error starting delivery:', error);
-      alert('Failed to start delivery');
+      setShowDeliveryErrorDialog(true);
     } finally {
       setProcessing(false);
     }
@@ -101,16 +121,16 @@ const VendorDeliveryDetails = () => {
   const validateDeliveryCode = () => {
     if (enteredCode.toUpperCase() === delivery?.delivery_code?.toUpperCase()) {
       setCodeValidated(true);
-      alert('✅ Code validated! You can now confirm delivery.');
+      setShowCodeValidDialog(true);
     } else {
-      alert('❌ Invalid code! Please ask customer for the correct delivery code.');
+      setShowCodeInvalidDialog(true);
       setEnteredCode('');
     }
   };
 
   const handleConfirmDelivery = async () => {
     if (!delivery || !codeValidated) {
-      alert('Please validate the delivery code first!');
+      setShowCodeRequiredDialog(true);
       return;
     }
     
@@ -141,7 +161,7 @@ const VendorDeliveryDetails = () => {
       navigate('/vendor/dashboard');
     } catch (error) {
       console.error('Error confirming delivery:', error);
-      alert('Failed to confirm delivery');
+      setShowDeliveryFailedDialog(true);
     } finally {
       setProcessing(false);
     }
@@ -195,7 +215,7 @@ const VendorDeliveryDetails = () => {
               <span className="text-sm font-medium text-slate-700">Payment</span>
             </div>
             <span className="text-lg font-bold text-slate-900">
-              ₦{delivery.naira_amount?.toLocaleString() || (delivery.usd_amount * 1650).toLocaleString()}
+              ₦{delivery.naira_amount?.toLocaleString() || (delivery.usd_amount * usdToNgnRate).toLocaleString()}
             </span>
           </div>
           <div className="text-xs text-slate-600">
@@ -262,7 +282,7 @@ const VendorDeliveryDetails = () => {
                   <strong>Confirm you received:</strong>
                 </p>
                 <p className="text-2xl font-bold text-blue-900">
-                  ₦{delivery.naira_amount?.toLocaleString() || (delivery.usd_amount * 1650).toLocaleString()} NGN
+                  ₦{delivery.naira_amount?.toLocaleString() || (delivery.usd_amount * usdToNgnRate).toLocaleString()} NGN
                 </p>
                 <p className="text-xs text-blue-600">
                   From merchant: {delivery.merchant_name}
@@ -400,6 +420,84 @@ const VendorDeliveryDetails = () => {
           </div>
         )}
       </div>
+
+      {/* Confirmation Dialogs */}
+      <ConfirmationDialog
+        isOpen={showPaymentSuccessDialog}
+        onClose={() => setShowPaymentSuccessDialog(false)}
+        onConfirm={() => setShowPaymentSuccessDialog(false)}
+        title="Payment Confirmed!"
+        message="Crypto has been released to the merchant. You can now proceed with delivery."
+        confirmText="Continue"
+        cancelText="Close"
+        type="success"
+      />
+
+      <ConfirmationDialog
+        isOpen={showPaymentErrorDialog}
+        onClose={() => setShowPaymentErrorDialog(false)}
+        onConfirm={() => setShowPaymentErrorDialog(false)}
+        title="Payment Confirmation Failed"
+        message="Failed to confirm payment. Please try again or contact support."
+        confirmText="Try Again"
+        cancelText="Close"
+        type="warning"
+      />
+
+      <ConfirmationDialog
+        isOpen={showDeliveryErrorDialog}
+        onClose={() => setShowDeliveryErrorDialog(false)}
+        onConfirm={() => setShowDeliveryErrorDialog(false)}
+        title="Delivery Start Failed"
+        message="Failed to start delivery process. Please try again."
+        confirmText="Try Again"
+        cancelText="Close"
+        type="warning"
+      />
+
+      <ConfirmationDialog
+        isOpen={showCodeValidDialog}
+        onClose={() => setShowCodeValidDialog(false)}
+        onConfirm={() => setShowCodeValidDialog(false)}
+        title="Code Validated!"
+        message="Delivery code is correct! You can now confirm delivery and give cash to customer."
+        confirmText="Continue"
+        cancelText="Close"
+        type="success"
+      />
+
+      <ConfirmationDialog
+        isOpen={showCodeInvalidDialog}
+        onClose={() => setShowCodeInvalidDialog(false)}
+        onConfirm={() => setShowCodeInvalidDialog(false)}
+        title="Invalid Code"
+        message="The entered code is incorrect. Please ask customer for the correct delivery code."
+        confirmText="Try Again"
+        cancelText="Close"
+        type="warning"
+      />
+
+      <ConfirmationDialog
+        isOpen={showCodeRequiredDialog}
+        onClose={() => setShowCodeRequiredDialog(false)}
+        onConfirm={() => setShowCodeRequiredDialog(false)}
+        title="Code Validation Required"
+        message="Please validate the delivery code first before confirming delivery."
+        confirmText="OK"
+        cancelText="Close"
+        type="warning"
+      />
+
+      <ConfirmationDialog
+        isOpen={showDeliveryFailedDialog}
+        onClose={() => setShowDeliveryFailedDialog(false)}
+        onConfirm={() => setShowDeliveryFailedDialog(false)}
+        title="Delivery Confirmation Failed"
+        message="Failed to confirm delivery. Please try again or contact support."
+        confirmText="Try Again"
+        cancelText="Close"
+        type="warning"
+      />
     </div>
   );
 };

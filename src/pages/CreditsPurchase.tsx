@@ -33,7 +33,7 @@ const CreditsPurchase = () => {
   const [pricesLoading, setPricesLoading] = useState(true);
   const [customCredits, setCustomCredits] = useState('');
   const [isCustom, setIsCustom] = useState(false);
-  const [selectedCrypto, setSelectedCrypto] = useState<'BTC' | 'USDT' | 'XRP'>('BTC');
+  const [selectedCrypto, setSelectedCrypto] = useState<'BTC' | 'USDT'>('BTC');
   const [currentStep, setCurrentStep] = useState(1);
   const [paymentAddress, setPaymentAddress] = useState('');
   const [purchaseId, setPurchaseId] = useState('');
@@ -389,7 +389,7 @@ const CreditsPurchase = () => {
                           )}
                         </div>
                         <div className="text-sm text-gray-600 mt-1">
-                          {pkg.btc.toFixed(8)} BTC • {pkg.usd?.toFixed(2)} USDT
+                          {pkg.btc.toFixed(8)} BTC • {pkg.usdt?.toFixed(2)} USDT
                         </div>
                       </div>
                       <div className={`w-4 h-4 rounded-full border-2 ${
@@ -461,44 +461,31 @@ const CreditsPurchase = () => {
                 <CardTitle>Payment Method</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-3 gap-2">
+                <div className="grid grid-cols-2 gap-4">
                   <div
-                    className={`p-3 border rounded-lg cursor-pointer text-center ${
+                    className={`p-4 border rounded-lg cursor-pointer text-center ${
                       selectedCrypto === 'BTC'
                         ? 'border-blue-500 bg-blue-50'
                         : 'border-gray-200 hover:border-gray-300'
                     }`}
                     onClick={() => setSelectedCrypto('BTC')}
                   >
-                    <div className="font-semibold text-sm">Bitcoin</div>
-                    <div className="text-xs text-gray-600">
+                    <div className="font-semibold">Bitcoin</div>
+                    <div className="text-sm text-gray-600 mt-1">
                       {getCurrentPackage().btc?.toFixed(8) || '0.00000000'} BTC
                     </div>
                   </div>
                   <div
-                    className={`p-3 border rounded-lg cursor-pointer text-center ${
+                    className={`p-4 border rounded-lg cursor-pointer text-center ${
                       selectedCrypto === 'USDT'
                         ? 'border-blue-500 bg-blue-50'
                         : 'border-gray-200 hover:border-gray-300'
                     }`}
                     onClick={() => setSelectedCrypto('USDT')}
                   >
-                    <div className="font-semibold text-sm">USDT</div>
-                    <div className="text-xs text-gray-600">
-                      {getCurrentPackage().usd?.toFixed(2) || '0.00'} USDT
-                    </div>
-                  </div>
-                  <div
-                    className={`p-3 border rounded-lg cursor-pointer text-center ${
-                      selectedCrypto === 'XRP'
-                        ? 'border-blue-500 bg-blue-50'
-                        : 'border-gray-200 hover:border-gray-300'
-                    }`}
-                    onClick={() => setSelectedCrypto('XRP')}
-                  >
-                    <div className="font-semibold text-sm">XRP</div>
-                    <div className="text-xs text-gray-600">
-                      {getCurrentPackage().usd?.toFixed(2) || '0.00'} XRP
+                    <div className="font-semibold">USDT (Solana)</div>
+                    <div className="text-sm text-gray-600 mt-1">
+                      {getCurrentPackage().usdt?.toFixed(2) || '0.00'} USDT
                     </div>
                   </div>
                 </div>
@@ -536,7 +523,7 @@ const CreditsPurchase = () => {
               <CardContent className="space-y-4">
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                   <div className="text-sm text-blue-800 mb-4">
-                    Send exactly <strong>{selectedCrypto === 'BTC' ? (getCurrentPackage().btc?.toFixed(8) || '0.00000000') : (getCurrentPackage().usd?.toFixed(2) || '0.00')} {selectedCrypto}</strong> to:
+                    Send exactly <strong>{selectedCrypto === 'BTC' ? (getCurrentPackage().btc?.toFixed(8) || '0.00000000') : (getCurrentPackage().usdt?.toFixed(2) || '0.00')} {selectedCrypto}</strong> to:
                   </div>
                   
                   {/* QR Code */}
@@ -651,7 +638,7 @@ const CreditsPurchase = () => {
                     <div className="font-medium mb-2">Purchase Details:</div>
                     <div>Credits: {getCurrentPackage().credits}</div>
                     <div>USD Value: ${getCurrentPackage().usd?.toFixed(2) || '0.00'}</div>
-                    <div>Amount: {selectedCrypto === 'BTC' ? (getCurrentPackage().btc?.toFixed(8) || '0.00000000') : (getCurrentPackage().usd?.toFixed(2) || '0.00')} {selectedCrypto}</div>
+                    <div>Amount: {selectedCrypto === 'BTC' ? (getCurrentPackage().btc?.toFixed(8) || '0.00000000') : (getCurrentPackage().usdt?.toFixed(2) || '0.00')} {selectedCrypto}</div>
                     <div>Status: Pending Confirmation</div>
                   </div>
                 </div>
@@ -665,7 +652,7 @@ const CreditsPurchase = () => {
                   id: purchaseId,
                   credits: getCurrentPackage().credits,
                   usdAmount: getCurrentPackage().usd || 0,
-                  cryptoAmount: selectedCrypto === 'BTC' ? (getCurrentPackage().btc || 0) : (getCurrentPackage().usd || 0),
+                  cryptoAmount: selectedCrypto === 'BTC' ? (getCurrentPackage().btc || 0) : (getCurrentPackage().usdt || 0),
                   cryptoType: selectedCrypto,
                   paymentAddress: paymentAddress,
                   transactionHash: transactionHash,

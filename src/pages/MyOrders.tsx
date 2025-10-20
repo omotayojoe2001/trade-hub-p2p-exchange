@@ -7,6 +7,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import BottomNavigation from '@/components/BottomNavigation';
+import ConfirmationDialog from '@/components/ConfirmationDialog';
 
 import MessageThread from '@/components/MessageThread';
 
@@ -33,6 +34,8 @@ const MyOrders = () => {
     otherUserName: string;
     cashTradeId: string;
   } | null>(null);
+  const [showCopySuccessDialog, setShowCopySuccessDialog] = useState(false);
+  const [showVendorNotFoundDialog, setShowVendorNotFoundDialog] = useState(false);
 
   useEffect(() => {
     loadOrders();
@@ -74,14 +77,14 @@ const MyOrders = () => {
 
   const copyDeliveryCode = (code: string) => {
     navigator.clipboard.writeText(code);
-    alert('Delivery code copied!');
+    setShowCopySuccessDialog(true);
   };
 
 
 
   return (
     <>
-      <div className="min-h-screen bg-gray-50 pb-24">
+      <div className="min-h-screen bg-white pb-24">
       {/* Header */}
       <div className="bg-white border-b border-gray-200 p-4">
         <h1 className="text-xl font-semibold text-gray-900">My Cash Orders</h1>
@@ -188,7 +191,7 @@ const MyOrders = () => {
                             cashTradeId: order.id
                           });
                         } else {
-                          alert('Vendor not found for this order');
+                          setShowVendorNotFoundDialog(true);
                         }
                       }}
                       variant="outline"
@@ -221,6 +224,29 @@ const MyOrders = () => {
           onClose={() => setSelectedMessage(null)}
         />
       )}
+
+      {/* Confirmation Dialogs */}
+      <ConfirmationDialog
+        isOpen={showCopySuccessDialog}
+        onClose={() => setShowCopySuccessDialog(false)}
+        onConfirm={() => setShowCopySuccessDialog(false)}
+        title="Code Copied!"
+        message="Delivery code has been copied to your clipboard."
+        confirmText="OK"
+        cancelText="Close"
+        type="success"
+      />
+
+      <ConfirmationDialog
+        isOpen={showVendorNotFoundDialog}
+        onClose={() => setShowVendorNotFoundDialog(false)}
+        onConfirm={() => setShowVendorNotFoundDialog(false)}
+        title="Vendor Not Found"
+        message="Unable to find vendor information for this order. Please try again later."
+        confirmText="OK"
+        cancelText="Close"
+        type="warning"
+      />
     </>
   );
 };

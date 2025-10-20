@@ -56,9 +56,7 @@ const GlobalNotifications = () => {
 
         if (error) throw error;
 
-        console.log(`📊 Found ${dbNotifications?.length || 0} notifications in database`);
-        
-        // Auto-mark old notifications as read (older than 1 minute) - ALL types
+        // Auto-mark old notifications as read (older than 1 minute)
         const oneMinuteAgo = new Date(Date.now() - 60 * 1000);
         const oldNotifications = (dbNotifications || []).filter(notif => 
           !notif.read && 
@@ -66,33 +64,18 @@ const GlobalNotifications = () => {
         );
         
         if (oldNotifications.length > 0) {
-          console.log(`🧹 Auto-marking ${oldNotifications.length} old notifications as read (older than 1 minute)`);
-          
           const oldNotificationIds = oldNotifications.map(n => n.id);
           await supabase
             .from('notifications')
             .update({ read: true })
             .in('id', oldNotificationIds);
           
-          // Update the data to reflect the changes
           dbNotifications?.forEach(notif => {
             if (oldNotificationIds.includes(notif.id)) {
               notif.read = true;
             }
           });
         }
-        
-        // Log each notification for debugging
-        (dbNotifications || []).forEach((notif, index) => {
-          const ageMinutes = Math.round((Date.now() - new Date(notif.created_at).getTime()) / 1000 / 60);
-          console.log(`   ${index + 1}. [${notif.type}] ${notif.title} - Read: ${notif.read} - Created: ${notif.created_at}`);
-          console.log(`      🕰️ Age: ${ageMinutes} minutes ${ageMinutes > 1 ? '(AUTO-MARKED READ)' : ''}`);
-          if (notif.type === 'new_message') {
-            console.log(`      💬 Message notification - Conversation: ${notif.data?.conversation_id}`);
-          } else if (notif.type.includes('trade')) {
-            console.log(`      📈 Trade notification - Trade ID: ${notif.data?.trade_id || 'N/A'}`);
-          }
-        });
 
         // Transform Supabase data to our format
         const transformedNotifications = (dbNotifications || []).map((notif: any) => ({
@@ -117,15 +100,8 @@ const GlobalNotifications = () => {
         );
         const totalUnreadCount = transformedNotifications.filter(n => !n.isRead).length;
         
-        console.log(`🔴 Total unread notifications: ${totalUnreadCount}`);
-        console.log(`🆕 Recent unread notifications (last minute): ${recentUnread.length}`);
-        
         if (recentUnread.length > 0) {
-          const latestUnread = recentUnread[0];
-          console.log(`🔔 Showing notification popup for recent: ${latestUnread?.title}`);
           showNewNotification();
-        } else if (totalUnreadCount > 0) {
-          console.log(`⏰ ${totalUnreadCount} unread notifications exist but all are older than 1 minute - not showing popup`);
         }
       } catch (error) {
         console.error('❌ Error loading notifications:', error);

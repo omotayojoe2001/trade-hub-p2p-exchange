@@ -284,6 +284,15 @@ const SellCryptoPaymentStep2 = () => {
                       Any other amount will cause delays.
                     </p>
                   </div>
+                  
+                  {coinType === 'USDT' && (
+                    <div className="p-3 bg-red-50 rounded border border-red-200">
+                      <p className="text-xs text-red-800">
+                        <strong>⚠️ Demo Mode:</strong> This is a test address. 
+                        Real BitGo integration is being configured for Solana USDT.
+                      </p>
+                    </div>
+                  )}
                 </div>
               </div>
 

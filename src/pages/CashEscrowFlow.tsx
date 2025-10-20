@@ -52,7 +52,7 @@ const CashEscrowFlow = () => {
         // Fallback to demo address if BitGo fails
         const demoAddresses = {
           BTC: 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh',
-          USDT: '0x742d35Cc6634C0532925a3b8D4C9db4C4C4C4C4C',
+          USDT: 'DemoSolanaUSDTAddress1234567890123456789012',
           ETH: '0x742d35Cc6634C0532925a3b8D4C9db4C4C4C4C4C'
         };
         setCryptoAddress(demoAddresses[cryptoType] || demoAddresses.BTC);

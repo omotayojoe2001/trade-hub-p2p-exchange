@@ -13,6 +13,7 @@ interface CashOrderData {
     preferredTime: string;
     additionalNotes?: string;
   };
+  exchangeRate?: number;
 }
 
 interface VendorJob {
@@ -47,7 +48,8 @@ export class CashOrderService {
         p_service_fee: orderData.serviceFee,
         p_order_type: orderData.orderType,
         p_delivery_details: orderData.deliveryDetails,
-        p_contact_details: orderData.contactDetails
+        p_contact_details: orderData.contactDetails,
+        p_exchange_rate: orderData.exchangeRate
       });
 
       if (error) throw error;

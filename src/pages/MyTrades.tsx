@@ -3,6 +3,7 @@ import { ChevronRight, AlertCircle, Clock, Calendar, ChevronDown, MessageCircle 
 import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { exchangeRateService } from '@/services/exchangeRateService';
 
 import BottomNavigation from '@/components/BottomNavigation';
 import CryptoIcon from '@/components/CryptoIcon';
@@ -41,6 +42,7 @@ const MyTrades = () => {
     cashTradeId?: string;
     contextType: 'crypto_trade' | 'cash_delivery';
   } | null>(null);
+  const [usdToNgnRate, setUsdToNgnRate] = useState(1650);
 
   const fetchTrades = async () => {
     if (!user) return;
@@ -73,16 +75,19 @@ const MyTrades = () => {
       // Combine and format data
       const allTrades = [
         ...(tradesData || []),
-        ...(cashOrders || []).map(order => ({
-          ...order,
-          trade_type: 'cash_order',
-          crypto_type: 'USD',
-          coin_type: 'USD',
-          amount: order.usd_amount,
-          amount_crypto: order.usd_amount,
-          naira_amount: order.usd_amount * 1650,
-          rate: 1650
-        }))
+        ...(cashOrders || []).map(order => {
+          const tradeRate = order.exchange_rate || usdToNgnRate;
+          return {
+            ...order,
+            trade_type: 'cash_order',
+            crypto_type: 'USD',
+            coin_type: 'USD',
+            amount: order.usd_amount,
+            amount_crypto: order.usd_amount,
+            naira_amount: order.usd_amount * tradeRate,
+            rate: tradeRate
+          };
+        })
       ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
       console.log('Fetched all trades:', allTrades);
@@ -94,8 +99,20 @@ const MyTrades = () => {
     }
   };
 
+  const loadExchangeRate = async () => {
+    try {
+      const rate = await exchangeRateService.getUSDToNGNRate();
+      setUsdToNgnRate(Math.round(rate));
+    } catch (error) {
+      console.error('Error loading exchange rate:', error);
+    }
+  };
+
   useEffect(() => {
-    fetchTrades();
+    if (user) {
+      loadExchangeRate();
+      fetchTrades();
+    }
   }, [user]);
 
   const getTradeStatus = (trade: Trade) => {
@@ -152,6 +169,61 @@ const MyTrades = () => {
       toast({
         title: "Error",
         description: "Failed to complete trade",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleCancelAllTrades = async () => {
+    if (!confirm('Are you sure you want to cancel all ongoing trades? This action cannot be undone.')) {
+      return;
+    }
+
+    try {
+      const ongoingStatuses = ['pending', 'in_progress', 'payment_proof_uploaded', 'vendor_paid', 'payment_confirmed', 'delivery_in_progress'];
+      const ongoingTrades = trades.filter(trade => ongoingStatuses.includes(trade.status));
+      
+      // Cancel regular trades
+      const regularTrades = ongoingTrades.filter(trade => trade.trade_type !== 'cash_order');
+      if (regularTrades.length > 0) {
+        const { error: tradesError } = await supabase
+          .from('trades')
+          .update({ status: 'cancelled' })
+          .in('id', regularTrades.map(t => t.id));
+        
+        if (tradesError) throw tradesError;
+      }
+      
+      // Cancel cash trades
+      const cashTrades = ongoingTrades.filter(trade => trade.trade_type === 'cash_order');
+      if (cashTrades.length > 0) {
+        const { error: cashError } = await supabase
+          .from('cash_trades')
+          .update({ status: 'cancelled' })
+          .in('id', cashTrades.map(t => t.id));
+        
+        if (cashError) throw cashError;
+      }
+
+      toast({
+        title: "Success!",
+        description: `Cancelled ${ongoingTrades.length} ongoing trades`,
+      });
+
+      fetchTrades();
+      
+      // Trigger BottomNavigation and Home page refresh
+      window.dispatchEvent(new CustomEvent('tradesUpdated'));
+      
+      // Force immediate refresh of home page data
+      setTimeout(() => {
+        window.dispatchEvent(new CustomEvent('tradesUpdated'));
+      }, 500);
+    } catch (error) {
+      console.error('Error cancelling trades:', error);
+      toast({
+        title: "Error",
+        description: "Failed to cancel trades",
         variant: "destructive"
       });
     }
@@ -218,8 +290,19 @@ const MyTrades = () => {
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-2xl font-bold text-foreground">My Trades</h1>
           
-          {/* Date Filter Dropdown */}
-          <div className="relative">
+          <div className="flex items-center space-x-3">
+            {/* Cancel All Button - only show for Ongoing tab */}
+            {activeTab === 'Ongoing' && filteredTrades.length > 0 && (
+              <button
+                onClick={handleCancelAllTrades}
+                className="px-3 py-1.5 bg-red-100 text-red-700 rounded-lg text-sm font-medium hover:bg-red-200 transition-colors"
+              >
+                Cancel All
+              </button>
+            )}
+            
+            {/* Date Filter Dropdown */}
+            <div className="relative">
             <button
               onClick={() => setShowDateFilter(!showDateFilter)}
               className="flex items-center space-x-2 px-3 py-1.5 bg-background border border-border rounded-lg text-sm font-medium text-foreground hover:bg-accent transition-colors"
@@ -247,6 +330,7 @@ const MyTrades = () => {
                 ))}
               </div>
             )}
+            </div>
           </div>
         </div>
 

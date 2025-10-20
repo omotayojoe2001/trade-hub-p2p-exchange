@@ -65,16 +65,49 @@ const CryptoWallet = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      // Generate a mock address for demo purposes
-      // In production, this would call a proper wallet generation service
-      const mockAddress = `${coinType.toLowerCase()}_${Math.random().toString(36).substring(2, 15)}`;
+      // Generate realistic-looking addresses as fallback
+      const generateAddress = (type: string) => {
+        const chars = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
+        const hexChars = '0123456789abcdef';
+        
+        switch (type) {
+          case 'BTC':
+            // Bitcoin address format (P2PKH starts with 1)
+            let btcAddr = '1';
+            for (let i = 0; i < 33; i++) {
+              btcAddr += chars[Math.floor(Math.random() * chars.length)];
+            }
+            return btcAddr;
+          
+          case 'ETH':
+            // Ethereum address format (0x + 40 hex chars)
+            let ethAddr = '0x';
+            for (let i = 0; i < 40; i++) {
+              ethAddr += hexChars[Math.floor(Math.random() * hexChars.length)];
+            }
+            return ethAddr;
+          
+          case 'USDT':
+            // USDT on Solana (Base58 format)
+            let usdtAddr = '';
+            for (let i = 0; i < 44; i++) {
+              usdtAddr += chars[Math.floor(Math.random() * chars.length)];
+            }
+            return usdtAddr;
+          
+          default:
+            return `${type.toLowerCase()}_${Math.random().toString(36).substring(2, 15)}`;
+        }
+      };
+
+      const address = generateAddress(coinType);
 
       const { error } = await supabase
         .from('crypto_wallets')
         .insert({
           user_id: user.id,
           coin_type: coinType,
-          deposit_address: mockAddress,
+          deposit_address: address,
           available_balance: 0,
           pending_balance: 0,
           total_balance: 0
@@ -84,7 +117,7 @@ const CryptoWallet = () => {
 
       toast({
         title: "Wallet generated!",
-        description: `New ${coinType} wallet address created.`,
+        description: `New ${coinType} wallet address created successfully.`,
       });
 
       loadWallets();
@@ -311,13 +344,13 @@ const CryptoWallet = () => {
         </Card>
 
         {/* Warning */}
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
           <div className="flex items-start">
-            <AlertTriangle size={16} className="text-yellow-600 mr-3 mt-1" />
+            <AlertTriangle size={16} className="text-blue-600 mr-3 mt-1" />
             <div>
-              <p className="text-sm text-gray-700 font-medium mb-1">Security Notice</p>
+              <p className="text-sm text-gray-700 font-medium mb-1">Demo Wallet Notice</p>
               <p className="text-xs text-gray-600">
-                Only send {selectedCoin} to addresses on the correct network. Sending to wrong addresses may result in permanent loss.
+                These are demo wallet addresses for testing purposes. Do not send real cryptocurrency to these addresses.
               </p>
             </div>
           </div>

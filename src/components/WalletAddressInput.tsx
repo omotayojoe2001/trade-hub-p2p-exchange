@@ -31,7 +31,7 @@ export const WalletAddressInput: React.FC<WalletAddressInputProps> = ({
     const patterns = {
       BTC: /^[13][a-km-zA-HJ-NP-Z1-9]{25,34}$|^bc1[a-z0-9]{39,59}$/,
       ETH: /^0x[a-fA-F0-9]{40}$/,
-      USDT: /^0x[a-fA-F0-9]{40}$/, // USDT is ERC-20
+      USDT: /^[1-9A-HJ-NP-Za-km-z]{32,44}$/, // USDT on Solana (Base58)
     };
     
     const pattern = patterns[cryptoType as keyof typeof patterns];
@@ -72,7 +72,7 @@ export const WalletAddressInput: React.FC<WalletAddressInputProps> = ({
       case 'ETH':
         return 'Ethereum address (starts with 0x)';
       case 'USDT':
-        return 'USDT address (ERC-20, starts with 0x)';
+        return 'USDT address (Solana SPL, Base58 format)';
       default:
         return 'Valid crypto wallet address';
     }
@@ -141,6 +141,11 @@ export const WalletAddressInput: React.FC<WalletAddressInputProps> = ({
 
         <div className="text-sm text-muted-foreground">
           <p>Expected format: {getAddressFormat()}</p>
+          {cryptoType === 'USDT' && (
+            <p className="text-xs text-blue-600 mt-1">
+              Note: Using Solana USDT (SPL token), not Ethereum USDT
+            </p>
+          )}
         </div>
       </CardContent>
     </Card>

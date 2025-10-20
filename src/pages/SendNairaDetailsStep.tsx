@@ -8,6 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useAuth } from '@/hooks/useAuth';
 import { creditsService } from '@/services/creditsService';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 const SendNairaDetailsStep = () => {
   const navigate = useNavigate();
@@ -46,6 +47,7 @@ const SendNairaDetailsStep = () => {
     
     if (user) {
       loadUserCredits();
+      loadUserProfile();
     }
   }, [user, nairaAmount, usdAmount, deliveryType]);
 
@@ -55,6 +57,23 @@ const SendNairaDetailsStep = () => {
       setUserCredits(credits);
     } catch (error) {
       console.error('Error loading credits:', error);
+    }
+  };
+
+  const loadUserProfile = async () => {
+    try {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('phone_number')
+        .eq('user_id', user!.id)
+        .single();
+      
+      if (profile?.phone_number) {
+        setPhoneNumber(profile.phone_number);
+        setWhatsappNumber(profile.phone_number);
+      }
+    } catch (error) {
+      console.error('Error loading profile:', error);
     }
   };
 
@@ -172,25 +191,21 @@ const SendNairaDetailsStep = () => {
           </CardHeader>
           <CardContent className="space-y-2">
             <div className="flex justify-between">
-              <span className="text-blue-800">Naira Amount:</span>
-              <span className="font-semibold text-blue-900">₦{parseFloat(nairaAmount).toLocaleString()}</span>
+              <span className="text-white">Naira Amount:</span>
+              <span className="font-semibold text-white">₦{parseFloat(nairaAmount).toLocaleString()}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-blue-800">USD Amount:</span>
-              <span className="font-semibold text-blue-900">${usdAmount}</span>
+              <span className="text-white">USD Amount:</span>
+              <span className="font-semibold text-white">${usdAmount}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-blue-800">Credits Required:</span>
-              <span className="font-semibold text-blue-900">{creditsRequired} credits</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-blue-800">Credits Charged:</span>
-              <span className="font-semibold text-red-600">{creditsRequired} credits</span>
+              <span className="text-white">Credits Charged:</span>
+              <span className="font-semibold text-white">{creditsRequired} credits</span>
             </div>
             <hr className="border-blue-200" />
             <div className="flex justify-between text-lg">
-              <span className="text-blue-800 font-medium">Total to Pay:</span>
-              <span className="font-bold text-blue-900">₦{parseFloat(nairaAmount).toLocaleString()}</span>
+              <span className="text-white font-medium">Total to Pay:</span>
+              <span className="font-bold text-white">₦{parseFloat(nairaAmount).toLocaleString()}</span>
             </div>
           </CardContent>
         </Card>

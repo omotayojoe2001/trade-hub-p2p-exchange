@@ -89,38 +89,43 @@ const Index = () => {
         .select('*')
         .or(`buyer_id.eq.${user.id},seller_id.eq.${user.id}`)
         .order('created_at', { ascending: false })
-        .limit(3);
+        .limit(5);
       
       const { data: cashTrades } = await supabase
         .from('cash_trades')
         .select('*')
-        .eq('seller_id', user.id)
+        .or(`buyer_id.eq.${user.id},seller_id.eq.${user.id}`)
         .order('created_at', { ascending: false })
-        .limit(2);
+        .limit(5);
       
       const formattedTrades = [
         ...(trades || []).map(trade => ({
-          id: trade.id,
+          id: `trade_${trade.id}`,
+          created_at: trade.created_at,
           text: `${trade.amount_crypto || trade.amount} ${trade.crypto_type} → ₦${(trade.naira_amount || 0).toLocaleString()}`,
           date: formatDateWAT(trade.created_at, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }),
-          status: trade.status === 'completed' ? 'Completed' : 'In Progress',
-          statusColor: trade.status === 'completed' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
+          status: trade.status === 'completed' ? 'Completed' : trade.status === 'cancelled' ? 'Cancelled' : 'In Progress',
+          statusColor: trade.status === 'completed' ? 'bg-green-100 text-green-800' : trade.status === 'cancelled' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800'
         })),
-        ...(cashTrades || []).map(trade => ({
-          id: trade.id,
-          text: `$${trade.usd_amount} USD → ₦${(trade.usd_amount * usdToNgnRate).toLocaleString()}`,
-          date: formatDateWAT(trade.created_at, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }),
-          status: trade.status === 'cash_delivered' ? 'Completed' : 'In Progress',
-          statusColor: trade.status === 'cash_delivered' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
-        }))
+        ...(cashTrades || []).map(trade => {
+          const tradeRate = trade.exchange_rate || usdToNgnRate;
+          return {
+            id: `cash_${trade.id}`,
+            created_at: trade.created_at,
+            text: `$${trade.usd_amount} USD → ₦${(trade.usd_amount * tradeRate).toLocaleString()}`,
+            date: formatDateWAT(trade.created_at, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }),
+            status: trade.status === 'cash_delivered' ? 'Completed' : trade.status === 'cancelled' ? 'Cancelled' : 'In Progress',
+            statusColor: trade.status === 'cash_delivered' ? 'bg-green-100 text-green-800' : trade.status === 'cancelled' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800'
+          };
+        })
       ];
       
-      // Remove duplicates based on ID and limit to 3
-      const uniqueTrades = formattedTrades.filter((trade, index, self) => 
-        index === self.findIndex(t => t.id === trade.id)
-      ).slice(0, 3);
+      // Sort by created_at and limit to 3 most recent
+      const sortedTrades = formattedTrades
+        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+        .slice(0, 3);
       
-      setRecentTradesData(uniqueTrades);
+      setRecentTradesData(sortedTrades);
     } catch (error) {
       console.error('Error fetching user trades:', error);
     }
@@ -152,10 +157,18 @@ const Index = () => {
       // Auto-refresh user trades every 30 seconds
       const tradesInterval = setInterval(fetchUserTrades, 30 * 1000);
 
+      // Listen for trade updates
+      const handleTradeUpdate = () => {
+        fetchUserTrades();
+      };
+      
+      window.addEventListener('tradesUpdated', handleTradeUpdate);
+
       return () => {
         clearTimeout(timer);
         clearInterval(rateInterval);
         clearInterval(tradesInterval);
+        window.removeEventListener('tradesUpdated', handleTradeUpdate);
         if (subscription) {
           subscription.unsubscribe();
         }
