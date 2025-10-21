@@ -244,7 +244,7 @@ const AppContent = () => {
   };
 
   return (
-    <>
+    <div className="mobile-container no-scroll-x">
       {isLoading && <PageLoader />}
       {/* Only show notifications if not on auth pages */}
       {!isOnAuthPage && <GlobalNotifications />}
@@ -254,7 +254,8 @@ const AppContent = () => {
       <GlobalCodeTracker />
       <RouteGuard>
         <RouteWrapper>
-          <Routes>
+          <div className="page-content">
+            <Routes>
             <Route path="/" element={<SplashScreen />} />
             <Route path="/home" element={<Index />} />
             <Route path="/my-orders" element={<MyOrders />} />
@@ -457,10 +458,10 @@ const AppContent = () => {
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
             </Routes>
+          </div>
           </RouteWrapper>
         </RouteGuard>
-
-    </>
+    </div>
   );
 };
 

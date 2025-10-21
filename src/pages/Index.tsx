@@ -211,7 +211,8 @@ const Index = () => {
   const profilePicture = profile?.avatar_url;
 
   return (
-      <div className="w-full min-h-screen bg-white font-['Poppins'] max-w-4xl mx-auto lg:max-w-md pb-20">
+      <div className="mobile-safe w-full min-h-screen bg-white font-['Poppins'] max-w-4xl mx-auto lg:max-w-md">
+        <div className="page-content pb-20">
       {/* Header */}
       <div className="px-4 py-4">
         <div className="flex justify-between items-center">
@@ -504,8 +505,9 @@ const Index = () => {
         </div>
       </div>
 
-      {/* Bottom Navigation */}
-      <BottomNavigation />
+        </div>
+        {/* Bottom Navigation */}
+        <BottomNavigation />
       </div>
   );
 };

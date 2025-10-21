@@ -185,7 +185,7 @@ const BottomNavigation = () => {
 
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-gray-200 px-4 py-2 z-[9999] shadow-lg transform-none will-change-auto" style={{ position: 'fixed', transform: 'none' }}>
+    <div className="bottom-nav fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 py-2 z-[9999] w-full" style={{ position: 'fixed !important', transform: 'none !important', bottom: '0 !important' }}>
       <div className="flex justify-around items-center max-w-md mx-auto">
         {navItems.map((item) => {
           const isActive = location.pathname === item.path;
@@ -205,11 +205,12 @@ const BottomNavigation = () => {
             <Link
               key={item.path}
               to={item.path}
-              className={`flex flex-col items-center space-y-1 p-2 rounded-xl transition-all duration-200 min-w-[60px] ${
+              className={`flex flex-col items-center space-y-1 p-2 rounded-xl transition-all duration-200 min-w-[60px] no-underline ${
                 isActive 
                   ? 'text-primary bg-primary/10 scale-105' 
                   : 'text-muted-foreground hover:text-primary hover:bg-accent/50 hover:scale-105'
               }`}
+              style={{ textDecoration: 'none !important', border: 'none !important' }}
               onClick={() => {
                 if (item.path === '/buy-sell' && hasNewTradeRequest) {
                   setHasNewTradeRequest(false);
