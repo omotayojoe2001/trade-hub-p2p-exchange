@@ -27,13 +27,24 @@ class ErrorBoundary extends React.Component<
         <div className="min-h-screen bg-white flex items-center justify-center p-4">
           <div className="text-center">
             <h2 className="text-xl font-semibold mb-4">Something went wrong</h2>
-            <p className="text-gray-600 mb-4">Please restart the app</p>
-            <button
-              onClick={() => window.location.reload()}
-              className="bg-blue-500 text-white px-4 py-2 rounded"
-            >
-              Restart App
-            </button>
+            <p className="text-gray-600 mb-4">The page encountered an error</p>
+            <div className="space-y-2">
+              <button
+                onClick={() => {
+                  this.setState({ hasError: false });
+                  window.location.href = '/home';
+                }}
+                className="bg-blue-500 text-white px-4 py-2 rounded mr-2"
+              >
+                Go Home
+              </button>
+              <button
+                onClick={() => window.location.reload()}
+                className="bg-gray-500 text-white px-4 py-2 rounded"
+              >
+                Reload Page
+              </button>
+            </div>
           </div>
         </div>
       );

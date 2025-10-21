@@ -155,6 +155,7 @@ import React from 'react';
 import PageLoader from './components/PageLoader';
 import GlobalLoader from './components/GlobalLoader';
 import ErrorBoundary from './utils/errorBoundary';
+import RouteGuard from './components/RouteGuard';
 import { usePageLoader } from './hooks/usePageLoader';
 
 const queryClient = new QueryClient();
@@ -167,6 +168,23 @@ const AppContent = () => {
 
   // Check if user is on auth-related pages
   const isOnAuthPage = ['/auth', '/onboarding', '/splash', '/email-verification', '/forgot-password', '/reset-password'].includes(location.pathname);
+  
+  // Handle page reload protection
+  React.useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      // Only prevent reload on critical pages
+      const criticalPages = ['/buy-crypto', '/sell-crypto', '/trade-details', '/payment'];
+      const isCriticalPage = criticalPages.some(page => location.pathname.includes(page));
+      
+      if (isCriticalPage) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+    
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [location.pathname]);
   
   // Save user data when logged in
   React.useEffect(() => {
@@ -200,6 +218,29 @@ const AppContent = () => {
   if (authLoading) {
     return <GlobalLoader />;
   }
+  
+  // Handle route errors gracefully
+  const RouteWrapper = ({ children }: { children: React.ReactNode }) => {
+    try {
+      return <>{children}</>;
+    } catch (error) {
+      console.error('Route error:', error);
+      return (
+        <div className="min-h-screen bg-white flex items-center justify-center p-4">
+          <div className="text-center">
+            <h2 className="text-lg font-semibold mb-2">Page Error</h2>
+            <p className="text-gray-600 mb-4">This page couldn't load properly</p>
+            <button
+              onClick={() => window.location.href = '/home'}
+              className="bg-blue-500 text-white px-4 py-2 rounded"
+            >
+              Go Home
+            </button>
+          </div>
+        </div>
+      );
+    }
+  };
 
   return (
     <>
@@ -210,7 +251,9 @@ const AppContent = () => {
       
 
       <GlobalCodeTracker />
-      <Routes>
+      <RouteGuard>
+        <RouteWrapper>
+          <Routes>
             <Route path="/" element={<SplashScreen />} />
             <Route path="/home" element={<Index />} />
             <Route path="/my-orders" element={<MyOrders />} />
@@ -411,7 +454,9 @@ const AppContent = () => {
             
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
-          </Routes>
+            </Routes>
+          </RouteWrapper>
+        </RouteGuard>
 
     </>
   );
