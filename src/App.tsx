@@ -200,17 +200,17 @@ const AppContent = () => {
     }
   }, [user, saveUser]);
 
-  // Show splash on initial page load
+  // Always show splash on app open
   React.useEffect(() => {
     if (authLoading) return;
     
     const hasShownSplash = sessionStorage.getItem('splash-shown');
     const currentPath = location.pathname;
     
-    // Only show splash if not already on splash and haven't seen it
-    if (!hasShownSplash && currentPath !== '/' && currentPath !== '/auth') {
-      sessionStorage.setItem('splash-shown', 'true');
+    // Always show splash first unless already on splash
+    if (!hasShownSplash && currentPath !== '/') {
       navigate('/', { replace: true });
+      return;
     }
     
     // Clear logout reason on page load
@@ -226,12 +226,23 @@ const AppContent = () => {
   }, [authLoading, navigate, location.pathname]);
 
   const handleSignOut = async () => {
-    // Clear splash flag and show splash before logout
-    sessionStorage.removeItem('splash-shown');
-    localStorage.setItem('logout-reason', 'user-logout');
-    navigate('/', { replace: true });
-    await signOut();
-    clearStoredUser();
+    try {
+      // Clear splash flag and show splash before logout
+      sessionStorage.removeItem('splash-shown');
+      localStorage.setItem('logout-reason', 'user-logout');
+      
+      // Sign out first, then navigate
+      await signOut();
+      clearStoredUser();
+      
+      // Force navigation after logout
+      setTimeout(() => {
+        navigate('/', { replace: true });
+      }, 100);
+    } catch (error) {
+      // Force navigation even if logout fails
+      navigate('/', { replace: true });
+    }
   };
 
   // Show global loader during initial auth check
@@ -270,16 +281,10 @@ const AppContent = () => {
       {!isOnAuthPage && <CreditAlert />}
       
       <GlobalCodeTracker />
-      <div className="mobile-container" style={{ height: '100vh', overflow: 'hidden' }}>
+      <div className="mobile-container">
         <RouteGuard>
           <RouteWrapper>
-            <div className="page-content" style={{ 
-              height: 'calc(100vh - 70px)', 
-              overflowY: 'auto', 
-              overflowX: 'hidden',
-              overscrollBehavior: 'none',
-              WebkitOverflowScrolling: 'touch'
-            }}>
+            <div className="page-content">
               <Routes>
             <Route path="/" element={<SplashScreen />} />
             <Route path="/home" element={<Index />} />
@@ -486,17 +491,7 @@ const AppContent = () => {
             </div>
           </RouteWrapper>
         </RouteGuard>
-        {!isOnAuthPage && (
-          <div style={{ 
-            position: 'fixed', 
-            bottom: '0', 
-            left: '0', 
-            right: '0', 
-            zIndex: '9998'
-          }}>
-            <BottomNavigation />
-          </div>
-        )}
+        {!isOnAuthPage && <BottomNavigation />}
       </div>
     </>
   );

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { ArrowLeft, Search, TrendingUp, TrendingDown } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import StickyHeader from '@/components/StickyHeader';
 
 const CryptoMarkets = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -44,6 +45,10 @@ const CryptoMarkets = () => {
 
   return (
     <div className="min-h-screen bg-white">
+      <StickyHeader 
+        title="Markets" 
+        showBackButton={true}
+      />
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-gray-100">
         <div className="flex items-center">

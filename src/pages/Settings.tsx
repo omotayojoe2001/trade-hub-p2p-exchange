@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Settings as SettingsIcon, User, Shield, Lock, CreditCard, FileCheck, Store, Bell, Users, HelpCircle, ChevronRight } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import BottomNavigation from '@/components/BottomNavigation';
+import StickyHeader from '@/components/StickyHeader';
 import { useAuth } from '@/hooks/useAuth';
 
 import { Switch } from '@/components/ui/switch';
@@ -134,6 +135,14 @@ const Settings = () => {
 
   return (
     <div className="min-h-screen bg-white font-['Poppins'] pb-20">
+      <StickyHeader 
+        title="Settings" 
+        rightElement={
+          <div className="inline-flex items-center px-3 py-1 border border-[#1A73E8] text-[#1A73E8] rounded-full text-sm font-medium bg-white">
+            Credits: {userCredits.toLocaleString()}
+          </div>
+        }
+      />
       {/* Header Section */}
       <div className="bg-white px-4 py-8 text-center">
         {/* Avatar */}

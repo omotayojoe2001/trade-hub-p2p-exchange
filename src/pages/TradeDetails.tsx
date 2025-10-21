@@ -13,6 +13,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import MessageThread from '@/components/MessageThread';
+import StickyHeader from '@/components/StickyHeader';
 
 const TradeDetails = () => {
   const { tradeId } = useParams();
@@ -334,6 +335,35 @@ const TradeDetails = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 font-['Poppins']">
+      <StickyHeader 
+        title={`Trade #${transactionDetails.id?.slice(-8)}`} 
+        showBackButton={true}
+        rightElement={
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="text-gray-600 hover:bg-gray-100">
+                <MoreVertical size={20} />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              {canResumeTrade && (
+                <DropdownMenuItem onClick={handleResumeTrade}>
+                  <Play size={16} className="mr-2" />
+                  Resume Trade
+                </DropdownMenuItem>
+              )}
+              <DropdownMenuItem onClick={() => setShowReportDialog(true)}>
+                <Flag size={16} className="mr-2" />
+                Report Trade
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setShowDeleteDialog(true)} className="text-red-600">
+                <Trash2 size={16} className="mr-2" />
+                Cancel Trade
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        }
+      />
       {/* Premium Header */}
       <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 pt-8 pb-6">
         <div className="flex items-center justify-between mb-4">

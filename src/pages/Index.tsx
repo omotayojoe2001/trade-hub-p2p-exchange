@@ -8,6 +8,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useCryptoData } from '@/hooks/useCryptoData';
 import CryptoTicker from '@/components/CryptoTicker';
 import BottomNavigation from '@/components/BottomNavigation';
+import StickyHeader from '@/components/StickyHeader';
 import { creditsService } from '@/services/creditsService';
 import { mockCreditsService, isDemoMode } from '@/services/mockCreditsService';
 import { exchangeRateService } from '@/services/exchangeRateService';
@@ -212,9 +213,23 @@ const Index = () => {
 
   return (
       <div className="mobile-safe w-full min-h-screen bg-white font-['Poppins'] max-w-4xl mx-auto lg:max-w-md">
+        <StickyHeader 
+          title="Home" 
+          rightElement={
+            <Link to="/notifications" className="relative">
+              <Bell size={20} className="text-gray-600" />
+              {unreadNotifications > 0 && (
+                <div className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"></div>
+              )}
+            </Link>
+          }
+        />
         <div className="page-content pb-0">
+      {/* White space at top */}
+      <div className="h-12"></div>
+      
       {/* Header */}
-      <div className="px-4 py-0">
+      <div className="px-4 pb-4">
         <div className="flex justify-between items-center">
           <h1 className="text-lg font-medium text-gray-900">
             Good Morning, {firstName}

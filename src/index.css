@@ -228,18 +228,22 @@ All colors MUST be HSL.
     box-sizing: border-box;
   }
   
+  /* Ensure normal scrolling behavior */
+  html {
+    scroll-behavior: smooth;
+    overflow-y: auto;
+  }
+  
+  body {
+    overflow-y: auto;
+  }
+  
   html, body {
     width: 100%;
     max-width: 100vw;
     overflow-x: hidden;
     position: relative;
     -webkit-overflow-scrolling: touch;
-    -webkit-user-select: none;
-    -webkit-touch-callout: none;
-    -webkit-text-size-adjust: none;
-    touch-action: manipulation;
-    overscroll-behavior: none !important;
-    overscroll-behavior-y: none !important;
   }
   
   #root {
@@ -257,11 +261,6 @@ All colors MUST be HSL.
     letter-spacing: -0.01em;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    touch-action: pan-y;
-    user-select: none;
-    -webkit-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
     background: linear-gradient(145deg, hsl(var(--background)) 0%, hsl(var(--background-secondary)) 100%);
     min-height: 100vh;
     width: 100%;
@@ -344,9 +343,13 @@ All colors MUST be HSL.
     box-shadow: 0 0 0 3px rgba(26, 115, 232, 0.1);
   }
 
-  /* Smooth scrolling */
+  /* Force normal scrolling */
   * {
     scroll-behavior: smooth;
+  }
+  
+  html, body, #root {
+    overflow-y: auto !important;
   }
 
   ::-webkit-scrollbar {
@@ -369,8 +372,6 @@ All colors MUST be HSL.
     height: 70px !important;
     z-index: 99999 !important;
     transform: translate3d(0,0,0) !important;
-    transition: none !important;
-    will-change: auto !important;
     backface-visibility: hidden !important;
     -webkit-backface-visibility: hidden !important;
   }
@@ -380,8 +381,8 @@ All colors MUST be HSL.
     width: 100%;
     max-width: 100vw;
     overflow-x: hidden;
-    overscroll-behavior: none !important;
-    -webkit-overflow-scrolling: touch;
+    position: relative;
+    z-index: 1;
   }
 }
 

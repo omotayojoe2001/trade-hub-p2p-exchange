@@ -6,20 +6,31 @@ const SplashScreen = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [showContent, setShowContent] = useState(true);
+  const [hasNavigated, setHasNavigated] = useState(false);
 
   const handleNavigation = () => {
+    if (hasNavigated) return;
+    setHasNavigated(true);
+    sessionStorage.setItem('splash-shown', 'true');
+    
     setShowContent(false);
     setTimeout(() => {
       if (user) {
-        // Check if profile is complete
-        navigate("/home");
+        navigate("/home", { replace: true });
       } else {
-        navigate("/auth");
+        navigate("/auth", { replace: true });
       }
-    }, 500);
+    }, 300);
   };
 
-  // Video handles navigation on end, no timer needed
+  // Auto-navigate after 7 seconds as fallback
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      handleNavigation();
+    }, 7000);
+    
+    return () => clearTimeout(timer);
+  }, []);
 
   return (
     <div className="fixed inset-0 w-full h-full" style={{ backgroundColor: '#192f4a', zIndex: 9999 }}>
@@ -29,11 +40,18 @@ const SplashScreen = () => {
           autoPlay
           muted
           playsInline
+          preload="auto"
+          controls={false}
           className="w-full h-full object-cover"
+          style={{ backgroundColor: '#192f4a' }}
           onEnded={handleNavigation}
-          onError={() => {
-            // Fallback: navigate after 3 seconds if video fails
-            setTimeout(handleNavigation, 3000);
+          onError={handleNavigation}
+          onLoadStart={() => {
+            // Hide any video controls immediately
+            const video = document.querySelector('video');
+            if (video) {
+              video.controls = false;
+            }
           }}
         />
       </div>

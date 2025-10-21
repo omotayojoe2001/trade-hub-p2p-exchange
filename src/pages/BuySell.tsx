@@ -4,6 +4,7 @@ import { ArrowDownRight, ArrowUpRight, DollarSign, Wallet, Bell, MessageCircle, 
 import { Button } from "@/components/ui/button";
 import { useNavigate } from 'react-router-dom';
 import BottomNavigation from '@/components/BottomNavigation';
+import StickyHeader from '@/components/StickyHeader';
 
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
@@ -101,6 +102,16 @@ const BuySell = () => {
 
   return (
     <div className="min-h-screen bg-white pb-20 font-['Poppins']">
+      <StickyHeader 
+        title="Trade" 
+        rightElement={
+          <div className="flex items-center space-x-2">
+            <button onClick={() => navigate('/notifications')} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
+              <Bell size={20} className="text-gray-600" />
+            </button>
+          </div>
+        }
+      />
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-4 h-[60px]">
         <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center overflow-hidden">

@@ -6,6 +6,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { exchangeRateService } from '@/services/exchangeRateService';
 
 import BottomNavigation from '@/components/BottomNavigation';
+import StickyHeader from '@/components/StickyHeader';
 import CryptoIcon from '@/components/CryptoIcon';
 import { toast } from '@/hooks/use-toast';
 import MessageThread from '@/components/MessageThread';
@@ -286,6 +287,53 @@ const MyTrades = () => {
 
   return (
     <div className="min-h-screen bg-white font-['Poppins'] pb-24">
+      <StickyHeader 
+        title="My Trades" 
+        rightElement={
+          <div className="flex items-center space-x-3">
+            {/* Cancel All Button - only show for Ongoing tab */}
+            {activeTab === 'Ongoing' && filteredTrades.length > 0 && (
+              <button
+                onClick={handleCancelAllTrades}
+                className="px-3 py-1.5 bg-red-100 text-red-700 rounded-lg text-sm font-medium hover:bg-red-200 transition-colors"
+              >
+                Cancel All
+              </button>
+            )}
+            
+            {/* Date Filter Dropdown */}
+            <div className="relative">
+            <button
+              onClick={() => setShowDateFilter(!showDateFilter)}
+              className="flex items-center space-x-2 px-3 py-1.5 bg-background border border-border rounded-lg text-sm font-medium text-foreground hover:bg-accent transition-colors"
+            >
+              <Calendar size={16} />
+              <span>{dateFilter}</span>
+              <ChevronDown size={16} className={`transition-transform ${showDateFilter ? 'rotate-180' : ''}`} />
+            </button>
+            
+            {showDateFilter && (
+              <div className="absolute right-0 mt-2 w-40 bg-card border border-border rounded-lg shadow-lg z-10">
+                {['All Time', 'Today', 'This Week', 'This Month'].map((filter) => (
+                  <button
+                    key={filter}
+                    onClick={() => {
+                      setDateFilter(filter);
+                      setShowDateFilter(false);
+                    }}
+                    className={`w-full text-left px-3 py-2 text-sm hover:bg-accent rounded-lg transition-colors ${
+                      dateFilter === filter ? 'bg-accent text-accent-foreground' : 'text-foreground'
+                    }`}
+                  >
+                    {filter}
+                  </button>
+                ))}
+              </div>
+            )}
+            </div>
+          </div>
+        }
+      />
       <div className="px-4 pt-6 pb-20 max-w-7xl mx-auto">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-2xl font-bold text-foreground">My Trades</h1>

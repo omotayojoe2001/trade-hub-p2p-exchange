@@ -11,6 +11,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import BottomNavigation from '@/components/BottomNavigation';
+import StickyHeader from '@/components/StickyHeader';
 
 const ProfileSettings = () => {
   const { user, profile, signOut } = useAuth();
@@ -349,6 +350,21 @@ const ProfileSettings = () => {
 
   return (
     <div className="min-h-screen bg-white font-['Poppins'] pb-20">
+      <StickyHeader 
+        title="Profile Settings" 
+        showBackButton={true}
+        backPath="/settings"
+        rightElement={
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setIsEditing(!isEditing)}
+          >
+            <Edit2 size={16} className="mr-2" />
+            {isEditing ? 'Cancel' : 'Edit'}
+          </Button>
+        }
+      />
       {/* Header */}
       <div className="bg-white border-b border-[#EAEAEA] px-4 py-4">
         <div className="flex items-center justify-between">
