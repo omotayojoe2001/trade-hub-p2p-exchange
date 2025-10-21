@@ -4,46 +4,38 @@ import { useAuth } from "@/hooks/useAuth";
 
 const SplashScreen = () => {
   const navigate = useNavigate();
-  const { user, loading } = useAuth();
-  const [displayText, setDisplayText] = useState("");
+  const { user } = useAuth();
   const [showContent, setShowContent] = useState(true);
-  const fullText = "CENTRAL EXCHANGE";
 
-  useEffect(() => {
-    let currentIndex = 0;
-    const typewriterTimer = setInterval(() => {
-      if (currentIndex <= fullText.length) {
-        setDisplayText(fullText.slice(0, currentIndex));
-        currentIndex++;
+  const handleNavigation = () => {
+    setShowContent(false);
+    setTimeout(() => {
+      if (user) {
+        // Check if profile is complete
+        navigate("/home");
       } else {
-        clearInterval(typewriterTimer);
-        // Start fade out after typing is complete
-        setTimeout(() => {
-          setShowContent(false);
-          // Navigate after fade out
-          setTimeout(() => {
-            if (!loading) {
-              if (user) {
-                navigate("/home");
-              } else {
-                navigate("/auth");
-              }
-            }
-          }, 500);
-        }, 500);
+        navigate("/auth");
       }
-    }, 150);
+    }, 500);
+  };
 
-    return () => clearInterval(typewriterTimer);
-  }, [navigate, user, loading]);
+  // Video handles navigation on end, no timer needed
 
   return (
-    <div className="min-h-screen bg-white flex items-center justify-center">
-      <div className={`text-center transition-opacity duration-500 ${showContent ? 'opacity-100' : 'opacity-0'}`}>
-        <h1 className="text-4xl font-bold" style={{ color: '#007AFF', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif' }}>
-          {displayText}
-          <span className="animate-pulse">|</span>
-        </h1>
+    <div className="fixed inset-0 w-full h-full" style={{ backgroundColor: '#192f4a', zIndex: 9999 }}>
+      <div className={`w-full h-full transition-opacity duration-500 ${showContent ? 'opacity-100' : 'opacity-0'}`}>
+        <video 
+          src="/splash-animation.mp4" 
+          autoPlay
+          muted
+          playsInline
+          className="w-full h-full object-cover"
+          onEnded={handleNavigation}
+          onError={() => {
+            // Fallback: navigate after 3 seconds if video fails
+            setTimeout(handleNavigation, 3000);
+          }}
+        />
       </div>
     </div>
   );

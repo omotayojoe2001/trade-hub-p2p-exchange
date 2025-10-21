@@ -10,7 +10,7 @@ import { useAuthStorage } from "@/hooks/useAuthStorage";
 import { AuthProvider, useAuth } from "./hooks/useAuth";
 
 // Removed ThemeProvider to disable dark mode by default
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import ProfileSetup from "./pages/ProfileSetup";
@@ -157,6 +157,7 @@ import PageLoader from './components/PageLoader';
 import GlobalLoader from './components/GlobalLoader';
 import ErrorBoundary from './utils/errorBoundary';
 import RouteGuard from './components/RouteGuard';
+import BottomNavigation from './components/BottomNavigation';
 import { usePageLoader } from './hooks/usePageLoader';
 
 const queryClient = new QueryClient();
@@ -165,10 +166,11 @@ const AppContent = () => {
   const { user, signOut, loading: authLoading } = useAuth();
   const { storedUser, saveUser, clearStoredUser } = useAuthStorage();
   const location = useLocation();
+  const navigate = useNavigate();
   const isLoading = usePageLoader();
 
-  // Check if user is on auth-related pages
-  const isOnAuthPage = ['/auth', '/onboarding', '/splash', '/email-verification', '/forgot-password', '/reset-password'].includes(location.pathname);
+  // Check if user is on auth-related pages or splash screen
+  const isOnAuthPage = ['/auth', '/onboarding', '/splash', '/email-verification', '/forgot-password', '/reset-password', '/'].includes(location.pathname);
   
   // Handle page reload protection
   React.useEffect(() => {
@@ -198,19 +200,31 @@ const AppContent = () => {
     }
   }, [user, saveUser]);
 
-  // Clear logout reason on page load (with error handling)
+  // Show splash on initial page load
   React.useEffect(() => {
+    const hasShownSplash = sessionStorage.getItem('splash-shown');
+    if (!hasShownSplash && !authLoading) {
+      sessionStorage.setItem('splash-shown', 'true');
+      navigate('/', { replace: true });
+    }
+    
+    // Clear logout reason on page load (with error handling)
     try {
       const logoutReason = localStorage.getItem('logout-reason');
       if (logoutReason) {
         localStorage.removeItem('logout-reason');
+        sessionStorage.removeItem('splash-shown'); // Show splash after logout
       }
     } catch (error) {
       // Ignore localStorage errors in mobile apps
     }
-  }, []);
+  }, [authLoading, navigate]);
 
   const handleSignOut = async () => {
+    // Clear splash flag and show splash before logout
+    sessionStorage.removeItem('splash-shown');
+    localStorage.setItem('logout-reason', 'user-logout');
+    navigate('/', { replace: true });
     await signOut();
     clearStoredUser();
   };
@@ -244,18 +258,24 @@ const AppContent = () => {
   };
 
   return (
-    <div className="mobile-container no-scroll-x">
+    <>
       {isLoading && <PageLoader />}
       {/* Only show notifications if not on auth pages */}
       {!isOnAuthPage && <GlobalNotifications />}
       {!isOnAuthPage && <CreditAlert />}
       
-
       <GlobalCodeTracker />
-      <RouteGuard>
-        <RouteWrapper>
-          <div className="page-content">
-            <Routes>
+      <div className="mobile-container" style={{ height: '100vh', overflow: 'hidden' }}>
+        <RouteGuard>
+          <RouteWrapper>
+            <div className="page-content" style={{ 
+              height: 'calc(100vh - 70px)', 
+              overflowY: 'auto', 
+              overflowX: 'hidden',
+              overscrollBehavior: 'none',
+              WebkitOverflowScrolling: 'touch'
+            }}>
+              <Routes>
             <Route path="/" element={<SplashScreen />} />
             <Route path="/home" element={<Index />} />
             <Route path="/my-orders" element={<MyOrders />} />
@@ -457,11 +477,23 @@ const AppContent = () => {
             
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
-            </Routes>
-          </div>
+              </Routes>
+            </div>
           </RouteWrapper>
         </RouteGuard>
-    </div>
+        {!isOnAuthPage && (
+          <div style={{ 
+            position: 'fixed', 
+            bottom: '0', 
+            left: '0', 
+            right: '0', 
+            zIndex: '9998'
+          }}>
+            <BottomNavigation />
+          </div>
+        )}
+      </div>
+    </>
   );
 };
 

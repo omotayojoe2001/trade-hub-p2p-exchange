@@ -212,9 +212,9 @@ const Index = () => {
 
   return (
       <div className="mobile-safe w-full min-h-screen bg-white font-['Poppins'] max-w-4xl mx-auto lg:max-w-md">
-        <div className="page-content pb-20">
+        <div className="page-content pb-0">
       {/* Header */}
-      <div className="px-4 py-4">
+      <div className="px-4 py-0">
         <div className="flex justify-between items-center">
           <h1 className="text-lg font-medium text-gray-900">
             Good Morning, {firstName}
@@ -237,9 +237,9 @@ const Index = () => {
         </div>
       </div>
 
-      <div className="px-4 pb-4">
+      <div className="px-4 pb-2">
         {/* Credits Card */}
-        <div className="mb-6">
+        <div className="mb-2">
           <div className="bg-gradient-to-r from-[#0052FF] to-[#006BFF] rounded-xl px-4 py-3">
             <div className="flex justify-between items-center">
               <div className="flex items-center">
@@ -260,7 +260,7 @@ const Index = () => {
         </div>
 
         {/* Quick Actions Grid */}
-        <div className="mb-6">
+        <div className="mb-2">
           <div className="grid grid-cols-2 gap-3">
             <Link to="/buy-sell">
               <div className="bg-white rounded-xl p-3 shadow-sm border border-gray-100 h-full">
@@ -309,15 +309,15 @@ const Index = () => {
         </div>
 
         {/* Markets Section */}
-        <div className="mb-6">
-          <div className="flex justify-between items-center mb-3">
+        <div className="mb-2">
+          <div className="flex justify-between items-center mb-2">
             <h2 className="text-lg font-medium text-gray-900">Markets</h2>
             <Link to="/crypto-markets" className="text-blue-600 text-sm font-medium">See All</Link>
           </div>
           
           
           {/* Top Crypto Cards */}
-          <div className="space-y-2 mb-4">
+          <div className="space-y-2 mb-2">
             <div className="bg-white rounded-xl p-3 shadow-sm border border-gray-100">
               <div className="flex items-center justify-between">
                 <div className="flex items-center">
@@ -384,13 +384,13 @@ const Index = () => {
         </div>
 
         {/* Recent Trades */}
-        <div className="mb-6">
-          <div className="flex justify-between items-center mb-3">
+        <div className="mb-2">
+          <div className="flex justify-between items-center mb-2">
             <h2 className="text-lg font-medium text-gray-900">Recent Trades</h2>
             <Link to="/my-trades" className="text-blue-600 text-sm font-medium">See All</Link>
           </div>
           
-          <div className="space-y-3">
+          <div className="space-y-2">
             {recentTradesData.length === 0 ? (
               <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 text-center">
                 <div className="text-gray-400 mb-3">
@@ -434,9 +434,9 @@ const Index = () => {
         </div>
 
         {/* Referral Banner */}
-        <div className="mb-6">
+        <div className="mb-1">
           <Link to="/referrals" className="block">
-            <div className="bg-[#0052FF] rounded-xl p-4">
+            <div className="bg-[#0052FF] rounded-xl p-3">
               <div className="flex items-center justify-between">
                 <div className="text-white font-medium text-base">
                   Invite friends. Earn Credits + Rewards.
@@ -448,8 +448,8 @@ const Index = () => {
         </div>
 
         {/* Platform Updates */}
-        <div>
-          <h2 className="text-lg font-medium text-gray-900 mb-3">Platform Updates</h2>
+        <div className="mb-7">
+          <h2 className="text-lg font-medium text-gray-900 mb-4">Platform Updates</h2>
           
           {/* Tab Selector */}
           <div className="flex space-x-2 mb-3">
@@ -469,7 +469,7 @@ const Index = () => {
           </div>
 
           {/* Update Cards */}
-          <div className="space-y-2">
+          <div className="space-y-1 mb-1">
             <div className="bg-[#F8F9FA] rounded-xl p-3">
               <div className="flex items-start">
                 <div className="w-6 h-6 bg-gray-200 rounded flex items-center justify-center mr-3 mt-0.5">
@@ -506,8 +506,6 @@ const Index = () => {
       </div>
 
         </div>
-        {/* Bottom Navigation */}
-        <BottomNavigation />
       </div>
   );
 };
