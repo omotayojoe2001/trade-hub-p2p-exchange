@@ -237,8 +237,9 @@ All colors MUST be HSL.
     -webkit-user-select: none;
     -webkit-touch-callout: none;
     -webkit-text-size-adjust: none;
-    touch-action: pan-y;
+    touch-action: manipulation;
     overscroll-behavior: none !important;
+    overscroll-behavior-y: none !important;
   }
   
   #root {

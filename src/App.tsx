@@ -202,23 +202,28 @@ const AppContent = () => {
 
   // Show splash on initial page load
   React.useEffect(() => {
+    if (authLoading) return;
+    
     const hasShownSplash = sessionStorage.getItem('splash-shown');
-    if (!hasShownSplash && !authLoading) {
+    const currentPath = location.pathname;
+    
+    // Only show splash if not already on splash and haven't seen it
+    if (!hasShownSplash && currentPath !== '/' && currentPath !== '/auth') {
       sessionStorage.setItem('splash-shown', 'true');
       navigate('/', { replace: true });
     }
     
-    // Clear logout reason on page load (with error handling)
+    // Clear logout reason on page load
     try {
       const logoutReason = localStorage.getItem('logout-reason');
       if (logoutReason) {
         localStorage.removeItem('logout-reason');
-        sessionStorage.removeItem('splash-shown'); // Show splash after logout
+        sessionStorage.removeItem('splash-shown');
       }
     } catch (error) {
-      // Ignore localStorage errors in mobile apps
+      // Ignore localStorage errors
     }
-  }, [authLoading, navigate]);
+  }, [authLoading, navigate, location.pathname]);
 
   const handleSignOut = async () => {
     // Clear splash flag and show splash before logout
