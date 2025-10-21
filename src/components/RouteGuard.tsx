@@ -21,7 +21,8 @@ const RouteGuard: React.FC<RouteGuardProps> = ({ children }) => {
     '/forgot-password',
     '/reset-password',
     '/verify-email',
-    '/vendor/login'
+    '/vendor/login',
+    '/account-deletion-instructions'
   ];
 
   const isPublicRoute = publicRoutes.includes(location.pathname);

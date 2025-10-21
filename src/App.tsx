@@ -42,6 +42,7 @@ import NotFound from "./pages/NotFound";
 import Referrals from "./pages/Referrals";
 import ProfileSettings from "./pages/ProfileSettings";
 import DeleteAccount from "./pages/DeleteAccount";
+import AccountDeletionInstructions from "./pages/AccountDeletionInstructions";
 import Security from "./pages/Security";
 import PaymentMethods from "./pages/PaymentMethods";
 import HelpSupport from "./pages/HelpSupport";
@@ -267,6 +268,7 @@ const AppContent = () => {
             <Route path="/referrals" element={<Referrals />} />
             <Route path="/profile-settings" element={<ProfileSettings />} />
             <Route path="/delete-account" element={<DeleteAccount />} />
+            <Route path="/account-deletion-instructions" element={<AccountDeletionInstructions />} />
             <Route path="/security" element={<Security />} />
             <Route path="/payment-methods" element={<PaymentMethods />} />
             <Route path="/help-support" element={<HelpSupport />} />
