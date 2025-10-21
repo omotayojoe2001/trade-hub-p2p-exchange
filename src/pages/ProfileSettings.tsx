@@ -569,14 +569,15 @@ const ProfileSettings = () => {
             >
               Deactivate Account
             </Button>
-            <Button
-              variant="outline"
-              className="w-full text-red-600 border-red-200 hover:bg-red-50"
-              onClick={() => setShowDeleteDialog(true)}
-            >
-              <Trash2 className="mr-2" size={16} />
-              Delete Account
-            </Button>
+            <Link to="/delete-account">
+              <Button
+                variant="outline"
+                className="w-full text-red-600 border-red-200 hover:bg-red-50"
+              >
+                <Trash2 className="mr-2" size={16} />
+                Delete Account
+              </Button>
+            </Link>
           </div>
         </Card>
       </div>
