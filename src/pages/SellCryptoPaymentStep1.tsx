@@ -93,8 +93,6 @@ const SellCryptoPaymentStep1 = () => {
         return selectedMerchant.eth_rate || liveRate;
       case 'USDT':
         return selectedMerchant.usdt_rate || liveRate;
-      case 'ETH':
-        return selectedMerchant.eth_rate || liveRate;
       case 'BNB':
         return selectedMerchant.bnb_rate || liveRate;
       case 'XRP':
