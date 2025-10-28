@@ -7,6 +7,7 @@ import './styles/remove-animations.css'
 import './styles/dialog-fixes.css'
 import './utils/preventZoom'
 import './utils/capacitorFixes'
+import './utils/mobileScrollFix'
 
 // Ensure proper mobile viewport
 const viewport = document.querySelector('meta[name=viewport]');

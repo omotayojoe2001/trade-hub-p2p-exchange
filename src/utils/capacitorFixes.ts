@@ -1,60 +1,77 @@
-// Capacitor-specific fixes for mobile app
+// Mobile app scroll fixes
 export const initCapacitorFixes = () => {
-  // Check if running in Capacitor
   const isCapacitor = !!(window as any).Capacitor;
+  const isMobileApp = isCapacitor || window.navigator.standalone || window.matchMedia('(display-mode: standalone)').matches;
   
-  if (isCapacitor) {
-    // Fix scroll issues in Capacitor
-    document.body.style.overflowY = 'scroll';
-    document.documentElement.style.overflowY = 'scroll';
+  if (isMobileApp) {
+    // Remove all scroll restrictions
+    document.documentElement.style.overflow = 'visible';
+    document.documentElement.style.overflowY = 'visible';
+    document.documentElement.style.height = 'auto';
     
-    // Enable momentum scrolling
+    document.body.style.overflow = 'visible';
+    document.body.style.overflowY = 'visible';
+    document.body.style.height = 'auto';
+    document.body.style.minHeight = '100vh';
     document.body.style.webkitOverflowScrolling = 'touch';
+    document.body.style.touchAction = 'auto';
     
-    // Fix touch action for scrolling
-    document.body.style.touchAction = 'pan-y';
+    // Fix root container
+    const root = document.getElementById('root');
+    if (root) {
+      root.style.overflow = 'visible';
+      root.style.overflowY = 'visible';
+      root.style.height = 'auto';
+      root.style.minHeight = '100vh';
+    }
     
-    // Prevent scroll bounce
-    document.addEventListener('touchmove', (e) => {
-      // Allow scrolling on the main content
-      const target = e.target as HTMLElement;
-      if (target.closest('.page-content') || target.closest('.mobile-safe')) {
-        return;
-      }
-      // Prevent bounce on other elements
-      e.preventDefault();
-    }, { passive: false });
-    
-    // Force scroll container setup
-    const setupScrollContainer = () => {
-      const root = document.getElementById('root');
-      if (root) {
-        root.style.height = '100vh';
-        root.style.overflowY = 'scroll';
-        root.style.webkitOverflowScrolling = 'touch';
-      }
+    // Remove any scroll blocking
+    const removeScrollBlocks = () => {
+      const elements = document.querySelectorAll('*');
+      elements.forEach((el: any) => {
+        if (el.style.overflowY === 'hidden' && !el.classList.contains('bottom-nav')) {
+          el.style.overflowY = 'visible';
+        }
+        if (el.style.height === '100vh' && !el.classList.contains('bottom-nav')) {
+          el.style.height = 'auto';
+          el.style.minHeight = '100vh';
+        }
+      });
     };
     
-    // Setup immediately and after DOM changes
-    setupScrollContainer();
-    setTimeout(setupScrollContainer, 100);
+    removeScrollBlocks();
+    setTimeout(removeScrollBlocks, 500);
     
-    // Handle keyboard events that might affect scrolling
-    document.addEventListener('keyboardWillShow', () => {
-      document.body.style.height = 'auto';
-    });
+    // Force scroll reset on touch
+    let touchStartY = 0;
+    document.addEventListener('touchstart', (e) => {
+      touchStartY = e.touches[0].clientY;
+    }, { passive: true });
     
-    document.addEventListener('keyboardWillHide', () => {
-      document.body.style.height = '100vh';
-    });
+    document.addEventListener('touchmove', (e) => {
+      const touchY = e.touches[0].clientY;
+      const touchDiff = touchStartY - touchY;
+      
+      // Allow natural scrolling
+      if (Math.abs(touchDiff) > 5) {
+        window.scrollBy(0, touchDiff * 0.5);
+      }
+    }, { passive: true });
   }
 };
 
-// Initialize on load
+// Initialize immediately and repeatedly
 if (typeof document !== 'undefined') {
+  initCapacitorFixes();
+  
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initCapacitorFixes);
-  } else {
-    initCapacitorFixes();
   }
+  
+  // Re-run fixes periodically for mobile apps
+  setInterval(initCapacitorFixes, 2000);
+  
+  // Re-run on route changes
+  window.addEventListener('popstate', initCapacitorFixes);
+  window.addEventListener('pushstate', initCapacitorFixes);
 }

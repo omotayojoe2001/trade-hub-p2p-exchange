@@ -34,7 +34,7 @@ const RouteGuard: React.FC<RouteGuardProps> = ({ children }) => {
       sessionStorage.setItem('redirectPath', location.pathname);
       navigate('/auth', { replace: true });
     }
-  }, [user, loading, isPublicRoute, location.pathname, navigate]);
+  }, [user, loading, isPublicRoute, navigate]);
 
   // Show loader during auth check
   if (loading) {

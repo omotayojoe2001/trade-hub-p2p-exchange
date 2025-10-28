@@ -1,19 +1,27 @@
-import type { CapacitorConfig } from '@capacitor/cli';
+import { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'app.lovable.c3c39ff4e6fb45248be11c89c6db9a26',
-  appName: 'trade-hub-p2p-exchange',
+  appId: 'com.tradehub.centralexchange',
+  appName: 'Central Exchange',
   webDir: 'dist',
   server: {
-    url: 'https://c3c39ff4-e6fb-4524-8be1-1c89c6db9a26.lovableproject.com?forceHideBadge=true',
-    cleartext: true
+    androidScheme: 'https'
   },
   plugins: {
     SplashScreen: {
-      launchShowDuration: 2000,
-      backgroundColor: "#1a1a1a",
-      showSpinner: true,
-      spinnerColor: "#fbbf24"
+      launchShowDuration: 0,
+      launchAutoHide: true,
+      backgroundColor: "#192f4a",
+      androidSplashResourceName: "splash",
+      androidScaleType: "CENTER_CROP",
+      showSpinner: false,
+      androidSpinnerStyle: "large",
+      iosSpinnerStyle: "small",
+      spinnerColor: "#ffffff",
+      splashFullScreen: true,
+      splashImmersive: true,
+      layoutName: "launch_screen",
+      useDialog: true
     }
   }
 };

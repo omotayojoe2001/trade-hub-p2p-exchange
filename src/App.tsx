@@ -208,7 +208,7 @@ const AppContent = () => {
     const currentPath = location.pathname;
     
     // Always show splash first unless already on splash
-    if (!hasShownSplash && currentPath !== '/') {
+    if (!hasShownSplash && currentPath !== '/' && currentPath !== '/splash') {
       navigate('/', { replace: true });
       return;
     }
@@ -223,7 +223,7 @@ const AppContent = () => {
     } catch (error) {
       // Ignore localStorage errors
     }
-  }, [authLoading, navigate, location.pathname]);
+  }, [authLoading, navigate]);
 
   const handleSignOut = async () => {
     try {
@@ -281,10 +281,10 @@ const AppContent = () => {
       {!isOnAuthPage && <CreditAlert />}
       
       <GlobalCodeTracker />
-      <div className="mobile-container">
+      <div className="mobile-container" style={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
         <RouteGuard>
           <RouteWrapper>
-            <div className="page-content">
+            <div className="page-content" style={{ flex: 1, overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}>
               <Routes>
             <Route path="/" element={<SplashScreen />} />
             <Route path="/home" element={<Index />} />
@@ -491,7 +491,11 @@ const AppContent = () => {
             </div>
           </RouteWrapper>
         </RouteGuard>
-        {!isOnAuthPage && <BottomNavigation />}
+        {!isOnAuthPage && (
+          <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 99999 }}>
+            <BottomNavigation />
+          </div>
+        )}
       </div>
     </>
   );
