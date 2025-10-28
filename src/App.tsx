@@ -207,8 +207,8 @@ const AppContent = () => {
     const hasShownSplash = sessionStorage.getItem('splash-shown');
     const currentPath = location.pathname;
     
-    // Always show splash first unless already on splash
-    if (!hasShownSplash && currentPath !== '/' && currentPath !== '/splash') {
+    // Only redirect to splash if not already there and haven't shown it
+    if (!hasShownSplash && currentPath !== '/' && currentPath !== '/splash' && currentPath !== '/auth') {
       navigate('/', { replace: true });
       return;
     }
@@ -223,7 +223,7 @@ const AppContent = () => {
     } catch (error) {
       // Ignore localStorage errors
     }
-  }, [authLoading, navigate]);
+  }, [authLoading]);
 
   const handleSignOut = async () => {
     try {

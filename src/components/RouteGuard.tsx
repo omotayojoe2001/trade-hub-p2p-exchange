@@ -11,9 +11,10 @@ const RouteGuard: React.FC<RouteGuardProps> = ({ children }) => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const [hasRedirected, setHasRedirected] = React.useState(false);
 
   // Public routes that don't require authentication
-  const publicRoutes = [
+  const publicRoutes = React.useMemo(() => [
     '/auth',
     '/splash',
     '/onboarding',
@@ -22,27 +23,41 @@ const RouteGuard: React.FC<RouteGuardProps> = ({ children }) => {
     '/reset-password',
     '/verify-email',
     '/vendor/login',
-    '/account-deletion-instructions'
-  ];
+    '/account-deletion-instructions',
+    '/'
+  ], []);
 
-  const isPublicRoute = publicRoutes.includes(location.pathname);
+  const isPublicRoute = React.useMemo(() => 
+    publicRoutes.includes(location.pathname), 
+    [publicRoutes, location.pathname]
+  );
 
   React.useEffect(() => {
+    // Prevent multiple redirects
+    if (hasRedirected || loading) return;
+    
     // Handle page reload authentication
-    if (!loading && !user && !isPublicRoute) {
-      // Store current path for redirect after login
+    if (!user && !isPublicRoute) {
       sessionStorage.setItem('redirectPath', location.pathname);
+      setHasRedirected(true);
       navigate('/auth', { replace: true });
     }
-  }, [user, loading, isPublicRoute, navigate]);
+  }, [user, loading, isPublicRoute, navigate, hasRedirected, location.pathname]);
+
+  // Reset redirect flag when user changes or route changes to public
+  React.useEffect(() => {
+    if (user || isPublicRoute) {
+      setHasRedirected(false);
+    }
+  }, [user, isPublicRoute]);
 
   // Show loader during auth check
   if (loading) {
     return <GlobalLoader />;
   }
 
-  // Redirect to auth if not authenticated and not on public route
-  if (!user && !isPublicRoute) {
+  // Show loader while redirecting
+  if (!user && !isPublicRoute && hasRedirected) {
     return <GlobalLoader />;
   }
 
