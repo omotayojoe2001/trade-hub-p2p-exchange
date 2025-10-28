@@ -334,7 +334,7 @@ const MyTrades = () => {
           </div>
         }
       />
-      <div className="px-4 pt-4 pb-20 max-w-7xl mx-auto">
+      <div className="px-4 pt-4 pb-20">
         <div className="flex items-center justify-between mb-4">
           <h1 className="text-2xl font-bold text-foreground">My Trades</h1>
           

@@ -212,7 +212,7 @@ const Index = () => {
   const profilePicture = profile?.avatar_url;
 
   return (
-      <div className="mobile-safe w-full min-h-screen bg-white font-['Poppins'] max-w-4xl mx-auto lg:max-w-md">
+      <div className="mobile-safe w-full min-h-screen bg-white font-['Poppins']">
         <StickyHeader 
           title="Home" 
           rightElement={
