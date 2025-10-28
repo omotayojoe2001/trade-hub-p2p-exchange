@@ -33,25 +33,27 @@ const SplashScreen = () => {
   }, []);
 
   return (
-    <div className="fixed inset-0 w-full h-full" style={{ backgroundColor: '#192f4a', zIndex: 9999 }}>
-      <div className={`w-full h-full transition-opacity duration-500 ${showContent ? 'opacity-100' : 'opacity-0'}`}>
+    <div className="fixed inset-0 w-full h-full" style={{ backgroundColor: '#192f4a', zIndex: 9999, overflow: 'hidden' }}>
+      <div className={`w-full h-full transition-opacity duration-500 ${showContent ? 'opacity-100' : 'opacity-0'}`} style={{ overflow: 'hidden' }}>
         <video 
           src="/splash-animation.mp4" 
           autoPlay
           muted
           playsInline
-          preload="auto"
+          preload="metadata"
           controls={false}
-          className="w-full h-full object-cover"
-          style={{ backgroundColor: '#192f4a' }}
+          disablePictureInPicture
+          controlsList="nodownload nofullscreen noremoteplayback"
+          className="w-full h-full object-cover pointer-events-none"
+          style={{ 
+            backgroundColor: '#192f4a',
+            outline: 'none',
+            border: 'none'
+          }}
           onEnded={handleNavigation}
           onError={handleNavigation}
-          onLoadStart={() => {
-            // Hide any video controls immediately
-            const video = document.querySelector('video');
-            if (video) {
-              video.controls = false;
-            }
+          onCanPlay={(e) => {
+            e.currentTarget.controls = false;
           }}
         />
       </div>

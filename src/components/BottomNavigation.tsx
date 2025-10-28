@@ -185,22 +185,7 @@ const BottomNavigation = () => {
 
 
   return (
-    <div 
-      className="bottom-nav bg-white border-t border-gray-200 px-4 py-2"
-      style={{ 
-        position: 'fixed', 
-        bottom: '0', 
-        left: '0', 
-        right: '0', 
-        width: '100vw',
-        height: '70px',
-        zIndex: '99999',
-        transform: 'translate3d(0,0,0)',
-        willChange: 'auto',
-        backfaceVisibility: 'hidden',
-        WebkitBackfaceVisibility: 'hidden'
-      }}
-    >
+    <div className="bottom-nav bg-white border-t border-gray-200 px-4 py-2">
       <div className="flex justify-around items-center h-full w-full px-2">
         {navItems.map((item) => {
           const isActive = location.pathname === item.path;
@@ -225,7 +210,6 @@ const BottomNavigation = () => {
                   ? 'text-primary bg-primary/10' 
                   : 'text-muted-foreground hover:text-primary hover:bg-accent/50'
               }`}
-              style={{ textDecoration: 'none !important', border: 'none !important' }}
               onClick={() => {
                 if (item.path === '/buy-sell' && hasNewTradeRequest) {
                   setHasNewTradeRequest(false);

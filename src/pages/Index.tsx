@@ -225,11 +225,9 @@ const Index = () => {
           }
         />
         <div className="page-content pb-0">
-      {/* White space at top */}
-      <div className="h-12"></div>
       
       {/* Header */}
-      <div className="px-4 pb-4">
+      <div className="px-4 pb-4 pt-2">
         <div className="flex justify-between items-center">
           <h1 className="text-lg font-medium text-gray-900">
             Good Morning, {firstName}

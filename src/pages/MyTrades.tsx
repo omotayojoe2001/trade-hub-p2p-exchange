@@ -334,8 +334,8 @@ const MyTrades = () => {
           </div>
         }
       />
-      <div className="px-4 pt-6 pb-20 max-w-7xl mx-auto">
-        <div className="flex items-center justify-between mb-6">
+      <div className="px-4 pt-4 pb-20 max-w-7xl mx-auto">
+        <div className="flex items-center justify-between mb-4">
           <h1 className="text-2xl font-bold text-foreground">My Trades</h1>
           
           <div className="flex items-center space-x-3">
@@ -383,7 +383,7 @@ const MyTrades = () => {
         </div>
 
         {/* Filter Tabs */}
-        <div className="flex space-x-2 mb-6">
+        <div className="flex space-x-2 mb-4">
           {['All', 'Ongoing', 'Completed', 'Cancelled', 'Disputes'].map((status) => (
             <button
               key={status}

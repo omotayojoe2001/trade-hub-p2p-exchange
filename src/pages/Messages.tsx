@@ -384,11 +384,11 @@ const Messages = () => {
               return (
                 <div 
                   key={conversation.id} 
-                  className="border-b border-gray-100 p-4 hover:bg-gray-50 cursor-pointer"
+                  className="border-b border-gray-100 px-4 py-2 hover:bg-gray-50 cursor-pointer"
                   onClick={() => setSelectedConversation(conversation)}
                 >
                   <div className="flex items-center space-x-3">
-                    <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center overflow-hidden">
+                    <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center overflow-hidden">
                       {conversation.other_user?.avatar_url ? (
                         <img 
                           src={conversation.other_user.avatar_url} 
@@ -396,7 +396,7 @@ const Messages = () => {
                           className="w-full h-full object-cover"
                         />
                       ) : (
-                        <User className="w-6 h-6 text-blue-600" />
+                        <User className="w-5 h-5 text-blue-600" />
                       )}
                     </div>
                     <div className="flex-1">
@@ -405,7 +405,7 @@ const Messages = () => {
                           <p className="font-medium text-gray-900">
                             {conversation.other_user?.display_name || 'User'}
                           </p>
-                          <p className="text-sm text-gray-600 mt-1">
+                          <p className="text-xs text-gray-600">
                             {conversation.last_message?.content || 'No messages yet'}
                           </p>
                         </div>
@@ -422,7 +422,7 @@ const Messages = () => {
                           )}
                         </div>
                       </div>
-                      <span className="text-xs bg-gray-100 px-2 py-1 rounded-full text-gray-600 mt-2 inline-block">
+                      <span className="text-xs bg-gray-100 px-2 py-0.5 rounded-full text-gray-600 mt-1 inline-block">
                         {contextLabel}
                       </span>
                     </div>

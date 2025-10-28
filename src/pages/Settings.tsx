@@ -165,12 +165,12 @@ const Settings = () => {
       </div>
 
       {/* Settings List Section */}
-      <div className="px-4 mb-6">
+      <div className="px-4 mb-4">
         <div className="bg-white rounded-xl shadow-sm border border-gray-100">
           {settingsOptions.map((option, index) => {
             if (option.hasToggle) {
               return (
-                <div key={index} className={`flex items-center justify-between p-4 ${index !== settingsOptions.length - 1 ? 'border-b border-gray-200' : ''}`}>
+                <div key={index} className={`flex items-center justify-between p-3 ${index !== settingsOptions.length - 1 ? 'border-b border-gray-200' : ''}`}>
                   <div className="flex items-center">
                     {option.icon}
                     <div className="ml-3">
@@ -190,7 +190,7 @@ const Settings = () => {
               <Link
                 key={index}
                 to={option.link || '#'}
-                className={`flex items-center justify-between p-4 hover:bg-gray-50 transition-colors ${index !== settingsOptions.length - 1 ? 'border-b border-gray-200' : ''}`}
+                className={`flex items-center justify-between p-3 hover:bg-gray-50 transition-colors ${index !== settingsOptions.length - 1 ? 'border-b border-gray-200' : ''}`}
               >
                 <div className="flex items-center">
                   {option.icon}

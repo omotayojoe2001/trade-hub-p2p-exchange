@@ -385,9 +385,9 @@ const ProfileSettings = () => {
         </div>
       </div>
 
-      <div className="p-4 space-y-6">
+      <div className="p-4 space-y-3">
         {/* Profile Photo */}
-        <Card className="bg-white p-6">
+        <Card className="bg-white p-4">
           <div className="flex flex-col items-center mb-4">
             <div className="relative mb-4">
               <div className="w-24 h-24 bg-blue-500 rounded-full flex items-center justify-center overflow-hidden mx-auto">
@@ -416,7 +416,7 @@ const ProfileSettings = () => {
         </Card>
 
         {/* Personal Information */}
-        <Card className="bg-white p-6">
+        <Card className="bg-white p-4">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Personal Information</h3>
           
           <div className="space-y-4">
@@ -547,7 +547,7 @@ const ProfileSettings = () => {
 
 
         {/* Account Status */}
-        <Card className="bg-card p-6">
+        <Card className="bg-card p-4">
           <h3 className="text-lg font-semibold text-foreground mb-4">Account Status</h3>
           
           <div className="space-y-3">
@@ -574,7 +574,7 @@ const ProfileSettings = () => {
         </Card>
 
         {/* Danger Zone */}
-        <Card className="bg-white p-6 border-red-200">
+        <Card className="bg-white p-4 border-red-200">
           <h3 className="text-lg font-semibold text-red-600 mb-4">Danger Zone</h3>
           
           <div className="space-y-3">

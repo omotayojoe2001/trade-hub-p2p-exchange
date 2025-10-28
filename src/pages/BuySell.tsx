@@ -137,7 +137,7 @@ const BuySell = () => {
       </div>
 
       {/* Main Action Cards */}
-      <div className="px-4 space-y-3 mb-4">
+      <div className="px-4 space-y-2 mb-3">
         {/* Buy Crypto Card */}
         <div 
           className="w-full bg-white border border-[#E5E7EB] rounded-xl p-4 cursor-pointer card-hover active:scale-98 transition-all duration-150"
@@ -234,7 +234,7 @@ const BuySell = () => {
       </div>
 
       {/* Helper Text / Guidance */}
-      <div className="px-4 mb-4">
+      <div className="px-4 mb-3">
         <p className="text-sm text-[#6B7280] mb-2">
           Not sure? If funding with Naira, start with Buy Crypto.
         </p>
@@ -244,7 +244,7 @@ const BuySell = () => {
       </div>
 
       {/* Trade Requests Section */}
-      <div className="px-4 mb-4">
+      <div className="px-4 mb-3">
         <div className="flex items-center justify-between mb-3">
           <h4 className="text-base font-semibold text-gray-900">Trade Requests</h4>
           <button 
