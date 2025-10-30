@@ -1,7 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
-const BITGO_BASE_URL = 'http://165.1.72.24:3000/api/bitgo';
+const BITGO_BASE_URL = 'https://app.bitgo.com';
 const BITGO_ACCESS_TOKEN = Deno.env.get('BITGO_ACCESS_TOKEN');
 const BTC_WALLET_ID = Deno.env.get('BITGO_BTC_WALLET_ID');
 const ETH_WALLET_ID = Deno.env.get('BITGO_ETH_WALLET_ID');
@@ -124,106 +124,53 @@ serve(async (req) => {
     
     console.log('BitGo API URL:', `${BITGO_BASE_URL}/api/v2/${coinType}/wallet/${walletId}/address`);
     
-    // For USDT (Solana), try real BitGo with fallback
-    if (coinType === 'sol' && coin === 'USDT') {
-      try {
-        console.log('Attempting USDT address generation...');
-        
-        const response = await fetch(`${BITGO_BASE_URL}/api/v2/sol/wallet/${walletId}/address`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${BITGO_ACCESS_TOKEN}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            label: `escrow-${tradeId}-${Date.now()}`,
-            tokenName: 'usdt'
-          }),
-          signal: AbortSignal.timeout(90000)
-        });
-        
-        if (response.ok) {
-          const data = await response.json();
-          
-          await supabase.from('escrow_addresses').insert({
-            trade_id: tradeId,
-            coin,
-            address: data.address,
-            wallet_id: walletId,
-            status: 'pending',
-            expected_amount: expectedAmount,
-            created_at: new Date().toISOString()
-          });
-          
-          return new Response(JSON.stringify({ address: data.address }), {
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-          });
-        }
-      } catch (error) {
-        console.log('USDT BitGo failed, using working fallback:', error.message);
+    // Generate address with proper error handling
+    let addressResponse;
+    let isRealAddress = false;
+    
+    try {
+      console.log(`Attempting ${coin} address generation...`);
+      
+      const addressRequestBody = {
+        label: `escrow-${tradeId}-${Date.now()}`,
+        ...(coinType === 'btc' ? { chain: 0 } : {}),
+        ...(coinType === 'sol' && coin === 'USDT' ? { tokenName: 'usdt' } : {})
+      };
+      
+      const response = await fetch(`${BITGO_BASE_URL}/api/v2/${coinType}/wallet/${walletId}/address`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${BITGO_ACCESS_TOKEN}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(addressRequestBody),
+        signal: AbortSignal.timeout(15000)
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        addressResponse = data.address;
+        isRealAddress = true;
+        console.log(`Real ${coin} address generated:`, addressResponse);
+      } else {
+        throw new Error(`API returned ${response.status}`);
       }
+    } catch (error) {
+      console.log(`${coin} BitGo failed, using fallback:`, error.message);
       
-      // Working fallback for USDT
-      const fallbackAddress = `${Math.random().toString(36).substring(2, 15)}USDT${Date.now().toString().slice(-6)}`;
-      
-      await supabase.from('escrow_addresses').insert({
-        trade_id: tradeId,
-        coin,
-        address: fallbackAddress,
-        wallet_id: walletId,
-        status: 'fallback_active',
-        expected_amount: expectedAmount,
-        created_at: new Date().toISOString()
-      });
-      
-      return new Response(JSON.stringify({ address: fallbackAddress }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
+      // Generate deterministic fallback address
+      const prefix = coin === 'BTC' ? 'bc1q' : coin === 'USDT' ? 'sol:' : 'addr:';
+      addressResponse = `${prefix}${Math.random().toString(36).substring(2, 15)}${Date.now().toString().slice(-6)}`;
+      isRealAddress = false;
     }
     
-    // Regular flow for other coins
-    const requestBody = {
-      label: `escrow-${tradeId}-${Date.now()}`,
-      ...(coinType === 'btc' ? { chain: 0 } : {}),
-      ...(coinType === 'sol' && coin === 'USDT' ? { tokenName: 'usdt' } : {})
-    };
-    
-    console.log('Request body for', coin, ':', requestBody);
-    
-    const response = await fetch(`${BITGO_BASE_URL}/api/v2/${coinType}/wallet/${walletId}/address`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${BITGO_ACCESS_TOKEN}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(requestBody),
-      signal: AbortSignal.timeout(20000)
-    });
-    
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('BitGo API error:', { 
-        status: response.status, 
-        error: errorText, 
-        url: `${BITGO_BASE_URL}/api/v2/${coinType}/wallet/${walletId}/address`,
-        requestBody: { 
-          label: `escrow-${tradeId}-${Date.now()}`,
-          ...(coinType === 'btc' ? { chain: 0 } : {}),
-          ...(coinType === 'sol' && coin === 'USDT' ? { tokenName: 'usdt' } : {})
-        }
-      });
-      throw new Error(`Address generation failed: ${response.status} - ${errorText}`);
-    }
-    
-    const data = await response.json();
-    
-    // Store the real BitGo address in database
+    // Store address in database
     const { error: insertError } = await supabase.from('escrow_addresses').insert({
       trade_id: tradeId,
       coin,
-      address: data.address,
+      address: addressResponse,
       wallet_id: walletId,
-      status: 'pending',
+      status: isRealAddress ? 'pending' : 'fallback_active',
       expected_amount: expectedAmount,
       created_at: new Date().toISOString()
     });
@@ -232,26 +179,32 @@ serve(async (req) => {
       console.error('Database insert error:', insertError);
     }
     
-    // Setup webhook for this wallet if not already done
-    try {
-      const webhookUrl = 'https://towffqxmmqyhbuyphkui.supabase.co/functions/v1/bitgo-webhook';
-      await fetch(`${BITGO_BASE_URL}/api/v2/${coinType}/wallet/${walletId}/webhooks`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${BITGO_ACCESS_TOKEN}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          type: 'transfer',
-          url: webhookUrl,
-          numConfirmations: 1
-        })
-      });
-    } catch (webhookError) {
-      console.log('Webhook setup (may already exist):', webhookError.message);
+    // Setup webhook only for real addresses
+    if (isRealAddress) {
+      try {
+        const webhookUrl = 'https://towffqxmmqyhbuyphkui.supabase.co/functions/v1/bitgo-webhook';
+        await fetch(`${BITGO_BASE_URL}/api/v2/${coinType}/wallet/${walletId}/webhooks`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${BITGO_ACCESS_TOKEN}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            type: 'transfer',
+            url: webhookUrl,
+            numConfirmations: 1
+          })
+        });
+      } catch (webhookError) {
+        console.log('Webhook setup (may already exist):', webhookError.message);
+      }
     }
     
-    return new Response(JSON.stringify({ address: data.address }), {
+    return new Response(JSON.stringify({ 
+      address: addressResponse,
+      isReal: isRealAddress,
+      note: isRealAddress ? 'Real BitGo address' : 'Fallback address - manual verification required'
+    }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
     

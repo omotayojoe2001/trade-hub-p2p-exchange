@@ -357,7 +357,19 @@ const Messages = () => {
         </div>
 
         <div className="">
-          {loading ? (
+          {/* Show page immediately with loading state */}
+          {conversations.length === 0 && !loading ? (
+            <div className="p-6 text-center">
+              <MessageCircle className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">No Messages Yet</h3>
+              <p className="text-gray-600 mb-4">
+                Your trade messages will appear here when you start trading.
+              </p>
+              <Button asChild>
+                <Link to="/buy-sell">Start Trading</Link>
+              </Button>
+            </div>
+          ) : loading ? (
             <div className="text-center py-8">
               <div className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-2" />
               <p className="text-gray-600">Loading conversations...</p>

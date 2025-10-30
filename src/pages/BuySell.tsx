@@ -131,7 +131,7 @@ const BuySell = () => {
             </button>
           )}
           <button onClick={() => navigate('/notifications')} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
-            <Bell size={20} className="text-gray-600" />
+            <Bell size={20} className="text-white" />
           </button>
         </div>
       </div>

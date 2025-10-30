@@ -369,7 +369,7 @@ const CreditsPurchase = () => {
                     key={pkg.credits}
                     className={`p-4 border rounded-lg cursor-pointer transition-all ${
                       !isCustom && selectedPackage.credits === pkg.credits
-                        ? 'border-blue-500 bg-blue-50'
+                        ? 'border-blue-500 bg-blue-500'
                         : 'border-gray-200 hover:border-gray-300'
                     }`}
                     onClick={() => {
@@ -380,25 +380,31 @@ const CreditsPurchase = () => {
                     <div className="flex items-center justify-between">
                       <div>
                         <div className="flex items-center gap-2">
-                          <span className="font-semibold">{pkg.credits} Credits</span>
-                          <span className="text-green-600 font-medium">${pkg.usd}</span>
+                          <span className={`font-semibold ${
+                            !isCustom && selectedPackage.credits === pkg.credits ? 'text-black' : 'text-gray-900'
+                          }`}>{pkg.credits} Credits</span>
+                          <span className={`font-medium ${
+                            !isCustom && selectedPackage.credits === pkg.credits ? 'text-black' : 'text-green-600'
+                          }`}>${pkg.usd}</span>
                           {pkg.popular && (
                             <span className="px-2 py-1 bg-orange-100 text-orange-600 text-xs rounded-full">
                               Popular
                             </span>
                           )}
                         </div>
-                        <div className="text-sm text-gray-600 mt-1">
+                        <div className={`text-sm mt-1 ${
+                          !isCustom && selectedPackage.credits === pkg.credits ? 'text-black' : 'text-gray-600'
+                        }`}>
                           {pkg.btc.toFixed(8)} BTC • {pkg.usdt?.toFixed(2)} USDT
                         </div>
                       </div>
                       <div className={`w-4 h-4 rounded-full border-2 ${
                         !isCustom && selectedPackage.credits === pkg.credits
-                          ? 'border-blue-500 bg-blue-500'
+                          ? 'border-white bg-blue-500'
                           : 'border-gray-300'
                       }`}>
                         {!isCustom && selectedPackage.credits === pkg.credits && (
-                          <div className="w-full h-full rounded-full bg-white scale-50" />
+                          <div className="w-2 h-2 rounded-full bg-white mx-auto mt-1" />
                         )}
                       </div>
                     </div>
@@ -465,26 +471,34 @@ const CreditsPurchase = () => {
                   <div
                     className={`p-4 border rounded-lg cursor-pointer text-center ${
                       selectedCrypto === 'BTC'
-                        ? 'border-blue-500 bg-blue-50'
+                        ? 'border-blue-500 bg-blue-500 text-white'
                         : 'border-gray-200 hover:border-gray-300'
                     }`}
                     onClick={() => setSelectedCrypto('BTC')}
                   >
-                    <div className="font-semibold">Bitcoin</div>
-                    <div className="text-sm text-gray-600 mt-1">
+                    <div className={`font-semibold ${
+                      selectedCrypto === 'BTC' ? 'text-black' : 'text-gray-900'
+                    }`}>Bitcoin</div>
+                    <div className={`text-sm mt-1 ${
+                      selectedCrypto === 'BTC' ? 'text-black' : 'text-gray-600'
+                    }`}>
                       {getCurrentPackage().btc?.toFixed(8) || '0.00000000'} BTC
                     </div>
                   </div>
                   <div
                     className={`p-4 border rounded-lg cursor-pointer text-center ${
                       selectedCrypto === 'USDT'
-                        ? 'border-blue-500 bg-blue-50'
+                        ? 'border-blue-500 bg-blue-500 text-white'
                         : 'border-gray-200 hover:border-gray-300'
                     }`}
                     onClick={() => setSelectedCrypto('USDT')}
                   >
-                    <div className="font-semibold">USDT (Solana)</div>
-                    <div className="text-sm text-gray-600 mt-1">
+                    <div className={`font-semibold ${
+                      selectedCrypto === 'USDT' ? 'text-black' : 'text-gray-900'
+                    }`}>USDT (Solana)</div>
+                    <div className={`text-sm mt-1 ${
+                      selectedCrypto === 'USDT' ? 'text-black' : 'text-gray-600'
+                    }`}>
                       {getCurrentPackage().usdt?.toFixed(2) || '0.00'} USDT
                     </div>
                   </div>
@@ -532,8 +546,8 @@ const CreditsPurchase = () => {
                       <div className="bg-white p-4 rounded-lg shadow-sm">
                         <img src={qrCodeUrl} alt="Payment QR Code" className="w-48 h-48" />
                         <div className="text-center mt-2">
-                          <div className="flex items-center justify-center text-gray-600 text-xs">
-                            <QrCode size={12} className="mr-1" />
+                          <div className="flex items-center justify-center text-white text-xs bg-gray-800 px-2 py-1 rounded">
+                            <QrCode size={12} className="mr-1 text-white" />
                             Scan to pay
                           </div>
                         </div>

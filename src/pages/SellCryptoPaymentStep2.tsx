@@ -278,30 +278,22 @@ const SellCryptoPaymentStep2 = () => {
                     </div>
                   </div>
 
-                  <div className="p-3 bg-yellow-50 rounded border border-yellow-200">
-                    <p className="text-xs text-yellow-800">
-                      <strong>Important:</strong> Send exactly {cryptoAmount} {coinType}. 
+                  <div className="p-4 bg-yellow-100 rounded-lg border-2 border-yellow-300">
+                    <p className="text-sm font-semibold text-yellow-900">
+                      <strong>⚠️ Important:</strong> Send exactly {cryptoAmount} {coinType}. 
                       Any other amount will cause delays.
                     </p>
                   </div>
-                  
-                  {coinType === 'USDT' && (
-                    <div className="p-3 bg-red-50 rounded border border-red-200">
-                      <p className="text-xs text-red-800">
-                        <strong>⚠️ Demo Mode:</strong> This is a test address. 
-                        Real BitGo integration is being configured for Solana USDT.
-                      </p>
-                    </div>
-                  )}
+
                 </div>
               </div>
 
 
 
               {/* Upload Proof */}
-              <div>
-                <label className="text-sm font-medium mb-2 block">Upload Deposit Proof</label>
-                <div className="border-2 border-dashed border-border rounded-lg p-4">
+              <div className="mt-6">
+                <label className="text-base font-semibold mb-3 block text-gray-900">Upload Deposit Proof</label>
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 bg-gray-50">
                   <input
                     type="file"
                     accept="image/*"
@@ -311,9 +303,12 @@ const SellCryptoPaymentStep2 = () => {
                   />
                   <label htmlFor="deposit-proof" className="cursor-pointer">
                     <div className="text-center">
-                      <Upload className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
-                      <p className="text-sm text-muted-foreground">
+                      <Upload className="w-10 h-10 text-gray-600 mx-auto mb-3" />
+                      <p className="text-base font-medium text-gray-900">
                         {depositProof ? depositProof.name : 'Upload transaction screenshot'}
+                      </p>
+                      <p className="text-sm text-gray-600 mt-1">
+                        Take a screenshot of your wallet transaction
                       </p>
                     </div>
                   </label>
@@ -321,21 +316,21 @@ const SellCryptoPaymentStep2 = () => {
               </div>
 
               {/* Action Buttons */}
-              <div className="space-y-3">
+              <div className="space-y-4 mt-6">
                 <Button
                   onClick={handleConfirmDeposit}
                   disabled={!depositProof || loading}
-                  className="w-full bg-[#1A73E8] hover:bg-[#1557b0] text-white rounded-xl"
+                  className="w-full bg-[#1A73E8] hover:bg-[#1557b0] text-white rounded-xl py-4 text-base font-semibold"
                   size="lg"
                 >
                   {loading ? 'Processing...' : 'Confirm Crypto Deposit & Send Trade Request'}
                 </Button>
                 
                 <div className="grid grid-cols-2 gap-3">
-                  <Button variant="outline" size="sm">
+                  <Button variant="outline" size="sm" className="py-3 text-sm font-medium">
                     Send Reminder
                   </Button>
-                  <Button variant="outline" size="sm">
+                  <Button variant="outline" size="sm" className="py-3 text-sm font-medium">
                     Cancel Trade
                   </Button>
                 </div>

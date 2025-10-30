@@ -166,7 +166,7 @@ const Settings = () => {
 
       {/* Settings List Section */}
       <div className="px-4 mb-4">
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100">
+        <div className="bg-white rounded-xl shadow-lg border border-gray-100">
           {settingsOptions.map((option, index) => {
             if (option.hasToggle) {
               return (
