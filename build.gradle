@@ -1,9 +1,9 @@
 android {
-    namespace 'com.tradehub.centralexchange'
+    namespace 'com.centralexchange.global'
     compileSdk 35
     
     defaultConfig {
-        applicationId "com.tradehub.centralexchange"
+        applicationId "com.centralexchange.global"
         minSdk 24
         targetSdk 35
         versionCode 1
