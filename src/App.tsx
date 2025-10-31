@@ -46,7 +46,7 @@ import AccountDeletionInstructions from "./pages/AccountDeletionInstructions";
 import Security from "./pages/Security";
 import PaymentMethods from "./pages/PaymentMethods";
 import HelpSupport from "./pages/HelpSupport";
-import SplashScreen from "./pages/SplashScreen";
+
 import OnboardingSlides from "./pages/OnboardingSlides";
 import EmailVerification from "./pages/EmailVerification";
 import ForgotPassword from "./pages/ForgotPassword";
@@ -158,6 +158,7 @@ import GlobalLoader from './components/GlobalLoader';
 import ErrorBoundary from './utils/errorBoundary';
 import RouteGuard from './components/RouteGuard';
 import BottomNavigation from './components/BottomNavigation';
+import VendorBottomNavigation from './components/vendor/VendorBottomNavigation';
 import { usePageLoader } from './hooks/usePageLoader';
 
 const queryClient = new QueryClient();
@@ -169,8 +170,8 @@ const AppContent = () => {
   const navigate = useNavigate();
   const isLoading = usePageLoader();
 
-  // Check if user is on auth-related pages or splash screen
-  const isOnAuthPage = ['/auth', '/onboarding', '/splash', '/email-verification', '/forgot-password', '/reset-password', '/'].includes(location.pathname);
+  // Check if user is on auth-related pages
+  const isOnAuthPage = ['/auth', '/onboarding', '/email-verification', '/forgot-password', '/reset-password', '/'].includes(location.pathname);
   
   // Handle page reload protection
   React.useEffect(() => {
@@ -200,48 +201,29 @@ const AppContent = () => {
     }
   }, [user, saveUser]);
 
-  // Always show splash on app open
+  // Direct navigation without splash
   React.useEffect(() => {
     if (authLoading) return;
     
-    const hasShownSplash = sessionStorage.getItem('splash-shown');
     const currentPath = location.pathname;
     
-    // Only redirect to splash if not already there and haven't shown it
-    if (!hasShownSplash && currentPath !== '/' && currentPath !== '/splash' && currentPath !== '/auth') {
-      navigate('/', { replace: true });
-      return;
-    }
-    
-    // Clear logout reason on page load
-    try {
-      const logoutReason = localStorage.getItem('logout-reason');
-      if (logoutReason) {
-        localStorage.removeItem('logout-reason');
-        sessionStorage.removeItem('splash-shown');
+    // Redirect root to appropriate page
+    if (currentPath === '/') {
+      if (user) {
+        navigate('/home', { replace: true });
+      } else {
+        navigate('/auth', { replace: true });
       }
-    } catch (error) {
-      // Ignore localStorage errors
     }
-  }, [authLoading]);
+  }, [authLoading, user, navigate, location.pathname]);
 
   const handleSignOut = async () => {
     try {
-      // Clear splash flag and show splash before logout
-      sessionStorage.removeItem('splash-shown');
-      localStorage.setItem('logout-reason', 'user-logout');
-      
-      // Sign out first, then navigate
       await signOut();
       clearStoredUser();
-      
-      // Force navigation after logout
-      setTimeout(() => {
-        navigate('/', { replace: true });
-      }, 100);
+      navigate('/auth', { replace: true });
     } catch (error) {
-      // Force navigation even if logout fails
-      navigate('/', { replace: true });
+      navigate('/auth', { replace: true });
     }
   };
 
@@ -286,7 +268,7 @@ const AppContent = () => {
           <RouteWrapper>
             <div className="page-content" style={{ flex: 1, overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}>
               <Routes>
-            <Route path="/" element={<SplashScreen />} />
+            <Route path="/" element={user ? <Index /> : <Auth />} />
             <Route path="/home" element={<Index />} />
             <Route path="/my-orders" element={<MyOrders />} />
             <Route path="/auth" element={<Auth />} />
@@ -303,7 +285,7 @@ const AppContent = () => {
             <Route path="/security" element={<Security />} />
             <Route path="/payment-methods" element={<PaymentMethods />} />
             <Route path="/help-support" element={<HelpSupport />} />
-            <Route path="/splash" element={<SplashScreen />} />
+
             <Route path="/onboarding" element={<OnboardingSlides />} />
             <Route path="/email-verification" element={<EmailVerification />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
@@ -493,7 +475,11 @@ const AppContent = () => {
         </RouteGuard>
         {!isOnAuthPage && (
           <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 99999 }}>
-            <BottomNavigation />
+            {location.pathname.startsWith('/vendor/') ? (
+              <VendorBottomNavigation />
+            ) : (
+              <BottomNavigation />
+            )}
           </div>
         )}
       </div>

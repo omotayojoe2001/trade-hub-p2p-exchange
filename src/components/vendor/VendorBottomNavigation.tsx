@@ -87,7 +87,7 @@ const VendorBottomNavigation = () => {
 
   return (
     <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-6 py-3 z-50 shadow-lg transform-none will-change-auto" style={{ position: 'fixed', transform: 'none' }}>
-      <div className="flex justify-around items-center max-w-md mx-auto">
+      <div className="flex justify-between items-center max-w-md mx-auto px-4">
         {navItems.map((item) => {
           const Icon = item.icon;
           const active = isActive(item.path);
@@ -96,7 +96,7 @@ const VendorBottomNavigation = () => {
             <button
               key={item.id}
               onClick={() => navigate(item.path)}
-              className={`flex flex-col items-center space-y-1 p-2 rounded-lg min-w-[60px] ${
+              className={`flex flex-col items-center space-y-1 p-2 min-w-[60px] ${
                 active 
                   ? 'text-black' 
                   : 'text-gray-600 hover:text-black'

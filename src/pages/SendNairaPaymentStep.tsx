@@ -323,31 +323,31 @@ const SendNairaPaymentStep = () => {
         {orderData && (
           <Card className="mb-6 border-blue-200 bg-blue-50">
             <CardHeader>
-              <CardTitle className="text-lg text-blue-900">Order Summary</CardTitle>
+              <CardTitle className="text-lg text-white">Order Summary</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="flex justify-between">
-                <span className="text-blue-800">Service Type:</span>
-                <span className="font-semibold text-blue-900">
+                <span className="text-white">Service Type:</span>
+                <span className="font-semibold text-white">
                   {orderData.deliveryMethod === 'pickup' ? 'USD Pickup' : 'USD Delivery'}
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-blue-800">Naira Amount:</span>
-                <span className="font-semibold text-blue-900">₦{parseFloat(orderData.nairaAmount).toLocaleString()}</span>
+                <span className="text-white">Naira Amount:</span>
+                <span className="font-semibold text-white">₦{parseFloat(orderData.nairaAmount).toLocaleString()}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-blue-800">USD Amount:</span>
-                <span className="font-semibold text-blue-900">${orderData.usdAmount}</span>
+                <span className="text-white">USD Amount:</span>
+                <span className="font-semibold text-white">${orderData.usdAmount}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-blue-800">Credits Charged:</span>
+                <span className="text-white">Credits Charged:</span>
                 <span className="font-semibold text-red-600">{orderData.creditsRequired || Math.ceil(parseFloat(orderData.usdAmount) / 10)} credits</span>
               </div>
               <hr className="border-blue-200" />
               <div className="flex justify-between text-lg">
-                <span className="text-blue-800 font-medium">Total to Pay:</span>
-                <span className="font-bold text-blue-900">₦{parseFloat(orderData.nairaAmount).toLocaleString()}</span>
+                <span className="text-white font-medium">Total to Pay:</span>
+                <span className="font-bold text-white">₦{parseFloat(orderData.nairaAmount).toLocaleString()}</span>
               </div>
             </CardContent>
           </Card>
@@ -466,6 +466,7 @@ const SendNairaPaymentStep = () => {
                 type="file"
                 accept="image/*,application/pdf"
                 onChange={(e) => {
+                  e.preventDefault();
                   const file = e.target.files?.[0];
                   if (file) {
                     setPaymentProof(file);
@@ -474,6 +475,7 @@ const SendNairaPaymentStep = () => {
                 }}
                 className="hidden"
                 id="payment-proof"
+                capture="environment"
               />
               <label
                 htmlFor="payment-proof"
