@@ -38,6 +38,23 @@ const SendNairaPaymentStep = () => {
   const { orderData } = location.state || {};
 
   useEffect(() => {
+    // Try to restore state from sessionStorage first
+    const savedState = sessionStorage.getItem('paymentPageState');
+    if (savedState) {
+      try {
+        const parsed = JSON.parse(savedState);
+        if (parsed.orderData && !orderData) {
+          // Restore from saved state
+          setBankDetails(parsed.bankDetails);
+          setPaymentProofUrl(parsed.paymentProofUrl || '');
+          setLoading(false);
+          return;
+        }
+      } catch (e) {
+        console.error('Failed to parse saved state:', e);
+      }
+    }
+    
     if (!orderData) {
       navigate('/send-naira-get-usd');
       return;
@@ -92,7 +109,13 @@ const SendNairaPaymentStep = () => {
       return;
     }
     
-    console.log('Starting file upload:', file.name, file.type, file.size);
+    // Store current state to prevent loss on reload
+    const currentState = {
+      orderData,
+      bankDetails,
+      paymentProofUrl
+    };
+    sessionStorage.setItem('paymentPageState', JSON.stringify(currentState));
     
     try {
       setUploading(true);
@@ -111,9 +134,6 @@ const SendNairaPaymentStep = () => {
       const fileExt = file.name.split('.').pop();
       const fileName = `${user.id}/payment-proof-${Date.now()}.${fileExt}`;
       
-      console.log('Uploading to:', fileName);
-      
-      // Try uploading to profiles bucket first (fallback)
       const { data, error } = await supabase.storage
         .from('profiles')
         .upload(fileName, file, {
@@ -121,26 +141,23 @@ const SendNairaPaymentStep = () => {
           upsert: false
         });
         
-      if (error) {
-        console.error('Storage upload error:', error);
-        throw error;
-      }
-      
-      console.log('Upload successful:', data);
+      if (error) throw error;
       
       const { data: urlData } = supabase.storage
         .from('profiles')
         .getPublicUrl(fileName);
         
       setPaymentProofUrl(urlData.publicUrl);
-      console.log('Public URL:', urlData.publicUrl);
+      
+      // Update stored state
+      const updatedState = { ...currentState, paymentProofUrl: urlData.publicUrl };
+      sessionStorage.setItem('paymentPageState', JSON.stringify(updatedState));
       
       toast({
         title: "Upload successful",
         description: "Payment proof uploaded successfully",
       });
     } catch (error: any) {
-      console.error('Upload error:', error);
       toast({
         title: "Upload failed",
         description: error.message || "Failed to upload payment proof",
@@ -466,16 +483,19 @@ const SendNairaPaymentStep = () => {
                 type="file"
                 accept="image/*,application/pdf"
                 onChange={(e) => {
-                  e.preventDefault();
                   const file = e.target.files?.[0];
                   if (file) {
                     setPaymentProof(file);
-                    handleFileUpload(file);
+                    // Use setTimeout to prevent immediate navigation
+                    setTimeout(() => {
+                      handleFileUpload(file);
+                    }, 100);
                   }
+                  // Reset input to allow same file selection
+                  e.target.value = '';
                 }}
                 className="hidden"
                 id="payment-proof"
-                capture="environment"
               />
               <label
                 htmlFor="payment-proof"
