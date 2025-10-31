@@ -159,14 +159,26 @@ const SendNairaDetailsStep = () => {
   };
 
   const pickupLocations = [
-    'Victoria Island, Lagos',
-    'Ikeja, Lagos',
-    'Lekki, Lagos',
-    'Surulere, Lagos',
-    'Abuja Central',
-    'Wuse 2, Abuja',
-    'Port Harcourt GRA',
-    'Kano Central'
+    'Lagos Island',
+    'Victoria Island',
+    'Ikoyi',
+    'Lekki Peninsula',
+    'Surulere',
+    'Badagry',
+    'Eko Atlantic City',
+    'Onikan',
+    'Apapa',
+    'Mile 2',
+    'Yaba',
+    'Ikeja',
+    'Ajah',
+    'Makoko',
+    'Ikorodu',
+    'Festac Town',
+    'Ejigbo',
+    'Mushin',
+    'Agbara',
+    'Shomolu'
   ];
 
   return (

@@ -10,8 +10,8 @@
     --card-foreground: 222.2 84% 4.9%;
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    --primary: 0 0% 0%;
+    --primary-foreground: 0 0% 100%;
     --secondary: 210 40% 96%;
     --secondary-foreground: 222.2 84% 4.9%;
     --muted: 210 40% 96%;
@@ -22,7 +22,7 @@
     --destructive-foreground: 210 40% 98%;
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --ring: 0 0% 0%;
     --radius: 0.5rem;
   }
 
@@ -33,8 +33,8 @@
     --card-foreground: 210 40% 98%;
     --popover: 222.2 84% 4.9%;
     --popover-foreground: 210 40% 98%;
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+    --primary: 0 0% 0%;
+    --primary-foreground: 0 0% 100%;
     --secondary: 217.2 32.6% 17.5%;
     --secondary-foreground: 210 40% 98%;
     --muted: 217.2 32.6% 17.5%;
@@ -45,179 +45,116 @@
     --destructive-foreground: 210 40% 98%;
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
+    --ring: 0 0% 0%;
   }
 }
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
-*/
-
 @layer base {
   :root {
-    /* Premium gradient backgrounds */
     --background: 240 100% 99%;
     --background-secondary: 245 60% 97%;
     --foreground: 224 71% 4%;
-
-    /* Enhanced card system */
     --card: 0 0% 100%;
     --card-foreground: 224 71% 4%;
     --card-hover: 240 20% 98%;
-
-    /* Elegant popover */
     --popover: 0 0% 100%;
     --popover-foreground: 224 71% 4%;
-
-    /* Premium primary palette */
-    --primary: 217 91% 60%;
+    --primary: 0 0% 0%;
     --primary-foreground: 0 0% 100%;
-    --primary-variant: 220 70% 50%;
-    --primary-light: 217 91% 85%;
-
-    /* Sophisticated secondary */
+    --primary-variant: 0 0% 20%;
+    --primary-light: 0 0% 85%;
     --secondary: 240 30% 96%;
     --secondary-foreground: 224 71% 4%;
     --secondary-hover: 240 30% 92%;
-
-    /* Refined muted tones */
     --muted: 240 20% 96%;
     --muted-foreground: 215 25% 35%;
-
-    /* Premium accent */
     --accent: 245 100% 96%;
     --accent-foreground: 224 71% 4%;
-
-    /* Error states */
     --destructive: 0 75% 55%;
     --destructive-foreground: 0 0% 100%;
-
-    /* Enhanced borders */
     --border: 240 20% 90%;
     --border-light: 240 15% 94%;
     --input: 240 20% 90%;
-    --ring: 217 91% 60%;
-
-    /* Brand identity */
-    --brand: 217 91% 60%;
+    --ring: 0 0% 0%;
+    --brand: 0 0% 0%;
     --brand-foreground: 0 0% 100%;
-    --brand-secondary: 245 100% 96%;
-
-    /* Success states */
+    --brand-secondary: 0 0% 96%;
     --success: 142 76% 36%;
     --success-foreground: 0 0% 100%;
     --success-light: 142 50% 90%;
-
-    /* Warning states */
     --warning: 38 92% 50%;
     --warning-foreground: 0 0% 100%;
     --warning-light: 38 100% 90%;
-
-    /* Premium shadows */
     --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
     --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
     --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
     --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-    --shadow-glow: 0 0 30px rgba(59, 130, 246, 0.15);
-
-    /* Elegant gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(217 91% 60%) 0%, hsl(220 70% 50%) 100%);
+    --shadow-glow: 0 0 30px rgba(0, 0, 0, 0.15);
+    --gradient-primary: linear-gradient(135deg, hsl(0 0% 0%) 0%, hsl(0 0% 20%) 100%);
     --gradient-secondary: linear-gradient(135deg, hsl(240 30% 96%) 0%, hsl(240 20% 92%) 100%);
     --gradient-surface: linear-gradient(145deg, hsl(0 0% 100%) 0%, hsl(240 20% 98%) 100%);
-
     --radius: 0.75rem;
-
-    /* Sidebar refinements */
     --sidebar-background: 240 30% 98%;
     --sidebar-foreground: 224 71% 4%;
-    --sidebar-primary: 217 91% 60%;
+    --sidebar-primary: 0 0% 0%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 240 20% 94%;
     --sidebar-accent-foreground: 224 71% 4%;
     --sidebar-border: 240 20% 90%;
-    --sidebar-ring: 217 91% 60%;
+    --sidebar-ring: 0 0% 0%;
   }
 
   .dark {
-    /* Premium dark backgrounds */
     --background: 224 71% 4%;
     --background-secondary: 220 50% 6%;
     --foreground: 240 20% 98%;
-
-    /* Dark card system */
     --card: 220 50% 6%;
     --card-foreground: 240 20% 98%;
     --card-hover: 220 40% 8%;
-
-    /* Dark popover */
     --popover: 220 50% 6%;
     --popover-foreground: 240 20% 98%;
-
-    /* Dark primary palette */
-    --primary: 217 91% 65%;
-    --primary-foreground: 224 71% 4%;
-    --primary-variant: 220 70% 55%;
-    --primary-light: 217 50% 25%;
-
-    /* Dark secondary */
+    --primary: 0 0% 0%;
+    --primary-foreground: 0 0% 100%;
+    --primary-variant: 0 0% 20%;
+    --primary-light: 0 0% 25%;
     --secondary: 220 30% 12%;
     --secondary-foreground: 240 20% 98%;
     --secondary-hover: 220 30% 16%;
-
-    /* Dark muted tones */
     --muted: 220 30% 12%;
     --muted-foreground: 215 20% 65%;
-
-    /* Dark accent */
     --accent: 220 30% 12%;
     --accent-foreground: 240 20% 98%;
-
-    /* Dark error states */
     --destructive: 0 75% 60%;
     --destructive-foreground: 240 20% 98%;
-
-    /* Dark borders */
     --border: 220 30% 18%;
     --border-light: 220 25% 22%;
     --input: 220 30% 18%;
-    --ring: 217 91% 65%;
-
-    /* Dark brand */
-    --brand: 217 91% 65%;
-    --brand-foreground: 224 71% 4%;
-    --brand-secondary: 220 50% 10%;
-
-    /* Dark success */
+    --ring: 0 0% 0%;
+    --brand: 0 0% 0%;
+    --brand-foreground: 0 0% 100%;
+    --brand-secondary: 0 0% 10%;
     --success: 142 76% 45%;
     --success-foreground: 240 20% 98%;
     --success-light: 142 30% 15%;
-
-    /* Dark warning */
     --warning: 38 92% 55%;
     --warning-foreground: 224 71% 4%;
     --warning-light: 38 50% 15%;
-
-    /* Dark shadows */
     --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
     --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -1px rgba(0, 0, 0, 0.3);
     --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.3);
     --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.4), 0 10px 10px -5px rgba(0, 0, 0, 0.2);
-    --shadow-glow: 0 0 30px rgba(59, 130, 246, 0.3);
-
-    /* Dark gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(217 91% 65%) 0%, hsl(220 70% 55%) 100%);
+    --shadow-glow: 0 0 30px rgba(0, 0, 0, 0.3);
+    --gradient-primary: linear-gradient(135deg, hsl(0 0% 0%) 0%, hsl(0 0% 20%) 100%);
     --gradient-secondary: linear-gradient(135deg, hsl(220 30% 12%) 0%, hsl(220 30% 16%) 100%);
     --gradient-surface: linear-gradient(145deg, hsl(220 50% 6%) 0%, hsl(220 40% 8%) 100%);
-
-    /* Dark sidebar */
     --sidebar-background: 224 71% 4%;
     --sidebar-foreground: 240 20% 98%;
-    --sidebar-primary: 217 91% 65%;
-    --sidebar-primary-foreground: 224 71% 4%;
+    --sidebar-primary: 0 0% 0%;
+    --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 220 30% 12%;
     --sidebar-accent-foreground: 240 20% 98%;
     --sidebar-border: 220 30% 18%;
-    --sidebar-ring: 217 91% 65%;
+    --sidebar-ring: 0 0% 0%;
   }
 }
 
@@ -228,7 +165,6 @@ All colors MUST be HSL.
     box-sizing: border-box;
   }
   
-  /* Ensure normal scrolling behavior */
   html {
     scroll-behavior: smooth;
     overflow-y: auto;
@@ -278,7 +214,6 @@ All colors MUST be HSL.
     -ms-text-size-adjust: 100%;
   }
 
-  /* Force light mode by default */
   html, body, * {
     color-scheme: light;
   }
@@ -311,7 +246,6 @@ All colors MUST be HSL.
     border-bottom: none !important;
   }
 
-  /* Enhanced card hover effects */
   .card-hover {
     @apply transition-all duration-300 ease-out;
     transform: translateY(0);
@@ -322,13 +256,11 @@ All colors MUST be HSL.
     box-shadow: var(--shadow-lg);
   }
 
-  /* Premium card styles */
   .card-premium {
     @apply bg-gradient-to-br from-card to-card-hover border-primary/20 shadow-elegant;
     backdrop-filter: blur(10px);
   }
 
-  /* Glassmorphism effects */
   .glass {
     backdrop-filter: blur(16px) saturate(180%);
     background-color: rgba(255, 255, 255, 0.75);
@@ -341,7 +273,6 @@ All colors MUST be HSL.
     border: 1px solid rgba(255, 255, 255, 0.125);
   }
 
-  /* Input focus effects */
   input, textarea {
     @apply transition-all duration-200 ease-out;
     -webkit-user-select: text !important;
@@ -350,10 +281,9 @@ All colors MUST be HSL.
 
   input:focus, textarea:focus {
     transform: none;
-    box-shadow: 0 0 0 3px rgba(26, 115, 232, 0.1);
+    box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.1);
   }
 
-  /* Force normal scrolling */
   * {
     scroll-behavior: smooth;
   }
@@ -362,18 +292,15 @@ All colors MUST be HSL.
     overflow-y: auto !important;
   }
   
-  /* Ensure main content can scroll */
   .min-h-screen {
     position: relative;
     overflow-y: auto;
   }
   
-  /* Fix scroll container */
   .mobile-container {
     position: relative;
   }
   
-  /* Hide video controls globally */
   video {
     outline: none !important;
     border: none !important;
@@ -436,7 +363,6 @@ All colors MUST be HSL.
   }
 }
 
-/* Crypto ticker animation */
 @keyframes crypto-scroll {
   0% {
     transform: translateX(100%);
@@ -451,7 +377,6 @@ All colors MUST be HSL.
   display: flex;
 }
 
-/* Global font size reduction */
 @layer utilities {
   .text-xs { font-size: 0.625rem; }
   .text-sm { font-size: 0.75rem; }
@@ -464,7 +389,6 @@ All colors MUST be HSL.
   .text-5xl { font-size: 2.875rem; }
   .text-6xl { font-size: 3.75rem; }
   
-  /* Mobile-specific utilities */
   .no-scroll-x {
     overflow-x: hidden !important;
     max-width: 100vw !important;
@@ -488,7 +412,6 @@ All colors MUST be HSL.
   }
 }
 
-/* Mobile App Layout Fixes */
 @media screen and (max-width: 768px) {
   html, body {
     overflow-x: hidden !important;
@@ -506,6 +429,16 @@ All colors MUST be HSL.
     max-width: 100vw !important;
   }
   
+  /* Vendor pages mobile spacing fix */
+  [class*="vendor"] .container,
+  [class*="vendor"] .p-4,
+  [class*="vendor"] .px-4,
+  [class*="vendor"] .space-y-4,
+  [class*="vendor"] .space-y-6 {
+    padding-left: 0.5rem !important;
+    padding-right: 0.5rem !important;
+  }
+  
   .min-h-screen {
     min-height: 100vh;
     width: 100vw !important;
@@ -520,7 +453,6 @@ All colors MUST be HSL.
   }
 }
 
-/* Mobile App Specific Fixes */
 @media (display-mode: standalone) {
   html, body {
     overflow-y: auto !important;
@@ -538,7 +470,6 @@ All colors MUST be HSL.
   }
 }
 
-/* Large Screen Support - Keep full width for mobile app */
 @media screen and (min-width: 768px) {
   .mobile-safe {
     width: 100vw;
@@ -560,7 +491,6 @@ All colors MUST be HSL.
   }
 }
 
-/* Extra Large Screens - Keep full width for mobile app */
 @media screen and (min-width: 1024px) {
   .mobile-safe {
     width: 100vw;
@@ -578,7 +508,6 @@ All colors MUST be HSL.
   }
 }
 
-/* Edge-to-Edge Support - No horizontal padding */
 @supports (padding: max(0px)) {
   .page-content {
     padding-left: 0;
@@ -591,7 +520,6 @@ All colors MUST be HSL.
   }
 }
 
-/* Foldable and Multi-Window Support */
 @media (orientation: landscape) and (min-width: 768px) {
   .mobile-safe {
     display: flex;
@@ -605,9 +533,101 @@ All colors MUST be HSL.
   }
 }
 
-/* Prevent layout issues on orientation change */
 @media (orientation: portrait) {
   .mobile-safe {
     display: block;
   }
+}
+
+/* NUCLEAR VENDOR BLUE ELIMINATION */
+.red-vendor-nav *,
+.red-vendor-nav *:before,
+.red-vendor-nav *:after,
+[class*="vendor"] *,
+[class*="vendor"] *:before,
+[class*="vendor"] *:after {
+  background-color: transparent !important;
+  background-image: none !important;
+  background: transparent !important;
+  border-color: transparent !important;
+  color: inherit !important;
+}
+
+.red-vendor-nav .red-nav-active,
+[class*="vendor"] .active {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+  color: #ffffff !important;
+}
+
+.red-vendor-nav .red-nav-inactive,
+[class*="vendor"] .inactive {
+  background-color: transparent !important;
+  color: #9ca3af !important;
+}
+
+/* Force all vendor page buttons to black */
+[class*="vendor"] button,
+[class*="vendor"] .btn {
+  background-color: #000000 !important;
+  color: #ffffff !important;
+  border-color: #000000 !important;
+}
+
+[class*="vendor"] button:hover,
+[class*="vendor"] .btn:hover {
+  background-color: #374151 !important;
+  color: #ffffff !important;
+}
+
+/* Eliminate any blue from vendor navigation containers */
+.red-vendor-nav,
+.red-vendor-nav > *,
+.red-vendor-nav .red-nav-container,
+.red-nav-container > * {
+  background: #000000 !important;
+  border-color: #374151 !important;
+}
+
+/* Force vendor page text colors */
+[class*="vendor"] .text-blue-600,
+[class*="vendor"] .text-blue-500,
+[class*="vendor"] .text-blue-700,
+[class*="vendor"] .text-blue-800,
+[class*="vendor"] .text-blue-900 {
+  color: #000000 !important;
+}
+
+/* Force vendor page background colors */
+[class*="vendor"] .bg-blue-50,
+[class*="vendor"] .bg-blue-100,
+[class*="vendor"] .bg-blue-200,
+[class*="vendor"] .bg-blue-500,
+[class*="vendor"] .bg-blue-600,
+[class*="vendor"] .bg-blue-700 {
+  background-color: #000000 !important;
+  color: #ffffff !important;
+}
+
+/* Force vendor page border colors */
+[class*="vendor"] .border-blue-200,
+[class*="vendor"] .border-blue-300,
+[class*="vendor"] .border-blue-400,
+[class*="vendor"] .border-blue-500 {
+  border-color: #374151 !important;
+}
+
+/* NUCLEAR VENDOR NAV BUTTON OVERRIDE */
+div[style*="position: fixed"][style*="bottom: 0"] button,
+div[style*="backgroundColor: #000000"] button,
+[style*="borderRadius: 16px"],
+[style*="border-radius: 16px"] {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+}
+
+/* Force vendor nav buttons to never have blue */
+div[style*="position: fixed"][style*="bottom: 0"] button * {
+  background: transparent !important;
+  background-color: transparent !important;
 }

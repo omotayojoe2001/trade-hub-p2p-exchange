@@ -38,13 +38,13 @@ const SendNairaPaymentStep = () => {
   const { orderData } = location.state || {};
 
   useEffect(() => {
-    // Try to restore state from sessionStorage first
-    const savedState = sessionStorage.getItem('paymentPageState');
+    // Try to restore state from localStorage first
+    const savedState = localStorage.getItem('paymentPageState');
     if (savedState) {
       try {
         const parsed = JSON.parse(savedState);
         if (parsed.orderData && !orderData) {
-          // Restore from saved state
+          // Use saved orderData if current is missing
           setBankDetails(parsed.bankDetails);
           setPaymentProofUrl(parsed.paymentProofUrl || '');
           setLoading(false);
@@ -52,6 +52,7 @@ const SendNairaPaymentStep = () => {
         }
       } catch (e) {
         console.error('Failed to parse saved state:', e);
+        localStorage.removeItem('paymentPageState');
       }
     }
     
@@ -59,8 +60,17 @@ const SendNairaPaymentStep = () => {
       navigate('/send-naira-get-usd');
       return;
     }
+    
     loadBankDetails();
   }, []);
+
+  // Save state whenever it changes
+  useEffect(() => {
+    if (orderData) {
+      const currentState = { orderData, bankDetails, paymentProofUrl };
+      localStorage.setItem('paymentPageState', JSON.stringify(currentState));
+    }
+  }, [orderData, bankDetails, paymentProofUrl]);
 
   const loadBankDetails = async () => {
     try {
@@ -109,14 +119,6 @@ const SendNairaPaymentStep = () => {
       return;
     }
     
-    // Store current state to prevent loss on reload
-    const currentState = {
-      orderData,
-      bankDetails,
-      paymentProofUrl
-    };
-    sessionStorage.setItem('paymentPageState', JSON.stringify(currentState));
-    
     try {
       setUploading(true);
       
@@ -149,9 +151,13 @@ const SendNairaPaymentStep = () => {
         
       setPaymentProofUrl(urlData.publicUrl);
       
-      // Update stored state
-      const updatedState = { ...currentState, paymentProofUrl: urlData.publicUrl };
-      sessionStorage.setItem('paymentPageState', JSON.stringify(updatedState));
+      // Update stored state immediately
+      const currentState = {
+        orderData: orderData || JSON.parse(localStorage.getItem('paymentPageState') || '{}').orderData,
+        bankDetails,
+        paymentProofUrl: urlData.publicUrl
+      };
+      localStorage.setItem('paymentPageState', JSON.stringify(currentState));
       
       toast({
         title: "Upload successful",
@@ -486,16 +492,12 @@ const SendNairaPaymentStep = () => {
                   const file = e.target.files?.[0];
                   if (file) {
                     setPaymentProof(file);
-                    // Use setTimeout to prevent immediate navigation
-                    setTimeout(() => {
-                      handleFileUpload(file);
-                    }, 100);
+                    handleFileUpload(file);
                   }
-                  // Reset input to allow same file selection
-                  e.target.value = '';
                 }}
                 className="hidden"
                 id="payment-proof"
+                key={Date.now()}
               />
               <label
                 htmlFor="payment-proof"

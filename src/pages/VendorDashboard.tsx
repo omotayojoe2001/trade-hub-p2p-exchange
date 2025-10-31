@@ -149,9 +149,9 @@ const VendorDashboard = () => {
   return (
       <div className="min-h-screen bg-white pb-24">
       {/* Header */}
-      <div className="bg-blue-600 text-white p-6">
+      <div className="bg-black text-white p-6">
         <h1 className="text-2xl font-bold mb-2 text-white">Vendor Dashboard</h1>
-        <p className="text-blue-100">Manage your cash delivery operations</p>
+        <p className="text-gray-300">Manage your cash delivery operations</p>
       </div>
       
       {/* Stats Cards */}
@@ -174,8 +174,8 @@ const VendorDashboard = () => {
           <Card className="bg-white shadow-lg">
             <CardContent className="p-4">
               <div className="flex items-center">
-                <div className="p-2 bg-blue-100 rounded-lg">
-                  <CheckCircle className="w-6 h-6 text-blue-600" />
+                <div className="p-2 bg-gray-100 rounded-lg">
+                  <CheckCircle className="w-6 h-6 text-black" />
                 </div>
                 <div className="ml-3">
                   <p className="text-sm text-gray-600">Completed</p>
@@ -242,7 +242,7 @@ const VendorDashboard = () => {
                       case 'vendor_paid':
                         return 'bg-orange-50 border-l-4 border-l-orange-400';
                       case 'payment_confirmed':
-                        return 'bg-blue-50 border-l-4 border-l-blue-400';
+                        return 'bg-gray-50 border-l-4 border-l-gray-400';
                       case 'delivery_in_progress':
                         return 'bg-purple-50 border-l-4 border-l-purple-400';
                       case 'cash_delivered':
@@ -257,7 +257,7 @@ const VendorDashboard = () => {
                       case 'vendor_paid':
                         return 'bg-orange-100 text-orange-800';
                       case 'payment_confirmed':
-                        return 'bg-blue-100 text-blue-800';
+                        return 'bg-gray-100 text-gray-800';
                       case 'delivery_in_progress':
                         return 'bg-purple-100 text-purple-800';
                       case 'cash_delivered':
@@ -285,7 +285,7 @@ const VendorDashboard = () => {
                       </div>
                       <div className="flex items-center justify-between text-sm text-gray-500">
                         <span>{formatDate(request.created_at)}</span>
-                        <span className="text-blue-600 font-medium">View Details →</span>
+                        <span className="text-black font-medium">View Details →</span>
                       </div>
                     </div>
                   );
@@ -296,7 +296,15 @@ const VendorDashboard = () => {
                     <p className="text-sm text-gray-500 mb-2">Showing 10 of {requests.length} requests</p>
                     <Button
                       onClick={() => navigate('/vendor/transactions')}
-                      className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
+                      className="px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                      style={{
+                        backgroundColor: '#000000',
+                        color: '#ffffff',
+                        border: 'none',
+                        outline: 'none'
+                      }}
+                      onMouseEnter={(e) => e.target.style.backgroundColor = '#374151'}
+                      onMouseLeave={(e) => e.target.style.backgroundColor = '#000000'}
                     >
                       View All Transactions
                     </Button>

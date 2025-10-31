@@ -48,7 +48,13 @@ const VendorDeliveryDetailsPage = () => {
       
       // Get real customer details from seller_id (the person who wants cash)
       let customerName = 'Customer';
-      let customerPhone = cashTrade.seller_phone || cashTrade.customer_phone || 'Not provided'; // Use phone from form
+      let customerPhone = cashTrade.seller_phone || cashTrade.customer_phone || 'Phone not provided';
+      
+      console.log('📞 DEBUG: Phone number sources:', {
+        seller_phone: cashTrade.seller_phone,
+        customer_phone: cashTrade.customer_phone,
+        final_used: customerPhone
+      });
       
       console.log('🔍 DEBUG: Existing seller_phone in cash_trades:', cashTrade.seller_phone);
       console.log('🔍 DEBUG: Existing customer_phone in cash_trades:', cashTrade.customer_phone);
@@ -139,11 +145,20 @@ const VendorDeliveryDetailsPage = () => {
   };
 
   const validateDeliveryCode = () => {
-    if (enteredCode.toUpperCase() === delivery?.delivery_code?.toUpperCase()) {
+    const customerCode = enteredCode.trim().toUpperCase();
+    const expectedCode = delivery?.delivery_code?.toString().trim().toUpperCase();
+    
+    console.log('🔍 Code validation:', {
+      entered: customerCode,
+      expected: expectedCode,
+      match: customerCode === expectedCode
+    });
+    
+    if (customerCode === expectedCode) {
       setCodeValidated(true);
       alert('✅ Code validated! You can now confirm delivery.');
     } else {
-      alert('❌ Invalid code! Please ask customer for the correct delivery code.');
+      alert(`❌ Invalid code! Expected: ${expectedCode}, Got: ${customerCode}`);
       setEnteredCode('');
     }
   };
@@ -176,7 +191,7 @@ const VendorDeliveryDetailsPage = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+        <div className="w-8 h-8 border-4 border-black border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
   }
@@ -233,7 +248,7 @@ const VendorDeliveryDetailsPage = () => {
                 <Button
                   onClick={() => setShowMessage(true)}
                   size="sm"
-                  className="bg-blue-600 text-white hover:bg-blue-700 h-7 px-3 text-xs"
+                  className="bg-black text-white hover:bg-gray-800 h-7 px-3 text-xs"
                 >
                   <MessageCircle className="w-3 h-3 mr-1" />
                   Message
@@ -250,7 +265,7 @@ const VendorDeliveryDetailsPage = () => {
                 )}
               </span>
             </div>
-            <div className="bg-blue-600 rounded-lg p-3 mt-3">
+            <div className="bg-black rounded-lg p-3 mt-3">
               <div className="flex items-center justify-between">
                 <span className="text-white font-medium">Cash Amount:</span>
                 <span className="text-white font-bold text-lg">${delivery.usd_amount.toLocaleString()} USD</span>
@@ -258,12 +273,46 @@ const VendorDeliveryDetailsPage = () => {
             </div>
             <div className="py-3 mt-3">
               <span className="text-gray-600 font-medium block mb-2">{delivery.delivery_type === 'delivery' ? 'Delivery Address:' : 'Pickup Location:'}:</span>
-              <span className="text-gray-900 font-semibold">
-                {delivery.delivery_type === 'delivery' 
-                  ? delivery.delivery_address || 'Address not provided'
-                  : delivery.pickup_location || 'Pickup location not provided'
-                }
-              </span>
+              <div className="bg-gray-50 p-3 rounded-lg">
+                <span className="text-gray-900 font-semibold text-base leading-relaxed">
+                  {(() => {
+                    let address = delivery.delivery_type === 'delivery' 
+                      ? delivery.delivery_address 
+                      : delivery.pickup_location;
+                    
+                    // Parse JSON if it's a string
+                    if (typeof address === 'string') {
+                      try {
+                        const parsed = JSON.parse(address);
+                        if (parsed.pickup_location) {
+                          return parsed.pickup_location;
+                        }
+                        if (parsed.address) {
+                          return `${parsed.address}${parsed.landmark ? `, Near: ${parsed.landmark}` : ''}`;
+                        }
+                        return address;
+                      } catch {
+                        return address;
+                      }
+                    }
+                    
+                    // Handle object format
+                    if (address && typeof address === 'object') {
+                      if (address.pickup_location) {
+                        return address.pickup_location;
+                      }
+                      if (address.address) {
+                        return `${address.address}${address.landmark ? `, Near: ${address.landmark}` : ''}`;
+                      }
+                    }
+                    
+                    return delivery.delivery_type === 'delivery' 
+                      ? 'Address not provided' 
+                      : 'Pickup location not provided';
+                  })()
+                  }
+                </span>
+              </div>
             </div>
           </div>
         </div>

@@ -157,7 +157,7 @@ const VendorPaymentConfirmation = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+        <div className="w-8 h-8 border-4 border-black border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
   }
@@ -197,8 +197,8 @@ const VendorPaymentConfirmation = () => {
         {/* Payment Amount */}
         <div className="bg-white rounded-lg shadow-sm border p-6">
           <div className="flex items-center mb-4">
-            <div className="p-2 bg-blue-100 rounded-lg mr-3">
-              <CreditCard className="w-5 h-5 text-blue-600" />
+            <div className="p-2 bg-gray-100 rounded-lg mr-3">
+              <CreditCard className="w-5 h-5 text-black" />
             </div>
             <span className="text-lg font-semibold text-gray-900">Payment Amount</span>
           </div>
@@ -243,7 +243,7 @@ const VendorPaymentConfirmation = () => {
                 Important: Verify Payment
               </p>
               <p className="text-sm text-orange-700">
-                Only confirm after checking your bank account. This will release crypto to the merchant.
+                Only confirm after checking your bank account. This will proceed to cash delivery.
               </p>
             </div>
           </div>
@@ -256,7 +256,7 @@ const VendorPaymentConfirmation = () => {
             <p className="text-sm text-green-600 mb-4">This payment has been processed successfully</p>
             <Button
               onClick={() => navigate(`/vendor/delivery-details/${payment.id}`)}
-              className="bg-green-600 hover:bg-green-700 text-white"
+              className="bg-black hover:bg-gray-800 text-white"
             >
               View Delivery Details
             </Button>
@@ -265,7 +265,7 @@ const VendorPaymentConfirmation = () => {
           <Button
             onClick={handleConfirmPayment}
             disabled={confirming}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white py-4 text-lg font-semibold rounded-lg"
+            className="w-full bg-black hover:bg-gray-800 text-white py-4 text-lg font-semibold rounded-lg"
           >
             {confirming ? (
               <div className="flex items-center justify-center">
@@ -288,7 +288,7 @@ const VendorPaymentConfirmation = () => {
         onClose={() => setShowConfirmDialog(false)}
         onConfirm={confirmPaymentAction}
         title="Confirm Payment"
-        message="Are you sure you have received the payment? This will release crypto to the merchant and cannot be undone."
+        message="Are you sure you have received the payment? This will proceed to cash delivery and cannot be undone."
         confirmText="Yes, I've Received Payment"
         cancelText="Let Me Check Again"
         type="warning"
@@ -322,7 +322,7 @@ const VendorPaymentConfirmation = () => {
           navigate(`/vendor/delivery-details/${payment?.id}`);
         }}
         title="Payment Confirmed!"
-        message="Payment confirmed successfully! Crypto has been released to the merchant."
+        message="Payment confirmed successfully! You can now proceed with cash delivery."
         confirmText="View Delivery Details"
         cancelText="Close"
         type="success"

@@ -118,7 +118,7 @@ const VendorProfile = () => {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center pb-20">
         <div className="text-center">
-          <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <div className="w-8 h-8 border-4 border-black border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-gray-600">Loading profile...</p>
         </div>
       </div>
@@ -135,7 +135,7 @@ const VendorProfile = () => {
             <p className="text-sm text-gray-600">Manage your delivery agent profile</p>
           </div>
           <div className="flex items-center space-x-2">
-            <Truck className="w-5 h-5 text-blue-600" />
+            <Truck className="w-5 h-5 text-black" />
             <span className={`px-2 py-1 rounded-full text-xs font-medium ${
               profile?.active 
                 ? 'bg-green-100 text-green-800' 

@@ -1,0 +1,190 @@
+/* Force Black Vendor Navigation - Override Everything */
+.red-vendor-nav {
+  position: fixed !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  background: #000000 !important;
+  border-top: 1px solid #374151 !important;
+  z-index: 9999 !important;
+  width: 100vw !important;
+  height: 75px !important;
+}
+
+.red-nav-container {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-around !important;
+  padding: 8px 12px !important;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.red-nav-item {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 8px 12px !important;
+  border-radius: 16px !important;
+  transition: all 0.3s ease !important;
+  flex: 1 !important;
+  max-width: 80px !important;
+  border: none !important;
+  cursor: pointer !important;
+  background: transparent !important;
+  outline: none !important;
+}
+
+.red-nav-active {
+  background: rgba(255, 255, 255, 0.1) !important;
+  background-color: rgba(255, 255, 255, 0.1) !important;
+  transform: translateY(-2px) !important;
+}
+
+.red-nav-inactive {
+  background: transparent !important;
+  background-color: transparent !important;
+}
+
+.red-nav-icon-wrapper {
+  position: relative !important;
+  margin-bottom: 4px !important;
+}
+
+.red-nav-icon {
+  transition: all 0.3s ease !important;
+}
+
+.red-nav-icon-active {
+  width: 26px !important;
+  height: 26px !important;
+  color: #ffffff !important;
+}
+
+.red-nav-icon-inactive {
+  width: 22px !important;
+  height: 22px !important;
+  color: #9ca3af !important;
+}
+
+.red-nav-badge {
+  position: absolute !important;
+  top: -6px !important;
+  right: -6px !important;
+  min-width: 20px !important;
+  height: 20px !important;
+  background: #ef4444 !important;
+  border-radius: 50% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.red-nav-badge-text {
+  font-size: 11px !important;
+  color: #ffffff !important;
+  font-weight: 800 !important;
+}
+
+.red-nav-label {
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  transition: all 0.3s ease !important;
+  text-align: center !important;
+}
+
+.red-nav-label-active {
+  color: #ffffff !important;
+}
+
+.red-nav-label-inactive {
+  color: #9ca3af !important;
+}
+
+/* Override any global styles that might interfere */
+.red-vendor-nav * {
+  box-sizing: border-box !important;
+}
+
+.red-vendor-nav button {
+  -webkit-tap-highlight-color: transparent !important;
+  background: transparent !important;
+}
+
+/* Force override any primary color usage */
+.red-vendor-nav .bg-primary,
+.red-vendor-nav .text-primary,
+.red-vendor-nav [class*="primary"] {
+  background: transparent !important;
+  color: inherit !important;
+}
+
+/* Target the rounded card containers for each nav item */
+.red-vendor-nav button,
+.red-vendor-nav .red-nav-item,
+.red-vendor-nav [class*="rounded"],
+.red-vendor-nav [class*="bg-"],
+.red-vendor-nav div[class*="bg-"] {
+  background: transparent !important;
+  background-color: transparent !important;
+}
+
+/* Force active state to be semi-transparent white only */
+.red-vendor-nav .red-nav-active,
+.red-vendor-nav button.red-nav-active {
+  background: rgba(255, 255, 255, 0.1) !important;
+  background-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+/* Override any Tailwind classes that might add blue */
+.red-vendor-nav .bg-blue-50,
+.red-vendor-nav .bg-blue-100,
+.red-vendor-nav .bg-blue-500,
+.red-vendor-nav .bg-blue-600,
+.red-vendor-nav [class*="blue"] {
+  background: transparent !important;
+  background-color: transparent !important;
+}
+
+/* Force ALL nav items to be transparent - no blue anywhere */
+.red-vendor-nav button.red-nav-inactive,
+.red-vendor-nav .red-nav-inactive,
+.red-vendor-nav button:not(.red-nav-active) {
+  background: transparent !important;
+  background-color: transparent !important;
+}
+
+/* Nuclear option - force everything to transparent */
+.red-vendor-nav *,
+.red-vendor-nav *:before,
+.red-vendor-nav *:after {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+}
+
+/* Target the specific rounded card containers */
+.red-vendor-nav button[style*="border-radius"],
+.red-vendor-nav button[style*="borderRadius"],
+.red-vendor-nav [style*="border-radius: 16px"],
+.red-vendor-nav [style*="borderRadius: 16px"],
+.red-vendor-nav button[class*="rounded"] {
+  background: transparent !important;
+  background-color: transparent !important;
+}
+
+/* Only allow active state to have background */
+.red-vendor-nav .red-nav-active,
+.red-vendor-nav button.red-nav-active,
+.red-vendor-nav button[style*="background: rgba(255, 255, 255, 0.1)"] {
+  background: rgba(255, 255, 255, 0.1) !important;
+  background-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+/* Force inactive buttons to be completely transparent */
+.red-vendor-nav button:not(.red-nav-active),
+.red-vendor-nav .red-nav-inactive {
+  background: transparent !important;
+  background-color: transparent !important;
+}

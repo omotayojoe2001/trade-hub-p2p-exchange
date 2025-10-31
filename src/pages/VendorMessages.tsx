@@ -202,8 +202,8 @@ const VendorMessages = () => {
       return (
         <div className={`max-w-[75%] rounded-lg overflow-hidden ${isOwn ? (isPending ? 'opacity-70' : '') : ''}`}>
           <img src={message.file_url} alt={message.file_name} className="max-w-full h-auto rounded-lg" style={{ maxHeight: '300px' }} />
-          <div className={`px-3 py-2 ${isOwn ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-900'}`}>
-            <p className={`text-xs ${isOwn ? 'text-blue-100' : 'text-gray-500'}`}>
+          <div className={`px-3 py-2 ${isOwn ? 'bg-black text-white' : 'bg-gray-100 text-gray-900'}`}>
+            <p className={`text-xs ${isOwn ? 'text-gray-300' : 'text-gray-500'}`}>
               {formatTime(message.created_at)}
               {isPending && isOwn && <span className="w-2 h-2 bg-current rounded-full animate-pulse ml-1 inline-block" />}
             </p>
@@ -216,8 +216,8 @@ const VendorMessages = () => {
       return (
         <div className={`max-w-[75%] rounded-lg overflow-hidden ${isOwn ? (isPending ? 'opacity-70' : '') : ''}`}>
           <video src={message.file_url} controls className="max-w-full h-auto rounded-lg" style={{ maxHeight: '300px' }} />
-          <div className={`px-3 py-2 ${isOwn ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-900'}`}>
-            <p className={`text-xs ${isOwn ? 'text-blue-100' : 'text-gray-500'}`}>
+          <div className={`px-3 py-2 ${isOwn ? 'bg-black text-white' : 'bg-gray-100 text-gray-900'}`}>
+            <p className={`text-xs ${isOwn ? 'text-gray-300' : 'text-gray-500'}`}>
               {formatTime(message.created_at)}
               {isPending && isOwn && <span className="w-2 h-2 bg-current rounded-full animate-pulse ml-1 inline-block" />}
             </p>
@@ -229,7 +229,7 @@ const VendorMessages = () => {
     if (message.message_type === 'file' && message.file_url) {
       return (
         <div className={`max-w-[75%] rounded-lg px-3 py-2 ${
-          isOwn ? isPending ? 'bg-blue-400 text-white opacity-70' : 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-900'
+          isOwn ? isPending ? 'bg-gray-600 text-white opacity-70' : 'bg-black text-white' : 'bg-gray-100 text-gray-900'
         }`}>
           <div className="flex items-center space-x-2">
             <FileText className="w-4 h-4" />
@@ -242,7 +242,7 @@ const VendorMessages = () => {
               </p>
             </div>
           </div>
-          <p className={`text-xs mt-1 flex items-center gap-1 ${isOwn ? 'text-blue-100' : 'text-gray-500'}`}>
+          <p className={`text-xs mt-1 flex items-center gap-1 ${isOwn ? 'text-gray-300' : 'text-gray-500'}`}>
             {formatTime(message.created_at)}
             {isPending && isOwn && <span className="w-2 h-2 bg-current rounded-full animate-pulse" />}
           </p>
@@ -252,10 +252,10 @@ const VendorMessages = () => {
 
     return (
       <div className={`max-w-[75%] rounded-lg px-3 py-2 ${
-        isOwn ? isPending ? 'bg-blue-400 text-white opacity-70' : 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-900'
+        isOwn ? isPending ? 'bg-gray-600 text-white opacity-70' : 'bg-black text-white' : 'bg-gray-100 text-gray-900'
       }`}>
         <p className="text-sm">{message.content}</p>
-        <p className={`text-xs mt-1 flex items-center gap-1 ${isOwn ? 'text-blue-100' : 'text-gray-500'}`}>
+        <p className={`text-xs mt-1 flex items-center gap-1 ${isOwn ? 'text-gray-300' : 'text-gray-500'}`}>
           {formatTime(message.created_at)}
           {isPending && isOwn && <span className="w-2 h-2 bg-current rounded-full animate-pulse" />}
         </p>
@@ -279,7 +279,7 @@ const VendorMessages = () => {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center pb-20">
         <div className="text-center">
-          <div className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-2" />
+          <div className="w-6 h-6 border-2 border-black border-t-transparent rounded-full animate-spin mx-auto mb-2" />
           <p className="text-gray-600">Loading conversations...</p>
         </div>
       </div>
@@ -291,9 +291,9 @@ const VendorMessages = () => {
     return (
       <div className="min-h-screen bg-white pb-20">
         {/* Header */}
-        <div className="bg-blue-600 px-4 py-4">
+        <div className="bg-black px-4 py-4">
           <h1 className="text-lg font-semibold text-white">Messages</h1>
-          <p className="text-sm text-blue-100">Cash delivery conversations</p>
+          <p className="text-sm text-gray-300">Cash delivery conversations</p>
         </div>
 
         <div className="">
@@ -313,8 +313,8 @@ const VendorMessages = () => {
                 onClick={() => setSelectedConversation(conversation)}
               >
                 <div className="flex items-center space-x-3">
-                  <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                    <User className="w-6 h-6 text-blue-600" />
+                  <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
+                    <User className="w-6 h-6 text-black" />
                   </div>
                   <div className="flex-1">
                     <div className="flex items-center justify-between">
@@ -331,7 +331,7 @@ const VendorMessages = () => {
                           {formatTime(conversation.last_message_at)}
                         </p>
                         {conversation.unread_count && conversation.unread_count > 0 && (
-                          <div className="w-5 h-5 bg-blue-600 rounded-full flex items-center justify-center mt-1 ml-auto">
+                          <div className="w-5 h-5 bg-black rounded-full flex items-center justify-center mt-1 ml-auto">
                             <span className="text-xs text-white font-medium">
                               {conversation.unread_count > 9 ? '9+' : conversation.unread_count}
                             </span>
@@ -366,24 +366,24 @@ const VendorMessages = () => {
   return (
     <div className="min-h-screen bg-white flex flex-col">
       {/* Chat Header */}
-      <div className="bg-blue-600 px-4 py-3">
+      <div className="bg-black px-4 py-3">
         <div className="flex items-center">
           <Button
             variant="ghost"
             size="sm"
             onClick={() => setSelectedConversation(null)}
-            className="mr-3 p-1 text-white hover:bg-blue-500"
+            className="mr-3 p-1 text-white hover:bg-gray-800"
           >
             <ArrowLeft size={20} className="text-white" />
           </Button>
-          <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center mr-3">
+          <div className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center mr-3">
             <User className="w-5 h-5 text-white" />
           </div>
           <div>
             <p className="font-medium text-white">
               {selectedConversation.other_user?.display_name || 'Customer'}
             </p>
-            <p className="text-xs text-blue-100">Cash Delivery</p>
+            <p className="text-xs text-gray-300">Cash Delivery</p>
           </div>
         </div>
       </div>
@@ -442,7 +442,7 @@ const VendorMessages = () => {
         />
         {uploading && (
           <div className="mt-2 text-sm text-gray-600 flex items-center gap-2">
-            <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+            <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin" />
             Uploading file...
           </div>
         )}

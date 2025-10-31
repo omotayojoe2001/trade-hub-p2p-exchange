@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Package, MessageCircle, User, Settings, Bell } from 'lucide-react';
+import { Home, Truck, MessageCircle, User } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -8,7 +8,7 @@ const VendorBottomNavigation = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuth();
-  const [jobsCount, setJobsCount] = useState(0);
+  const [activeJobs, setActiveJobs] = useState(0);
   const [messagesCount, setMessagesCount] = useState(0);
 
   useEffect(() => {
@@ -16,29 +16,32 @@ const VendorBottomNavigation = () => {
       if (!user) return;
 
       try {
-        // Get active cash delivery jobs count
-        const vendorId = localStorage.getItem('vendor_id');
-        const { data: jobs } = await supabase
-          .from('cash_trades')
+        const { data: vendor } = await supabase
+          .from('vendors')
           .select('id')
-          .eq('vendor_id', vendorId)
-          .eq('status', 'vendor_paid');
+          .eq('user_id', user.id)
+          .single();
 
-        // Get unread messages count (mock for now)
-        const messages: any[] = [];
+        if (vendor) {
+          const { data: jobs } = await supabase
+            .from('cash_trades')
+            .select('id')
+            .eq('vendor_id', vendor.id)
+            .in('status', ['vendor_paid', 'payment_confirmed']);
 
-        setJobsCount(jobs?.length || 0);
-        setMessagesCount(messages?.length || 0);
+          setActiveJobs(jobs?.length || 0);
+        }
+
+        setMessagesCount(0);
       } catch (error) {
-        console.error('Error fetching counts:', error);
+        console.error('Error fetching vendor counts:', error);
       }
     };
 
     fetchCounts();
 
-    // Set up real-time subscription
     const channel = supabase
-      .channel('vendor-updates')
+      .channel('vendor-nav-updates')
       .on('postgres_changes',
         { event: '*', schema: 'public', table: 'cash_trades' },
         () => fetchCounts()
@@ -52,18 +55,18 @@ const VendorBottomNavigation = () => {
 
   const navItems = [
     {
-      id: 'jobs',
-      label: 'Jobs',
-      icon: Package,
+      id: 'home',
+      label: 'Home',
+      icon: Home,
       path: '/vendor/dashboard',
-      badge: jobsCount
+      badge: 0
     },
     {
-      id: 'transactions',
-      label: 'Transactions',
-      icon: Bell,
+      id: 'deliveries',
+      label: 'Deliveries',
+      icon: Truck,
       path: '/vendor/transactions',
-      badge: 0
+      badge: activeJobs
     },
     {
       id: 'messages',
@@ -82,12 +85,34 @@ const VendorBottomNavigation = () => {
   ];
 
   const isActive = (path: string) => {
-    return location.pathname === path;
+    return location.pathname === path || 
+           (path === '/vendor/dashboard' && location.pathname.startsWith('/vendor/dashboard'));
   };
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-6 py-3 z-50 shadow-lg transform-none will-change-auto" style={{ position: 'fixed', transform: 'none' }}>
-      <div className="flex justify-between items-center max-w-md mx-auto px-4">
+    <div 
+      style={{
+        position: 'fixed',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        backgroundColor: '#000000',
+        borderTop: '1px solid #374151',
+        zIndex: 9999,
+        width: '100vw',
+        height: '75px'
+      }}
+    >
+      <div 
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-around',
+          padding: '8px 12px',
+          width: '100%',
+          height: '100%'
+        }}
+      >
         {navItems.map((item) => {
           const Icon = item.icon;
           const active = isActive(item.path);
@@ -96,25 +121,74 @@ const VendorBottomNavigation = () => {
             <button
               key={item.id}
               onClick={() => navigate(item.path)}
-              className={`flex flex-col items-center space-y-1 p-2 min-w-[60px] ${
-                active 
-                  ? 'text-black' 
-                  : 'text-gray-600 hover:text-black'
-              }`}
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: '8px 12px',
+                borderRadius: '16px',
+                transition: 'all 0.3s ease',
+                flex: 1,
+                maxWidth: '80px',
+                border: 'none',
+                cursor: 'pointer',
+                background: 'transparent',
+                backgroundColor: 'transparent',
+                outline: 'none',
+                transform: active ? 'translateY(-2px)' : 'none'
+              }}
             >
-              <div className="relative">
-                <Icon className="w-5 h-5" />
+              <div 
+                style={{
+                  position: 'relative',
+                  marginBottom: '4px'
+                }}
+              >
+                <Icon 
+                  style={{
+                    width: active ? '26px' : '22px',
+                    height: active ? '26px' : '22px',
+                    color: active ? '#ffffff' : '#9ca3af',
+                    transition: 'all 0.3s ease'
+                  }}
+                />
                 {item.badge > 0 && (
-                  <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center">
-                    <span className="text-[10px] text-white font-bold">
-                      {item.badge > 9 ? '9+' : item.badge}
+                  <div 
+                    style={{
+                      position: 'absolute',
+                      top: '-6px',
+                      right: '-6px',
+                      minWidth: '20px',
+                      height: '20px',
+                      background: '#ef4444',
+                      borderRadius: '50%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}
+                  >
+                    <span 
+                      style={{
+                        fontSize: '11px',
+                        color: '#ffffff',
+                        fontWeight: 800
+                      }}
+                    >
+                      {item.badge > 99 ? '99+' : item.badge}
                     </span>
                   </div>
                 )}
               </div>
-              <span className={`text-[10px] font-medium ${
-                active ? 'text-black' : 'text-gray-600'
-              }`}>
+              <span 
+                style={{
+                  fontSize: '11px',
+                  fontWeight: 600,
+                  transition: 'all 0.3s ease',
+                  textAlign: 'center',
+                  color: active ? '#ffffff' : '#9ca3af'
+                }}
+              >
                 {item.label}
               </span>
             </button>

@@ -67,14 +67,14 @@ const VendorLogin = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       {/* Header */}
       <div className="flex items-center p-4 bg-white border-b border-gray-200">
         <button onClick={() => navigate('/')} className="mr-3">
           <ArrowLeft size={20} className="text-gray-600" />
         </button>
         <div className="flex items-center space-x-2">
-          <Shield className="w-6 h-6 text-blue-600" />
+          <Shield className="w-6 h-6 text-black" />
           <h1 className="text-lg font-semibold text-gray-900">
             Vendor Portal
           </h1>
@@ -84,8 +84,8 @@ const VendorLogin = () => {
       <div className="flex items-center justify-center min-h-[calc(100vh-80px)] p-4">
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
-            <div className="w-16 h-16 mx-auto mb-4 bg-blue-100 rounded-full flex items-center justify-center">
-              <Truck className="w-8 h-8 text-blue-600" />
+            <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
+              <Truck className="w-8 h-8 text-black" />
             </div>
             <CardTitle className="text-2xl font-bold text-gray-900">
               Vendor Login
@@ -145,7 +145,7 @@ const VendorLogin = () => {
               <Button
                 type="submit"
                 disabled={loading}
-                className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-semibold"
+                className="w-full h-12 bg-black hover:bg-gray-800 text-white font-semibold"
               >
                 {loading ? 'Signing In...' : 'Sign In to Vendor Portal'}
               </Button>
@@ -158,7 +158,7 @@ const VendorLogin = () => {
                 </p>
                 <button
                   onClick={() => navigate('/help-support')}
-                  className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+                  className="text-black hover:text-gray-800 text-sm font-medium"
                 >
                   Contact Administrator
                 </button>
