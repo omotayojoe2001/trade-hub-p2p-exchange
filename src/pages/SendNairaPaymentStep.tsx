@@ -36,6 +36,11 @@ const SendNairaPaymentStep = () => {
   const { user } = useAuth();
   
   const { orderData } = location.state || {};
+  
+  // Get vendor info from URL params (passed from details step)
+  const urlParams = new URLSearchParams(location.search);
+  const vendorId = urlParams.get('vendorId');
+  const exchangeRate = parseFloat(urlParams.get('exchangeRate') || '1650');
 
   useEffect(() => {
     // Try to restore state from localStorage first
@@ -75,12 +80,20 @@ const SendNairaPaymentStep = () => {
   const loadBankDetails = async () => {
     try {
       setLoading(true);
-      // Get the first available vendor's bank details
-      const { data: vendors, error } = await supabase
+      
+      // Get specific vendor's bank details if vendorId provided
+      let query = supabase
         .from('vendors')
         .select('bank_name, bank_account, display_name')
-        .eq('active', true)
-        .limit(1);
+        .eq('active', true);
+      
+      if (vendorId) {
+        query = query.eq('id', vendorId);
+      } else {
+        query = query.limit(1);
+      }
+      
+      const { data: vendors, error } = await query;
 
       if (error) throw error;
       
@@ -226,9 +239,6 @@ const SendNairaPaymentStep = () => {
         orderType: orderData.deliveryMethod === 'pickup' ? 'naira_to_usd_pickup' : 'naira_to_usd_delivery'
       });
       
-      // Get current exchange rate
-      const currentRate = await exchangeRateService.getUSDToNGNRate();
-      
       // Create cash order with vendor assignment using the service
       const orderId = await cashOrderService.createCashOrder(user.id, {
         nairaAmount: parseFloat(orderData.nairaAmount),
@@ -245,8 +255,8 @@ const SendNairaPaymentStep = () => {
           preferredTime: orderData.preferredTime,
           additionalNotes: orderData.additionalNotes
         },
-        exchangeRate: Math.round(currentRate)
-      });
+        exchangeRate: exchangeRate
+      }, vendorId || undefined);
       
       console.log('Cash order created successfully, ID:', orderId);
       

@@ -19,6 +19,7 @@ interface VendorProfileData {
   bank_code?: string;
   is_active: boolean;
   active?: boolean;
+  usd_to_naira_rate?: number;
 }
 
 const VendorProfile = () => {
@@ -74,6 +75,7 @@ const VendorProfile = () => {
           bank_account: editData.bank_account,
           bank_name: editData.bank_name,
           bank_code: editData.bank_code,
+          usd_to_naira_rate: editData.usd_to_naira_rate ? parseFloat(editData.usd_to_naira_rate) : null,
         })
         .eq('id', profile.id);
 
@@ -226,6 +228,48 @@ const VendorProfile = () => {
                   <MapPin className="w-4 h-4 text-gray-500" />
                   <span>{profile?.location}</span>
                 </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Exchange Rate Card */}
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle className="text-lg">Exchange Rate</CardTitle>
+            <p className="text-sm text-gray-600">
+              Set how much Naira you give for 1 USD. Leave empty to use market rate.
+            </p>
+          </CardHeader>
+          <CardContent>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                USD to Naira Rate
+              </label>
+              {isEditing ? (
+                <div className="flex items-center space-x-2">
+                  <span className="text-sm text-gray-500">$1 USD =</span>
+                  <Input
+                    type="number"
+                    value={editData.usd_to_naira_rate || ''}
+                    onChange={(e) => setEditData({...editData, usd_to_naira_rate: e.target.value})}
+                    placeholder="1650"
+                    className="w-32"
+                  />
+                  <span className="text-sm text-gray-500">NGN</span>
+                </div>
+              ) : (
+                <div className="text-lg font-semibold">
+                  {profile?.usd_to_naira_rate 
+                    ? `$1 USD = ₦${Number(profile.usd_to_naira_rate).toLocaleString()} NGN`
+                    : 'Using market rate'
+                  }
+                </div>
+              )}
+              {isEditing && (
+                <p className="text-xs text-gray-500 mt-1">
+                  This rate will be used to calculate Naira amounts for all crypto trades
+                </p>
               )}
             </div>
           </CardContent>

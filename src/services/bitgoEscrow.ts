@@ -21,7 +21,11 @@ class BitGoEscrowService {
         if (error) throw new Error(`BitGo error: ${error.message}`);
         if (data?.error) throw new Error(`BitGo API error: ${data.error}`);
         if (data?.address) {
-          console.log('✅ Real BitGo USDT address generated:', data.address.slice(0, 8) + '...');
+          if (data.isReal) {
+            console.log('✅ Real USDT address generated');
+          } else {
+            console.log('⚠️ USDT fallback address (BitGo unavailable)');
+          }
           return data.address;
         }
         
@@ -42,7 +46,11 @@ class BitGoEscrowService {
       if (error) throw new Error(`Payment system error: ${error.message}`);
       if (data?.error) throw new Error(`Payment error: ${data.error}`);
       if (data?.address) {
-        console.log(`✅ Real BitGo ${coin} address generated:`, data.address.slice(0, 8) + '...');
+        if (data.isReal) {
+          console.log(`✅ Real ${coin} address generated`);
+        } else {
+          console.log(`⚠️ ${coin} fallback address (BitGo unavailable)`);
+        }
         return data.address;
       }
       

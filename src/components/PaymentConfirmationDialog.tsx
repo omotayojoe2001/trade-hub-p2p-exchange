@@ -16,8 +16,8 @@ const PaymentConfirmationDialog = ({ isOpen, onClose, onConfirm, amount, bankAcc
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg max-w-md w-full">
+    <div className="fixed inset-0 bg-black bg-opacity-75 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-lg max-w-md w-full shadow-2xl border-2 border-gray-300">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-100">
           <h3 className="text-lg font-semibold text-gray-900">Payment Confirmation</h3>

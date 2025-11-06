@@ -118,9 +118,25 @@ class CryptoPriceService {
       
     } catch (error) {
       console.error('Failed to fetch exchange rate:', error);
-      // Return a reasonable fallback temporarily while debugging
+      
+      // Try one more free API as final fallback
+      try {
+        console.log('Trying final fallback API...');
+        const response = await fetch('https://api.exchangerate-api.com/v4/latest/USD');
+        if (response.ok) {
+          const data = await response.json();
+          if (data.rates?.NGN) {
+            console.log('Got rate from final fallback:', data.rates.NGN);
+            return data.rates.NGN;
+          }
+        }
+      } catch (fallbackError) {
+        console.error('Final fallback also failed:', fallbackError);
+      }
+      
+      // Use current market rate as last resort
       const fallbackRate = 1650;
-      console.log('Using fallback rate:', fallbackRate);
+      console.log('Using hardcoded fallback rate:', fallbackRate);
       return fallbackRate;
     }
   }

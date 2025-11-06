@@ -20,15 +20,15 @@ interface CashOrder {
   delivery_code: string;
   status: string;
   created_at: string;
-  vendor_phone?: string;
   vendor_name?: string;
+  vendor_user_id?: string;
 }
 
 const MyOrders = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [orders, setOrders] = useState<CashOrder[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [selectedMessage, setSelectedMessage] = useState<{
     otherUserId: string;
     otherUserName: string;
@@ -38,7 +38,10 @@ const MyOrders = () => {
   const [showVendorNotFoundDialog, setShowVendorNotFoundDialog] = useState(false);
 
   useEffect(() => {
-    loadOrders();
+    if (user) {
+      setLoading(true);
+      loadOrders();
+    }
   }, [user]);
 
   const loadOrders = async () => {
@@ -47,12 +50,26 @@ const MyOrders = () => {
 
       const { data, error } = await supabase
         .from('cash_trades')
-        .select('*')
+        .select(`
+          *,
+          vendors!inner(
+            user_id,
+            display_name
+          )
+        `)
         .eq('seller_id', user.id)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setOrders(data || []);
+      
+      // Transform data to include vendor info
+      const transformedOrders = (data || []).map(order => ({
+        ...order,
+        vendor_user_id: order.vendors?.user_id,
+        vendor_name: order.vendors?.display_name || 'Vendor'
+      }));
+      
+      setOrders(transformedOrders);
     } catch (error) {
       console.error('Error loading orders:', error);
     } finally {
@@ -92,7 +109,23 @@ const MyOrders = () => {
       </div>
 
       <div className="p-4 space-y-3">
-        {orders.length === 0 && !loading ? (
+        {loading ? (
+          <div className="space-y-3">
+            {[1, 2, 3].map((i) => (
+              <Card key={i} className="animate-pulse">
+                <CardContent className="p-3">
+                  <div className="h-4 bg-gray-200 rounded w-1/3 mb-2"></div>
+                  <div className="h-3 bg-gray-200 rounded w-1/4 mb-3"></div>
+                  <div className="h-3 bg-gray-200 rounded w-1/2 mb-3"></div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="h-8 bg-gray-200 rounded"></div>
+                    <div className="h-8 bg-gray-200 rounded"></div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : orders.length === 0 ? (
           <Card>
             <CardContent className="text-center py-8">
               <Package className="w-12 h-12 text-gray-400 mx-auto mb-4" />
@@ -103,7 +136,7 @@ const MyOrders = () => {
               </Button>
             </CardContent>
           </Card>
-        ) : !loading && (
+        ) : (
           <div className="space-y-3">
             {orders.map((order) => {
               const statusInfo = getStatusInfo(order.status);
@@ -173,21 +206,11 @@ const MyOrders = () => {
                       View Details
                     </Button>
                     <Button
-                      onClick={async () => {
-                        // Get real vendor user_id from cash_trades table
-                        const { data: cashTrade } = await supabase
-                          .from('cash_trades')
-                          .select('vendor_id, vendors!inner(user_id, display_name)')
-                          .eq('id', order.id)
-                          .single();
-                        
-                        const vendorUserId = cashTrade?.vendors?.user_id;
-                        const vendorName = cashTrade?.vendors?.display_name || 'Vendor';
-                        
-                        if (vendorUserId) {
+                      onClick={() => {
+                        if (order.vendor_user_id) {
                           setSelectedMessage({
-                            otherUserId: vendorUserId,
-                            otherUserName: vendorName,
+                            otherUserId: order.vendor_user_id,
+                            otherUserName: order.vendor_name || 'Vendor',
                             cashTradeId: order.id
                           });
                         } else {

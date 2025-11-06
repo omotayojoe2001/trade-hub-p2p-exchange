@@ -8,6 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { creditsService, calculatePlatformFeeCredits } from '@/services/creditsService';
 import { exchangeRateService } from '@/services/exchangeRateService';
+import { supabase } from '@/integrations/supabase/client';
 
 const SendNairaGetUSD = () => {
   const navigate = useNavigate();
@@ -19,7 +20,12 @@ const SendNairaGetUSD = () => {
   const [loading, setLoading] = useState(true);
   const [usdRate, setUsdRate] = useState(1650);
   const [rateLoading, setRateLoading] = useState(true);
-  const usdAmount = nairaAmount ? (parseFloat(nairaAmount) / usdRate).toFixed(2) : '0.00';
+  const [vendors, setVendors] = useState<any[]>([]);
+  const [selectedVendor, setSelectedVendor] = useState<any>(null);
+  const [vendorsLoading, setVendorsLoading] = useState(true);
+  
+  const currentRate = selectedVendor?.usd_to_naira_rate || usdRate;
+  const usdAmount = nairaAmount ? (parseFloat(nairaAmount) / currentRate).toFixed(2) : '0.00';
   const creditsRequired = nairaAmount ? calculatePlatformFeeCredits(parseFloat(usdAmount)) : 0;
 
   useEffect(() => {
@@ -27,6 +33,7 @@ const SendNairaGetUSD = () => {
       loadUserCredits();
     }
     loadExchangeRate();
+    loadVendors();
   }, [user]);
 
   const loadExchangeRate = async () => {
@@ -38,6 +45,30 @@ const SendNairaGetUSD = () => {
       console.error('Error loading exchange rate:', error);
     } finally {
       setRateLoading(false);
+    }
+  };
+
+  const loadVendors = async () => {
+    try {
+      setVendorsLoading(true);
+      const { data: vendorData, error } = await supabase
+        .from('vendors')
+        .select('id, name, display_name, location, usd_to_naira_rate, active')
+        .eq('active', true)
+        .order('usd_to_naira_rate', { ascending: false, nullsLast: true });
+      
+      if (error) throw error;
+      setVendors(vendorData || []);
+      
+      // Auto-select first vendor with custom rate, or first vendor if none have rates
+      const vendorWithRate = vendorData?.find(v => v.usd_to_naira_rate) || vendorData?.[0];
+      if (vendorWithRate) {
+        setSelectedVendor(vendorWithRate);
+      }
+    } catch (error) {
+      console.error('Error loading vendors:', error);
+    } finally {
+      setVendorsLoading(false);
     }
   };
 
@@ -70,7 +101,9 @@ const SendNairaGetUSD = () => {
       nairaAmount,
       usdAmount,
       creditsRequired: creditsRequired.toString(),
-      deliveryType: selectedOption
+      deliveryType: selectedOption,
+      vendorId: selectedVendor?.id || '',
+      exchangeRate: currentRate.toString()
     });
     
     navigate(`/send-naira-details-step?${params}`);
@@ -95,6 +128,48 @@ const SendNairaGetUSD = () => {
           </div>
           <p className="text-gray-700">Convert your Naira directly to USD cash</p>
         </div>
+
+        {/* Vendor Selection */}
+        <Card className="mb-6">
+          <CardContent className="p-4">
+            <h3 className="font-medium text-gray-900 mb-3">Select Vendor & Rate</h3>
+            {vendorsLoading ? (
+              <div className="text-center py-4">
+                <div className="w-6 h-6 border border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
+                <p className="text-sm text-gray-600">Loading vendors...</p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {vendors.map((vendor) => (
+                  <div
+                    key={vendor.id}
+                    onClick={() => setSelectedVendor(vendor)}
+                    className={`p-3 border rounded-lg cursor-pointer transition-all ${
+                      selectedVendor?.id === vendor.id
+                        ? 'border-blue-500 bg-blue-50'
+                        : 'border-gray-200 hover:border-gray-300'
+                    }`}
+                  >
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <p className="font-medium text-gray-900">{vendor.display_name || vendor.name}</p>
+                        <p className="text-sm text-gray-600">{vendor.location}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-semibold text-lg">
+                          ₦{(vendor.usd_to_naira_rate || usdRate).toLocaleString()}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          {vendor.usd_to_naira_rate ? 'Custom rate' : 'Market rate'}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
         {/* Amount Input */}
         <Card className="mb-6">
@@ -121,17 +196,10 @@ const SendNairaGetUSD = () => {
                 <div className="flex justify-between items-center mt-1">
                   <span className="text-sm text-gray-600">Rate:</span>
                   <div className="flex items-center space-x-2">
-                    <span className="text-sm text-gray-900">₦{usdRate.toLocaleString()} per $1</span>
-                    {rateLoading && (
-                      <div className="w-3 h-3 border border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-                    )}
-                    <button 
-                      onClick={loadExchangeRate}
-                      className="text-xs text-blue-600 hover:text-blue-800"
-                      disabled={rateLoading}
-                    >
-                      ↻
-                    </button>
+                    <span className="text-sm text-gray-900">₦{currentRate.toLocaleString()} per $1</span>
+                    <span className="text-xs px-2 py-1 bg-blue-100 text-blue-800 rounded">
+                      {selectedVendor?.usd_to_naira_rate ? 'Vendor rate' : 'Market rate'}
+                    </span>
                   </div>
                 </div>
                 <div className="flex justify-between items-center mt-1">

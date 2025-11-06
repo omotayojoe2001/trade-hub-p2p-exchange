@@ -39,49 +39,52 @@ interface VendorJob {
 
 export class CashOrderService {
   // Create cash order with vendor assignment
-  async createCashOrder(userId: string, orderData: CashOrderData): Promise<string> {
+  async createCashOrder(userId: string, orderData: CashOrderData, vendorId?: string): Promise<string> {
     try {
       // Generate tracking code
       const trackingCode = `TH${Date.now().toString().slice(-6)}`;
       
-      // Create cash order directly
-      const { data: cashOrder, error: orderError } = await supabase
-        .from('cash_order_tracking')
-        .insert({
-          user_id: userId,
-          tracking_code: trackingCode,
-          naira_amount: orderData.nairaAmount,
-          usd_amount: orderData.usdAmount,
-          service_fee: orderData.serviceFee,
-          order_type: orderData.orderType,
-          delivery_details: orderData.deliveryDetails,
-          contact_details: orderData.contactDetails,
-          status: 'pending'
-        })
-        .select('id')
-        .single();
+      // Get vendor (use provided vendorId or find active vendor)
+      let vendor;
+      if (vendorId) {
+        const { data: selectedVendor, error: vendorError } = await supabase
+          .from('vendors')
+          .select('id, usd_to_naira_rate')
+          .eq('id', vendorId)
+          .eq('active', true)
+          .single();
+        
+        if (vendorError || !selectedVendor) {
+          throw new Error('Selected vendor not available');
+        }
+        vendor = selectedVendor;
+      } else {
+        const { data: activeVendor, error: vendorError } = await supabase
+          .from('vendors')
+          .select('id, usd_to_naira_rate')
+          .eq('active', true)
+          .limit(1)
+          .single();
 
-      if (orderError) throw orderError;
-      
-      // Get any active vendor for cash trades
-      const { data: vendor, error: vendorError } = await supabase
-        .from('vendors')
-        .select('id')
-        .eq('active', true)
-        .limit(1)
-        .single();
-
-      if (vendorError || !vendor) {
-        throw new Error('No active vendors available');
+        if (vendorError || !activeVendor) {
+          throw new Error('No active vendors available');
+        }
+        vendor = activeVendor;
       }
 
-      // Create corresponding cash trade for vendor
-      const { error: tradeError } = await supabase
+      // Use vendor's exchange rate if available, otherwise use provided rate
+      const finalExchangeRate = vendor.usd_to_naira_rate || orderData.exchangeRate || 1650;
+      
+      // Recalculate amounts using vendor's rate
+      const finalUsdAmount = orderData.nairaAmount / finalExchangeRate;
+      
+      // Create cash trade record (this is what shows in my-orders)
+      const { data: cashTrade, error: tradeError } = await supabase
         .from('cash_trades')
         .insert({
           seller_id: userId,
           vendor_id: vendor.id,
-          usd_amount: orderData.usdAmount,
+          usd_amount: finalUsdAmount,
           naira_amount: orderData.nairaAmount,
           delivery_type: orderData.orderType.includes('pickup') ? 'pickup' : 'delivery',
           delivery_address: orderData.orderType.includes('delivery') ? JSON.stringify(orderData.deliveryDetails) : null,
@@ -90,12 +93,33 @@ export class CashOrderService {
           status: 'vendor_paid',
           merchant_name: 'Send Naira Customer',
           seller_phone: orderData.contactDetails.phoneNumber,
-          customer_phone: orderData.contactDetails.phoneNumber
-        });
+          customer_phone: orderData.contactDetails.phoneNumber,
+          exchange_rate: finalExchangeRate
+        })
+        .select('id')
+        .single();
 
       if (tradeError) throw tradeError;
       
-      return cashOrder.id;
+      // Also create cash order tracking record
+      const { error: orderError } = await supabase
+        .from('cash_order_tracking')
+        .insert({
+          user_id: userId,
+          tracking_code: trackingCode,
+          naira_amount: orderData.nairaAmount,
+          usd_amount: finalUsdAmount,
+          service_fee: orderData.serviceFee,
+          order_type: orderData.orderType,
+          delivery_details: orderData.deliveryDetails,
+          contact_details: orderData.contactDetails,
+          status: 'pending',
+          cash_trade_id: cashTrade.id
+        });
+
+      if (orderError) throw orderError;
+      
+      return cashTrade.id;
     } catch (error: any) {
       console.error('Error creating cash order:', error);
       throw new Error(error.message || 'Failed to create cash order');

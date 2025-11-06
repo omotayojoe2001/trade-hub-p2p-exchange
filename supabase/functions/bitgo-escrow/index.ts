@@ -124,44 +124,73 @@ serve(async (req) => {
     
     console.log('BitGo API URL:', `${BITGO_BASE_URL}/api/v2/${coinType}/wallet/${walletId}/address`);
     
-    // Generate address with proper error handling
+    // Generate address with retry logic (3 attempts, 30 second delays)
     let addressResponse;
     let isRealAddress = false;
+    const maxRetries = 3;
+    const retryDelay = 30000; // 30 seconds
     
-    try {
-      console.log(`Attempting ${coin} address generation...`);
-      
-      const addressRequestBody = {
-        label: `escrow-${tradeId}-${Date.now()}`,
-        ...(coinType === 'btc' ? { chain: 0 } : {}),
-        ...(coinType === 'sol' && coin === 'USDT' ? { tokenName: 'usdt' } : {})
-      };
-      
-      const response = await fetch(`${BITGO_BASE_URL}/api/v2/${coinType}/wallet/${walletId}/address`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${BITGO_ACCESS_TOKEN}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(addressRequestBody),
-        signal: AbortSignal.timeout(15000)
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        addressResponse = data.address;
-        isRealAddress = true;
-        console.log(`Real ${coin} address generated:`, addressResponse);
-      } else {
-        throw new Error(`API returned ${response.status}`);
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        console.log(`Attempting ${coin} address generation (${attempt}/${maxRetries})...`);
+        
+        const addressRequestBody = {
+          label: `escrow-${tradeId}-${Date.now()}-${attempt}`,
+          ...(coinType === 'btc' ? { chain: 0 } : {}),
+          ...(coinType === 'sol' && coin === 'USDT' ? { tokenName: 'usdt' } : {})
+        };
+        
+        if (attempt === 1) {
+          console.log('Request details:', {
+            url: `${BITGO_BASE_URL}/api/v2/${coinType}/wallet/${walletId}/address`,
+            body: addressRequestBody,
+            tokenPrefix: BITGO_ACCESS_TOKEN?.substring(0, 10) + '...'
+          });
+        }
+        
+        const response = await fetch(`${BITGO_BASE_URL}/api/v2/${coinType}/wallet/${walletId}/address`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${BITGO_ACCESS_TOKEN}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(addressRequestBody),
+          signal: AbortSignal.timeout(25000) // 25 second timeout per attempt
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          addressResponse = data.address;
+          isRealAddress = true;
+          console.log(`✅ ${coin} address generated successfully on attempt ${attempt}`);
+          break; // Success - exit retry loop
+        } else {
+          const errorText = await response.text();
+          console.log(`❌ BitGo API error ${response.status} on attempt ${attempt}:`, errorText);
+          
+          if (attempt === maxRetries) {
+            throw new Error(`All ${maxRetries} attempts failed - API returned ${response.status}`);
+          }
+        }
+      } catch (error) {
+        console.log(`⚠️ Attempt ${attempt} failed:`, error.message);
+        
+        if (attempt === maxRetries) {
+          console.log(`❌ All ${maxRetries} attempts failed, using fallback address`);
+          
+          // Generate deterministic fallback address
+          const prefix = coin === 'BTC' ? 'bc1q' : coin === 'USDT' ? 'sol:' : 'addr:';
+          addressResponse = `${prefix}${Math.random().toString(36).substring(2, 15)}${Date.now().toString().slice(-6)}`;
+          isRealAddress = false;
+          break;
+        }
       }
-    } catch (error) {
-      console.log(`${coin} BitGo failed, using fallback:`, error.message);
       
-      // Generate deterministic fallback address
-      const prefix = coin === 'BTC' ? 'bc1q' : coin === 'USDT' ? 'sol:' : 'addr:';
-      addressResponse = `${prefix}${Math.random().toString(36).substring(2, 15)}${Date.now().toString().slice(-6)}`;
-      isRealAddress = false;
+      // Wait before next attempt (except on last attempt)
+      if (attempt < maxRetries) {
+        console.log(`⏳ Waiting ${retryDelay/1000} seconds before retry...`);
+        await new Promise(resolve => setTimeout(resolve, retryDelay));
+      }
     }
     
     // Store address in database

@@ -31,18 +31,35 @@ const Auth = () => {
   const [pendingUser, setPendingUser] = useState<any>(null);
   const [message, setMessage] = useState('');
   const [userProfile, setUserProfile] = useState<any>(null);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [resetEmail, setResetEmail] = useState('');
+  const [showPasswordReset, setShowPasswordReset] = useState(false);
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmNewPassword, setConfirmNewPassword] = useState('');
 
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user } = useAuth();
 
   useEffect(() => {
+    // Check if this is a password reset redirect FIRST
+    const urlParams = new URLSearchParams(window.location.search);
+    const accessToken = urlParams.get('access_token');
+    const type = urlParams.get('type');
+    const recoveryParam = urlParams.get('type');
+    
+    if ((accessToken && type === 'recovery') || recoveryParam === 'recovery') {
+      setShowPasswordReset(true);
+      return;
+    }
+    
     const checkSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
         navigate('/home');
       }
     };
+    
     checkSession();
     
     const storedReferralCode = localStorage.getItem('referral_code');
@@ -85,6 +102,83 @@ const Auth = () => {
           navigate('/home');
         }
       }
+    } catch (err) {
+      setError('An unexpected error occurred');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+    setMessage('');
+
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
+        redirectTo: window.location.hostname === 'localhost' 
+          ? 'http://localhost:3000/auth?type=recovery'
+          : `${window.location.origin}/auth?type=recovery`
+      });
+
+      if (error) {
+        setError(error.message);
+        return;
+      }
+
+      setMessage('Password reset email sent! Check your inbox.');
+      toast({
+        title: "Reset email sent",
+        description: "Check your email for password reset instructions.",
+      });
+      
+      setTimeout(() => {
+        setShowForgotPassword(false);
+        setResetEmail('');
+        setMessage('');
+      }, 3000);
+    } catch (err) {
+      setError('An unexpected error occurred');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handlePasswordReset = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+
+    if (newPassword !== confirmNewPassword) {
+      setError('Passwords do not match');
+      setLoading(false);
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      setError('Password must be at least 6 characters long');
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword
+      });
+
+      if (error) {
+        setError(error.message);
+        return;
+      }
+
+      toast({
+        title: "Password updated!",
+        description: "Your password has been successfully reset.",
+      });
+      
+      setShowPasswordReset(false);
+      navigate('/home');
     } catch (err) {
       setError('An unexpected error occurred');
     } finally {
@@ -202,6 +296,62 @@ const Auth = () => {
     }
   };
 
+  if (showPasswordReset) {
+    return (
+      <div className="fixed inset-0 bg-gradient-to-br from-gray-50 to-white flex items-center justify-center px-4">
+        <div className="w-full max-w-sm">
+          <div className="text-center mb-6">
+            <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <span className="text-white text-2xl font-bold">CE</span>
+            </div>
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">
+              Reset Password
+            </h1>
+            <p className="text-gray-500 text-sm">
+              Enter your new password
+            </p>
+          </div>
+
+          <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
+            {error && (
+              <div className="bg-red-50 border border-red-200 rounded-xl p-3 mb-4">
+                <p className="text-red-600 text-sm">{error}</p>
+              </div>
+            )}
+
+            <form onSubmit={handlePasswordReset} className="space-y-4">
+              <Input
+                type="password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                className="h-14 px-4 bg-gray-50 border-0 rounded-xl text-base"
+                placeholder="New Password"
+                required
+              />
+
+              <Input
+                type="password"
+                value={confirmNewPassword}
+                onChange={(e) => setConfirmNewPassword(e.target.value)}
+                className="h-14 px-4 bg-gray-50 border-0 rounded-xl text-base"
+                placeholder="Confirm New Password"
+                required
+              />
+
+              <Button
+                type="submit"
+                className="w-full h-14 bg-blue-600 hover:bg-blue-700 rounded-xl text-base font-semibold"
+                disabled={loading}
+              >
+                {loading ? 'Updating...' : 'Update Password'}
+              </Button>
+            </form>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (show2FA && pendingUser) {
     return (
       <TwoFactorLogin
@@ -274,7 +424,17 @@ const Auth = () => {
               </Button>
             </form>
 
-            <div className="text-center mt-6">
+            <div className="text-center mt-4">
+              <button
+                type="button"
+                onClick={() => setShowForgotPassword(true)}
+                className="text-blue-600 text-sm font-medium"
+              >
+                Forgot Password?
+              </button>
+            </div>
+
+            <div className="text-center mt-4">
               <p className="text-gray-500 text-sm">
                 Don't have an account?{' '}
                 <button
@@ -298,6 +458,63 @@ const Auth = () => {
             </button>
           </div>
         </div>
+
+        {/* Forgot Password Modal */}
+        {showForgotPassword && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center px-4 z-50">
+            <div className="bg-white rounded-2xl p-6 w-full max-w-sm">
+              <h2 className="text-xl font-bold text-gray-900 mb-4 text-center">
+                Reset Password
+              </h2>
+              
+              {error && (
+                <div className="bg-red-50 border border-red-200 rounded-xl p-3 mb-4">
+                  <p className="text-red-600 text-sm">{error}</p>
+                </div>
+              )}
+              
+              {message && (
+                <div className="bg-green-50 border border-green-200 rounded-xl p-3 mb-4">
+                  <p className="text-green-600 text-sm">{message}</p>
+                </div>
+              )}
+              
+              <form onSubmit={handleForgotPassword} className="space-y-4">
+                <Input
+                  type="email"
+                  value={resetEmail}
+                  onChange={(e) => setResetEmail(e.target.value)}
+                  className="h-12 px-4 bg-gray-50 border-0 rounded-xl"
+                  placeholder="Enter your email"
+                  required
+                />
+                
+                <div className="flex space-x-3">
+                  <Button
+                    type="button"
+                    onClick={() => {
+                      setShowForgotPassword(false);
+                      setResetEmail('');
+                      setError('');
+                      setMessage('');
+                    }}
+                    variant="outline"
+                    className="flex-1 h-12 rounded-xl"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="submit"
+                    className="flex-1 h-12 bg-blue-600 hover:bg-blue-700 rounded-xl"
+                    disabled={loading}
+                  >
+                    {loading ? 'Sending...' : 'Send Reset'}
+                  </Button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
       </div>
     );
   }

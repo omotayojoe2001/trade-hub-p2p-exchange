@@ -142,8 +142,14 @@ const SendNairaDetailsStep = () => {
         )
       };
 
-      // Navigate to payment step
-      navigate('/send-naira-payment-step', {
+      // Get vendor info from URL params
+      const urlParams = new URLSearchParams(window.location.search);
+      const vendorId = urlParams.get('vendorId');
+      const exchangeRate = urlParams.get('exchangeRate');
+      
+      // Navigate to payment step with vendor info
+      const paymentUrl = `/send-naira-payment-step?vendorId=${vendorId || ''}&exchangeRate=${exchangeRate || ''}`;
+      navigate(paymentUrl, {
         state: { orderData }
       });
     } catch (error) {
