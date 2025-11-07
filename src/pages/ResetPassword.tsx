@@ -21,11 +21,19 @@ const ResetPassword = () => {
     // Check if this is a valid password reset session
     const urlParams = new URLSearchParams(window.location.search);
     const accessToken = urlParams.get('access_token');
+    const refreshToken = urlParams.get('refresh_token');
     const type = urlParams.get('type');
     
     if (!accessToken || type !== 'recovery') {
       navigate('/auth');
+      return;
     }
+    
+    // Establish session immediately
+    supabase.auth.setSession({
+      access_token: accessToken,
+      refresh_token: refreshToken || ''
+    });
   }, [navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -46,6 +54,13 @@ const ResetPassword = () => {
     }
 
     try {
+      // Verify session exists
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        setError('Session expired. Please request a new password reset.');
+        return;
+      }
+      
       const { error } = await supabase.auth.updateUser({
         password: password
       });
@@ -140,6 +155,19 @@ const ResetPassword = () => {
               {loading ? 'Updating...' : 'Reset Password'}
             </Button>
           </form>
+          
+          <div className="text-center mt-4">
+            <p className="text-gray-500 text-sm">
+              Remember your password?{' '}
+              <button
+                type="button"
+                onClick={() => navigate('/auth')}
+                className="text-blue-600 font-semibold hover:underline"
+              >
+                Back to Login
+              </button>
+            </p>
+          </div>
         </CardContent>
       </Card>
     </div>

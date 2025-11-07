@@ -42,13 +42,24 @@ const Auth = () => {
   const { user } = useAuth();
 
   useEffect(() => {
-    // Check if this is a password reset redirect FIRST
     const urlParams = new URLSearchParams(window.location.search);
     const accessToken = urlParams.get('access_token');
+    const refreshToken = urlParams.get('refresh_token');
     const type = urlParams.get('type');
-    const recoveryParam = urlParams.get('type');
     
-    if ((accessToken && type === 'recovery') || recoveryParam === 'recovery') {
+    // Check for password reset BEFORE session check
+    if (accessToken && type === 'recovery') {
+      // Establish session immediately
+      supabase.auth.setSession({
+        access_token: accessToken,
+        refresh_token: refreshToken || ''
+      });
+      setShowPasswordReset(true);
+      return;
+    }
+    
+    // Also check for manual recovery parameter
+    if (type === 'recovery') {
       setShowPasswordReset(true);
       return;
     }
@@ -116,11 +127,7 @@ const Auth = () => {
     setMessage('');
 
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
-        redirectTo: window.location.hostname === 'localhost' 
-          ? 'http://localhost:3000/auth?type=recovery'
-          : `${window.location.origin}/auth?type=recovery`
-      });
+      const { error } = await supabase.auth.resetPasswordForEmail(resetEmail);
 
       if (error) {
         setError(error.message);
@@ -163,6 +170,8 @@ const Auth = () => {
     }
 
     try {
+      // Session should already be established
+      
       const { error } = await supabase.auth.updateUser({
         password: newPassword
       });

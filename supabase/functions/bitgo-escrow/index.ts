@@ -1,8 +1,9 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
-const BITGO_BASE_URL = 'https://app.bitgo.com';
-const BITGO_ACCESS_TOKEN = Deno.env.get('BITGO_ACCESS_TOKEN');
+// Proxy server configuration
+const ORACLE_PROXY_URL = Deno.env.get('ORACLE_PROXY_URL'); // e.g., http://YOUR_ORACLE_IP:3000
+const LOCAL_PROXY_URL = 'http://localhost:3001'; // Local fallback proxy
 const BTC_WALLET_ID = Deno.env.get('BITGO_BTC_WALLET_ID');
 const ETH_WALLET_ID = Deno.env.get('BITGO_ETH_WALLET_ID');
 const XRP_WALLET_ID = Deno.env.get('BITGO_XRP_WALLET_ID');
@@ -29,16 +30,14 @@ serve(async (req) => {
     const requestBody = await req.json();
     const { tradeId, coin, action, toAddress, amount, expectedAmount } = requestBody;
     
-    console.log('Request received:', { tradeId, coin, action, hasToken: !!BITGO_ACCESS_TOKEN });
+    console.log('Request received:', { tradeId, coin, action, proxyUrl: !!ORACLE_PROXY_URL });
     
     if (!tradeId || !coin) {
       throw new Error('Missing required parameters: tradeId and coin');
     }
     
-    if (!BITGO_ACCESS_TOKEN) {
-      console.error('Missing BITGO_ACCESS_TOKEN');
-      throw new Error('BitGo access token not configured');
-    }
+    const proxyUrl = ORACLE_PROXY_URL || LOCAL_PROXY_URL;
+    console.log('Using proxy:', proxyUrl);
     
     if (action === 'setup_webhook') {
       // Setup BitGo webhook for payment notifications
@@ -49,10 +48,9 @@ serve(async (req) => {
       
       const webhookUrl = 'https://towffqxmmqyhbuyphkui.supabase.co/functions/v1/bitgo-webhook';
       
-      const response = await fetch(`${BITGO_BASE_URL}/api/v2/${coinType}/wallet/${walletId}/webhooks`, {
+      const response = await fetch(`${proxyUrl}/api/forward/api/v2/${coinType}/wallet/${walletId}/webhooks`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${BITGO_ACCESS_TOKEN}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
@@ -75,10 +73,9 @@ serve(async (req) => {
       const walletId = walletMap[coin];
       const coinType = coinTypeMap[coin];
       
-      const response = await fetch(`${BITGO_BASE_URL}/api/v2/${coinType}/wallet/${walletId}/sendcoins`, {
+      const response = await fetch(`${proxyUrl}/api/forward/api/v2/${coinType}/wallet/${walletId}/sendcoins`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${BITGO_ACCESS_TOKEN}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
@@ -122,75 +119,48 @@ serve(async (req) => {
       throw new Error(`Wallet not configured for ${coin}`);
     }
     
-    console.log('BitGo API URL:', `${BITGO_BASE_URL}/api/v2/${coinType}/wallet/${walletId}/address`);
+    console.log('Proxy URL:', `${proxyUrl}/api/forward/api/v2/${coinType}/wallet/${walletId}/address`);
     
-    // Generate address with retry logic (3 attempts, 30 second delays)
+    // Generate address via Oracle proxy (single attempt - no IP restrictions)
     let addressResponse;
     let isRealAddress = false;
-    const maxRetries = 3;
-    const retryDelay = 30000; // 30 seconds
     
-    for (let attempt = 1; attempt <= maxRetries; attempt++) {
-      try {
-        console.log(`Attempting ${coin} address generation (${attempt}/${maxRetries})...`);
-        
-        const addressRequestBody = {
-          label: `escrow-${tradeId}-${Date.now()}-${attempt}`,
-          ...(coinType === 'btc' ? { chain: 0 } : {}),
-          ...(coinType === 'sol' && coin === 'USDT' ? { tokenName: 'usdt' } : {})
-        };
-        
-        if (attempt === 1) {
-          console.log('Request details:', {
-            url: `${BITGO_BASE_URL}/api/v2/${coinType}/wallet/${walletId}/address`,
-            body: addressRequestBody,
-            tokenPrefix: BITGO_ACCESS_TOKEN?.substring(0, 10) + '...'
-          });
-        }
-        
-        const response = await fetch(`${BITGO_BASE_URL}/api/v2/${coinType}/wallet/${walletId}/address`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${BITGO_ACCESS_TOKEN}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(addressRequestBody),
-          signal: AbortSignal.timeout(25000) // 25 second timeout per attempt
-        });
-        
-        if (response.ok) {
-          const data = await response.json();
-          addressResponse = data.address;
-          isRealAddress = true;
-          console.log(`✅ ${coin} address generated successfully on attempt ${attempt}`);
-          break; // Success - exit retry loop
-        } else {
-          const errorText = await response.text();
-          console.log(`❌ BitGo API error ${response.status} on attempt ${attempt}:`, errorText);
-          
-          if (attempt === maxRetries) {
-            throw new Error(`All ${maxRetries} attempts failed - API returned ${response.status}`);
-          }
-        }
-      } catch (error) {
-        console.log(`⚠️ Attempt ${attempt} failed:`, error.message);
-        
-        if (attempt === maxRetries) {
-          console.log(`❌ All ${maxRetries} attempts failed, using fallback address`);
-          
-          // Generate deterministic fallback address
-          const prefix = coin === 'BTC' ? 'bc1q' : coin === 'USDT' ? 'sol:' : 'addr:';
-          addressResponse = `${prefix}${Math.random().toString(36).substring(2, 15)}${Date.now().toString().slice(-6)}`;
-          isRealAddress = false;
-          break;
-        }
-      }
+    try {
+      console.log(`Attempting ${coin} address generation via proxy...`);
       
-      // Wait before next attempt (except on last attempt)
-      if (attempt < maxRetries) {
-        console.log(`⏳ Waiting ${retryDelay/1000} seconds before retry...`);
-        await new Promise(resolve => setTimeout(resolve, retryDelay));
+      const addressRequestBody = {
+        label: `escrow-${tradeId}-${Date.now()}`,
+        ...(coinType === 'btc' ? { chain: 0 } : {}),
+        ...(coinType === 'sol' && coin === 'USDT' ? { tokenName: 'usdt' } : {})
+      };
+      
+      const response = await fetch(`${proxyUrl}/api/forward/api/v2/${coinType}/wallet/${walletId}/address`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(addressRequestBody),
+        signal: AbortSignal.timeout(30000) // 30 second timeout
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        addressResponse = data.address;
+        isRealAddress = true;
+        console.log(`✅ ${coin} address generated successfully via proxy`);
+      } else {
+        const errorText = await response.text();
+        console.log(`❌ Proxy error ${response.status}:`, errorText);
+        throw new Error(`Proxy returned ${response.status}`);
       }
+    } catch (error) {
+      console.log(`⚠️ Proxy failed:`, error.message);
+      console.log(`❌ Using fallback address`);
+      
+      // Generate deterministic fallback address
+      const prefix = coin === 'BTC' ? 'bc1q' : coin === 'USDT' ? 'sol:' : 'addr:';
+      addressResponse = `${prefix}${Math.random().toString(36).substring(2, 15)}${Date.now().toString().slice(-6)}`;
+      isRealAddress = false;
     }
     
     // Store address in database
@@ -212,10 +182,9 @@ serve(async (req) => {
     if (isRealAddress) {
       try {
         const webhookUrl = 'https://towffqxmmqyhbuyphkui.supabase.co/functions/v1/bitgo-webhook';
-        await fetch(`${BITGO_BASE_URL}/api/v2/${coinType}/wallet/${walletId}/webhooks`, {
+        await fetch(`${proxyUrl}/api/forward/api/v2/${coinType}/wallet/${walletId}/webhooks`, {
           method: 'POST',
           headers: {
-            'Authorization': `Bearer ${BITGO_ACCESS_TOKEN}`,
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({
@@ -245,7 +214,7 @@ serve(async (req) => {
     let statusCode = 500;
     
     if (error.name === 'AbortError' || error.message.includes('timeout')) {
-      errorMessage = `BitGo ${coinType?.toUpperCase()} wallet timeout - wallet may need initialization`;
+      errorMessage = `Proxy timeout - please try again`;
       statusCode = 504;
     } else if (error.message.includes('Failed to fetch') || error.message.includes('network')) {
       errorMessage = 'Network connectivity issue - please try again';

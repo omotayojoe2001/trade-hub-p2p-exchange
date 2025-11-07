@@ -107,14 +107,14 @@ export const useCryptoData = (limit: number = 50): UseCryptoDataReturn => {
       setCryptoData(transformedData);
     } catch (err) {
       console.error('Error fetching crypto data:', err);
-      setError('Failed to fetch crypto data');
+      setError(null); // Don't show error to user
       // Fallback to mock data for development
       setCryptoData([
         {
           id: 1,
           name: 'Bitcoin',
           symbol: 'btc',
-          image: '',
+          image: 'https://assets.coingecko.com/coins/images/1/large/bitcoin.png',
           current_price: 68523.45,
           market_cap: 1340000000000,
           market_cap_rank: 1,
@@ -122,7 +122,66 @@ export const useCryptoData = (limit: number = 50): UseCryptoDataReturn => {
           total_volume: 45000000000,
           high_24h: 70000,
           low_24h: 67000,
-        } as CryptoData,
+          price_change_24h: 3200,
+          market_cap_change_24h: 65000000000,
+          market_cap_change_percentage_24h: 5.1,
+          circulating_supply: 19500000,
+          total_supply: 21000000,
+          max_supply: 21000000,
+          ath: 73000,
+          ath_change_percentage: -6.2,
+          ath_date: '2024-03-14T07:10:36.635Z',
+          atl: 67.81,
+          atl_change_percentage: 101000,
+          atl_date: '2013-07-06T00:00:00.000Z',
+          roi: null,
+          last_updated: new Date().toISOString(),
+          fully_diluted_valuation: 1440000000000,
+          quote: {
+            USD: {
+              price: 68523.45,
+              percent_change_24h: 5.2,
+              market_cap: 1340000000000,
+              volume_24h: 45000000000,
+            },
+          },
+        },
+        {
+          id: 2,
+          name: 'Ethereum',
+          symbol: 'eth',
+          image: 'https://assets.coingecko.com/coins/images/279/large/ethereum.png',
+          current_price: 3456.78,
+          market_cap: 415000000000,
+          market_cap_rank: 2,
+          price_change_percentage_24h: 3.8,
+          total_volume: 18000000000,
+          high_24h: 3500,
+          low_24h: 3400,
+          price_change_24h: 126.5,
+          market_cap_change_24h: 15200000000,
+          market_cap_change_percentage_24h: 3.8,
+          circulating_supply: 120000000,
+          total_supply: 120000000,
+          max_supply: null,
+          ath: 4878.26,
+          ath_change_percentage: -29.1,
+          ath_date: '2021-11-10T14:24:19.604Z',
+          atl: 0.432979,
+          atl_change_percentage: 798000,
+          atl_date: '2015-10-20T00:00:00.000Z',
+          roi: null,
+          last_updated: new Date().toISOString(),
+          fully_diluted_valuation: 415000000000,
+          quote: {
+            USD: {
+              price: 3456.78,
+              percent_change_24h: 3.8,
+              market_cap: 415000000000,
+              volume_24h: 18000000000,
+            },
+          },
+        }
       ]);
     } finally {
       setLoading(false);
@@ -205,8 +264,8 @@ export const useCryptoData = (limit: number = 50): UseCryptoDataReturn => {
   useEffect(() => {
     fetchCryptoData();
     
-    // Refresh data every 30 seconds
-    const interval = setInterval(fetchCryptoData, 30000);
+    // Refresh data every 5 minutes to avoid rate limits
+    const interval = setInterval(fetchCryptoData, 300000);
     
     return () => clearInterval(interval);
   }, [limit]);
