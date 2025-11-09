@@ -11,8 +11,19 @@ const PushNotificationSetup = () => {
   console.log('PushNotificationSetup - isSupported:', isSupported, 'isSubscribed:', isSubscribed);
 
   const handleEnableNotifications = async () => {
+    console.log('Enable notifications clicked');
     const success = await requestPermission();
     if (success) {
+      // Test with a simple browser notification first
+      try {
+        new Notification('Test Notification', {
+          body: 'Notifications are working!',
+          vibrate: [200, 100, 200]
+        });
+      } catch (e) {
+        console.error('Simple notification failed:', e);
+      }
+      
       toast({
         title: "Notifications Enabled",
         description: "You'll now receive push notifications for trades and messages.",
