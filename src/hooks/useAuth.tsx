@@ -110,8 +110,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signOut = async (reason: 'manual' | 'timeout' = 'manual') => {
     try {
-      // Store logout reason
+      // Store logout reason and mark manual logout for 2FA requirement
       localStorage.setItem('logout-reason', reason);
+      if (reason === 'manual') {
+        localStorage.setItem('manual_logout', 'true');
+        localStorage.removeItem('2fa_completed');
+      }
 
       // Clean up auth state first
       Object.keys(localStorage).forEach((key) => {

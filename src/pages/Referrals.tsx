@@ -65,7 +65,7 @@ const Referrals = () => {
   };
   
   const referralCode = generateUserReferralCode();
-  const referralLink = user ? `${getWebsiteUrl()}/refer/${referralCode}` : "";
+  const referralLink = user ? `${getWebsiteUrl()}/?ref=${referralCode}` : "";
 
   // Load referral data from Supabase
   useEffect(() => {
@@ -78,31 +78,23 @@ const Referrals = () => {
     try {
       setLoading(true);
 
-      // Load referrals from profiles table (handle missing referred_by column gracefully)
-      let referrals = [];
-      try {
-        const { data: referralData, error: referralsError } = await supabase
-          .from('profiles')
-          .select('user_id, display_name, created_at')
-          .eq('referred_by', user!.id);
+      // Load referral signups
+      const { data: referralSignups, error: signupsError } = await supabase
+        .from('referral_signups')
+        .select(`
+          *,
+          referred_user:profiles!referral_signups_referred_user_id_fkey(
+            display_name,
+            created_at
+          )
+        `)
+        .eq('referrer_id', user!.id);
 
-        if (referralsError && referralsError.code === '42703') {
-          // Column doesn't exist yet, use empty array
-          console.log('referred_by column not found, using empty referrals');
-          referrals = [];
-        } else if (referralsError) {
-          throw referralsError;
-        } else {
-          referrals = referralData || [];
-        }
-      } catch (error: any) {
-        if (error.code === '42703') {
-          // Column doesn't exist, use empty array
-          referrals = [];
-        } else {
-          throw error;
-        }
+      if (signupsError) {
+        console.error('Error loading referral signups:', signupsError);
       }
+
+      const referrals = referralSignups || [];
 
       // Load referral commissions
       const { data: commissions, error: commissionsError } = await supabase
@@ -110,18 +102,20 @@ const Referrals = () => {
         .select('*')
         .eq('referrer_id', user!.id);
 
-      if (commissionsError) throw commissionsError;
+      if (commissionsError) {
+        console.error('Error loading commissions:', commissionsError);
+      }
 
       // Calculate stats and format data
       const formattedReferrals = (referrals || []).map(referral => {
-        const userCommissions = (commissions || []).filter(c => c.referred_user_id === referral.user_id);
+        const userCommissions = (commissions || []).filter(c => c.referred_user_id === referral.referred_user_id);
         const totalEarnings = userCommissions.reduce((sum, c) => sum + (c.commission_amount || 0), 0);
         const hasActiveTrades = userCommissions.length > 0;
 
         return {
-          id: referral.user_id,
-          name: referral.display_name || 'Anonymous User',
-          joinDate: new Date(referral.created_at).toLocaleDateString(),
+          id: referral.referred_user_id,
+          name: referral.referred_user?.display_name || 'Anonymous User',
+          joinDate: new Date(referral.signup_date).toLocaleDateString(),
           earnings: totalEarnings,
           status: hasActiveTrades ? 'Active' : 'Pending',
           totalTrades: userCommissions.length

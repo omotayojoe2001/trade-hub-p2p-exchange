@@ -120,6 +120,7 @@ import AdminDashboard from "./pages/AdminDashboard";
 import AdminUsers from "./pages/AdminUsers";
 import TestCredits from "./pages/TestCredits";
 import TestBitGo from "./pages/TestBitGo";
+import TestNotifications from "./pages/TestNotifications";
 import VendorAuthGuard from "./components/VendorAuthGuard";
 import VendorDashboard from "./pages/VendorDashboard";
 import ConfirmCashReceipt from "./pages/ConfirmCashReceipt";
@@ -464,8 +465,7 @@ const AppContent = () => {
             
             {/* Test Route for debugging trade completion */}
             <Route path="/test-trade-completion" element={<TestTradeCompletion />} />
-            
-
+            <Route path="/test-notifications" element={<TestNotifications />} />
             
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />

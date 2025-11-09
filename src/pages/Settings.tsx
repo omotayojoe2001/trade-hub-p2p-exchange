@@ -31,8 +31,13 @@ const Settings = () => {
 
   const check2FAStatus = async () => {
     if (!user) return;
-    const isEnabled = await twoFactorAuthService.is2FAEnabled(user.id);
-    setTwoFactorEnabled(isEnabled);
+    try {
+      const isEnabled = await twoFactorAuthService.is2FAEnabled(user.id);
+      setTwoFactorEnabled(isEnabled);
+    } catch (error) {
+      console.error('Error checking 2FA status:', error);
+      setTwoFactorEnabled(false);
+    }
   };
 
   const fetchUserCredits = async () => {
@@ -54,7 +59,23 @@ const Settings = () => {
     if (!user) return;
     
     if (enabled) {
-      setShowTwoFactorSetup(true);
+      // Check if user has existing 2FA setup (even if disabled)
+      const existingData = await twoFactorAuthService.get2FAData(user.id);
+      
+      if (existingData && existingData.secret) {
+        // Reuse existing secret - just enable it
+        const result = await twoFactorAuthService.enable2FA(user.id, existingData.secret, existingData.backup_codes || []);
+        if (result.success) {
+          setTwoFactorEnabled(true);
+          toast({
+            title: "2FA Re-enabled",
+            description: "Using your existing Google Authenticator setup.",
+          });
+        }
+      } else {
+        // First time setup
+        setShowTwoFactorSetup(true);
+      }
     } else {
       const result = await twoFactorAuthService.disable2FA(user.id);
       if (result.success) {
@@ -76,6 +97,8 @@ const Settings = () => {
   const handleTwoFactorComplete = () => {
     setTwoFactorEnabled(true);
     setShowTwoFactorSetup(false);
+    // Refresh 2FA status from database
+    check2FAStatus();
   };
 
 
@@ -124,6 +147,12 @@ const Settings = () => {
       title: 'Referrals',
       description: 'Invite friends and earn rewards',
       link: '/referrals'
+    },
+    {
+      icon: <Bell size={20} className="text-[#1A73E8]" />,
+      title: 'Test Push Notifications',
+      description: 'Test push notifications and vibration',
+      link: '/test-notifications'
     },
     {
       icon: <HelpCircle size={20} className="text-[#1A73E8]" />,

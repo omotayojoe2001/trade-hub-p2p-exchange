@@ -188,7 +188,7 @@ const HelpSupport = () => {
                     onClick={() => setExpandedFaq(expandedFaq === faq.id ? null : faq.id)}
                     className="w-full p-4 text-left flex items-center justify-between"
                   >
-                    <span className="font-medium text-gray-900">{faq.question}</span>
+                    <span className="font-medium text-white">{faq.question}</span>
                     {expandedFaq === faq.id ? (
                       <ChevronUp size={20} className="text-gray-400" />
                     ) : (
@@ -227,7 +227,7 @@ const HelpSupport = () => {
                     <p className="text-sm text-gray-500">Get help via email</p>
                   </div>
                 </div>
-                <p className="text-blue-600 font-medium">support@centralexchange.com</p>
+                <p className="text-blue-600 font-medium">support@centralexchange.com.ng</p>
                 <p className="text-sm text-gray-500 mt-1">Response time: 2-4 hours</p>
               </Card>
 
@@ -241,7 +241,7 @@ const HelpSupport = () => {
                     <p className="text-sm text-gray-500">Call us directly</p>
                   </div>
                 </div>
-                <p className="text-green-600 font-medium">+234 800 123 4567</p>
+                <p className="text-green-600 font-medium">+90 535 742 4157</p>
                 <p className="text-sm text-gray-500 mt-1">Available 24/7</p>
               </Card>
 

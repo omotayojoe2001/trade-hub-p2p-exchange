@@ -13,21 +13,40 @@ class TwoFactorAuthService {
   // Enable 2FA for user
   async enable2FA(userId: string, secret: string, backupCodes: string[]): Promise<{ success: boolean; error?: string }> {
     try {
-      const { error } = await supabase
+      // Check if record exists first
+      const { data: existing } = await supabase
         .from('user_2fa')
-        .upsert({
-          user_id: userId,
-          secret: secret,
-          backup_codes: backupCodes,
-          is_enabled: true,
-          created_at: new Date().toISOString()
-        });
+        .select('user_id')
+        .eq('user_id', userId)
+        .single();
 
-      if (error) throw error;
+      if (existing) {
+        // Update existing record
+        const { error } = await supabase
+          .from('user_2fa')
+          .update({
+            secret: secret,
+            backup_codes: backupCodes,
+            is_enabled: true,
+            updated_at: new Date().toISOString()
+          })
+          .eq('user_id', userId);
 
-      // Also store in localStorage for quick access
-      localStorage.setItem(`2fa_enabled_${userId}`, 'true');
-      localStorage.setItem(`2fa_secret_${userId}`, secret);
+        if (error) throw error;
+      } else {
+        // Insert new record
+        const { error } = await supabase
+          .from('user_2fa')
+          .insert({
+            user_id: userId,
+            secret: secret,
+            backup_codes: backupCodes,
+            is_enabled: true,
+            created_at: new Date().toISOString()
+          });
+
+        if (error) throw error;
+      }
 
       return { success: true };
     } catch (error: any) {
@@ -60,24 +79,22 @@ class TwoFactorAuthService {
   // Check if 2FA is enabled for user
   async is2FAEnabled(userId: string): Promise<boolean> {
     try {
-      // First check localStorage for quick access
-      const localEnabled = localStorage.getItem(`2fa_enabled_${userId}`) === 'true';
-      if (localEnabled) return true;
-
-      // Check database
+      console.log('Checking 2FA status for user:', userId);
+      // Always check database for accurate status
       const { data, error } = await supabase
         .from('user_2fa')
-        .select('is_enabled')
+        .select('is_enabled, secret')
         .eq('user_id', userId)
         .single();
 
-      if (error || !data) return false;
+      console.log('2FA query result:', { data, error });
 
-      // Update localStorage
-      if (data.is_enabled) {
-        localStorage.setItem(`2fa_enabled_${userId}`, 'true');
+      if (error || !data) {
+        console.log('No 2FA data found or error:', error);
+        return false;
       }
 
+      console.log('2FA enabled status:', data.is_enabled);
       return data.is_enabled;
     } catch (error) {
       console.error('Error checking 2FA status:', error);
@@ -102,15 +119,15 @@ class TwoFactorAuthService {
     }
   }
 
-  // Verify 2FA token
+  // Verify 2FA token using TOTP
   async verify2FAToken(userId: string, token: string): Promise<boolean> {
     try {
       const data = await this.get2FAData(userId);
       if (!data || !data.is_enabled) return false;
 
-      // Here you would verify the TOTP token against the secret
-      // For now, we'll simulate verification
-      const isValid = token.length === 6 && /^\d+$/.test(token);
+      // Import TOTP verification
+      const { verifyTOTPCode } = await import('@/services/twoFactorAuth');
+      const isValid = verifyTOTPCode(token, data.secret);
       
       if (isValid) {
         // Update last used timestamp
@@ -127,22 +144,20 @@ class TwoFactorAuthService {
     }
   }
 
-  // Check if 2FA is required for login (after 24 hours or new device)
+  // 2FA is ALWAYS required on every login when enabled
   shouldRequire2FA(userId: string): boolean {
-    const lastLogin = localStorage.getItem(`last_2fa_login_${userId}`);
-    if (!lastLogin) return true;
-
-    const lastLoginTime = new Date(lastLogin);
-    const now = new Date();
-    const hoursSinceLogin = (now.getTime() - lastLoginTime.getTime()) / (1000 * 60 * 60);
-
-    // Require 2FA after 24 hours
-    return hoursSinceLogin >= 24;
+    // Always require 2FA if enabled - no session persistence
+    return true;
   }
 
-  // Mark 2FA as completed for this session
+  // Mark 2FA as completed for this session (no-op since we always require it)
   mark2FACompleted(userId: string): void {
-    localStorage.setItem(`last_2fa_login_${userId}`, new Date().toISOString());
+    // Update last used timestamp in database
+    supabase
+      .from('user_2fa')
+      .update({ last_used_at: new Date().toISOString() })
+      .eq('user_id', userId)
+      .then(() => console.log('2FA usage logged'));
   }
 }
 

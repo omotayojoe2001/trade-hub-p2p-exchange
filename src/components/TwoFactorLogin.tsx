@@ -9,16 +9,17 @@ interface TwoFactorLoginProps {
   onSuccess: () => void;
   onBack: () => void;
   userEmail: string;
+  pendingUser?: any;
 }
 
-const TwoFactorLogin: React.FC<TwoFactorLoginProps> = ({ onSuccess, onBack, userEmail }) => {
+const TwoFactorLogin: React.FC<TwoFactorLoginProps> = ({ onSuccess, onBack, userEmail, pendingUser }) => {
   const { toast } = useToast();
   const [code, setCode] = useState('');
   const [isVerifying, setIsVerifying] = useState(false);
   const [useBackupCode, setUseBackupCode] = useState(false);
 
   const handleVerifyCode = async () => {
-    if (code.length !== 6) {
+    if (code.length < 6) {
       toast({
         title: "Invalid Code",
         description: "Please enter a 6-digit verification code",
@@ -29,28 +30,36 @@ const TwoFactorLogin: React.FC<TwoFactorLoginProps> = ({ onSuccess, onBack, user
 
     setIsVerifying(true);
 
-    // Simulate API call for verification
-    setTimeout(() => {
-      // For demo purposes, accept any 6-digit code or specific backup codes
-      const validCodes = ['123456', 'A1B2C3D4', 'E5F6G7H8'];
-      
-      if (validCodes.includes(code)) {
-        toast({
-          title: "Verification Successful",
-          description: "Welcome back! 2FA verification completed.",
-        });
-        onSuccess();
-      } else {
-        toast({
-          title: "Invalid Code",
-          description: "The verification code you entered is incorrect. Please try again.",
-          variant: "destructive"
-        });
+    try {
+      if (pendingUser) {
+        const { twoFactorAuthService } = await import('@/services/twoFactorAuthService');
+        const isValid = await twoFactorAuthService.verify2FAToken(pendingUser.id, code);
+        
+        if (isValid) {
+          toast({
+            title: "Verification Successful",
+            description: "2FA verification completed.",
+          });
+          onSuccess();
+        } else {
+          toast({
+            title: "Invalid Code",
+            description: "The verification code you entered is incorrect. Please try again.",
+            variant: "destructive"
+          });
+        }
       }
-      
+    } catch (error) {
+      console.error('2FA verification error:', error);
+      toast({
+        title: "Verification Error",
+        description: "Failed to verify code. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
       setIsVerifying(false);
       setCode('');
-    }, 1500);
+    }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -150,14 +159,7 @@ const TwoFactorLogin: React.FC<TwoFactorLoginProps> = ({ onSuccess, onBack, user
           </div>
         </div>
 
-        {/* Demo Codes */}
-        <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-          <p className="text-xs text-blue-800 font-medium mb-1">Demo Codes (for testing):</p>
-          <p className="text-xs text-blue-700">
-            Authenticator: <span className="font-mono">123456</span><br />
-            Backup: <span className="font-mono">A1B2C3D4</span> or <span className="font-mono">E5F6G7H8</span>
-          </p>
-        </div>
+
       </Card>
     </div>
   );

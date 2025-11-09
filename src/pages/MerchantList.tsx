@@ -284,10 +284,25 @@ const MerchantList = () => {
               {/* Merchant Header */}
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center">
-                  <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center mr-3">
-                    <span className="text-lg font-semibold text-gray-600">
-                      {getAvatarInitials(merchant.display_name)}
-                    </span>
+                  <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center mr-3 overflow-hidden">
+                    {(() => {
+                      console.log(`Merchant ${merchant.display_name} avatar_url:`, merchant.avatar_url);
+                      return merchant.avatar_url ? (
+                        <img
+                          src={merchant.avatar_url}
+                          alt={merchant.display_name}
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            console.log('Image load error for:', merchant.avatar_url);
+                            e.currentTarget.style.display = 'none';
+                          }}
+                        />
+                      ) : (
+                        <span className="text-lg font-semibold text-gray-600">
+                          {getAvatarInitials(merchant.display_name)}
+                        </span>
+                      );
+                    })()}
                   </div>
                   <div>
                     <h3 className="font-semibold text-gray-800">{merchant.display_name}</h3>

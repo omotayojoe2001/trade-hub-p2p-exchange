@@ -205,38 +205,38 @@ const SelectCoin = () => {
         </div>
 
         {/* Coins List */}
-        <div className="space-y-4 mb-6">
+        <div className="space-y-3 mb-6">
           {filteredCoins.map((coin) => {
             const availableCount = getAvailableCount(coin);
             return (
-              <Card key={coin.id} className="p-4 bg-white border border-gray-200 rounded-lg hover:shadow-md transition-shadow cursor-pointer">
-                <div className="flex items-center justify-between mb-3">
+              <Card key={coin.id} className="p-3 bg-white border border-gray-200 rounded-lg hover:shadow-md transition-shadow cursor-pointer">
+                <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center">
-                    <div className={`w-12 h-12 ${coin.iconBg} rounded-full flex items-center justify-center mr-3`}>
-                      <CryptoIcon symbol={coin.symbol || 'BTC'} size={24} />
+                    <div className={`w-10 h-10 ${coin.iconBg} rounded-full flex items-center justify-center mr-3`}>
+                      <CryptoIcon symbol={coin.symbol || 'BTC'} size={20} />
                     </div>
                     <div>
-                      <h3 className="text-lg font-semibold text-gray-900">{coin.name}</h3>
-                      <p className="text-sm text-gray-500">{coin.symbol}</p>
+                      <h3 className="text-base font-semibold text-gray-900">{coin.name}</h3>
+                      <p className="text-xs text-gray-500">{coin.symbol}</p>
                     </div>
                   </div>
                   <div className="flex items-center">
-                    <span className={`inline-block w-2 h-2 rounded-full mr-2 ${
+                    <span className={`inline-block w-1.5 h-1.5 rounded-full mr-1 ${
                       coin.demand === 'High' ? 'bg-green-500' : 
                       coin.demand === 'Medium' ? 'bg-yellow-500' : 'bg-red-500'
                     }`}></span>
-                    <span className={`text-sm font-medium ${coin.demandColor}`}>{coin.demand}</span>
+                    <span className={`text-xs font-medium ${coin.demandColor}`}>{coin.demand}</span>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4 mb-4 text-sm">
+                <div className="grid grid-cols-2 gap-3 mb-3 text-xs">
                   <div>
                     <p className="text-gray-500 mb-1">Network:</p>
                     <div className="font-medium text-gray-900">
                       {coin.networks ? (
                         <div className="flex flex-wrap gap-1">
-                          {coin.networks.map((network, index) => (
-                            <span key={index} className={`px-2 py-1 rounded text-xs ${
+                          {coin.networks.slice(0, 2).map((network, index) => (
+                            <span key={index} className={`px-1.5 py-0.5 rounded text-xs ${
                               network === 'TRC20' ? 'bg-blue-100 text-blue-600' :
                               network === 'ERC20' ? 'bg-red-100 text-red-600' :
                               'bg-yellow-100 text-yellow-600'
@@ -250,30 +250,24 @@ const SelectCoin = () => {
                   </div>
                   <div>
                     <p className="text-gray-500 mb-1">{mode === 'buy' ? 'Sellers:' : 'Buyers:'}</p>
-                    <p className="font-medium text-gray-900">{availableCount} Available</p>
-                  </div>
-                  <div>
-                    <p className="text-gray-500 mb-1">{coin.networks ? 'From:' : 'Avg Rate:'}</p>
-                    <p className="font-medium text-gray-900">{coin.avgRate}</p>
-                  </div>
-                  <div>
-                    <p className="text-gray-500 mb-1">Speed:</p>
-                    <p className="font-medium text-gray-900">{coin.speed}</p>
+                    <p className="font-medium text-gray-900">{availableCount}</p>
                   </div>
                 </div>
 
                 <Button 
                   onClick={() => handleCoinSelect(coin.id)}
-                  className={`w-full h-10 rounded-lg font-semibold ${
+                  className={`w-full h-8 rounded-lg font-semibold text-sm ${
                     availableCount > 0 
                       ? mode === 'buy' 
-                        ? 'bg-blue-600 hover:bg-blue-700 text-white' 
-                        : 'bg-green-600 hover:bg-green-700 text-white'
-                      : 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                        ? 'bg-blue-600 hover:bg-blue-700' 
+                        : 'bg-green-600 hover:bg-green-700'
+                      : 'bg-gray-200 cursor-not-allowed'
                   }`}
                   disabled={availableCount === 0}
                 >
-                  {getActionText(coin)}
+                  <span className={availableCount > 0 ? 'text-white' : 'text-gray-500'}>
+                    {getActionText(coin)}
+                  </span>
                 </Button>
               </Card>
             );
@@ -299,19 +293,19 @@ const SelectCoin = () => {
         <div className="flex space-x-4">
           <Button 
             onClick={handleAutoMatch}
-            className="flex-1 h-12 bg-gray-800 text-white hover:bg-gray-900"
+            className="flex-1 h-12 bg-gray-800 hover:bg-gray-900"
           >
-            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-4 h-4 mr-2 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
             </svg>
-            Auto Match
+            <span className="text-white">Auto Match</span>
           </Button>
           <Button 
             onClick={handleBrowseSellers}
-            className="flex-1 h-12 bg-blue-600 hover:bg-blue-700 text-white"
+            className="flex-1 h-12 bg-blue-600 hover:bg-blue-700"
           >
-            <Users size={16} className="mr-2" />
-            {mode === 'buy' ? 'Browse Sellers' : 'Browse Buyers'}
+            <Users size={16} className="mr-2 text-white" />
+            <span className="text-white">{mode === 'buy' ? 'Browse Sellers' : 'Browse Buyers'}</span>
           </Button>
         </div>
       </div>

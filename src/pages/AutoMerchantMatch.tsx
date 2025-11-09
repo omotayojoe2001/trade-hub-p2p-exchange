@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Star, Clock, Zap, CheckCircle, Users } from 'lucide-react';
+import { ArrowLeft, Star, Clock, Zap, CheckCircle, Users, Search } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -184,7 +184,7 @@ const AutoMerchantMatch = () => {
 
   if (isMatching) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-white">
         <div className="flex items-center p-4 bg-white border-b border-gray-200">
           <button onClick={() => navigate('/merchant-matching-choice', { state: location.state })} className="mr-3">
             <ArrowLeft size={20} className="text-gray-600" />
@@ -192,32 +192,55 @@ const AutoMerchantMatch = () => {
           <h1 className="text-lg font-semibold text-gray-900">Finding Best Merchant</h1>
         </div>
 
-        <div className="p-6 text-center">
-          <div className="mb-6">
-            <div className="w-16 h-16 mx-auto mb-4 bg-blue-100 rounded-full flex items-center justify-center">
-              <Zap className="w-8 h-8 text-blue-600 animate-pulse" />
+        <div className="flex flex-col items-center justify-center min-h-[60vh] p-6">
+          {/* Beautiful animated search */}
+          <div className="relative mb-8">
+            <div className="w-24 h-24 mx-auto mb-6 relative">
+              {/* Outer rotating ring */}
+              <div className="absolute inset-0 border-4 border-blue-200 rounded-full animate-spin">
+                <div className="absolute top-0 left-1/2 w-2 h-2 bg-blue-600 rounded-full transform -translate-x-1/2 -translate-y-1"></div>
+              </div>
+              {/* Inner pulsing circle */}
+              <div className="absolute inset-2 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center animate-pulse">
+                <Zap className="w-8 h-8 text-white" />
+              </div>
             </div>
-            <h2 className="text-xl font-semibold text-gray-900 mb-2">
-              Auto-Matching in Progress
-            </h2>
-            <p className="text-gray-600">
-              We're finding the best merchant for your {mode} order...
-            </p>
+            
+            {/* Floating particles */}
+            <div className="absolute -top-4 -left-4 w-2 h-2 bg-green-400 rounded-full animate-bounce" style={{animationDelay: '0s'}}></div>
+            <div className="absolute -top-2 -right-6 w-1.5 h-1.5 bg-yellow-400 rounded-full animate-bounce" style={{animationDelay: '0.5s'}}></div>
+            <div className="absolute -bottom-4 -right-2 w-2 h-2 bg-pink-400 rounded-full animate-bounce" style={{animationDelay: '1s'}}></div>
+            <div className="absolute -bottom-2 -left-6 w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce" style={{animationDelay: '1.5s'}}></div>
           </div>
 
-          <div className="space-y-3 text-left max-w-sm mx-auto">
-            <div className="flex items-center space-x-3">
-              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-              <span className="text-sm text-gray-600">Analyzing merchant ratings</span>
+          <div className="flex items-center justify-center mb-3">
+            <Search className="w-6 h-6 text-blue-600 mr-2" />
+            <h2 className="text-2xl font-bold text-gray-900">
+              Smart Matching in Progress
+            </h2>
+          </div>
+          <p className="text-gray-600 mb-8 text-center max-w-md">
+            Our AI is analyzing thousands of merchants to find your perfect match...
+          </p>
+
+          {/* Progress steps */}
+          <div className="w-full max-w-md space-y-4">
+            <div className="flex items-center space-x-4 p-3 bg-green-50 rounded-lg border border-green-200">
+              <CheckCircle className="w-4 h-4 text-green-500 animate-pulse" />
+              <span className="text-sm font-medium text-green-800">Scanning merchant ratings & reviews</span>
             </div>
-            <div className="flex items-center space-x-3">
-              <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
-              <span className="text-sm text-gray-600">Checking response times</span>
+            <div className="flex items-center space-x-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+              <Zap className="w-4 h-4 text-blue-500 animate-pulse" style={{animationDelay: '0.5s'}} />
+              <span className="text-sm font-medium text-blue-800">Checking response times & availability</span>
             </div>
-            <div className="flex items-center space-x-3">
-              <div className="w-2 h-2 bg-purple-500 rounded-full animate-pulse"></div>
-              <span className="text-sm text-gray-600">Finding best rates</span>
+            <div className="flex items-center space-x-4 p-3 bg-purple-50 rounded-lg border border-purple-200">
+              <Star className="w-4 h-4 text-purple-500 animate-pulse" style={{animationDelay: '1s'}} />
+              <span className="text-sm font-medium text-purple-800">Comparing rates & fees</span>
             </div>
+          </div>
+
+          <div className="mt-8 text-center">
+            <p className="text-xs text-gray-500">This usually takes 10-30 seconds</p>
           </div>
         </div>
       </div>
@@ -225,7 +248,7 @@ const AutoMerchantMatch = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-white">
       <div className="flex items-center p-4 bg-white border-b border-gray-200">
         <button onClick={() => navigate('/merchant-matching-choice', { state: location.state })} className="mr-3">
           <ArrowLeft size={20} className="text-gray-600" />
@@ -313,16 +336,18 @@ const AutoMerchantMatch = () => {
         <div className="space-y-3">
           <Button
             onClick={handleContinue}
-            className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg"
+            className="w-full h-12 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold rounded-lg shadow-lg transform hover:scale-105 transition-all duration-200"
           >
+            <CheckCircle className="w-4 h-4 mr-2" />
             Continue with This Merchant
           </Button>
           
           <Button
             onClick={handleFindAnother}
             variant="outline"
-            className="w-full h-12 border-gray-300 text-gray-700 font-semibold rounded-lg"
+            className="w-full h-12 border-2 border-gray-300 text-gray-700 font-semibold rounded-lg hover:border-blue-400 hover:text-blue-600 transition-all duration-200"
           >
+            <Search className="w-4 h-4 mr-2" />
             Find Another Merchant
           </Button>
         </div>

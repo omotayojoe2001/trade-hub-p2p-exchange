@@ -7,7 +7,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Eye, EyeOff, User, Mail, Lock } from 'lucide-react';
-import TwoFactorLogin from '@/components/TwoFactorLogin';
+import TwoFactorAuthPage from '@/components/TwoFactorAuthPage';
 import { useAuth } from '@/hooks/useAuth';
 import EnhancedLocationSelector from '@/components/EnhancedLocationSelector';
 import { countries } from '@/data/countries';
@@ -29,6 +29,7 @@ const Auth = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [show2FA, setShow2FA] = useState(false);
   const [pendingUser, setPendingUser] = useState<any>(null);
+  const [pendingCredentials, setPendingCredentials] = useState<{email: string, password: string} | null>(null);
   const [message, setMessage] = useState('');
   const [userProfile, setUserProfile] = useState<any>(null);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
@@ -46,6 +47,7 @@ const Auth = () => {
     const accessToken = urlParams.get('access_token');
     const refreshToken = urlParams.get('refresh_token');
     const type = urlParams.get('type');
+    const refCode = urlParams.get('ref');
     
     // Check for password reset BEFORE session check
     if (accessToken && type === 'recovery') {
@@ -67,18 +69,49 @@ const Auth = () => {
     const checkSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
-        navigate('/home');
+        // Check if 2FA is enabled for existing session
+        const { twoFactorAuthService } = await import('@/services/twoFactorAuthService');
+        const has2FA = await twoFactorAuthService.is2FAEnabled(session.user.id);
+        
+        console.log('Existing session - User ID:', session.user.id);
+        console.log('Existing session - Has 2FA:', has2FA);
+        
+        if (has2FA) {
+          // Always show 2FA if user manually logged out or first time
+          const manualLogout = localStorage.getItem('manual_logout') === 'true';
+          console.log('Existing session with 2FA - manual logout:', manualLogout);
+          
+          if (manualLogout || !localStorage.getItem('2fa_completed')) {
+            console.log('Showing 2FA screen');
+            localStorage.removeItem('manual_logout');
+            setPendingUser(session.user);
+            setShow2FA(true);
+          } else {
+            console.log('2FA already completed this session - going to home');
+            navigate('/home');
+          }
+        } else {
+          console.log('Existing session without 2FA - going to home');
+          navigate('/home');
+        }
       }
     };
     
     checkSession();
     
-    const storedReferralCode = localStorage.getItem('referral_code');
-    if (storedReferralCode) {
-      setReferralCode(storedReferralCode);
-      setIsLogin(false);
+    // Handle referral code from URL or localStorage
+    if (refCode) {
+      setReferralCode(refCode);
+      localStorage.setItem('referral_code', refCode);
+      setIsLogin(false); // Switch to signup if referral code present
     } else {
-      setReferralCode('centralexchange');
+      const storedReferralCode = localStorage.getItem('referral_code');
+      if (storedReferralCode) {
+        setReferralCode(storedReferralCode);
+        setIsLogin(false);
+      } else {
+        setReferralCode('centralexchange');
+      }
     }
   }, [navigate]);
 
@@ -100,12 +133,20 @@ const Auth = () => {
       }
 
       if (data.user && data.session) {
-        const has2FA = localStorage.getItem(`2fa_enabled_${data.user.id}`) === 'true';
+        // Check if 2FA is enabled in database
+        const { twoFactorAuthService } = await import('@/services/twoFactorAuthService');
+        const has2FA = await twoFactorAuthService.is2FAEnabled(data.user.id);
+        
+        console.log('Login check - User ID:', data.user.id);
+        console.log('Login check - Has 2FA:', has2FA);
 
         if (has2FA) {
+          console.log('2FA enabled - showing 2FA screen');
+          // Keep session but show 2FA verification
           setPendingUser(data.user);
           setShow2FA(true);
         } else {
+          console.log('No 2FA - going to home');
           toast({
             title: "Welcome back!",
             description: "You have successfully signed in.",
@@ -195,19 +236,24 @@ const Auth = () => {
     }
   };
 
-  const handle2FASuccess = () => {
+  const handle2FASuccess = async () => {
+    // Mark 2FA as completed for this session
+    localStorage.setItem('2fa_completed', 'true');
+    
     toast({
       title: "Welcome back!",
       description: "2FA verification successful. You are now signed in.",
     });
     setShow2FA(false);
     setPendingUser(null);
+    setPendingCredentials(null);
     navigate('/home');
   };
 
   const handle2FABack = () => {
     setShow2FA(false);
     setPendingUser(null);
+    setPendingCredentials(null);
     supabase.auth.signOut();
   };
 
@@ -261,25 +307,38 @@ const Auth = () => {
             city: city
           });
           
+          // Process referral if code provided
           if (referralCode && referralCode !== 'centralexchange') {
-            const { data: referrerProfiles } = await supabase
-              .from('profiles')
-              .select('user_id, display_name')
-              .not('user_id', 'eq', data.user.id);
-            
-            const referrer = referrerProfiles?.find(profile => {
-              const displayName = profile.display_name?.toLowerCase().replace(/[^a-z0-9]/g, '');
-              const code = referralCode.toLowerCase();
-              return displayName === code;
-            });
-            
-            if (referrer) {
-              await supabase
+            try {
+              // Find referrer by display name matching referral code
+              const { data: referrerProfiles } = await supabase
                 .from('profiles')
-                .update({ referred_by: referrer.user_id })
-                .eq('user_id', data.user.id);
+                .select('user_id, display_name')
+                .not('user_id', 'eq', data.user.id);
+              
+              const referrer = referrerProfiles?.find(profile => {
+                const displayName = profile.display_name?.toLowerCase().replace(/[^a-z0-9]/g, '');
+                const code = referralCode.toLowerCase();
+                return displayName === code;
+              });
+              
+              if (referrer) {
+                // Call the referral signup function
+                await supabase.rpc('process_referral_signup', {
+                  new_user_id: data.user.id,
+                  referrer_user_id: referrer.user_id,
+                  referral_code_used: referralCode
+                });
+                
+                console.log('Referral processed successfully');
+              }
+            } catch (error) {
+              console.error('Error processing referral:', error);
             }
           }
+          
+          // Clear referral code from localStorage after use
+          localStorage.removeItem('referral_code');
         } catch (error) {
           console.log('Profile creation failed:', error);
         }
@@ -363,10 +422,11 @@ const Auth = () => {
 
   if (show2FA && pendingUser) {
     return (
-      <TwoFactorLogin
+      <TwoFactorAuthPage
         onSuccess={handle2FASuccess}
         onBack={handle2FABack}
         userEmail={pendingUser.email}
+        pendingUser={pendingUser}
       />
     );
   }

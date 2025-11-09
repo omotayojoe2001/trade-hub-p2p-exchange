@@ -30,20 +30,58 @@ const TwoFactorSetup: React.FC<TwoFactorSetupProps> = ({
   const [verificationCode, setVerificationCode] = useState('');
   const [isVerifying, setIsVerifying] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [error, setError] = useState('');
   const { toast } = useToast();
 
   useEffect(() => {
-    if (isOpen && !setupData) {
-      generateSetup();
+    if (isOpen) {
+      // Reset state when opening
+      setStep(1);
+      setSetupData(null);
+      setVerificationCode('');
+      
+      // Check if 2FA is already enabled
+      checkExisting2FA();
     }
   }, [isOpen]);
+
+  const checkExisting2FA = async () => {
+    try {
+      const { supabase } = await import('@/integrations/supabase/client');
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (user) {
+        const { data } = await supabase
+          .from('user_2fa')
+          .select('is_enabled')
+          .eq('user_id', user.id)
+          .single();
+
+        if (data?.is_enabled) {
+          setError('2FA is already enabled on your account.');
+          return;
+        }
+      }
+      
+      // Generate new setup if not already enabled
+      generateSetup();
+    } catch (error) {
+      generateSetup();
+    }
+  };
 
   const generateSetup = async () => {
     setIsGenerating(true);
     try {
-      const setup = await generateTwoFactorSetup(userEmail);
+      const setup = await generateTwoFactorSetup(userEmail, 'Central Exchange');
+      console.log('Generated 2FA setup:', { 
+        hasQR: !!setup.qrCodeUrl, 
+        hasSecret: !!setup.secret,
+        secretLength: setup.secret?.length 
+      });
       setSetupData(setup);
     } catch (error) {
+      console.error('2FA setup generation error:', error);
       toast({
         title: "Setup Error",
         description: "Failed to generate 2FA setup. Please try again.",
@@ -110,8 +148,34 @@ Instructions:
       const isValid = verifyTOTPCode(verificationCode, setupData.secret);
       
       if (isValid) {
-        // Enable 2FA
-        enableTwoFactor(setupData.secret, setupData.backupCodes);
+        // Enable 2FA in database
+        const { supabase } = await import('@/integrations/supabase/client');
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        if (user) {
+          const { error } = await supabase
+            .from('user_2fa')
+            .upsert({
+              user_id: user.id,
+              secret: setupData.secret,
+              backup_codes: setupData.backupCodes,
+              is_enabled: true,
+              created_at: new Date().toISOString()
+            });
+
+          if (error) {
+            throw new Error(error.message);
+          }
+
+          // Also update profiles table for compatibility
+          await supabase.from('profiles').upsert({
+            user_id: user.id,
+            two_factor_enabled: true,
+            two_factor_secret: setupData.secret,
+            backup_codes: setupData.backupCodes,
+            updated_at: new Date().toISOString()
+          });
+        }
         
         toast({
           title: "2FA Enabled",
@@ -154,21 +218,54 @@ Instructions:
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle className="flex items-center">
-            <Shield className="w-5 h-5 mr-2 text-blue-600" />
-            Setup Two-Factor Authentication
+      <DialogContent className="max-w-sm h-[80vh] flex flex-col fixed top-4 left-1/2 transform -translate-x-1/2">
+        <DialogHeader className="pb-2">
+          <DialogTitle className="flex items-center text-base">
+            <Shield className="w-4 h-4 mr-2 text-blue-600" />
+            Setup 2FA
           </DialogTitle>
         </DialogHeader>
 
+        {error && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-2">
+            <p className="text-red-600 text-sm">{error}</p>
+            <div className="mt-2 flex gap-2">
+              <button
+                onClick={() => {
+                  setError('');
+                  onClose();
+                }}
+                className="text-xs text-red-700 underline"
+              >
+                Close
+              </button>
+              <button
+                onClick={async () => {
+                  // Reset 2FA to allow re-setup
+                  const { supabase } = await import('@/integrations/supabase/client');
+                  const { data: { user } } = await supabase.auth.getUser();
+                  if (user) {
+                    await supabase.from('user_2fa').delete().eq('user_id', user.id);
+                  }
+                  setError('');
+                  generateSetup();
+                }}
+                className="text-xs text-blue-700 underline"
+              >
+                Reset & Setup Again
+              </button>
+            </div>
+          </div>
+        )}
+
+        <div className="flex-1 overflow-y-auto px-1">
         {step === 1 && (
-          <div className="space-y-4">
+          <div className="space-y-3">
             <div className="text-center">
-              <Smartphone className="w-16 h-16 text-blue-600 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold mb-2">Install Authenticator App</h3>
-              <p className="text-sm text-gray-600 mb-4">
-                Download and install Google Authenticator or any compatible TOTP app on your phone.
+              <Smartphone className="w-12 h-12 text-blue-600 mx-auto mb-3" />
+              <h3 className="text-base font-semibold mb-2">Install Authenticator App</h3>
+              <p className="text-xs text-gray-600 mb-3">
+                Download Google Authenticator or compatible TOTP app.
               </p>
             </div>
 
@@ -193,11 +290,11 @@ Instructions:
         )}
 
         {step === 2 && setupData && (
-          <div className="space-y-4">
+          <div className="space-y-3">
             <div className="text-center">
-              <h3 className="text-lg font-semibold mb-2">Scan QR Code</h3>
-              <p className="text-sm text-gray-600 mb-4">
-                Scan this QR code with your authenticator app
+              <h3 className="text-base font-semibold mb-2">Scan QR Code</h3>
+              <p className="text-xs text-gray-600 mb-3">
+                Scan with your authenticator app
               </p>
             </div>
 
@@ -208,19 +305,43 @@ Instructions:
                 className="w-48 h-48 border rounded-lg"
               />
             </div>
+            <p className="text-xs text-center text-gray-600">
+              Can't scan? Use manual entry below
+            </p>
 
-            <div className="bg-gray-50 border rounded-lg p-4">
-              <h4 className="font-medium text-gray-800 mb-2">Manual Entry Key:</h4>
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+              <h4 className="font-medium text-blue-800 mb-2 text-sm">Manual Setup:</h4>
+              <p className="text-xs text-blue-700 mb-2">1. Open Google Authenticator</p>
+              <p className="text-xs text-blue-700 mb-2">2. Tap + → Enter setup key</p>
+              <p className="text-xs text-blue-700 mb-2">3. Account: {userEmail}</p>
+              <p className="text-xs text-blue-700 mb-2">4. Key:</p>
               <div className="flex items-center space-x-2">
-                <code className="flex-1 text-sm bg-white p-2 rounded border font-mono">
+                <code className="flex-1 text-xs bg-white p-2 rounded border font-mono break-all">
                   {setupData.manualEntryKey}
                 </code>
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => copyToClipboard(setupData.manualEntryKey, 'Manual entry key')}
+                  onClick={() => copyToClipboard(setupData.manualEntryKey, 'Key copied')}
                 >
-                  <Copy size={14} />
+                  <Copy size={12} />
+                </Button>
+              </div>
+              <div className="mt-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={async () => {
+                    const { getCurrentTOTPCode } = await import('@/services/twoFactorAuth');
+                    const testCode = getCurrentTOTPCode(setupData.secret);
+                    toast({
+                      title: "Test Code",
+                      description: `Current code: ${testCode}`,
+                    });
+                  }}
+                  className="text-xs"
+                >
+                  Show Test Code
                 </Button>
               </div>
             </div>
@@ -252,12 +373,12 @@ Instructions:
         )}
 
         {step === 3 && setupData && (
-          <div className="space-y-4">
+          <div className="space-y-3">
             <div className="text-center">
-              <CheckCircle className="w-16 h-16 text-green-600 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold mb-2">2FA Enabled Successfully!</h3>
-              <p className="text-sm text-gray-600 mb-4">
-                Your account is now protected with two-factor authentication.
+              <CheckCircle className="w-12 h-12 text-green-600 mx-auto mb-3" />
+              <h3 className="text-base font-semibold mb-2">2FA Enabled!</h3>
+              <p className="text-xs text-gray-600 mb-3">
+                Your account is now protected.
               </p>
             </div>
 
@@ -287,6 +408,7 @@ Instructions:
             </Button>
           </div>
         )}
+        </div>
       </DialogContent>
     </Dialog>
   );

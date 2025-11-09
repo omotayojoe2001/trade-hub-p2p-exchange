@@ -385,39 +385,43 @@ const ProfileSettings = () => {
         </div>
       </div>
 
-      <div className="p-4 space-y-3">
-        {/* Profile Photo */}
-        <Card className="bg-white p-4">
-          <div className="flex flex-col items-center mb-4">
-            <div className="relative mb-4">
-              <div className="w-24 h-24 bg-blue-500 rounded-full flex items-center justify-center overflow-hidden mx-auto">
-                {profilePicture ? (
-                  <img
-                    src={profilePicture}
-                    alt="Profile"
-                    className="w-full h-full object-cover object-center"
-                  />
-                ) : (
-                  <User size={40} className="text-white" />
-                )}
+      <div className="p-4 space-y-6">
+        {/* Profile Settings Section */}
+        <div className="bg-white border border-gray-200 rounded-lg">
+          <div className="p-4 border-b border-gray-200">
+            <h2 className="text-lg font-semibold text-gray-900">Profile Settings</h2>
+            <p className="text-sm text-gray-500 mt-1">Manage your profile information and photo</p>
+          </div>
+          
+          <div className="p-4">
+            {/* Profile Photo */}
+            <div className="flex flex-col items-center mb-6">
+              <div className="relative mb-4">
+                <div className="w-24 h-24 bg-blue-500 rounded-full flex items-center justify-center overflow-hidden mx-auto">
+                  {profilePicture ? (
+                    <img
+                      src={profilePicture}
+                      alt="Profile"
+                      className="w-full h-full object-cover object-center"
+                    />
+                  ) : (
+                    <User size={40} className="text-white" />
+                  )}
+                </div>
+                <button
+                  onClick={() => setShowProfilePictureDialog(true)}
+                  className="absolute -bottom-1 -right-1 w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center hover:bg-blue-700 transition-colors shadow-lg border-2 border-white"
+                >
+                  <Camera size={16} className="text-white" />
+                </button>
               </div>
-              <button
-                onClick={() => setShowProfilePictureDialog(true)}
-                className="absolute -bottom-1 -right-1 w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center hover:bg-blue-700 transition-colors shadow-lg border-2 border-white"
-              >
-                <Camera size={16} className="text-white" />
-              </button>
+              <div className="text-center">
+                <h3 className="text-xl font-semibold text-gray-900">{formData.displayName}</h3>
+                <p className="text-sm text-gray-500">{profile?.user_type === 'merchant' ? 'Merchant' : 'Customer'}</p>
+              </div>
             </div>
-          </div>
-          <div className="text-center">
-            <h2 className="text-xl font-semibold text-gray-900">{formData.displayName}</h2>
-            <p className="text-sm text-gray-500">{profile?.user_type === 'merchant' ? 'Merchant' : 'Customer'}</p>
-          </div>
-        </Card>
 
-        {/* Personal Information */}
-        <Card className="bg-white p-4">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Personal Information</h3>
+            {/* Personal Information Fields */}
           
           <div className="space-y-4">
             <div>
@@ -532,70 +536,79 @@ const ProfileSettings = () => {
             </div>
           </div>
 
-          {isEditing && (
-            <div className="flex space-x-3 mt-6">
-              <Button onClick={handleSave} className="flex-1">
-                Save Changes
-              </Button>
-              <Button variant="outline" onClick={() => setIsEditing(false)} className="flex-1">
-                Cancel
-              </Button>
-            </div>
-          )}
-        </Card>
+            {isEditing && (
+              <div className="flex space-x-3 mt-6">
+                <Button onClick={handleSave} className="flex-1">
+                  Save Changes
+                </Button>
+                <Button variant="outline" onClick={() => setIsEditing(false)} className="flex-1">
+                  Cancel
+                </Button>
+              </div>
+            )}
+          </div>
+        </div>
 
-
-
-        {/* Account Status */}
-        <Card className="bg-card p-4">
-          <h3 className="text-lg font-semibold text-foreground mb-4">Account Status</h3>
+        {/* Security Section */}
+        <div className="bg-white border border-gray-200 rounded-lg">
+          <div className="p-4 border-b border-gray-200">
+            <h2 className="text-lg font-semibold text-gray-900">Security</h2>
+            <p className="text-sm text-gray-500 mt-1">Manage your account security and verification status</p>
+          </div>
           
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">Account Type</span>
-              <span className="text-sm font-medium text-blue-600 capitalize">{profile?.user_type}</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">Email Verification</span>
-              <div className="flex items-center">
-                <Shield size={14} className="text-green-500 mr-1" />
-                <span className="text-sm text-green-600">Verified</span>
+          <div className="p-4">
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-600">Account Type</span>
+                <span className="text-sm font-medium text-blue-600 capitalize">{profile?.user_type}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-600">Email Verification</span>
+                <div className="flex items-center">
+                  <Shield size={14} className="text-green-500 mr-1" />
+                  <span className="text-sm text-green-600">Verified</span>
+                </div>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-600">Phone Verification</span>
+                <span className="text-sm text-orange-600">Pending</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-600">KYC Status</span>
+                <span className="text-sm text-orange-600">Pending</span>
               </div>
             </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">Phone Verification</span>
-              <span className="text-sm text-orange-600">Pending</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">KYC Status</span>
-              <span className="text-sm text-orange-600">Pending</span>
-            </div>
           </div>
-        </Card>
+        </div>
 
-        {/* Danger Zone */}
-        <Card className="bg-white p-4 border-red-200">
-          <h3 className="text-lg font-semibold text-red-600 mb-4">Danger Zone</h3>
+        {/* Account Management Section */}
+        <div className="bg-white border border-red-200 rounded-lg">
+          <div className="p-4 border-b border-red-200">
+            <h2 className="text-lg font-semibold text-red-600">Account Management</h2>
+            <p className="text-sm text-red-500 mt-1">Manage account deactivation and deletion</p>
+          </div>
           
-          <div className="space-y-3">
-            <Button
-              variant="outline"
-              className="w-full text-orange-600 border-orange-200 hover:bg-orange-50"
-              onClick={() => setShowDeactivateDialog(true)}
-            >
-              Deactivate Account
-            </Button>
-            <Link to="/delete-account">
+          <div className="p-4">
+            <div className="space-y-3">
               <Button
                 variant="outline"
-                className="w-full text-red-600 border-red-200 hover:bg-red-50"
+                className="w-full text-orange-600 border-orange-200 hover:bg-orange-50"
+                onClick={() => setShowDeactivateDialog(true)}
               >
-                <Trash2 className="mr-2" size={16} />
-                Delete Account
+                Deactivate Account
               </Button>
-            </Link>
+              <Link to="/delete-account">
+                <Button
+                  variant="outline"
+                  className="w-full text-red-600 border-red-200 hover:bg-red-50"
+                >
+                  <Trash2 className="mr-2" size={16} />
+                  Delete Account
+                </Button>
+              </Link>
+            </div>
           </div>
-        </Card>
+        </div>
       </div>
 
       {/* Profile Picture Dialog */}

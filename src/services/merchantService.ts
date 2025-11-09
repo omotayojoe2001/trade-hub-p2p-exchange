@@ -4,6 +4,7 @@ export interface MerchantProfile {
   id: string;
   user_id: string;
   display_name: string;
+  avatar_url?: string;
   rating: number;
   is_online: boolean;
   trade_count: number;
@@ -34,6 +35,7 @@ export const merchantService = {
         .select(`
           user_id,
           display_name,
+          avatar_url,
           phone_number,
           is_merchant,
           user_type,
@@ -62,20 +64,24 @@ export const merchantService = {
       }
 
       // Transform profiles data to merchant format with default values
-      const merchants: MerchantProfile[] = profilesData.map(profile => ({
-        id: profile.user_id,
-        user_id: profile.user_id,
-        display_name: profile.display_name || 'Unknown User',
-        rating: 4.5 + Math.random() * 0.5, // Random rating between 4.5-5.0
-        is_online: Math.random() > 0.3, // 70% chance of being online
-        trade_count: Math.floor(Math.random() * 100) + 10, // Random trade count
-        total_volume: Math.floor(Math.random() * 1000000) + 100000, // Random volume
-        avg_response_time_minutes: Math.floor(Math.random() * 30) + 5, // 5-35 minutes
-        payment_methods: ['bank_transfer', 'cash'], // Default payment methods
-        created_at: profile.created_at,
-        is_premium: profile.user_type === 'premium',
-        verification_level: 'basic' // Default verification level
-      }));
+      const merchants: MerchantProfile[] = profilesData.map(profile => {
+        console.log('Profile avatar_url:', profile.avatar_url); // Debug log
+        return {
+          id: profile.user_id,
+          user_id: profile.user_id,
+          display_name: profile.display_name || 'Unknown User',
+          avatar_url: profile.avatar_url,
+          rating: 4.5 + Math.random() * 0.5, // Random rating between 4.5-5.0
+          is_online: Math.random() > 0.3, // 70% chance of being online
+          trade_count: Math.floor(Math.random() * 100) + 10, // Random trade count
+          total_volume: Math.floor(Math.random() * 1000000) + 100000, // Random volume
+          avg_response_time_minutes: Math.floor(Math.random() * 30) + 5, // 5-35 minutes
+          payment_methods: ['bank_transfer', 'cash'], // Default payment methods
+          created_at: profile.created_at,
+          is_premium: profile.user_type === 'premium',
+          verification_level: 'basic' // Default verification level
+        };
+      });
 
       console.log('Found merchants:', merchants.length);
       return merchants;

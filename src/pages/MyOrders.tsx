@@ -144,66 +144,56 @@ const MyOrders = () => {
               // Always show code if it exists
 
               return (
-                <Card key={order.id} className="overflow-hidden">
-                  <CardContent className="p-3">
-                    {/* Header */}
-                    <div className="flex items-center justify-between mb-2">
-                      <div>
-                        <p className="font-semibold text-base">${order.usd_amount.toLocaleString()}</p>
-                        <p className="text-xs text-gray-500">
-                          {new Date(order.created_at).toLocaleDateString()}
-                        </p>
-                      </div>
-                      <Badge variant={statusInfo.color === 'green' ? 'default' : 'secondary'} className={`bg-${statusInfo.color}-100 text-${statusInfo.color}-800 text-xs`}>
+                <div className="bg-white border border-gray-200 rounded-lg p-3">
+                  {/* Header */}
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center space-x-3">
+                      <p className="font-semibold text-sm">${order.usd_amount.toLocaleString()}</p>
+                      <Badge variant={statusInfo.color === 'green' ? 'default' : 'secondary'} className={`bg-${statusInfo.color}-100 text-${statusInfo.color}-800 text-xs px-2 py-1`}>
                         <StatusIcon className="w-3 h-3 mr-1" />
                         {statusInfo.label}
                       </Badge>
                     </div>
+                    <p className="text-xs text-gray-500">
+                      {new Date(order.created_at).toLocaleDateString()}
+                    </p>
+                  </div>
 
-                  {/* Delivery Info */}
-                  <div className="flex items-center space-x-2 mb-3">
-                    <MapPin className="w-3 h-3 text-gray-500" />
-                    <div>
-                      <p className="text-xs font-medium">
+                  {/* Delivery Info & Code */}
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center space-x-1">
+                      <MapPin className="w-3 h-3 text-gray-500" />
+                      <p className="text-xs text-gray-600">
                         {order.delivery_type === 'delivery' ? 'Delivery' : 'Pickup'}
                       </p>
                     </div>
-                  </div>
-
-                  {/* Delivery Code - Compact */}
-                  {order.delivery_code && (
-                    <div className="bg-yellow-50 border border-yellow-200 rounded p-2 mb-3">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-xs text-yellow-700 flex items-center">
-                            <Lock className="w-3 h-3 mr-1" />
-                            Code
-                          </p>
-                          <p className="text-lg font-mono font-bold text-yellow-900">
-                            {order.delivery_code}
-                          </p>
-                        </div>
+                    {order.delivery_code && (
+                      <div className="flex items-center space-x-1">
+                        <Lock className="w-3 h-3 text-yellow-600" />
+                        <span className="text-xs font-mono font-bold text-yellow-800">
+                          {order.delivery_code}
+                        </span>
                         <Button
                           onClick={() => copyDeliveryCode(order.delivery_code)}
-                          variant="outline"
+                          variant="ghost"
                           size="sm"
-                          className="border-yellow-300 text-yellow-700 hover:bg-yellow-100 h-8 w-8 p-0"
+                          className="h-6 w-6 p-0 hover:bg-yellow-100"
                         >
-                          <Copy className="w-3 h-3" />
+                          <Copy className="w-3 h-3 text-yellow-600" />
                         </Button>
                       </div>
-                    </div>
-                  )}
+                    )}
+                  </div>
 
-                  {/* Action Button */}
-                  <div className="grid grid-cols-2 gap-2">
+                  {/* Action Buttons */}
+                  <div className="flex space-x-2">
                     <Button
                       onClick={() => navigate(`/cash-trade-status/${order.id}`)}
                       variant="outline"
                       size="sm"
-                      className="h-8 text-xs"
+                      className="flex-1 h-7 text-xs"
                     >
-                      View Details
+                      Details
                     </Button>
                     <Button
                       onClick={() => {
@@ -219,14 +209,13 @@ const MyOrders = () => {
                       }}
                       variant="outline"
                       size="sm"
-                      className="h-8 text-xs"
+                      className="flex-1 h-7 text-xs"
                     >
                       <MessageCircle className="w-3 h-3 mr-1" />
                       Message
                     </Button>
                   </div>
-                  </CardContent>
-                </Card>
+                </div>
               );
             })}
           </div>

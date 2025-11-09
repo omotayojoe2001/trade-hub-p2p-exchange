@@ -49,7 +49,7 @@ const MerchantSettings = () => {
 
   const [settings, setSettings] = useState<MerchantSettings>({
     merchant_type: 'manual',
-    supported_coins: ['BTC', 'USDT', 'ETH', 'DOGE', 'ADA', 'BNB', 'XRP', 'SOL', 'MATIC', 'DOT'],
+    supported_coins: ['BTC', 'USDT'],
     supported_currencies: ['NGN', 'USD'],
     exchange_rates: {
       BTC: { buy_rate: null, sell_rate: null },
@@ -176,7 +176,7 @@ const MerchantSettings = () => {
     }
   };
 
-  const availableCoins = ['BTC', 'USDT', 'ETH', 'DOGE', 'ADA', 'BNB', 'XRP', 'SOL', 'MATIC', 'DOT'];
+  const availableCoins = ['BTC', 'USDT'];
   const availableCurrencies = ['NGN', 'USD'];
   const availablePaymentMethods = ['bank_transfer', 'paypal'];
   const availableCountries = ['Nigeria', 'Kenya', 'South Africa', 'Ghana', 'Uganda', 'Rwanda', 'Tanzania', 'Ethiopia'];
@@ -309,10 +309,25 @@ const MerchantSettings = () => {
             <p className="text-xs text-orange-500">If you only select BTC, you won't appear for USDT trades</p>
           </div>
           
-          <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-3">
             {availableCoins.map((coin) => (
-              <div key={coin} className="flex items-center space-x-2">
-                <Checkbox
+              <div key={coin} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50">
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center">
+                    {coin === 'BTC' ? (
+                      <span className="text-orange-500 text-lg">₿</span>
+                    ) : coin === 'USDT' ? (
+                      <span className="text-green-600 text-lg">⊞</span>
+                    ) : (
+                      <span className="text-orange-600 font-bold text-sm">{coin}</span>
+                    )}
+                  </div>
+                  <div>
+                    <Label htmlFor={`coin-${coin}`} className="font-medium text-gray-900">{coin}</Label>
+                    <p className="text-xs text-gray-500">${currentPrices[coin]?.toLocaleString()}</p>
+                  </div>
+                </div>
+                <Switch
                   id={`coin-${coin}`}
                   checked={settings.supported_coins.includes(coin)}
                   onCheckedChange={(checked) => {
@@ -324,9 +339,6 @@ const MerchantSettings = () => {
                     }));
                   }}
                 />
-                <Label htmlFor={`coin-${coin}`} className="flex items-center">
-                  {coin} <span className="text-xs text-gray-500 ml-1">${currentPrices[coin]?.toLocaleString()}</span>
-                </Label>
               </div>
             ))}
           </div>
@@ -339,10 +351,22 @@ const MerchantSettings = () => {
             <h2 className="text-lg font-semibold text-gray-900">Supported Currencies</h2>
           </div>
           
-          <div className="grid grid-cols-3 gap-3">
+          <div className="space-y-3">
             {availableCurrencies.map((currency) => (
-              <div key={currency} className="flex items-center space-x-2">
-                <Checkbox
+              <div key={currency} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50">
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                    {currency === 'NGN' ? (
+                      <span className="text-green-600 text-lg">₦</span>
+                    ) : currency === 'USD' ? (
+                      <span className="text-blue-600 text-lg">$</span>
+                    ) : (
+                      <span className="text-blue-600 font-bold text-sm">{currency}</span>
+                    )}
+                  </div>
+                  <Label htmlFor={`currency-${currency}`} className="font-medium text-gray-900">{currency}</Label>
+                </div>
+                <Switch
                   id={`currency-${currency}`}
                   checked={settings.supported_currencies.includes(currency)}
                   onCheckedChange={(checked) => {
@@ -354,7 +378,6 @@ const MerchantSettings = () => {
                     }));
                   }}
                 />
-                <Label htmlFor={`currency-${currency}`}>{currency}</Label>
               </div>
             ))}
           </div>
@@ -435,10 +458,18 @@ const MerchantSettings = () => {
             <h2 className="text-lg font-semibold text-gray-900">Payment Methods</h2>
           </div>
           
-          <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-3">
             {availablePaymentMethods.map((method) => (
-              <div key={method} className="flex items-center space-x-2">
-                <Checkbox
+              <div key={method} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50">
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
+                    <CreditCard size={18} className="text-purple-600" />
+                  </div>
+                  <Label htmlFor={`payment-${method}`} className="font-medium text-gray-900 capitalize">
+                    {method.replace('_', ' ')}
+                  </Label>
+                </div>
+                <Switch
                   id={`payment-${method}`}
                   checked={settings.payment_methods.includes(method)}
                   onCheckedChange={(checked) => {
@@ -450,41 +481,12 @@ const MerchantSettings = () => {
                     }));
                   }}
                 />
-                <Label htmlFor={`payment-${method}`} className="capitalize">
-                  {method.replace('_', ' ')}
-                </Label>
               </div>
             ))}
           </div>
         </Card>
 
-        {/* Service Locations */}
-        <Card className="p-4">
-          <div className="flex items-center mb-4">
-            <MapPin size={20} className="text-red-600 mr-2" />
-            <h2 className="text-lg font-semibold text-gray-900">Service Locations</h2>
-          </div>
-          
-          <div className="grid grid-cols-2 gap-3">
-            {availableCountries.map((country) => (
-              <div key={country} className="flex items-center space-x-2">
-                <Checkbox
-                  id={`location-${country}`}
-                  checked={settings.service_locations.includes(country)}
-                  onCheckedChange={(checked) => {
-                    setSettings(prev => ({
-                      ...prev,
-                      service_locations: checked 
-                        ? [...prev.service_locations, country]
-                        : prev.service_locations.filter(l => l !== country)
-                    }));
-                  }}
-                />
-                <Label htmlFor={`location-${country}`}>{country}</Label>
-              </div>
-            ))}
-          </div>
-        </Card>
+
 
         {/* Trading Limits */}
         <Card className="p-4">
@@ -522,40 +524,7 @@ const MerchantSettings = () => {
           </div>
         </Card>
 
-        {/* Auto Trading Settings */}
-        <Card className="p-4">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Auto Trading Settings</h2>
-          
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <Label>Auto Accept Trades</Label>
-                <p className="text-sm text-gray-600">Automatically accept new trade requests</p>
-              </div>
-              <Switch
-                checked={settings.auto_accept_trades}
-                onCheckedChange={(checked) => setSettings(prev => ({ 
-                  ...prev, 
-                  auto_accept_trades: checked 
-                }))}
-              />
-            </div>
 
-            <div className="flex items-center justify-between">
-              <div>
-                <Label>Auto Release Escrow</Label>
-                <p className="text-sm text-gray-600">Automatically release crypto when payment confirmed</p>
-              </div>
-              <Switch
-                checked={settings.auto_release_escrow}
-                onCheckedChange={(checked) => setSettings(prev => ({ 
-                  ...prev, 
-                  auto_release_escrow: checked 
-                }))}
-              />
-            </div>
-          </div>
-        </Card>
 
         {/* Business Hours */}
         <Card className="p-4">
@@ -585,9 +554,10 @@ const MerchantSettings = () => {
                   if (day === 'enabled' || typeof hours === 'boolean') return null;
                   const dayHours = hours as { start: string; end: string; enabled: boolean };
                   return (
-                    <div key={day} className="flex items-center space-x-4">
-                      <div className="w-20">
-                        <Checkbox
+                    <div key={day} className="flex items-center justify-between p-3 border rounded-lg">
+                      <Label className="capitalize font-medium text-gray-900">{day}</Label>
+                      <div className="flex items-center space-x-3">
+                        <Switch
                           checked={dayHours.enabled}
                           onCheckedChange={(checked) => setSettings(prev => ({
                             ...prev,
@@ -597,37 +567,36 @@ const MerchantSettings = () => {
                             }
                           }))}
                         />
-                        <Label className="capitalize ml-2">{day}</Label>
+                        {dayHours.enabled && (
+                          <>
+                            <Input
+                              type="time"
+                              value={dayHours.start}
+                              onChange={(e) => setSettings(prev => ({
+                                ...prev,
+                                business_hours: {
+                                  ...prev.business_hours,
+                                  [day]: { ...dayHours, start: e.target.value }
+                                }
+                              }))}
+                              className="w-24"
+                            />
+                            <span>to</span>
+                            <Input
+                              type="time"
+                              value={dayHours.end}
+                              onChange={(e) => setSettings(prev => ({
+                                ...prev,
+                                business_hours: {
+                                  ...prev.business_hours,
+                                  [day]: { ...dayHours, end: e.target.value }
+                                }
+                              }))}
+                              className="w-24"
+                            />
+                          </>
+                        )}
                       </div>
-                      {dayHours.enabled && (
-                        <>
-                          <Input
-                            type="time"
-                            value={dayHours.start}
-                            onChange={(e) => setSettings(prev => ({
-                              ...prev,
-                              business_hours: {
-                                ...prev.business_hours,
-                                [day]: { ...dayHours, start: e.target.value }
-                              }
-                            }))}
-                            className="w-24"
-                          />
-                          <span>to</span>
-                          <Input
-                            type="time"
-                            value={dayHours.end}
-                            onChange={(e) => setSettings(prev => ({
-                              ...prev,
-                              business_hours: {
-                                ...prev.business_hours,
-                                [day]: { ...dayHours, end: e.target.value }
-                              }
-                            }))}
-                            className="w-24"
-                          />
-                        </>
-                      )}
                     </div>
                   );
                 })}

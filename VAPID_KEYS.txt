@@ -1,0 +1,19 @@
+🔑 VAPID KEYS FOR PUSH NOTIFICATIONS
+Generated: 2025-01-11
+
+📋 PUBLIC KEY:
+BB8V5J-QRu5aQUnOov7ah6JkBSXFJjYkYElqFdND58bgNZMQQ8nJLQ6Vl8KdAEbaiO6HeU9hsGkMMsXZwotlTOU
+
+🔐 PRIVATE KEY:
+Lqy9PPge1Tsi6oYNNvDJfVzmI8Y84kjRMSCbT1b3KpQ
+
+⚠️ IMPORTANT:
+- Keep these keys secure and private
+- The private key should NEVER be exposed in client-side code
+- Add the private key to Supabase Environment Variables
+- The public key is already updated in your code
+
+📝 NEXT STEPS:
+1. Add VAPID_PRIVATE_KEY to Supabase Dashboard → Settings → Environment Variables
+2. Deploy your Edge Function to Supabase
+3. Test push notifications on your app

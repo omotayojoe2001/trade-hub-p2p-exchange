@@ -61,8 +61,8 @@ const MerchantMatchingChoice = () => {
           <div className="flex items-start">
             <Shield size={16} className="text-blue-600 mr-2 mt-0.5" />
             <div className="text-sm">
-              <p className="font-medium mb-1 text-white">How would you like to find a merchant?</p>
-              <p className="text-white">Choose between automatic matching for speed or manual selection for control.</p>
+              <p className="font-medium mb-1 text-blue-800">How would you like to find a merchant?</p>
+              <p className="text-blue-700">Choose between automatic matching for speed or manual selection for control.</p>
             </div>
           </div>
         </div>
@@ -79,32 +79,42 @@ const MerchantMatchingChoice = () => {
           <CardContent className="p-6">
             <div className="flex items-start space-x-4">
               <div className={`p-3 rounded-full ${
-                selectedOption === 'auto' ? 'bg-blue-100' : 'bg-gray-100'
+                selectedOption === 'auto' ? 'bg-blue-600' : 'bg-gray-100'
               }`}>
                 <Zap className={`w-6 h-6 ${
-                  selectedOption === 'auto' ? 'text-blue-600' : 'text-gray-600'
+                  selectedOption === 'auto' ? 'text-white' : 'text-gray-600'
                 }`} />
               </div>
               <div className="flex-1">
                 <div className="flex items-center space-x-2 mb-2">
-                  <h3 className="text-lg font-semibold text-gray-900">Auto Match</h3>
+                  <h3 className={`text-lg font-semibold ${
+                    selectedOption === 'auto' ? 'text-white' : 'text-gray-900'
+                  }`}>Auto Match</h3>
                   <Badge variant="secondary" className="bg-green-100 text-green-800">
                     Recommended
                   </Badge>
                 </div>
-                <p className="text-gray-600 text-sm mb-3">
+                <p className={`text-sm mb-3 ${
+                  selectedOption === 'auto' ? 'text-white' : 'text-gray-600'
+                }`}>
                   We'll automatically find the best merchant for you based on:
                 </p>
                 <div className="space-y-2">
-                  <div className="flex items-center space-x-2 text-sm text-gray-600">
+                  <div className={`flex items-center space-x-2 text-sm ${
+                    selectedOption === 'auto' ? 'text-white' : 'text-gray-600'
+                  }`}>
                     <Star className="w-4 h-4 text-yellow-500" />
                     <span>Highest rating and reputation</span>
                   </div>
-                  <div className="flex items-center space-x-2 text-sm text-gray-600">
+                  <div className={`flex items-center space-x-2 text-sm ${
+                    selectedOption === 'auto' ? 'text-white' : 'text-gray-600'
+                  }`}>
                     <Clock className="w-4 h-4 text-blue-500" />
                     <span>Fastest response time</span>
                   </div>
-                  <div className="flex items-center space-x-2 text-sm text-gray-600">
+                  <div className={`flex items-center space-x-2 text-sm ${
+                    selectedOption === 'auto' ? 'text-white' : 'text-gray-600'
+                  }`}>
                     <Zap className="w-4 h-4 text-green-500" />
                     <span>Best available rates</span>
                   </div>
@@ -134,29 +144,39 @@ const MerchantMatchingChoice = () => {
           <CardContent className="p-6">
             <div className="flex items-start space-x-4">
               <div className={`p-3 rounded-full ${
-                selectedOption === 'manual' ? 'bg-blue-100' : 'bg-gray-100'
+                selectedOption === 'manual' ? 'bg-blue-600' : 'bg-gray-100'
               }`}>
                 <Users className={`w-6 h-6 ${
-                  selectedOption === 'manual' ? 'text-blue-600' : 'text-gray-600'
+                  selectedOption === 'manual' ? 'text-white' : 'text-gray-600'
                 }`} />
               </div>
               <div className="flex-1">
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                <h3 className={`text-lg font-semibold mb-2 ${
+                  selectedOption === 'manual' ? 'text-white' : 'text-gray-900'
+                }`}>
                   Manual Selection
                 </h3>
-                <p className="text-gray-600 text-sm mb-3">
+                <p className={`text-sm mb-3 ${
+                  selectedOption === 'manual' ? 'text-white' : 'text-gray-600'
+                }`}>
                   Browse and choose from available merchants yourself:
                 </p>
                 <div className="space-y-2">
-                  <div className="flex items-center space-x-2 text-sm text-gray-600">
+                  <div className={`flex items-center space-x-2 text-sm ${
+                    selectedOption === 'manual' ? 'text-white' : 'text-gray-600'
+                  }`}>
                     <Users className="w-4 h-4 text-purple-500" />
                     <span>View all available merchants</span>
                   </div>
-                  <div className="flex items-center space-x-2 text-sm text-gray-600">
+                  <div className={`flex items-center space-x-2 text-sm ${
+                    selectedOption === 'manual' ? 'text-white' : 'text-gray-600'
+                  }`}>
                     <Star className="w-4 h-4 text-yellow-500" />
                     <span>Compare ratings and reviews</span>
                   </div>
-                  <div className="flex items-center space-x-2 text-sm text-gray-600">
+                  <div className={`flex items-center space-x-2 text-sm ${
+                    selectedOption === 'manual' ? 'text-white' : 'text-gray-600'
+                  }`}>
                     <Clock className="w-4 h-4 text-blue-500" />
                     <span>Check response times and rates</span>
                   </div>
