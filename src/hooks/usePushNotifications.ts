@@ -8,7 +8,19 @@ export const usePushNotifications = () => {
   const [isSubscribed, setIsSubscribed] = useState(false);
 
   useEffect(() => {
-    setIsSupported('Notification' in window && 'serviceWorker' in navigator);
+    const notificationSupported = 'Notification' in window;
+    const serviceWorkerSupported = 'serviceWorker' in navigator;
+    
+    console.log('🔔 Notification support check:');
+    console.log('- Notification in window:', notificationSupported);
+    console.log('- serviceWorker in navigator:', serviceWorkerSupported);
+    console.log('- User agent:', navigator.userAgent);
+    console.log('- Is HTTPS:', location.protocol === 'https:');
+    
+    const supported = notificationSupported && serviceWorkerSupported;
+    console.log('- Overall supported:', supported);
+    
+    setIsSupported(supported);
   }, []);
 
   const requestPermission = async () => {

@@ -58,18 +58,45 @@ const PushNotificationSetup = () => {
               ? 'You\'ll receive notifications for new trades and messages'
               : isSupported 
                 ? 'Get notified instantly when you receive trades or messages'
-                : 'Push notifications are not supported in this browser'
+                : 'Push notifications may not be supported - check console for details'
             }
           </p>
         </div>
-        {!isSubscribed && isSupported && (
-          <Button
-            onClick={handleEnableNotifications}
-            size="sm"
-            className="bg-blue-600 hover:bg-blue-700 text-white"
-          >
-            Enable
-          </Button>
+        {!isSubscribed && (
+          <div className="space-x-2">
+            {isSupported && (
+              <Button
+                onClick={handleEnableNotifications}
+                size="sm"
+                className="bg-blue-600 hover:bg-blue-700 text-white"
+              >
+                Enable
+              </Button>
+            )}
+            <Button
+              onClick={async () => {
+                console.log('Force enable clicked - bypassing support check');
+                try {
+                  if ('Notification' in window) {
+                    const permission = await Notification.requestPermission();
+                    console.log('Force permission result:', permission);
+                    if (permission === 'granted') {
+                      new Notification('Test', { body: 'Force test worked!' });
+                    }
+                  } else {
+                    console.log('Notification API not available');
+                  }
+                } catch (e) {
+                  console.error('Force test error:', e);
+                }
+              }}
+              size="sm"
+              variant="outline"
+              className="text-xs"
+            >
+              Force Test
+            </Button>
+          </div>
         )}
       </div>
     </div>
