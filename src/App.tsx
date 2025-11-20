@@ -4,7 +4,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import GlobalNotifications from "@/components/GlobalNotifications";
+// import GlobalNotifications from "@/components/GlobalNotifications";
 import CreditAlert from "@/components/CreditAlert";
 import { useAuthStorage } from "@/hooks/useAuthStorage";
 import { AuthProvider, useAuth } from "./hooks/useAuth";
