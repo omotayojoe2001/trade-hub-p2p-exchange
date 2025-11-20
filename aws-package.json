@@ -1,0 +1,13 @@
+{
+  "name": "bitgo-proxy",
+  "version": "1.0.0",
+  "main": "aws-proxy-server.js",
+  "dependencies": {
+    "express": "^4.18.2",
+    "http-proxy-middleware": "^2.0.6",
+    "cors": "^2.8.5"
+  },
+  "scripts": {
+    "start": "node aws-proxy-server.js"
+  }
+}

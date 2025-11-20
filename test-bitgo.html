@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>BitGo Token Test</title>
+</head>
+<body>
+    <h1>BitGo Token Test</h1>
+    <button onclick="testToken()">Test Token</button>
+    <button onclick="testWallet()">Test Wallet Access</button>
+    <div id="result"></div>
+
+    <script>
+        async function testToken() {
+            const result = document.getElementById('result');
+            result.innerHTML = 'Testing token...';
+            
+            try {
+                const response = await fetch('https://app.bitgo.com/api/v2/user/me', {
+                    headers: {
+                        'Authorization': 'Bearer v2x9eba10d23cb16b271fd072394d76a4021ae88719dba92ab5a383f389715492d0'
+                    }
+                });
+                
+                const data = await response.json();
+                result.innerHTML = `<h3>Token Test Result:</h3><pre>${JSON.stringify(data, null, 2)}</pre>`;
+            } catch (error) {
+                result.innerHTML = `<h3>Token Test Error:</h3><pre>${error.message}</pre>`;
+            }
+        }
+        
+        async function testWallet() {
+            const result = document.getElementById('result');
+            result.innerHTML = 'Testing wallet access...';
+            
+            try {
+                const response = await fetch('https://app.bitgo.com/api/v2/btc/wallet/68dd6fe94425f8b958244dcf157a6635', {
+                    headers: {
+                        'Authorization': 'Bearer v2x9eba10d23cb16b271fd072394d76a4021ae88719dba92ab5a383f389715492d0'
+                    }
+                });
+                
+                const data = await response.json();
+                result.innerHTML = `<h3>Wallet Test Result:</h3><pre>${JSON.stringify(data, null, 2)}</pre>`;
+            } catch (error) {
+                result.innerHTML = `<h3>Wallet Test Error:</h3><pre>${error.message}</pre>`;
+            }
+        }
+    </script>
+</body>
+</html>

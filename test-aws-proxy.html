@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>AWS Proxy Test</title>
+</head>
+<body>
+    <h1>AWS Proxy Test</h1>
+    <button onclick="testProxy()">Test AWS Proxy</button>
+    <div id="result"></div>
+
+    <script>
+        async function testProxy() {
+            const result = document.getElementById('result');
+            result.innerHTML = 'Testing AWS proxy...';
+            
+            try {
+                const response = await fetch('http://13.53.167.64:3000/health', {
+                    method: 'GET'
+                });
+                
+                const data = await response.text();
+                result.innerHTML = `<h3>AWS Proxy Health:</h3><pre>${data}</pre>`;
+            } catch (error) {
+                result.innerHTML = `<h3>AWS Proxy Error:</h3><pre>${error.message}</pre>`;
+            }
+        }
+    </script>
+</body>
+</html>
