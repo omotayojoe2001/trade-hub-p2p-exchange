@@ -1,25 +1,15 @@
 import { useEffect } from 'react';
-import { Capacitor } from '@capacitor/core';
-
-// Conditional import for status bar
-let StatusBar: any = null;
-let Style: any = null;
-
-if (Capacitor.isNativePlatform()) {
-  try {
-    const statusBarModule = await import('@capacitor/status-bar');
-    StatusBar = statusBarModule.StatusBar;
-    Style = statusBarModule.Style;
-  } catch (error) {
-    console.warn('Status bar plugin not available:', error);
-  }
-}
 
 export const useStatusBar = (style: 'light' | 'dark' = 'dark', backgroundColor?: string) => {
   useEffect(() => {
-    if (Capacitor.isNativePlatform() && StatusBar && Style) {
-      const setStatusBar = async () => {
-        try {
+    // Only works on native platforms
+    const setStatusBar = async () => {
+      try {
+        const { Capacitor } = await import('@capacitor/core');
+        
+        if (Capacitor.isNativePlatform()) {
+          const { StatusBar, Style } = await import('@capacitor/status-bar');
+          
           await StatusBar.setStyle({ 
             style: style === 'light' ? Style.Light : Style.Dark 
           });
@@ -27,44 +17,54 @@ export const useStatusBar = (style: 'light' | 'dark' = 'dark', backgroundColor?:
           if (backgroundColor) {
             await StatusBar.setBackgroundColor({ color: backgroundColor });
           }
-        } catch (error) {
-          console.warn('Status bar not available:', error);
         }
-      };
+      } catch (error) {
+        // Silently fail on web
+      }
+    };
 
-      setStatusBar();
-    }
+    setStatusBar();
   }, [style, backgroundColor]);
 
   const setStatusBarStyle = async (newStyle: 'light' | 'dark') => {
-    if (Capacitor.isNativePlatform() && StatusBar && Style) {
-      try {
+    try {
+      const { Capacitor } = await import('@capacitor/core');
+      
+      if (Capacitor.isNativePlatform()) {
+        const { StatusBar, Style } = await import('@capacitor/status-bar');
+        
         await StatusBar.setStyle({ 
           style: newStyle === 'light' ? Style.Light : Style.Dark 
         });
-      } catch (error) {
-        console.warn('Status bar not available:', error);
       }
+    } catch (error) {
+      // Silently fail on web
     }
   };
 
   const hideStatusBar = async () => {
-    if (Capacitor.isNativePlatform() && StatusBar) {
-      try {
+    try {
+      const { Capacitor } = await import('@capacitor/core');
+      
+      if (Capacitor.isNativePlatform()) {
+        const { StatusBar } = await import('@capacitor/status-bar');
         await StatusBar.hide();
-      } catch (error) {
-        console.warn('Status bar not available:', error);
       }
+    } catch (error) {
+      // Silently fail on web
     }
   };
 
   const showStatusBar = async () => {
-    if (Capacitor.isNativePlatform() && StatusBar) {
-      try {
+    try {
+      const { Capacitor } = await import('@capacitor/core');
+      
+      if (Capacitor.isNativePlatform()) {
+        const { StatusBar } = await import('@capacitor/status-bar');
         await StatusBar.show();
-      } catch (error) {
-        console.warn('Status bar not available:', error);
       }
+    } catch (error) {
+      // Silently fail on web
     }
   };
 

@@ -163,8 +163,8 @@ import BottomNavigation from './components/BottomNavigation';
 import VendorBottomNavigation from './components/vendor/VendorBottomNavigation';
 import { usePageLoader } from './hooks/usePageLoader';
 import { usePageTransitions } from './hooks/usePageTransitions';
-import { useHapticFeedback } from './hooks/useHapticFeedback';
-import { useStatusBar } from './hooks/useStatusBar';
+// import { useHapticFeedback } from './hooks/useHapticFeedback';
+// import { useStatusBar } from './hooks/useStatusBar';
 
 const queryClient = new QueryClient();
 
@@ -175,9 +175,9 @@ const AppContent = () => {
   const navigate = useNavigate();
   const isLoading = usePageLoader();
   const { isTransitioning } = usePageTransitions();
-  const { impact } = useHapticFeedback();
+  // const { impact } = useHapticFeedback();
   
-  useStatusBar('dark', '#ffffff');
+  // useStatusBar('dark', '#ffffff');
 
   // Check if user is on auth-related pages
   const isOnAuthPage = ['/auth', '/onboarding', '/email-verification', '/forgot-password', '/reset-password', '/'].includes(location.pathname);
