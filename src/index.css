@@ -1,9 +1,9 @@
+/* Import native mobile styles */
+@import './styles/native-mobile.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-/* Import native mobile styles */
-@import './styles/native-mobile.css';
 
 @layer base {
   :root {
