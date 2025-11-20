@@ -11,7 +11,7 @@ import CryptoIcon from '@/components/CryptoIcon';
 import { toast } from '@/hooks/use-toast';
 import MessageThread from '@/components/MessageThread';
 import MobileLayout from '@/components/MobileLayout';
-import { PullToRefresh } from '@/components/ui/pull-to-refresh';
+
 import { SwipeToDelete } from '@/components/ui/swipe-to-delete';
 import { NativeButton } from '@/components/ui/native-button';
 import { LoadingList } from '@/components/ui/native-loading';
@@ -312,8 +312,6 @@ const MyTrades = () => {
 
   return (
     <MobileLayout 
-      enablePullToRefresh={true}
-      onRefresh={handleRefresh}
       statusBarStyle="dark"
       className="font-['Poppins']"
     >

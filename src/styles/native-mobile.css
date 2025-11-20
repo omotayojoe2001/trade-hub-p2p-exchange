@@ -19,8 +19,6 @@
 /* Native Scrolling */
 .native-scroll {
   -webkit-overflow-scrolling: touch;
-  scroll-behavior: smooth;
-  overscroll-behavior: contain;
 }
 
 /* Touch Optimizations */
@@ -29,7 +27,6 @@
   -webkit-touch-callout: none;
   -webkit-user-select: none;
   user-select: none;
-  touch-action: manipulation;
 }
 
 /* Ripple Effect */

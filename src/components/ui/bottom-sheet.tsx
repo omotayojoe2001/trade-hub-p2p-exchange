@@ -35,26 +35,10 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
     }
   };
 
-  const handleTouchStart = (e: React.TouchEvent) => {
-    startYRef.current = e.touches[0].clientY;
-  };
-
-  const handleTouchMove = (e: React.TouchEvent) => {
-    const currentY = e.touches[0].clientY;
-    const deltaY = currentY - startYRef.current;
-    
-    if (deltaY > 0) {
-      setDragY(deltaY);
-    }
-  };
-
-  const handleTouchEnd = () => {
-    if (dragY > 100) {
-      impact('light');
-      onClose();
-    }
-    setDragY(0);
-  };
+  // Disabled to prevent scroll interference
+  const handleTouchStart = (e: React.TouchEvent) => {};
+  const handleTouchMove = (e: React.TouchEvent) => {};
+  const handleTouchEnd = () => {};
 
   useEffect(() => {
     if (isOpen) {
@@ -89,9 +73,7 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
           isOpen ? 'translate-y-0' : 'translate-y-full'
         }`}
         style={{ transform: `translateY(${dragY}px)` }}
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
+
         onTransitionEnd={() => setIsAnimating(false)}
       >
         {/* Handle */}

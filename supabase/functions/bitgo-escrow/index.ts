@@ -13,7 +13,7 @@ serve(async (req) => {
   try {
     const { tradeId, coin } = await req.json();
     
-    const response = await fetch(`http://13.53.167.64:8080/api/forward/api/v2/btc/wallet/68dd6fe94425f8b958244dcf157a6635/address`, {
+    const response = await fetch(`http://13.53.167.64:3000/api/forward/api/v2/btc/wallet/68dd6fe94425f8b958244dcf157a6635/address`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

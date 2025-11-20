@@ -20,38 +20,10 @@ export const SwipeToDelete: React.FC<SwipeToDeleteProps> = ({
   const startXRef = useRef(0);
   const { impact, notification } = useHapticFeedback();
 
-  const handleTouchStart = (e: React.TouchEvent) => {
-    startXRef.current = e.touches[0].clientX;
-  };
-
-  const handleTouchMove = (e: React.TouchEvent) => {
-    const currentX = e.touches[0].clientX;
-    const deltaX = currentX - startXRef.current;
-    
-    if (deltaX < 0) {
-      const newSwipeX = Math.max(deltaX, -threshold * 1.5);
-      setSwipeX(newSwipeX);
-      
-      // Haptic feedback at threshold
-      if (Math.abs(newSwipeX) >= threshold && Math.abs(swipeX) < threshold) {
-        impact('medium');
-      }
-    }
-  };
-
-  const handleTouchEnd = async () => {
-    if (Math.abs(swipeX) >= threshold) {
-      setIsDeleting(true);
-      await notification('warning');
-      setTimeout(() => {
-        onDelete();
-        setIsDeleting(false);
-        setSwipeX(0);
-      }, 200);
-    } else {
-      setSwipeX(0);
-    }
-  };
+  // Disabled to prevent scroll interference
+  const handleTouchStart = (e: React.TouchEvent) => {};
+  const handleTouchMove = (e: React.TouchEvent) => {};
+  const handleTouchEnd = async () => {};
 
   const progress = Math.min(Math.abs(swipeX) / threshold, 1);
 
@@ -80,9 +52,7 @@ export const SwipeToDelete: React.FC<SwipeToDeleteProps> = ({
           transform: `translateX(${swipeX}px)`,
           opacity: isDeleting ? 0.5 : 1
         }}
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
+
       >
         {children}
       </div>

@@ -1,5 +1,6 @@
-/* Import native mobile styles */
-@import './styles/native-mobile.css';
+
+
+@import './styles/no-movement.css';
 
 @tailwind base;
 @tailwind components;
@@ -166,10 +167,12 @@
     @apply border-border;
     -webkit-tap-highlight-color: transparent;
     box-sizing: border-box;
+    transition: none !important;
+    animation: none !important;
+    transform: none !important;
   }
   
   html {
-    scroll-behavior: smooth;
     overflow-y: auto;
   }
   
@@ -222,8 +225,6 @@
   }
 
   button, .btn, a {
-    @apply transition-all duration-150 ease-out;
-    transform: scale(1);
     -webkit-tap-highlight-color: transparent;
     text-decoration: none !important;
     border: none;
@@ -231,11 +232,6 @@
     -webkit-appearance: none;
     -moz-appearance: none;
     appearance: none;
-  }
-
-  button:active, .btn:active {
-    transform: scale(0.98);
-    transition-duration: 50ms;
   }
   
   a, button, .nav-link {
@@ -249,15 +245,7 @@
     border-bottom: none !important;
   }
 
-  .card-hover {
-    @apply transition-all duration-300 ease-out;
-    transform: translateY(0);
-  }
 
-  .card-hover:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-lg);
-  }
 
   .card-premium {
     @apply bg-gradient-to-br from-card to-card-hover border-primary/20 shadow-elegant;
@@ -277,19 +265,11 @@
   }
 
   input, textarea {
-    @apply transition-all duration-200 ease-out;
     -webkit-user-select: text !important;
     user-select: text !important;
   }
 
-  input:focus, textarea:focus {
-    transform: none;
-    box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.1);
-  }
 
-  * {
-    scroll-behavior: smooth;
-  }
   
   html, body, #root {
     overflow-y: auto !important;
@@ -366,19 +346,7 @@
   }
 }
 
-@keyframes crypto-scroll {
-  0% {
-    transform: translateX(100%);
-  }
-  100% {
-    transform: translateX(-100%);
-  }
-}
 
-.animate-crypto-scroll {
-  animation: crypto-scroll 80s linear infinite;
-  display: flex;
-}
 
 @layer utilities {
   .text-xs { font-size: 0.625rem; }

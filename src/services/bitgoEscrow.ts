@@ -9,27 +9,14 @@ interface EscrowAddress {
 
 class BitGoEscrowService {
   async generateEscrowAddress(tradeId: string, coin: 'BTC' | 'ETH' | 'USDT' | 'XRP' | 'BNB' | 'POLYGON', expectedAmount?: number): Promise<string> {
-    console.log(`🔄 Generating real ${coin} address via BitGo direct...`);
+    console.log(`🔄 Generating real ${coin} address via Supabase edge function...`);
     
-    const walletId = '68dd6fe94425f8b958244dcf157a6635';
-    
-    const response = await fetch(`http://13.53.167.64:3000/api/forward/api/v2/btc/wallet/${walletId}/address`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer v2x9eba10d23cb16b271fd072394d76a4021ae88719dba92ab5a383f389715492d0'
-      },
-      body: JSON.stringify({
-        label: `escrow-${tradeId}-${Date.now()}`
-      })
+    const { data, error } = await supabase.functions.invoke('bitgo-escrow', {
+      body: { tradeId, coin }
     });
     
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`BitGo failed: ${response.status} - ${errorText}`);
-    }
-    
-    const data = await response.json();
+    if (error) throw error;
+    if (data?.error) throw new Error(data.error);
     
     // Store in database
     await supabase.from('escrow_addresses').insert({
@@ -40,43 +27,26 @@ class BitGoEscrowService {
       expected_amount: expectedAmount
     });
     
-    console.log(`✅ Real ${coin} address generated via BitGo`);
+    console.log(`✅ Real ${coin} address generated`);
     return data.address;
   }
 
 
   async releaseFunds(tradeId: string, merchantAddress: string, amount: number, coin: 'BTC' | 'ETH' | 'USDT' | 'XRP' | 'BNB' | 'POLYGON'): Promise<string> {
-    const walletId = '68dd6fe94425f8b958244dcf157a6635';
-    
-    const response = await fetch(`http://13.53.167.64:3000/api/forward/api/v2/btc/wallet/${walletId}/sendcoins`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer v2x9eba10d23cb16b271fd072394d76a4021ae88719dba92ab5a383f389715492d0'
-      },
-      body: JSON.stringify({
-        address: merchantAddress,
-        amount: amount.toString()
-      })
+    const { data, error } = await supabase.functions.invoke('bitgo-escrow', {
+      body: { 
+        action: 'release',
+        tradeId, 
+        coin,
+        toAddress: merchantAddress,
+        amount
+      }
     });
     
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Release failed: ${response.status} - ${errorText}`);
-    }
+    if (error) throw error;
+    if (data?.error) throw new Error(data.error);
     
-    const data = await response.json();
-    
-    // Update escrow status
-    await supabase.from('escrow_addresses')
-      .update({ 
-        status: 'released',
-        release_txid: data.txid,
-        released_at: new Date().toISOString()
-      })
-      .eq('trade_id', tradeId);
-    
-    return data.txid;
+    return data?.txid || 'release-pending';
   }
 
   async getEscrowStatus(tradeId: string): Promise<any> {

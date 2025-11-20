@@ -43,14 +43,15 @@ const CreditsPurchase = () => {
   const [loading, setLoading] = useState(false);
   const [qrCodeUrl, setQrCodeUrl] = useState('');
 
-  useEffect(() => {
-    if (countdown > 0 && currentStep === 2) {
-      const timer = setInterval(() => {
-        setCountdown(prev => prev - 1);
-      }, 1000);
-      return () => clearInterval(timer);
-    }
-  }, [countdown, currentStep]);
+  // Disabled countdown timer to prevent scroll interference
+  // useEffect(() => {
+  //   if (countdown > 0 && currentStep === 2) {
+  //     const timer = setInterval(() => {
+  //       setCountdown(prev => prev - 1);
+  //     }, 1000);
+  //     return () => clearInterval(timer);
+  //   }
+  // }, [countdown, currentStep]);
 
   const formatTime = (seconds: number) => {
     const hours = Math.floor(seconds / 3600);
@@ -80,33 +81,16 @@ const CreditsPurchase = () => {
     };
   };
 
-  // Load real-time crypto prices
-  useEffect(() => {
-    const loadPrices = async () => {
-      setPricesLoading(true);
-      try {
-        const packagesWithPrices = await Promise.all(
-          CREDIT_PACKAGES_BASE.map(async (pkg) => {
-            const pricing = await cryptoPriceService.calculateCreditValue(pkg.credits);
-            return { ...pkg, ...pricing };
-          })
-        );
-        setCreditPackages(packagesWithPrices);
-      } catch (error) {
-        console.error('Error loading crypto prices:', error);
-        // Fallback to base packages
-        setCreditPackages(CREDIT_PACKAGES_BASE.map(pkg => ({
-          ...pkg,
-          usd: pkg.credits * 0.01,
-          btc: (pkg.credits * 0.01) / 100000,
-          eth: (pkg.credits * 0.01) / 3500
-        })));
-      } finally {
-        setPricesLoading(false);
-      }
-    };
-
-    loadPrices();
+  // Disabled price loading to prevent scroll interference
+  // Set static packages instead
+  React.useEffect(() => {
+    setCreditPackages(CREDIT_PACKAGES_BASE.map(pkg => ({
+      ...pkg,
+      usd: pkg.credits * 0.01,
+      btc: (pkg.credits * 0.01) / 100000,
+      usdt: pkg.credits * 0.01
+    })));
+    setPricesLoading(false);
   }, []);
 
   const handlePurchaseStart = async () => {
@@ -252,23 +236,7 @@ const CreditsPurchase = () => {
 
       setCurrentStep(3);
 
-      // Simulate admin approval for demo (remove in production)
-      setTimeout(async () => {
-        try {
-          const { data, error } = await supabase.functions.invoke('process-credit-purchase', {
-            body: { purchaseId }
-          });
-          
-          if (!error && data?.success) {
-            toast({
-              title: "Credits Added!",
-              description: `${data.creditsAdded} credits added to your account. New balance: ${data.newBalance}`,
-            });
-          }
-        } catch (error) {
-          console.error('Error processing credits:', error);
-        }
-      }, 3000); // 3 second delay to simulate processing
+      // Removed setTimeout to prevent automatic updates
 
       toast({
         title: "Payment Submitted to Real System",
@@ -331,7 +299,7 @@ const CreditsPurchase = () => {
         </div>
       </div>
 
-      <div className="p-4">
+      <div className="p-4 pb-24">
         {currentStep === 1 && (
           <div className="space-y-6">
             {/* Credit Value Info */}
@@ -367,10 +335,10 @@ const CreditsPurchase = () => {
                   creditPackages.map((pkg) => (
                   <div
                     key={pkg.credits}
-                    className={`p-4 border rounded-lg cursor-pointer transition-all ${
+                    className={`p-4 border rounded-lg cursor-pointer ${
                       !isCustom && selectedPackage.credits === pkg.credits
                         ? 'border-blue-500 bg-blue-500'
-                        : 'border-gray-200 hover:border-gray-300'
+                        : 'border-gray-200'
                     }`}
                     onClick={() => {
                       setSelectedPackage(pkg);
@@ -414,10 +382,10 @@ const CreditsPurchase = () => {
                 
                 {/* Custom Amount */}
                 <div
-                  className={`p-4 border rounded-lg cursor-pointer transition-all ${
+                  className={`p-4 border rounded-lg cursor-pointer ${
                     isCustom
                       ? 'border-blue-500 bg-blue-50'
-                      : 'border-gray-200 hover:border-gray-300'
+                      : 'border-gray-200'
                   }`}
                   onClick={() => setIsCustom(true)}
                 >
@@ -508,11 +476,11 @@ const CreditsPurchase = () => {
 
             <Button 
               onClick={handlePurchaseStart} 
-              className="w-full" 
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-4 px-6 text-lg rounded-xl shadow-lg" 
               size="lg"
               disabled={loading || (isCustom && (!customCredits || parseInt(customCredits) < MIN_CREDIT_PURCHASE))}
             >
-              {loading ? 'Generating...' : 'Generate Payment Address'}
+              {loading ? 'Processing...' : 'Continue to Payment'}
             </Button>
           </div>
         )}

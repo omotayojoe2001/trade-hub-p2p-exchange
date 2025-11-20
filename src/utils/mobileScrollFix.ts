@@ -63,14 +63,14 @@ export const enableMobileScroll = () => {
     setTimeout(fixScrollArchitecture, 100);
     setTimeout(fixScrollArchitecture, 500);
     
-    // Re-apply on DOM changes
-    const observer = new MutationObserver(() => {
-      setTimeout(fixScrollArchitecture, 50);
-    });
-    
-    if (document.body) {
-      observer.observe(document.body, { childList: true, subtree: true });
-    }
+    // Removed MutationObserver to prevent scroll interference
+    // const observer = new MutationObserver(() => {
+    //   setTimeout(fixScrollArchitecture, 50);
+    // });
+    // 
+    // if (document.body) {
+    //   observer.observe(document.body, { childList: true, subtree: true });
+    // }
   }
 };
 
@@ -85,6 +85,6 @@ if (typeof document !== 'undefined') {
   // Re-run on route changes
   window.addEventListener('popstate', enableMobileScroll);
   
-  // Periodic fixes for mobile apps
-  setInterval(enableMobileScroll, 2000);
+  // Removed periodic fixes to prevent scroll interference
+  // setInterval(enableMobileScroll, 2000);
 }

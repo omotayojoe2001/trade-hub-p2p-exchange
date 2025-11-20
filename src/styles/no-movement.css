@@ -1,0 +1,65 @@
+/* NUCLEAR OPTION - DISABLE ALL MOVEMENT */
+*, *::before, *::after {
+  transition: none !important;
+  animation: none !important;
+  transform: none !important;
+  scroll-behavior: auto !important;
+  -webkit-transform: none !important;
+  -moz-transform: none !important;
+  -ms-transform: none !important;
+  -o-transform: none !important;
+}
+
+html {
+  scroll-behavior: auto !important;
+}
+
+body {
+  scroll-behavior: auto !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+}
+
+/* Disable all Tailwind transitions */
+.transition-all,
+.transition,
+.transition-colors,
+.transition-opacity,
+.transition-shadow,
+.transition-transform,
+.duration-75,
+.duration-100,
+.duration-150,
+.duration-200,
+.duration-300,
+.duration-500,
+.duration-700,
+.duration-1000,
+.ease-in,
+.ease-out,
+.ease-in-out {
+  transition: none !important;
+}
+
+/* Disable all animations */
+.animate-spin,
+.animate-ping,
+.animate-pulse,
+.animate-bounce {
+  animation: none !important;
+}
+
+/* Disable all transforms */
+.transform,
+.scale-95,
+.scale-100,
+.scale-105,
+.translate-x-0,
+.translate-y-0,
+.-translate-y-1,
+.translate-y-1,
+.rotate-0,
+.rotate-90,
+.rotate-180 {
+  transform: none !important;
+}

@@ -174,7 +174,7 @@ const AppContent = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const isLoading = usePageLoader();
-  const { isTransitioning } = usePageTransitions();
+
   // const { impact } = useHapticFeedback();
   
   // useStatusBar('dark', '#ffffff');
@@ -271,10 +271,10 @@ const AppContent = () => {
       {!isOnAuthPage && <CreditAlert />}
       
       <GlobalCodeTracker />
-      <div className="mobile-container native-scroll touch-optimized" style={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
+      <div style={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
         <RouteGuard>
           <RouteWrapper>
-            <div className={`page-content native-scroll smooth-animation ${isTransitioning ? 'page-enter' : ''}`} style={{ flex: 1, overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}>
+            <div style={{ flex: 1, overflowY: 'auto' }}>
               <Routes>
             <Route path="/" element={user ? <Index /> : <Auth />} />
             <Route path="/home" element={<Index />} />

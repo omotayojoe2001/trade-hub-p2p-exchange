@@ -1,14 +1,13 @@
 import React from 'react';
 import { useStatusBar } from '@/hooks/useStatusBar';
-import { PullToRefresh } from '@/components/ui/pull-to-refresh';
+
 
 interface MobileLayoutProps {
   children: React.ReactNode;
   className?: string;
   statusBarStyle?: 'light' | 'dark';
   statusBarColor?: string;
-  enablePullToRefresh?: boolean;
-  onRefresh?: () => Promise<void>;
+
   showHeader?: boolean;
   headerTitle?: string;
   headerActions?: React.ReactNode;
@@ -19,8 +18,7 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
   className = '',
   statusBarStyle = 'dark',
   statusBarColor,
-  enablePullToRefresh = false,
-  onRefresh,
+
   showHeader = false,
   headerTitle,
   headerActions
@@ -43,14 +41,6 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
       </div>
     </div>
   );
-
-  if (enablePullToRefresh && onRefresh) {
-    return (
-      <PullToRefresh onRefresh={onRefresh}>
-        {content}
-      </PullToRefresh>
-    );
-  }
 
   return content;
 };
