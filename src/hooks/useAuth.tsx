@@ -110,17 +110,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signOut = async (reason: 'manual' | 'timeout' = 'manual') => {
     try {
-      // Store logout reason and mark manual logout for 2FA requirement
+      // Store logout reason and clear 2FA session verification
       localStorage.setItem('logout-reason', reason);
-      if (reason === 'manual') {
-        localStorage.setItem('manual_logout', 'true');
-        localStorage.removeItem('2fa_completed');
-      }
+      
+      // Clear all 2FA session verifications
+      Object.keys(sessionStorage).forEach(key => {
+        if (key.startsWith('2fa_verified_')) {
+          sessionStorage.removeItem(key);
+        }
+      });
 
-      // Clean up auth state first
+      // Clean up auth state and 2FA session data
       Object.keys(localStorage).forEach((key) => {
         if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
           localStorage.removeItem(key);
+        }
+      });
+      
+      // Clear 2FA session verification
+      Object.keys(sessionStorage).forEach(key => {
+        if (key.startsWith('2fa_verified_')) {
+          sessionStorage.removeItem(key);
         }
       });
 

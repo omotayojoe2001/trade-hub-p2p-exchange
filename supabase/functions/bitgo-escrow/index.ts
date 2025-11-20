@@ -1,8 +1,9 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
-// Proxy server configuration
-const ORACLE_PROXY_URL = Deno.env.get('ORACLE_PROXY_URL'); // e.g., http://YOUR_ORACLE_IP:3000
+// BitGo Configuration with new token
+const BITGO_ACCESS_TOKEN = 'v2x9eba10d23cb16b271fd072394d76a4021ae88719dba92ab5a383f389715492d0';
+const AWS_PROXY_URL = 'http://13.53.167.64:8080'; // Your AWS server
 const LOCAL_PROXY_URL = 'http://localhost:3001'; // Local fallback proxy
 const BTC_WALLET_ID = Deno.env.get('BITGO_BTC_WALLET_ID');
 const ETH_WALLET_ID = Deno.env.get('BITGO_ETH_WALLET_ID');
@@ -30,14 +31,14 @@ serve(async (req) => {
     const requestBody = await req.json();
     const { tradeId, coin, action, toAddress, amount, expectedAmount } = requestBody;
     
-    console.log('Request received:', { tradeId, coin, action, proxyUrl: !!ORACLE_PROXY_URL });
+    console.log('Request received:', { tradeId, coin, action, proxyUrl: !!AWS_PROXY_URL });
     
     if (!tradeId || !coin) {
       throw new Error('Missing required parameters: tradeId and coin');
     }
     
-    const proxyUrl = ORACLE_PROXY_URL || LOCAL_PROXY_URL;
-    console.log('Using proxy:', proxyUrl);
+    const proxyUrl = AWS_PROXY_URL || LOCAL_PROXY_URL;
+    console.log('Using AWS proxy:', proxyUrl);
     
     if (action === 'setup_webhook') {
       // Setup BitGo webhook for payment notifications
@@ -51,7 +52,8 @@ serve(async (req) => {
       const response = await fetch(`${proxyUrl}/api/forward/api/v2/${coinType}/wallet/${walletId}/webhooks`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${BITGO_ACCESS_TOKEN}`
         },
         body: JSON.stringify({
           type: 'transfer',
@@ -76,7 +78,8 @@ serve(async (req) => {
       const response = await fetch(`${proxyUrl}/api/forward/api/v2/${coinType}/wallet/${walletId}/sendcoins`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${BITGO_ACCESS_TOKEN}`
         },
         body: JSON.stringify({
           address: toAddress,
@@ -119,14 +122,14 @@ serve(async (req) => {
       throw new Error(`Wallet not configured for ${coin}`);
     }
     
-    console.log('Proxy URL:', `${proxyUrl}/api/forward/api/v2/${coinType}/wallet/${walletId}/address`);
+    console.log('AWS Proxy URL:', `${proxyUrl}/api/forward/api/v2/${coinType}/wallet/${walletId}/address`);
     
-    // Generate address via Oracle proxy (single attempt - no IP restrictions)
+    // Generate address via AWS proxy (single attempt - no IP restrictions)
     let addressResponse;
     let isRealAddress = false;
     
     try {
-      console.log(`Attempting ${coin} address generation via proxy...`);
+      console.log(`Attempting ${coin} address generation via AWS proxy...`);
       
       const addressRequestBody = {
         label: `escrow-${tradeId}-${Date.now()}`,
@@ -137,7 +140,8 @@ serve(async (req) => {
       const response = await fetch(`${proxyUrl}/api/forward/api/v2/${coinType}/wallet/${walletId}/address`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${BITGO_ACCESS_TOKEN}`
         },
         body: JSON.stringify(addressRequestBody),
         signal: AbortSignal.timeout(30000) // 30 second timeout
@@ -147,14 +151,14 @@ serve(async (req) => {
         const data = await response.json();
         addressResponse = data.address;
         isRealAddress = true;
-        console.log(`✅ ${coin} address generated successfully via proxy`);
+        console.log(`✅ ${coin} address generated successfully via AWS proxy`);
       } else {
         const errorText = await response.text();
-        console.log(`❌ Proxy error ${response.status}:`, errorText);
-        throw new Error(`Proxy returned ${response.status}`);
+        console.log(`❌ AWS Proxy error ${response.status}:`, errorText);
+        throw new Error(`AWS Proxy returned ${response.status}`);
       }
     } catch (error) {
-      console.log(`⚠️ Proxy failed:`, error.message);
+      console.log(`⚠️ AWS Proxy failed:`, error.message);
       console.log(`❌ Using fallback address`);
       
       // Generate deterministic fallback address
@@ -185,7 +189,8 @@ serve(async (req) => {
         await fetch(`${proxyUrl}/api/forward/api/v2/${coinType}/wallet/${walletId}/webhooks`, {
           method: 'POST',
           headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${BITGO_ACCESS_TOKEN}`
           },
           body: JSON.stringify({
             type: 'transfer',
@@ -214,10 +219,10 @@ serve(async (req) => {
     let statusCode = 500;
     
     if (error.name === 'AbortError' || error.message.includes('timeout')) {
-      errorMessage = `Proxy timeout - please try again`;
+      errorMessage = `AWS Proxy timeout - please try again`;
       statusCode = 504;
     } else if (error.message.includes('Failed to fetch') || error.message.includes('network')) {
-      errorMessage = 'Network connectivity issue - please try again';
+      errorMessage = 'AWS network connectivity issue - please try again';
       statusCode = 503;
     }
     

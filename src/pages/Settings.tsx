@@ -11,10 +11,11 @@ import { creditsService } from '@/services/creditsService';
 import TwoFactorSetup from '@/components/TwoFactorSetup';
 import { twoFactorAuthService } from '@/services/twoFactorAuthService';
 import { useToast } from '@/hooks/use-toast';
+import { usePushNotifications } from '@/hooks/usePushNotifications';
 
 const Settings = () => {
   const { signOut, user, profile } = useAuth();
-
+  const { isSupported, isSubscribed, requestPermission } = usePushNotifications();
   const navigate = useNavigate();
   const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
   const [userCredits, setUserCredits] = useState(0);
@@ -101,6 +102,24 @@ const Settings = () => {
     check2FAStatus();
   };
 
+  const handleNotificationToggle = async (enabled: boolean) => {
+    if (enabled) {
+      const success = await requestPermission();
+      if (success) {
+        toast({
+          title: "Notifications Enabled",
+          description: "You'll receive push notifications for trades.",
+        });
+      } else {
+        toast({
+          title: "Permission Denied",
+          description: "Please enable notifications in browser settings.",
+          variant: "destructive"
+        });
+      }
+    }
+  };
+
 
   
   const settingsOptions = [
@@ -150,9 +169,10 @@ const Settings = () => {
     },
     {
       icon: <Bell size={20} className="text-[#1A73E8]" />,
-      title: 'Test Push Notifications',
-      description: 'Test push notifications and vibration',
-      link: '/test-notifications'
+      title: 'Push Notifications',
+      description: 'Enable push notifications for trades',
+      hasToggle: true,
+      toggleType: 'notifications'
     },
     {
       icon: <HelpCircle size={20} className="text-[#1A73E8]" />,
@@ -198,6 +218,7 @@ const Settings = () => {
         <div className="bg-white rounded-xl shadow-lg border border-gray-100">
           {settingsOptions.map((option, index) => {
             if (option.hasToggle) {
+              const isNotificationToggle = option.toggleType === 'notifications';
               return (
                 <div key={index} className={`flex items-center justify-between p-3 ${index !== settingsOptions.length - 1 ? 'border-b border-gray-200' : ''}`}>
                   <div className="flex items-center">
@@ -208,8 +229,8 @@ const Settings = () => {
                     </div>
                   </div>
                   <Switch 
-                    checked={twoFactorEnabled} 
-                    onCheckedChange={handleTwoFactorToggle}
+                    checked={isNotificationToggle ? isSubscribed : twoFactorEnabled} 
+                    onCheckedChange={isNotificationToggle ? handleNotificationToggle : handleTwoFactorToggle}
                   />
                 </div>
               );

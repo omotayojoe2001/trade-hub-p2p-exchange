@@ -2,6 +2,9 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Import native mobile styles */
+@import './styles/native-mobile.css';
+
 @layer base {
   :root {
     --background: 0 0% 100%;

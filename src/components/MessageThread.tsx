@@ -79,6 +79,12 @@ const MessageThread: React.FC<MessageThreadProps> = ({
   const initializeConversation = async () => {
     setLoading(true);
     try {
+      // Validate that otherUserId is a valid UUID
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+      if (!uuidRegex.test(otherUserId)) {
+        throw new Error('Invalid user ID format');
+      }
+
       const { data, error } = await messagingService.getOrCreateConversation(
         otherUserId,
         tradeId,
@@ -93,7 +99,7 @@ const MessageThread: React.FC<MessageThreadProps> = ({
       console.error('Error initializing conversation:', error);
       toast({
         title: "Error",
-        description: "Failed to load conversation",
+        description: "Cannot start conversation - merchant information not available",
         variant: "destructive"
       });
     } finally {

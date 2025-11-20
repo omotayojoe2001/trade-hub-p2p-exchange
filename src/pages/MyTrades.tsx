@@ -10,6 +10,12 @@ import StickyHeader from '@/components/StickyHeader';
 import CryptoIcon from '@/components/CryptoIcon';
 import { toast } from '@/hooks/use-toast';
 import MessageThread from '@/components/MessageThread';
+import MobileLayout from '@/components/MobileLayout';
+import { PullToRefresh } from '@/components/ui/pull-to-refresh';
+import { SwipeToDelete } from '@/components/ui/swipe-to-delete';
+import { NativeButton } from '@/components/ui/native-button';
+import { LoadingList } from '@/components/ui/native-loading';
+import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 
 interface Trade {
   id: string;
@@ -30,6 +36,7 @@ interface Trade {
 
 const MyTrades = () => {
   const { user } = useAuth();
+  const { impact, notification } = useHapticFeedback();
 
   const [trades, setTrades] = useState<Trade[]>([]);
   const [loading, setLoading] = useState(true);
@@ -149,6 +156,7 @@ const MyTrades = () => {
 
   const handleCompleteTrade = async (tradeId: string) => {
     try {
+      await impact('medium');
       const { error } = await supabase
         .from('trades')
         .update({ 
@@ -159,6 +167,7 @@ const MyTrades = () => {
 
       if (error) throw error;
 
+      await notification('success');
       toast({
         title: "Success!",
         description: "Trade marked as completed",
@@ -167,6 +176,7 @@ const MyTrades = () => {
       fetchTrades();
     } catch (error) {
       console.error('Error completing trade:', error);
+      await notification('error');
       toast({
         title: "Error",
         description: "Failed to complete trade",
@@ -285,8 +295,28 @@ const MyTrades = () => {
 
   const filteredTrades = filterTradesByDate(filterTrades(trades));
 
+  const handleRefresh = async () => {
+    await fetchTrades();
+    await loadExchangeRate();
+  };
+
+  const handleDeleteTrade = async (tradeId: string) => {
+    try {
+      await impact('heavy');
+      // Add delete logic here
+      await notification('warning');
+    } catch (error) {
+      console.error('Error deleting trade:', error);
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-white font-['Poppins'] pb-24">
+    <MobileLayout 
+      enablePullToRefresh={true}
+      onRefresh={handleRefresh}
+      statusBarStyle="dark"
+      className="font-['Poppins']"
+    >
       <StickyHeader 
         title="My Trades" 
         rightElement={
@@ -400,30 +430,7 @@ const MyTrades = () => {
         </div>
 
         {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {[1, 2, 3, 4, 5, 6].map((i) => (
-              <div key={i} className="bg-card rounded-lg border border-border p-3 animate-pulse">
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center space-x-2">
-                    <div className="w-8 h-8 bg-gray-200 rounded-full"></div>
-                    <div>
-                      <div className="h-4 bg-gray-200 rounded w-20 mb-1"></div>
-                      <div className="h-3 bg-gray-200 rounded w-16"></div>
-                    </div>
-                  </div>
-                </div>
-                <div className="grid grid-cols-3 gap-2 mb-3">
-                  <div className="h-8 bg-gray-200 rounded"></div>
-                  <div className="h-8 bg-gray-200 rounded"></div>
-                  <div className="h-8 bg-gray-200 rounded"></div>
-                </div>
-                <div className="flex space-x-2">
-                  <div className="flex-1 h-8 bg-gray-200 rounded"></div>
-                  <div className="h-8 w-16 bg-gray-200 rounded"></div>
-                </div>
-              </div>
-            ))}
-          </div>
+          <LoadingList count={6} />
         ) : filteredTrades.length === 0 ? (
           <div className="text-center py-12">
             <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -444,14 +451,19 @@ const MyTrades = () => {
             </Link>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="space-y-3">
             {filteredTrades.map((trade) => {
               const status = getTradeStatus(trade);
               const userRole = (trade as any).buyer_id === user?.id ? 'buyer' : 'seller';
               const shouldShowComplete = trade.status === 'pending' && (trade as any).payment_proof_url;
 
               return (
-                <div key={trade.id} className="bg-card rounded-lg border border-border p-3 hover:shadow-md transition-all duration-200">
+                <SwipeToDelete
+                  key={trade.id}
+                  onDelete={() => handleDeleteTrade(trade.id)}
+                  deleteText="Cancel"
+                >
+                  <div className="native-card native-list-item p-4 hover:shadow-md smooth-animation">
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center space-x-2">
                       <CryptoIcon 
@@ -500,12 +512,23 @@ const MyTrades = () => {
                   <div className="flex space-x-2">
                     <Link
                       to={trade.trade_type === 'cash_order' ? `/cash-trade-status/${trade.id}` : `/trade-details/${trade.id}`}
-                      className="flex-1 py-1.5 px-3 bg-blue-100 text-blue-700 rounded-md text-xs font-medium hover:bg-blue-200 transition-colors text-center"
+                      className="flex-1"
                     >
-                      View Details
+                      <NativeButton 
+                        variant="outline" 
+                        size="sm" 
+                        className="w-full text-xs"
+                        hapticFeedback="light"
+                      >
+                        View Details
+                      </NativeButton>
                     </Link>
                     
-                    <button
+                    <NativeButton
+                      variant="ghost"
+                      size="sm"
+                      className="px-3 text-xs"
+                      hapticFeedback="light"
                       onClick={() => {
                         const otherUserId = userRole === 'buyer' ? trade.seller_id : trade.buyer_id;
                         if (otherUserId && otherUserId !== 'other-user') {
@@ -520,22 +543,25 @@ const MyTrades = () => {
                           alert('Other user not found for this trade');
                         }
                       }}
-                      className="px-3 py-1.5 bg-gray-100 text-gray-700 rounded-md text-xs font-medium hover:bg-gray-200 transition-colors flex items-center"
                     >
                       <MessageCircle className="w-3 h-3 mr-1" />
                       Message
-                    </button>
+                    </NativeButton>
                     
                     {shouldShowComplete && (
-                      <button
+                      <NativeButton
+                        variant="default"
+                        size="sm"
+                        className="px-3 text-xs bg-green-600 hover:bg-green-700"
+                        hapticFeedback="medium"
                         onClick={() => handleCompleteTrade(trade.id)}
-                        className="px-3 py-1.5 bg-success text-success-foreground rounded-md text-xs font-medium hover:bg-success/90 transition-colors"
                       >
                         Complete
-                      </button>
+                      </NativeButton>
                     )}
                   </div>
-                </div>
+                  </div>
+                </SwipeToDelete>
               );
             })}
           </div>
@@ -556,7 +582,7 @@ const MyTrades = () => {
           onClose={() => setSelectedMessage(null)}
         />
       )}
-    </div>
+    </MobileLayout>
   );
 };
 

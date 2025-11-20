@@ -9,7 +9,7 @@ import { useCryptoData } from '@/hooks/useCryptoData';
 import CryptoTicker from '@/components/CryptoTicker';
 import BottomNavigation from '@/components/BottomNavigation';
 import StickyHeader from '@/components/StickyHeader';
-import PushNotificationSetup from '@/components/PushNotificationSetup';
+
 import { creditsService } from '@/services/creditsService';
 import { mockCreditsService, isDemoMode } from '@/services/mockCreditsService';
 import { exchangeRateService } from '@/services/exchangeRateService';
@@ -252,23 +252,7 @@ const Index = () => {
       </div>
 
       <div className="px-4 pb-2">
-        {/* Push Notification Setup */}
-        <PushNotificationSetup />
-        
-        {/* Quick Test Button */}
-        <div className="mb-2">
-          <Link to="/test-notifications" className="block">
-            <div className="bg-green-50 border border-green-200 rounded-lg p-3">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h4 className="font-medium text-green-900">🔔 Test Push Notifications</h4>
-                  <p className="text-sm text-green-700">Test notifications and phone vibration</p>
-                </div>
-                <Bell className="w-5 h-5 text-green-600" />
-              </div>
-            </div>
-          </Link>
-        </div>
+
         
         {/* Credits Card */}
         <div className="mb-2">

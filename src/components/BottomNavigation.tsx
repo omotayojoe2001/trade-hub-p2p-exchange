@@ -185,7 +185,7 @@ const BottomNavigation = () => {
 
 
   return (
-    <div className="bottom-nav bg-white border-t border-gray-200 px-4 py-2">
+    <div className="bottom-nav native-card touch-optimized">
       <div className="flex justify-around items-center h-full w-full px-2">
         {navItems.map((item) => {
           const isActive = location.pathname === item.path;
@@ -205,10 +205,10 @@ const BottomNavigation = () => {
             <Link
               key={item.path}
               to={item.path}
-              className={`flex flex-col items-center space-y-1 p-1 rounded-xl transition-all duration-200 flex-1 max-w-[80px] no-underline ${
+              className={`flex flex-col items-center space-y-1 p-2 rounded-xl smooth-animation flex-1 max-w-[80px] no-underline touch-target ${
                 isActive 
-                  ? 'text-primary bg-primary/10' 
-                  : 'text-muted-foreground hover:text-primary hover:bg-accent/50'
+                  ? 'text-blue-600 bg-blue-50 scale-105' 
+                  : 'text-gray-500 hover:text-blue-600 hover:bg-blue-50/50 active:scale-95'
               }`}
               onClick={() => {
                 if (item.path === '/buy-sell' && hasNewTradeRequest) {
@@ -217,17 +217,17 @@ const BottomNavigation = () => {
               }}
             >
               <div className="relative">
-                <item.icon className={`transition-all duration-200 ${isActive ? 'w-5 h-5' : 'w-4 h-4'}`} />
+                <item.icon className={`smooth-animation ${isActive ? 'w-6 h-6' : 'w-5 h-5'}`} />
                 {showBadge && (
-                  <div className="absolute -top-1 -right-1 w-4 h-4 bg-destructive rounded-full flex items-center justify-center animate-pulse">
-                    <span className="text-[10px] text-destructive-foreground font-bold">
+                  <div className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center animate-pulse native-shadow-sm">
+                    <span className="text-[10px] text-white font-bold">
                       {badgeCount > 9 ? '9+' : badgeCount}
                     </span>
                   </div>
                 )}
               </div>
-              <span className={`text-[9px] font-medium transition-all duration-200 text-center leading-tight ${
-                isActive ? 'text-primary' : 'text-muted-foreground'
+              <span className={`text-[10px] font-medium smooth-animation text-center leading-tight ${
+                isActive ? 'text-blue-600' : 'text-gray-500'
               }`}>
                 {item.label}
               </span>

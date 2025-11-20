@@ -2,25 +2,40 @@ import { useEffect, useState } from 'react';
 import { useAuth } from './useAuth';
 import { pushNotificationService } from '@/services/pushNotificationService';
 
+// Capacitor import with error handling
+let Capacitor: any = null;
+try {
+  const capacitorCore = require('@capacitor/core');
+  Capacitor = capacitorCore.Capacitor;
+} catch (error) {
+  console.log('Capacitor not available');
+}
+
 export const usePushNotifications = () => {
   const { user } = useAuth();
   const [isSupported, setIsSupported] = useState(false);
   const [isSubscribed, setIsSubscribed] = useState(false);
 
   useEffect(() => {
+    const isNative = Capacitor && Capacitor.isNativePlatform();
     const notificationSupported = 'Notification' in window;
     const serviceWorkerSupported = 'serviceWorker' in navigator;
     
     console.log('🔔 Notification support check:');
+    console.log('- Is native platform:', isNative);
     console.log('- Notification in window:', notificationSupported);
     console.log('- serviceWorker in navigator:', serviceWorkerSupported);
     console.log('- User agent:', navigator.userAgent);
     console.log('- Is HTTPS:', location.protocol === 'https:');
     
-    const supported = notificationSupported && serviceWorkerSupported;
+    const supported = isNative || (notificationSupported && serviceWorkerSupported);
     console.log('- Overall supported:', supported);
     
     setIsSupported(supported);
+    
+    if (isNative) {
+      pushNotificationService.initializePushNotifications();
+    }
   }, []);
 
   const requestPermission = async () => {

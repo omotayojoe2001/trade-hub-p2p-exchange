@@ -33,6 +33,7 @@ import SellCryptoPaymentStep3 from "./pages/SellCryptoPaymentStep3";
 import TradeStatus from "./pages/TradeStatus";
 
 import TradeDetails from "./pages/TradeDetails";
+import TradeDetailsCompact from "./pages/TradeDetailsCompact";
 import SellCrypto from "./pages/SellCrypto";
 import SellCryptoMerchantSelection from "./pages/SellCryptoMerchantSelection";
 import SellCryptoEscrow from "./pages/SellCryptoEscrow";
@@ -161,6 +162,9 @@ import RouteGuard from './components/RouteGuard';
 import BottomNavigation from './components/BottomNavigation';
 import VendorBottomNavigation from './components/vendor/VendorBottomNavigation';
 import { usePageLoader } from './hooks/usePageLoader';
+import { usePageTransitions } from './hooks/usePageTransitions';
+import { useHapticFeedback } from './hooks/useHapticFeedback';
+import { useStatusBar } from './hooks/useStatusBar';
 
 const queryClient = new QueryClient();
 
@@ -170,6 +174,10 @@ const AppContent = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const isLoading = usePageLoader();
+  const { isTransitioning } = usePageTransitions();
+  const { impact } = useHapticFeedback();
+  
+  useStatusBar('dark', '#ffffff');
 
   // Check if user is on auth-related pages
   const isOnAuthPage = ['/auth', '/onboarding', '/email-verification', '/forgot-password', '/reset-password', '/'].includes(location.pathname);
@@ -264,10 +272,10 @@ const AppContent = () => {
       {!isOnAuthPage && <CreditAlert />}
       
       <GlobalCodeTracker />
-      <div className="mobile-container" style={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
+      <div className="mobile-container native-scroll touch-optimized" style={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
         <RouteGuard>
           <RouteWrapper>
-            <div className="page-content" style={{ flex: 1, overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}>
+            <div className={`page-content native-scroll smooth-animation ${isTransitioning ? 'page-enter' : ''}`} style={{ flex: 1, overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}>
               <Routes>
             <Route path="/" element={user ? <Index /> : <Auth />} />
             <Route path="/home" element={<Index />} />
@@ -329,7 +337,7 @@ const AppContent = () => {
             <Route path="/sell-crypto-payment-step3" element={<SellCryptoPaymentStep3 />} />
             <Route path="/trade-status" element={<TradeStatus />} />
 
-            <Route path="/trade-details/:tradeId" element={<TradeDetails />} />
+            <Route path="/trade-details/:tradeId" element={<TradeDetailsCompact />} />
             <Route path="/sell-crypto" element={<SellCrypto />} />
             <Route path="/sell-crypto-merchant-selection" element={<SellCryptoMerchantSelection />} />
             <Route path="/sell-crypto-escrow" element={<SellCryptoEscrow />} />
@@ -465,7 +473,7 @@ const AppContent = () => {
             
             {/* Test Route for debugging trade completion */}
             <Route path="/test-trade-completion" element={<TestTradeCompletion />} />
-            <Route path="/test-notifications" element={<TestNotifications />} />
+
             
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />

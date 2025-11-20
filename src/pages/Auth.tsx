@@ -77,17 +77,18 @@ const Auth = () => {
         console.log('Existing session - Has 2FA:', has2FA);
         
         if (has2FA) {
-          // Always show 2FA if user manually logged out or first time
-          const manualLogout = localStorage.getItem('manual_logout') === 'true';
-          console.log('Existing session with 2FA - manual logout:', manualLogout);
+          // Check if 2FA was completed in this browser session (not localStorage)
+          const sessionKey = `2fa_verified_${session.user.id}`;
+          const twoFAVerified = sessionStorage.getItem(sessionKey) === 'true';
           
-          if (manualLogout || !localStorage.getItem('2fa_completed')) {
-            console.log('Showing 2FA screen');
-            localStorage.removeItem('manual_logout');
+          console.log('Existing session with 2FA - verified in session:', twoFAVerified);
+          
+          if (!twoFAVerified) {
+            console.log('2FA not verified in this session - showing 2FA screen');
             setPendingUser(session.user);
             setShow2FA(true);
           } else {
-            console.log('2FA already completed this session - going to home');
+            console.log('2FA already verified this session - going to home');
             navigate('/home');
           }
         } else {
@@ -142,7 +143,7 @@ const Auth = () => {
 
         if (has2FA) {
           console.log('2FA enabled - showing 2FA screen');
-          // Keep session but show 2FA verification
+          // Always require 2FA verification on fresh login
           setPendingUser(data.user);
           setShow2FA(true);
         } else {
@@ -237,8 +238,11 @@ const Auth = () => {
   };
 
   const handle2FASuccess = async () => {
-    // Mark 2FA as completed for this session
-    localStorage.setItem('2fa_completed', 'true');
+    // Mark 2FA as completed for this browser session only
+    if (pendingUser) {
+      const sessionKey = `2fa_verified_${pendingUser.id}`;
+      sessionStorage.setItem(sessionKey, 'true');
+    }
     
     toast({
       title: "Welcome back!",

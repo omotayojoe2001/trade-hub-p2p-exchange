@@ -1,0 +1,11 @@
+{
+  "imports": {
+    "@/integrations/supabase/client": "https://esm.sh/@supabase/supabase-js@2",
+    "@/integrations/supabase/types": "https://esm.sh/@supabase/supabase-js@2",
+    "@/integrations/supabase/": "https://esm.sh/@supabase/supabase-js@2/",
+    "@/integrations/": "https://esm.sh/@supabase/supabase-js@2/",
+    "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2",
+    "@/services/": "https://esm.sh/@supabase/supabase-js@2/",
+    "@/hooks/": "https://esm.sh/@supabase/supabase-js@2/"
+  }
+}

@@ -40,7 +40,7 @@ interface BitGoTransaction {
 
 class BitGoService {
   private baseUrl = 'https://app.bitgo-test.com/api/v2';
-  private accessToken = import.meta.env.VITE_BITGO_ACCESS_TOKEN?.replace(/"/g, '');
+  private accessToken = 'v2x9eba10d23cb16b271fd072394d76a4021ae88719dba92ab5a383f389715492d0';
   private btcWalletId = import.meta.env.VITE_BITGO_BTC_WALLET_ID;
   private ethWalletId = import.meta.env.VITE_BITGO_ETH_WALLET_ID;
 

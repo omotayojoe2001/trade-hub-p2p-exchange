@@ -1,0 +1,21 @@
+{
+  "name": "bitgo-proxy-server",
+  "version": "1.0.0",
+  "description": "Proxy server for BitGo API to handle IP restrictions",
+  "main": "bitgo-proxy-server.js",
+  "scripts": {
+    "start": "node bitgo-proxy-server.js",
+    "dev": "nodemon bitgo-proxy-server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "http-proxy-middleware": "^2.0.6",
+    "cors": "^2.8.5"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  }
+}

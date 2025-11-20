@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, CheckCircle, Clock, MapPin, Phone, User, AlertTriangle, Copy, DollarSign, Truck, PartyPopper, Lock, MessageCircle } from 'lucide-react';
+import { ArrowLeft, CheckCircle, Clock, MapPin, Phone, User, AlertTriangle, Copy, DollarSign, Truck, PartyPopper, Lock, MessageCircle, Download, Share2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { useNavigate, useParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-
+import { ReceiptGenerator } from '@/components/ReceiptGenerator';
 import MessageThread from '@/components/MessageThread';
 
 interface CashTradeStatus {
@@ -161,170 +162,141 @@ const UserCashTradeStatus = () => {
   const statusInfo = getStatusInfo(trade.status);
 
   return (
-      <div className="min-h-screen bg-gray-50 pb-24">
-      {/* Header */}
-      <div className="bg-white border-b border-gray-200 p-4">
-        <div className="flex items-center">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => navigate('/my-trades')}
-            className="mr-3"
-          >
-            <ArrowLeft className="w-4 h-4" />
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+      {/* Compact Header */}
+      <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-6">
+        <div className="flex items-center justify-between">
+          <Button variant="ghost" size="icon" onClick={() => navigate('/my-trades')} className="text-white hover:bg-white/20">
+            <ArrowLeft className="w-5 h-5" />
           </Button>
-          <div>
-            <h1 className="text-xl font-semibold text-gray-900">Cash Delivery Status</h1>
-            <p className="text-sm text-gray-600">${trade.usd_amount.toLocaleString()} USD Cash</p>
+          <div className="text-center">
+            <h1 className="text-lg font-semibold text-white">Cash Delivery</h1>
+            <p className="text-blue-100 text-sm">${trade.usd_amount.toLocaleString()} USD</p>
           </div>
+          <div className="w-10" />
+        </div>
+        
+        {/* Status Badge */}
+        <div className="flex justify-center mt-4">
+          <Badge className={`px-4 py-2 text-sm font-medium text-white ${
+            statusInfo.color === 'green' ? 'bg-green-500' :
+            statusInfo.color === 'blue' ? 'bg-blue-500' :
+            statusInfo.color === 'purple' ? 'bg-purple-500' :
+            statusInfo.color === 'orange' ? 'bg-orange-500' :
+            'bg-gray-500'
+          }`}>
+            <statusInfo.icon className="w-4 h-4 mr-2 text-white" />
+            <span className="text-white">{statusInfo.title}</span>
+          </Badge>
         </div>
       </div>
 
-      <div className="p-4 space-y-4">
-        {/* Current Status */}
-        <Card className={`border-l-4 border-l-${statusInfo.color}-500`}>
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <statusInfo.icon className={`w-5 h-5 mr-3 text-${statusInfo.color}-600`} />
-              {statusInfo.title}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-gray-600">{statusInfo.description}</p>
-          </CardContent>
-        </Card>
-
-        {/* Progress Steps */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Delivery Progress</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {[
-                { step: 1, title: 'Merchant Pays Vendor', status: 'vendor_paid' },
-                { step: 2, title: 'Vendor Confirms Payment', status: 'payment_confirmed' },
-                { step: 3, title: 'Delivery Started', status: 'delivery_in_progress' },
-                { step: 4, title: 'Cash Delivered', status: 'cash_delivered' }
-              ].map((item) => {
-                const isCompleted = statusInfo.step >= item.step;
-                const isCurrent = statusInfo.step === item.step;
-                
+      <div className="px-4 py-6 space-y-4">
+        {/* Progress Timeline - Compact */}
+        <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
+          <CardContent className="p-4">
+            <div className="flex justify-between items-center">
+              {[1, 2, 3, 4].map((step) => {
+                const isCompleted = statusInfo.step >= step;
+                const isCurrent = statusInfo.step === step;
                 return (
-                  <div key={item.step} className="flex items-center">
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center mr-3 ${
-                      isCompleted 
-                        ? 'bg-green-500 text-white' 
-                        : isCurrent 
-                        ? 'bg-blue-500 text-white' 
-                        : 'bg-gray-200 text-gray-500'
+                  <div key={step} className="flex flex-col items-center">
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
+                      isCompleted ? 'bg-green-500 text-white' :
+                      isCurrent ? 'bg-blue-500 text-white' :
+                      'bg-gray-200 text-gray-500'
                     }`}>
-                      {isCompleted ? <CheckCircle className="w-4 h-4" /> : item.step}
+                      {isCompleted ? <CheckCircle className="w-4 h-4" /> : step}
                     </div>
-                    <span className={`${isCompleted ? 'text-green-700 font-medium' : isCurrent ? 'text-blue-700 font-medium' : 'text-gray-500'}`}>
-                      {item.title}
-                    </span>
+                    {step < 4 && (
+                      <div className={`w-12 h-0.5 mt-4 ${
+                        statusInfo.step > step ? 'bg-green-500' : 'bg-gray-200'
+                      }`} />
+                    )}
                   </div>
                 );
               })}
             </div>
+            <p className="text-center text-sm text-gray-600 mt-3">{statusInfo.description}</p>
           </CardContent>
         </Card>
 
-        {/* Delivery Details */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <MapPin className="w-5 h-5 mr-2" />
-              Delivery Information
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="flex items-center">
-              <span className="text-sm text-gray-600 w-20">Type:</span>
-              <span className="font-medium">
-                {trade.delivery_type === 'delivery' ? 'Home Delivery' : 'Pickup'}
-              </span>
-            </div>
-            <div className="flex items-start">
-              <span className="text-sm text-gray-600 w-20">Location:</span>
-              <span className="font-medium">
-                {trade.delivery_type === 'delivery' 
-                  ? trade.delivery_address 
-                  : trade.pickup_location
-                }
-              </span>
-            </div>
-            <div className="flex items-center">
-              <span className="text-sm text-gray-600 w-20">Amount:</span>
-              <span className="font-medium text-green-600">${trade.usd_amount.toLocaleString()} USD</span>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Delivery Code - Always show if exists */}
-        {trade.delivery_code && (
-          <Card className="bg-yellow-50 border-yellow-200">
-            <CardHeader>
-              <CardTitle className="text-yellow-800 flex items-center">
-                <Lock className="w-5 h-5 mr-2" />
-                Your Delivery Code
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center">
-                <p className="text-sm text-yellow-700 mb-3">
-                  Show this code to the vendor when they arrive with your cash. Only give the code AFTER receiving the full amount.
-                </p>
-                <div className="bg-white border-2 border-yellow-300 rounded-lg p-4 mb-3">
-                  <p className="text-3xl font-mono font-bold text-yellow-900 tracking-wider">
-                    {trade.delivery_code}
-                  </p>
+        {/* Delivery Info - Enhanced */}
+        <Card className="bg-white/90 backdrop-blur-sm border-0 shadow-xl">
+          <CardContent className="p-5">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center">
+                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center mr-3">
+                  <MapPin className="w-5 h-5 text-white" />
                 </div>
-                <Button
-                  onClick={copyDeliveryCode}
-                  variant="secondary"
-                  size="sm"
-                  className="border-yellow-300 text-yellow-700 hover:bg-yellow-100"
-                >
-                  <Copy className="w-4 h-4 mr-2" />
-                  Copy Code
-                </Button>
+                <div>
+                  <span className="font-bold text-gray-900 text-lg">
+                    {trade.delivery_type === 'delivery' ? 'Home Delivery' : 'Cash Pickup'}
+                  </span>
+                  <p className="text-sm text-gray-600">Service Type</p>
+                </div>
               </div>
+              <div className="text-right bg-green-50 px-3 py-2 rounded-lg border border-green-200">
+                <span className="text-2xl font-bold text-green-700">${trade.usd_amount.toLocaleString()}</span>
+                <p className="text-xs text-green-600 font-medium">USD Cash</p>
+              </div>
+            </div>
+            <div className="bg-gray-50 rounded-lg p-4 border-l-4 border-blue-500">
+              <p className="text-sm text-gray-600 font-medium mb-1">
+                {trade.delivery_type === 'delivery' ? 'Delivery Address:' : 'Pickup Location:'}
+              </p>
+              <p className="text-gray-900 font-semibold">
+                {trade.delivery_type === 'delivery' ? trade.delivery_address : trade.pickup_location}
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Delivery Code - Enhanced */}
+        {trade.delivery_code && (
+          <Card className="bg-gradient-to-r from-amber-400 to-orange-500 border-0 shadow-xl">
+            <CardContent className="p-6 text-center">
+              <div className="flex items-center justify-center mb-4">
+                <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center mr-3">
+                  <Lock className="w-4 h-4 text-white" />
+                </div>
+                <span className="text-white font-bold text-lg">Your Delivery Code</span>
+              </div>
+              <div className="bg-white rounded-xl p-4 mb-4 shadow-lg">
+                <p className="text-3xl font-mono font-bold text-gray-900 tracking-widest">
+                  {trade.delivery_code}
+                </p>
+              </div>
+              <p className="text-white/90 text-sm mb-4">Show this code to receive your cash</p>
+              <Button onClick={copyDeliveryCode} size="sm" className="bg-white/20 text-white hover:bg-white/30 border-white/30 shadow-md">
+                <Copy className="w-4 h-4 mr-2 text-white" />
+                <span className="text-white">Copy Code</span>
+              </Button>
             </CardContent>
           </Card>
         )}
 
-        {/* Vendor Contact - Only show when delivery started */}
+        {/* Vendor Contact - Enhanced */}
         {trade.status === 'delivery_in_progress' && trade.vendor_phone && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <Phone className="w-5 h-5 mr-2" />
-                Vendor Contact
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
+          <Card className="bg-white/90 backdrop-blur-sm border-0 shadow-xl">
+            <CardContent className="p-5">
+              <h3 className="font-bold text-gray-900 mb-3 text-lg">Delivery Vendor</h3>
               <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-medium">{trade.vendor_name || 'Delivery Vendor'}</p>
-                  <p className="text-sm text-gray-600">{trade.vendor_phone}</p>
+                <div className="flex items-center">
+                  <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center mr-4 shadow-md">
+                    <User className="w-6 h-6 text-white" />
+                  </div>
+                  <div>
+                    <p className="font-bold text-gray-900 text-lg">{trade.vendor_name || 'Delivery Vendor'}</p>
+                    <p className="text-sm text-gray-600 font-medium">{trade.vendor_phone}</p>
+                  </div>
                 </div>
                 <div className="flex space-x-2">
-                  <Button
-                    onClick={() => setShowMessage(true)}
-                    size="sm"
-                    variant="outline"
-                  >
-                    <MessageCircle className="w-4 h-4 mr-1" />
-                    Message
+                  <Button onClick={() => setShowMessage(true)} size="sm" className="bg-blue-600 hover:bg-blue-700 text-white shadow-md">
+                    <MessageCircle className="w-4 h-4" />
                   </Button>
-                  <Button
-                    onClick={() => window.open(`tel:${trade.vendor_phone}`)}
-                    size="sm"
-                    className="bg-green-600 hover:bg-green-700"
-                  >
-                    Call Vendor
+                  <Button onClick={() => window.open(`tel:${trade.vendor_phone}`)} size="sm" className="bg-green-600 hover:bg-green-700 text-white shadow-md">
+                    <Phone className="w-4 h-4" />
                   </Button>
                 </div>
               </div>
@@ -332,20 +304,64 @@ const UserCashTradeStatus = () => {
           </Card>
         )}
 
-        {/* Important Instructions */}
-        <Card className="bg-blue-50 border-blue-200">
-          <CardHeader>
-            <CardTitle className="text-blue-800 flex items-center">
-              <AlertTriangle className="w-5 h-5 mr-2" />
-              Important Instructions
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2 text-sm text-blue-700">
-              <p>• Only give your delivery code AFTER receiving the full cash amount</p>
-              <p>• Count the money carefully before providing the code</p>
-              <p>• The vendor must provide exactly ${trade.usd_amount.toLocaleString()} USD</p>
-              <p>• If there are any issues, contact support immediately</p>
+        {/* Receipt Actions - For Completed Trades */}
+        {trade.status === 'cash_delivered' && (
+          <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
+            <CardContent className="p-4">
+              <div className="text-center">
+                <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-3" />
+                <h3 className="font-semibold text-gray-900 mb-2">Trade Completed!</h3>
+                <p className="text-sm text-gray-600 mb-4">Cash delivered successfully</p>
+                <div className="flex space-x-3">
+                  <ReceiptGenerator
+                    trade={{
+                      id: trade.id,
+                      amount: trade.usd_amount,
+                      currency: 'USD',
+                      type: 'cash_delivery',
+                      status: 'completed',
+                      date: trade.created_at,
+                      merchant: { name: trade.merchant_name || 'Merchant', phone: trade.merchant_phone },
+                      vendor: { name: trade.vendor_name || 'Vendor', phone: trade.vendor_phone }
+                    }}
+                    trigger={
+                      <Button size="sm" className="bg-blue-600 hover:bg-blue-700">
+                        <Download className="w-4 h-4 mr-2" />
+                        Receipt
+                      </Button>
+                    }
+                  />
+                  <Button size="sm" variant="outline" onClick={() => {
+                    if (navigator.share) {
+                      navigator.share({
+                        title: 'Trade Completed',
+                        text: `Successfully received $${trade.usd_amount} USD cash delivery`,
+                        url: window.location.href
+                      });
+                    }
+                  }}>
+                    <Share2 className="w-4 h-4 mr-2" />
+                    Share
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Safety Tips - Compact */}
+        <Card className="bg-blue-50/80 backdrop-blur-sm border-blue-200 shadow-lg">
+          <CardContent className="p-4">
+            <div className="flex items-start">
+              <AlertTriangle className="w-5 h-5 text-blue-600 mr-3 mt-0.5 flex-shrink-0" />
+              <div>
+                <h4 className="font-medium text-blue-900 mb-2">Safety Reminder</h4>
+                <ul className="text-sm text-blue-800 space-y-1">
+                  <li>• Count cash before giving code</li>
+                  <li>• Verify exact amount: ${trade.usd_amount.toLocaleString()}</li>
+                  <li>• Contact support if issues arise</li>
+                </ul>
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -362,7 +378,7 @@ const UserCashTradeStatus = () => {
           onClose={() => setShowMessage(false)}
         />
       )}
-      </div>
+    </div>
   );
 };
 

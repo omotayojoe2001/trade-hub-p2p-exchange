@@ -9,32 +9,44 @@ interface EscrowAddress {
 
 class BitGoEscrowService {
   async generateEscrowAddress(tradeId: string, coin: 'BTC' | 'ETH' | 'USDT' | 'XRP' | 'BNB' | 'POLYGON', expectedAmount?: number): Promise<string> {
-    // For USDT, force real BitGo address generation
-    if (coin === 'USDT') {
-      try {
-        console.log('🔄 Attempting real BitGo USDT address generation...');
-        
-        const { data, error } = await supabase.functions.invoke('bitgo-escrow', {
-          body: { tradeId, coin, expectedAmount }
-        });
-        
-        if (error) throw new Error(`BitGo error: ${error.message}`);
-        if (data?.error) throw new Error(`BitGo API error: ${data.error}`);
-        if (data?.address) {
-          if (data.isReal) {
-            console.log('✅ Real USDT address generated');
-          } else {
-            console.log('⚠️ USDT fallback address (BitGo unavailable)');
-          }
+    // Direct AWS call - bypass Supabase edge function
+    try {
+      console.log(`🔄 Attempting real ${coin} address generation via AWS...`);
+      
+      const response = await fetch('http://13.53.167.64:8080/api/forward/api/v2/btc/wallet/68dd6fe94425f8b958244dcf157a6635/address', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer v2x9eba10d23cb16b271fd072394d76a4021ae88719dba92ab5a383f389715492d0'
+        },
+        body: JSON.stringify({
+          label: `escrow-${tradeId}-${Date.now()}`
+        })
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        if (data.address) {
+          console.log(`✅ Real ${coin} address generated via AWS`);
+          
+          // Store in database
+          await supabase.from('escrow_addresses').insert({
+            trade_id: tradeId,
+            coin_type: coin,
+            address: data.address,
+            status: 'pending',
+            expected_amount: expectedAmount
+          });
+          
           return data.address;
         }
-        
-        throw new Error('No address returned from BitGo');
-        
-      } catch (error) {
-        console.error('❌ BitGo USDT failed:', error.message);
-        throw new Error(`USDT address generation failed: ${error.message}`);
       }
+      
+      throw new Error('AWS proxy failed');
+      
+    } catch (error) {
+      console.error(`❌ AWS ${coin} failed:`, error.message);
+      // Continue to fallback below
     }
     
     try {
