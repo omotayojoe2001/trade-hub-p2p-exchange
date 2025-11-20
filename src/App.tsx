@@ -263,7 +263,6 @@ const AppContent = () => {
       );
     }
   };
-
   return (
     <>
       {isLoading && <PageLoader />}
