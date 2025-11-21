@@ -184,7 +184,70 @@ export const useBiometricAuth = () => {
     }
   }, [state.isSupported, state.isEnrolled, toast]);
 
-  // Remove biometric enrollment
+  // Toggle biometric (preserve existing credentials)
+  const toggleBiometric = useCallback(async (enable: boolean) => {
+    try {
+      setState(prev => ({ ...prev, loading: true }));
+
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('User not authenticated');
+
+      if (enable) {
+        // Check if user already has credentials
+        const hasExistingCredential = user.user_metadata?.biometric_credential_id;
+        
+        if (hasExistingCredential) {
+          // Just enable existing credential
+          await supabase.auth.updateUser({
+            data: {
+              biometric_enrolled: true
+            }
+          });
+          
+          setState(prev => ({ ...prev, isEnrolled: true }));
+          
+          toast({
+            title: "2FA Enabled",
+            description: "Using your existing authenticator setup",
+          });
+          
+          return true;
+        } else {
+          // Need to set up new credential
+          return await registerBiometric('Primary Device');
+        }
+      } else {
+        // Disable but keep credential for future use
+        await supabase.auth.updateUser({
+          data: {
+            biometric_enrolled: false
+            // Keep biometric_credential_id and biometric_credential_name
+          }
+        });
+
+        setState(prev => ({ ...prev, isEnrolled: false }));
+
+        toast({
+          title: "2FA Disabled",
+          description: "Your authenticator setup is preserved for future use",
+        });
+
+        return true;
+      }
+    } catch (error: any) {
+      console.error('Error toggling biometric:', error);
+      toast({
+        title: "Toggle Failed",
+        description: error.message || "Failed to toggle 2FA",
+        variant: "destructive"
+      });
+      return false;
+    } finally {
+      setState(prev => ({ ...prev, loading: false }));
+    }
+  }, [toast, registerBiometric]);
+
+  // Remove biometric enrollment completely (for reset)
   const removeBiometric = useCallback(async () => {
     try {
       setState(prev => ({ ...prev, loading: true }));
@@ -204,16 +267,16 @@ export const useBiometricAuth = () => {
       }));
 
       toast({
-        title: "Biometric Removed",
-        description: "Biometric authentication has been disabled",
+        title: "2FA Reset",
+        description: "All authenticator data has been removed",
       });
 
       return true;
     } catch (error: any) {
       console.error('Error removing biometric:', error);
       toast({
-        title: "Removal Failed",
-        description: error.message || "Failed to remove biometric authentication",
+        title: "Reset Failed",
+        description: error.message || "Failed to reset 2FA",
         variant: "destructive"
       });
       return false;
@@ -258,6 +321,7 @@ export const useBiometricAuth = () => {
     ...state,
     registerBiometric,
     authenticateWithBiometric,
+    toggleBiometric,
     removeBiometric,
     quickBiometricLogin,
     checkSupport,

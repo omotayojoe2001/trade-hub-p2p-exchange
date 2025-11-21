@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
+import { use2FA } from '@/hooks/use2FA';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -19,6 +20,7 @@ const Security = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const { isEnabled, loading: twoFALoading, enable2FA, disable2FA, reset2FA } = use2FA();
 
   const [passwordData, setPasswordData] = useState({
     currentPassword: '',
@@ -224,7 +226,75 @@ const Security = () => {
           </div>
         </Card>
 
-
+        {/* Two-Factor Authentication */}
+        <Card className="bg-white p-6">
+          <div className="flex items-center mb-4">
+            <Shield size={20} className="text-green-600 mr-2" />
+            <h3 className="text-lg font-semibold text-gray-900">Two-Factor Authentication</h3>
+          </div>
+          
+          <div className="space-y-4">
+            <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+              <div className="flex-1">
+                <h4 className="font-medium text-gray-900">Authenticator App</h4>
+                <p className="text-sm text-gray-600 mt-1">
+                  {isEnabled 
+                    ? "Your account is protected with 2FA" 
+                    : "Add an extra layer of security to your account"
+                  }
+                </p>
+              </div>
+              <Button
+                onClick={() => isEnabled ? disable2FA() : enable2FA()}
+                disabled={twoFALoading}
+                className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                  isEnabled 
+                    ? 'bg-green-600 text-white hover:bg-green-700' 
+                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                }`}
+              >
+                {twoFALoading ? 'Loading...' : (isEnabled ? 'Disable 2FA' : 'Enable 2FA')}
+              </Button>
+            </div>
+            
+            {isEnabled && (
+              <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                <div className="flex items-start">
+                  <Shield size={16} className="text-green-600 mt-0.5 mr-3 flex-shrink-0" />
+                  <div className="flex-1">
+                    <p className="text-sm text-green-900 font-medium">2FA is Active</p>
+                    <p className="text-sm text-green-700 mt-1">
+                      Your existing Google Authenticator setup is being used. No need to scan QR code again.
+                    </p>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="mt-3 text-red-600 border-red-200 hover:bg-red-50"
+                      onClick={() => reset2FA()}
+                      disabled={twoFALoading}
+                    >
+                      Reset 2FA Setup
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            {!isEnabled && (
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <div className="flex items-start">
+                  <Shield size={16} className="text-blue-600 mt-0.5 mr-3 flex-shrink-0" />
+                  <div>
+                    <p className="text-sm text-blue-900 font-medium">Enable 2FA Protection</p>
+                    <p className="text-sm text-blue-700 mt-1">
+                      Toggle the switch above to enable two-factor authentication using your authenticator app.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </Card>
 
         {/* Session Management */}
         <Card className="bg-white p-6">
