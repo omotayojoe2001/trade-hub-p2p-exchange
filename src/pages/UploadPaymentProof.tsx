@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { ArrowLeft, Upload, FileText, Hash } from 'lucide-react';
+import { InAppPhotoPicker } from '@/components/ui/InAppPhotoPicker';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -21,6 +22,7 @@ const UploadPaymentProof = () => {
   const [uploading, setUploading] = useState(false);
   const [proofType, setProofType] = useState<'file' | 'hash'>('file');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [showPhotoPicker, setShowPhotoPicker] = useState(false);
   const [paymentHash, setPaymentHash] = useState('');
   const [notes, setNotes] = useState('');
 
@@ -263,13 +265,15 @@ const UploadPaymentProof = () => {
             <CardContent className="space-y-4">
               <div>
                 <Label htmlFor="file-upload">Select File (JPEG, PNG, PDF - Max 5MB)</Label>
-                <Input
-                  id="file-upload"
-                  type="file"
-                  accept=".jpg,.jpeg,.png,.pdf"
-                  onChange={handleFileSelect}
-                  className="mt-2"
-                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setShowPhotoPicker(true)}
+                  className="w-full mt-2"
+                >
+                  <Upload className="w-4 h-4 mr-2" />
+                  {selectedFile ? selectedFile.name : 'Choose File'}
+                </Button>
               </div>
               
               {selectedFile && (
@@ -347,6 +351,16 @@ const UploadPaymentProof = () => {
           </ul>
         </div>
       </div>
+      
+      <InAppPhotoPicker
+        isOpen={showPhotoPicker}
+        onClose={() => setShowPhotoPicker(false)}
+        onSelect={(file) => {
+          setSelectedFile(file);
+          setShowPhotoPicker(false);
+        }}
+        title="Upload Payment Proof"
+      />
     </div>
   );
 };
