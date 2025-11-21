@@ -13,6 +13,7 @@ import { bitgoEscrow } from '@/services/bitgoEscrow';
 import { creditsService, MIN_CREDIT_PURCHASE } from '@/services/creditsService';
 import { cryptoPriceService } from '@/services/cryptoPriceService';
 import CreditReceiptGenerator from '@/components/CreditReceiptGenerator';
+import { InAppPhotoPicker } from '@/components/ui/InAppPhotoPicker';
 
 // Credit packages with real-time pricing
 const CREDIT_PACKAGES_BASE = [
@@ -42,6 +43,7 @@ const CreditsPurchase = () => {
   const [countdown, setCountdown] = useState(2 * 60 * 60); // 2 hours
   const [loading, setLoading] = useState(false);
   const [qrCodeUrl, setQrCodeUrl] = useState('');
+  const [showPhotoPicker, setShowPhotoPicker] = useState(false);
 
   // Disabled countdown timer to prevent scroll interference
   // useEffect(() => {
@@ -562,21 +564,14 @@ const CreditsPurchase = () => {
               <CardContent className="space-y-4">
                 <div>
                   <Label htmlFor="payment-proof">Upload Screenshot (Optional)</Label>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handlePaymentProofUpload}
-                    className="hidden"
-                    id="payment-proof"
-                  />
                   <div className="mt-2">
                     <Button
                       variant="outline"
-                      onClick={() => document.getElementById('payment-proof')?.click()}
+                      onClick={() => setShowPhotoPicker(true)}
                       className="w-full"
                     >
                       <Upload size={16} className="mr-2" />
-                      {paymentProof ? paymentProof.name : 'Choose File'}
+                      {paymentProof ? paymentProof.name : 'Upload Payment Proof'}
                     </Button>
                   </div>
                 </div>
@@ -658,6 +653,17 @@ const CreditsPurchase = () => {
           </div>
         )}
       </div>
+      
+      {/* In-App Photo Picker */}
+      <InAppPhotoPicker
+        isOpen={showPhotoPicker}
+        onClose={() => setShowPhotoPicker(false)}
+        onSelect={(file) => {
+          setPaymentProof(file);
+          setShowPhotoPicker(false);
+        }}
+        title="Upload Payment Proof"
+      />
     </div>
   );
 };
