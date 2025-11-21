@@ -373,8 +373,8 @@ const Auth = () => {
       <div className="fixed inset-0 bg-gradient-to-br from-gray-50 to-white flex items-center justify-center px-4">
         <div className="w-full max-w-sm">
           <div className="text-center mb-6">
-            <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <span className="text-white text-2xl font-bold">CE</span>
+            <div className="w-16 h-16 mx-auto mb-4">
+              <img src="/centralexchange-logo.png" alt="Central Exchange" className="w-full h-full object-contain" />
             </div>
             <h1 className="text-2xl font-bold text-gray-900 mb-2">
               Reset Password
@@ -440,8 +440,8 @@ const Auth = () => {
       <div className="fixed inset-0 bg-gradient-to-br from-gray-50 to-white flex items-center justify-center px-4" style={{ overscrollBehavior: 'none', touchAction: 'manipulation' }}>
         <div className="w-full max-w-sm">
           <div className="text-center mb-6">
-            <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <span className="text-white text-2xl font-bold">CE</span>
+            <div className="w-16 h-16 mx-auto mb-4">
+              <img src="/centralexchange-logo.png" alt="Central Exchange" className="w-full h-full object-contain" />
             </div>
             <h1 className="text-2xl font-bold text-gray-900 mb-2">
               Welcome Back
@@ -596,8 +596,8 @@ const Auth = () => {
     <div className="fixed inset-0 bg-gradient-to-br from-gray-50 to-white px-4 py-6 overflow-y-auto" style={{ overscrollBehavior: 'none', touchAction: 'manipulation' }}>
       <div className="max-w-md mx-auto min-h-full flex flex-col justify-center">
         <div className="text-center mb-4">
-          <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-3">
-            <span className="text-white text-2xl font-bold">CE</span>
+          <div className="w-16 h-16 mx-auto mb-3">
+            <img src="/centralexchange-logo.png" alt="Central Exchange" className="w-full h-full object-contain" />
           </div>
           <h1 className="text-2xl font-bold text-gray-900 mb-1">
             Create Account

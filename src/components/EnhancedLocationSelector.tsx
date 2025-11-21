@@ -82,10 +82,10 @@ const EnhancedLocationSelector: React.FC<EnhancedLocationSelectorProps> = ({
             {selectedCountry ? (
               <>
                 <span className="text-2xl">{getCountryFlag(selectedCountry)}</span>
-                <span className="font-medium text-gray-900">{currentCountry?.name}</span>
+                <span className="font-medium text-white">{currentCountry?.name}</span>
               </>
             ) : (
-              <span className="text-gray-500">Select your country</span>
+              <span className="text-white">Select your country</span>
             )}
           </div>
           <ChevronDown className="w-5 h-5 text-gray-400" />
@@ -106,11 +106,11 @@ const EnhancedLocationSelector: React.FC<EnhancedLocationSelectorProps> = ({
           >
             <div className="flex items-center space-x-3">
               {selectedState ? (
-                <span className="font-medium text-gray-900">
+                <span className="font-medium text-white">
                   {availableStates.find(s => s.code === selectedState)?.name}
                 </span>
               ) : (
-                <span className="text-gray-500">Select your state/region</span>
+                <span className="text-white">Select your state/region</span>
               )}
             </div>
             <ChevronDown className="w-5 h-5 text-gray-400" />
@@ -154,23 +154,33 @@ const EnhancedLocationSelector: React.FC<EnhancedLocationSelectorProps> = ({
           </div>
 
           <div className="max-h-96 overflow-y-auto">
-            {filteredCountries.map((country) => (
-              <button
-                key={country.code}
-                onClick={() => handleCountrySelect(country.code)}
-                className="w-full px-6 py-4 hover:bg-gray-50 transition-colors flex items-center justify-between text-left border-b border-gray-100 last:border-b-0"
-              >
-                <div className="flex items-center space-x-3">
-                  <span className="text-2xl">{getCountryFlag(country.code)}</span>
-                  <span className="font-medium text-gray-900">{country.name}</span>
-                </div>
-                {selectedCountry === country.code && (
-                  <div className="w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center">
-                    <Check className="w-4 h-4 text-white" />
+            {filteredCountries.map((country) => {
+              const isNigeria = country.code === 'NG';
+              return (
+                <button
+                  key={country.code}
+                  onClick={() => isNigeria ? handleCountrySelect(country.code) : null}
+                  className={`w-full px-6 py-4 transition-colors flex items-center justify-between text-left border-b border-gray-100 last:border-b-0 ${
+                    isNigeria ? 'hover:bg-gray-50 cursor-pointer' : 'cursor-not-allowed opacity-50'
+                  }`}
+                >
+                  <div className="flex items-center space-x-3">
+                    <span className="text-2xl">{getCountryFlag(country.code)}</span>
+                    <span className={`font-medium ${
+                      isNigeria ? 'text-white' : 'text-gray-400'
+                    }`}>
+                      {country.name}
+                      {!isNigeria && ' (Not Available)'}
+                    </span>
                   </div>
-                )}
-              </button>
-            ))}
+                  {selectedCountry === country.code && (
+                    <div className="w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center">
+                      <Check className="w-4 h-4 text-white" />
+                    </div>
+                  )}
+                </button>
+              );
+            })}
           </div>
         </DialogContent>
       </Dialog>
@@ -201,7 +211,7 @@ const EnhancedLocationSelector: React.FC<EnhancedLocationSelectorProps> = ({
                 onClick={() => handleStateSelect(state.code)}
                 className="w-full px-6 py-4 hover:bg-gray-50 transition-colors flex items-center justify-between text-left border-b border-gray-100 last:border-b-0"
               >
-                <span className="font-medium text-gray-900">{state.name}</span>
+                <span className="font-medium text-white">{state.name}</span>
                 {selectedState === state.code && (
                   <div className="w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center">
                     <Check className="w-4 h-4 text-white" />
