@@ -1,152 +1,137 @@
-import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from './useAuth';
+import { useState, useEffect } from 'react';
 
-interface SessionData {
-  currentStep: string;
-  completedSteps: string[];
-  formData: Record<string, any>;
-  timestamp: Date;
-}
-
-interface UserSession {
+export interface SessionData {
   id: string;
-  user_id: string;
-  session_data: Record<string, any>;
-  session_type: 'trade_flow' | 'premium_flow' | 'onboarding' | 'kyc';
-  current_step: string;
-  completed_steps: string[];
-  expires_at: string;
-  created_at: string;
-  updated_at: string;
+  type: 'credit_purchase' | 'crypto_buy' | 'crypto_sell' | 'escrow';
+  step: number;
+  data: any;
+  timestamp: number;
+  expiresAt: number;
 }
 
-export const useSessionPersistence = (sessionType: 'trade_flow' | 'premium_flow' | 'onboarding' | 'kyc') => {
-  const { user } = useAuth();
-  const [sessionData, setSessionData] = useState<SessionData | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+const SESSION_STORAGE_KEY = 'trade_hub_sessions';
+const SESSION_EXPIRY_HOURS = 24; // 24 hours
 
-  // Load session data on mount
+export const useSessionPersistence = () => {
+  const [activeSessions, setActiveSessions] = useState<SessionData[]>([]);
+
   useEffect(() => {
-    const loadSession = async () => {
-      if (!user) {
-        setIsLoading(false);
-        return;
-      }
+    loadSessions();
+  }, []);
 
-      try {
-        const { data, error } = await supabase
-          .from('user_sessions')
-          .select('*')
-          .eq('user_id', user.id)
-          .eq('session_type', sessionType)
-          .gte('expires_at', new Date().toISOString())
-          .order('created_at', { ascending: false })
-          .limit(1)
-          .maybeSingle();
-
-        if (error) throw error;
-
-        if (data) {
-          setSessionData({
-            currentStep: data.current_step || '',
-            completedSteps: data.completed_steps || [],
-            formData: (data.session_data as Record<string, any>) || {},
-            timestamp: new Date(data.updated_at)
-          });
+  const loadSessions = () => {
+    try {
+      const stored = localStorage.getItem(SESSION_STORAGE_KEY);
+      if (stored) {
+        const sessions: SessionData[] = JSON.parse(stored);
+        const now = Date.now();
+        
+        // Filter out expired sessions
+        const validSessions = sessions.filter(session => session.expiresAt > now);
+        
+        setActiveSessions(validSessions);
+        
+        // Update storage if we removed expired sessions
+        if (validSessions.length !== sessions.length) {
+          localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(validSessions));
         }
-      } catch (error) {
-        console.error('Error loading session:', error);
-      } finally {
-        setIsLoading(false);
       }
+    } catch (error) {
+      console.error('Error loading sessions:', error);
+      setActiveSessions([]);
+    }
+  };
+
+  const saveSession = (sessionData: Omit<SessionData, 'timestamp' | 'expiresAt'>) => {
+    const now = Date.now();
+    const session: SessionData = {
+      ...sessionData,
+      timestamp: now,
+      expiresAt: now + (SESSION_EXPIRY_HOURS * 60 * 60 * 1000)
     };
 
-    loadSession();
-  }, [user, sessionType]);
-
-  // Save session data
-  const saveSession = useCallback(async (data: Partial<SessionData>) => {
-    if (!user) return;
-
     try {
-      const sessionPayload = {
-        user_id: user.id,
-        session_type: sessionType,
-        session_data: { ...sessionData?.formData, ...data.formData },
-        current_step: data.currentStep || sessionData?.currentStep || '',
-        completed_steps: data.completedSteps || sessionData?.completedSteps || [],
-        expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() // 24 hours
-      };
-
-      const { error } = await supabase
-        .from('user_sessions')
-        .upsert(sessionPayload, {
-          onConflict: 'user_id,session_type'
-        });
-
-      if (error) throw error;
-
-      setSessionData({
-        currentStep: sessionPayload.current_step,
-        completedSteps: sessionPayload.completed_steps,
-        formData: sessionPayload.session_data,
-        timestamp: new Date()
-      });
+      const stored = localStorage.getItem(SESSION_STORAGE_KEY);
+      let sessions: SessionData[] = stored ? JSON.parse(stored) : [];
+      
+      // Remove existing session with same ID
+      sessions = sessions.filter(s => s.id !== session.id);
+      
+      // Add new session
+      sessions.push(session);
+      
+      localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(sessions));
+      setActiveSessions(sessions);
+      
+      return true;
     } catch (error) {
       console.error('Error saving session:', error);
+      return false;
     }
-  }, [user, sessionType, sessionData]);
+  };
 
-  // Clear session data
-  const clearSession = useCallback(async () => {
-    if (!user) return;
+  const getSession = (id: string): SessionData | null => {
+    const session = activeSessions.find(s => s.id === id);
+    if (session && session.expiresAt > Date.now()) {
+      return session;
+    }
+    return null;
+  };
 
+  const updateSession = (id: string, updates: Partial<SessionData>) => {
     try {
-      const { error } = await supabase
-        .from('user_sessions')
-        .delete()
-        .eq('user_id', user.id)
-        .eq('session_type', sessionType);
-
-      if (error) throw error;
-
-      setSessionData(null);
+      const stored = localStorage.getItem(SESSION_STORAGE_KEY);
+      if (!stored) return false;
+      
+      let sessions: SessionData[] = JSON.parse(stored);
+      const sessionIndex = sessions.findIndex(s => s.id === id);
+      
+      if (sessionIndex === -1) return false;
+      
+      sessions[sessionIndex] = { ...sessions[sessionIndex], ...updates };
+      
+      localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(sessions));
+      setActiveSessions(sessions);
+      
+      return true;
     } catch (error) {
-      console.error('Error clearing session:', error);
+      console.error('Error updating session:', error);
+      return false;
     }
-  }, [user, sessionType]);
+  };
 
-  // Update current step
-  const updateStep = useCallback(async (step: string, markCompleted = true) => {
-    const completedSteps = sessionData?.completedSteps || [];
-    const newCompletedSteps = markCompleted && !completedSteps.includes(step) 
-      ? [...completedSteps, step] 
-      : completedSteps;
+  const removeSession = (id: string) => {
+    try {
+      const stored = localStorage.getItem(SESSION_STORAGE_KEY);
+      if (!stored) return;
+      
+      let sessions: SessionData[] = JSON.parse(stored);
+      sessions = sessions.filter(s => s.id !== id);
+      
+      localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(sessions));
+      setActiveSessions(sessions);
+    } catch (error) {
+      console.error('Error removing session:', error);
+    }
+  };
 
-    await saveSession({
-      currentStep: step,
-      completedSteps: newCompletedSteps
-    });
-  }, [sessionData, saveSession]);
+  const clearAllSessions = () => {
+    localStorage.removeItem(SESSION_STORAGE_KEY);
+    setActiveSessions([]);
+  };
 
-  // Update form data
-  const updateFormData = useCallback(async (data: Record<string, any>) => {
-    await saveSession({
-      formData: { ...sessionData?.formData, ...data }
-    });
-  }, [sessionData, saveSession]);
+  const getActiveSessionsByType = (type: SessionData['type']) => {
+    return activeSessions.filter(s => s.type === type && s.expiresAt > Date.now());
+  };
 
   return {
-    sessionData,
-    isLoading,
+    activeSessions,
     saveSession,
-    clearSession,
-    updateStep,
-    updateFormData,
-    hasSession: !!sessionData,
-    currentStep: sessionData?.currentStep || '',
-    completedSteps: sessionData?.completedSteps || [],
-    formData: sessionData?.formData || {}
+    getSession,
+    updateSession,
+    removeSession,
+    clearAllSessions,
+    getActiveSessionsByType,
+    loadSessions
   };
 };

@@ -14,6 +14,8 @@ import { creditsService, MIN_CREDIT_PURCHASE } from '@/services/creditsService';
 import { cryptoPriceService } from '@/services/cryptoPriceService';
 import CreditReceiptGenerator from '@/components/CreditReceiptGenerator';
 import { InAppPhotoPicker } from '@/components/ui/InAppPhotoPicker';
+import { useSessionPersistence } from '@/hooks/useSessionPersistence';
+import SessionRecoveryModal from '@/components/SessionRecoveryModal';
 
 // Credit packages with real-time pricing
 const CREDIT_PACKAGES_BASE = [
@@ -28,6 +30,7 @@ const CreditsPurchase = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
+  const { saveSession, getActiveSessionsByType, removeSession } = useSessionPersistence();
 
   const [selectedPackage, setSelectedPackage] = useState(CREDIT_PACKAGES_BASE[1]);
   const [creditPackages, setCreditPackages] = useState<any[]>([]);
@@ -44,6 +47,8 @@ const CreditsPurchase = () => {
   const [loading, setLoading] = useState(false);
   const [qrCodeUrl, setQrCodeUrl] = useState('');
   const [showPhotoPicker, setShowPhotoPicker] = useState(false);
+  const [showSessionModal, setShowSessionModal] = useState(false);
+  const [sessionId, setSessionId] = useState('');
 
   // Disabled countdown timer to prevent scroll interference
   // useEffect(() => {
@@ -83,9 +88,13 @@ const CreditsPurchase = () => {
     };
   };
 
-  // Disabled price loading to prevent scroll interference
-  // Set static packages instead
+  // Check for existing sessions on mount
   React.useEffect(() => {
+    const existingSessions = getActiveSessionsByType('credit_purchase');
+    if (existingSessions.length > 0) {
+      setShowSessionModal(true);
+    }
+    
     setCreditPackages(CREDIT_PACKAGES_BASE.map(pkg => ({
       ...pkg,
       usd: pkg.credits * 0.01,
@@ -94,6 +103,29 @@ const CreditsPurchase = () => {
     })));
     setPricesLoading(false);
   }, []);
+
+  // Save session whenever important state changes
+  React.useEffect(() => {
+    if (currentStep > 1 && sessionId) {
+      saveSession({
+        id: sessionId,
+        type: 'credit_purchase',
+        step: currentStep,
+        data: {
+          selectedPackage,
+          customCredits,
+          isCustom,
+          selectedCrypto,
+          paymentAddress,
+          purchaseId,
+          transactionHash,
+          credits: getCurrentPackage().credits,
+          usdAmount: getCurrentPackage().usd,
+          cryptoAmount: selectedCrypto === 'BTC' ? getCurrentPackage().btc : getCurrentPackage().usdt
+        }
+      });
+    }
+  }, [currentStep, selectedPackage, customCredits, isCustom, selectedCrypto, paymentAddress, purchaseId, transactionHash, sessionId]);
 
   const handlePurchaseStart = async () => {
     if (!user) return;
@@ -109,6 +141,10 @@ const CreditsPurchase = () => {
       });
       return;
     }
+
+    // Generate session ID
+    const newSessionId = `credit_${Date.now()}_${user.id}`;
+    setSessionId(newSessionId);
 
     setLoading(true);
     try {
@@ -167,6 +203,24 @@ const CreditsPurchase = () => {
       }
       
       setCurrentStep(2);
+
+      // Save initial session
+      saveSession({
+        id: newSessionId,
+        type: 'credit_purchase',
+        step: 2,
+        data: {
+          selectedPackage,
+          customCredits,
+          isCustom,
+          selectedCrypto,
+          paymentAddress: address,
+          purchaseId: purchase.id,
+          credits: currentPackage.credits,
+          usdAmount: currentPackage.usd,
+          cryptoAmount
+        }
+      });
 
       toast({
         title: `${selectedCrypto} Payment Address Generated`,
@@ -242,8 +296,6 @@ const CreditsPurchase = () => {
 
       setCurrentStep(3);
 
-      // Removed setTimeout to prevent automatic updates
-
       toast({
         title: "Payment Submitted to Real System",
         description: "Your payment proof has been submitted. Credits will be added once payment is confirmed on blockchain.",
@@ -256,6 +308,42 @@ const CreditsPurchase = () => {
         description: "Failed to submit payment proof",
         variant: "destructive"
       });
+    }
+  };
+
+  const handleRestoreSession = (session: any) => {
+    setSessionId(session.id);
+    setCurrentStep(session.step);
+    setSelectedPackage(session.data.selectedPackage || CREDIT_PACKAGES_BASE[1]);
+    setCustomCredits(session.data.customCredits || '');
+    setIsCustom(session.data.isCustom || false);
+    setSelectedCrypto(session.data.selectedCrypto || 'BTC');
+    setPaymentAddress(session.data.paymentAddress || '');
+    setPurchaseId(session.data.purchaseId || '');
+    setTransactionHash(session.data.transactionHash || '');
+    
+    // Regenerate QR code if we have payment address
+    if (session.data.paymentAddress) {
+      QRCode.toDataURL(session.data.paymentAddress, {
+        width: 200,
+        margin: 2,
+        color: { dark: '#000000', light: '#FFFFFF' }
+      }).then(setQrCodeUrl).catch(console.error);
+    }
+    
+    setShowSessionModal(false);
+    
+    toast({
+      title: "Session Restored",
+      description: `Resumed your credit purchase at step ${session.step}`,
+    });
+  };
+
+  const handleDismissSession = (sessionId: string) => {
+    removeSession(sessionId);
+    const remainingSessions = getActiveSessionsByType('credit_purchase').filter(s => s.id !== sessionId);
+    if (remainingSessions.length === 0) {
+      setShowSessionModal(false);
     }
   };
 
@@ -882,6 +970,14 @@ const CreditsPurchase = () => {
           setShowPhotoPicker(false);
         }}
         title="Upload Payment Proof"
+      />
+      
+      {/* Session Recovery Modal */}
+      <SessionRecoveryModal
+        sessions={showSessionModal ? getActiveSessionsByType('credit_purchase') : []}
+        onRestore={handleRestoreSession}
+        onDismiss={handleDismissSession}
+        onClose={() => setShowSessionModal(false)}
       />
     </div>
   );

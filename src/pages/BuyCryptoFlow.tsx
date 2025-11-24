@@ -1,16 +1,23 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Info, Shield, Clock } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { useNavigate, useLocation } from 'react-router-dom';
 import CryptoIcon from '@/components/CryptoIcon';
+import { useSessionPersistence } from '@/hooks/useSessionPersistence';
+import SessionRecoveryModal from '@/components/SessionRecoveryModal';
+import { useToast } from '@/hooks/use-toast';
 
 const BuyCryptoFlow = () => {
   const [nairaAmount, setNairaAmount] = useState("");
   const [cryptoAmount, setCryptoAmount] = useState("");
+  const [sessionId, setSessionId] = useState('');
+  const [showSessionModal, setShowSessionModal] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
+  const { toast } = useToast();
+  const { saveSession, getActiveSessionsByType, removeSession } = useSessionPersistence();
   const { selectedCoin = 'bitcoin', coinData } = location.state || {};
 
   // Default coin data if not provided
@@ -49,8 +56,52 @@ const BuyCryptoFlow = () => {
     }
   };
 
+  // Check for existing sessions on mount
+  useEffect(() => {
+    const existingSessions = getActiveSessionsByType('crypto_buy');
+    if (existingSessions.length > 0) {
+      setShowSessionModal(true);
+    }
+  }, []);
+
+  // Save session when amounts change
+  useEffect(() => {
+    if (cryptoAmount && nairaAmount && sessionId) {
+      saveSession({
+        id: sessionId,
+        type: 'crypto_buy',
+        step: 1,
+        data: {
+          nairaAmount: parseFloat(nairaAmount),
+          cryptoAmount: parseFloat(cryptoAmount),
+          selectedCoin,
+          coinData: coin,
+          coinType: coin.symbol
+        }
+      });
+    }
+  }, [nairaAmount, cryptoAmount, sessionId]);
+
   const handleContinue = () => {
     if (!cryptoAmount || parseFloat(cryptoAmount) <= 0) return;
+    
+    // Generate session ID if not exists
+    const newSessionId = sessionId || `crypto_buy_${Date.now()}`;
+    if (!sessionId) setSessionId(newSessionId);
+    
+    // Save session before navigation
+    saveSession({
+      id: newSessionId,
+      type: 'crypto_buy',
+      step: 2,
+      data: {
+        nairaAmount: parseFloat(nairaAmount),
+        cryptoAmount: parseFloat(cryptoAmount),
+        selectedCoin,
+        coinData: coin,
+        coinType: coin.symbol
+      }
+    });
     
     // Route to merchant matching choice for consistent flow
     navigate('/merchant-matching-choice', { 
@@ -60,9 +111,30 @@ const BuyCryptoFlow = () => {
         selectedCoin,
         coinData: coin,
         coinType: coin.symbol,
-        mode: 'buy'
+        mode: 'buy',
+        sessionId: newSessionId
       } 
     });
+  };
+
+  const handleRestoreSession = (session: any) => {
+    setSessionId(session.id);
+    setNairaAmount(session.data.nairaAmount?.toString() || '');
+    setCryptoAmount(session.data.cryptoAmount?.toString() || '');
+    setShowSessionModal(false);
+    
+    toast({
+      title: "Session Restored",
+      description: `Resumed your ${session.data.coinType} purchase`,
+    });
+  };
+
+  const handleDismissSession = (sessionId: string) => {
+    removeSession(sessionId);
+    const remainingSessions = getActiveSessionsByType('crypto_buy').filter(s => s.id !== sessionId);
+    if (remainingSessions.length === 0) {
+      setShowSessionModal(false);
+    }
   };
 
   return (
@@ -176,6 +248,14 @@ const BuyCryptoFlow = () => {
           Continue to Merchant Selection
         </Button>
       </div>
+      
+      {/* Session Recovery Modal */}
+      <SessionRecoveryModal
+        sessions={showSessionModal ? getActiveSessionsByType('crypto_buy') : []}
+        onRestore={handleRestoreSession}
+        onDismiss={handleDismissSession}
+        onClose={() => setShowSessionModal(false)}
+      />
     </div>
   );
 };

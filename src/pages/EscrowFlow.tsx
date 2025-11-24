@@ -11,6 +11,8 @@ import { useCryptoPayments } from '@/hooks/useCryptoPayments';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { useSessionPersistence } from '@/hooks/useSessionPersistence';
+import SessionRecoveryModal from '@/components/SessionRecoveryModal';
 
 const EscrowFlow = () => {
   const navigate = useNavigate();
@@ -40,8 +42,11 @@ const EscrowFlow = () => {
   const [userRole, setUserRole] = useState<'merchant' | 'buyer'>('merchant'); // Determine user role
   const [systemConfirmedCrypto, setSystemConfirmedCrypto] = useState<boolean>(false);
   const [showConfirmDialog, setShowConfirmDialog] = useState<boolean>(false);
+  const [sessionId, setSessionId] = useState('');
+  const [showSessionModal, setShowSessionModal] = useState(false);
   
   const { generateQRCode } = useCryptoPayments();
+  const { saveSession, getActiveSessionsByType, removeSession } = useSessionPersistence();
 
   // Extract trade details from passed data
   const tradeAmount = trade?.amount_crypto || request?.amount_crypto || initialAmount || 0;
@@ -65,6 +70,12 @@ const EscrowFlow = () => {
   });
 
   useEffect(() => {
+    // Check for existing sessions on mount
+    const existingSessions = getActiveSessionsByType('escrow');
+    if (existingSessions.length > 0) {
+      setShowSessionModal(true);
+    }
+    
     // Set the buyer's wallet address for crypto release
     if (buyerWalletAddress) {
       setReceiverWalletAddress(buyerWalletAddress);
@@ -82,6 +93,10 @@ const EscrowFlow = () => {
       }
     }
     
+    // Generate session ID
+    const newSessionId = location.state?.sessionId || `escrow_${Date.now()}`;
+    setSessionId(newSessionId);
+    
     // Fetch merchant's real bank details
     fetchMerchantBankDetails();
     
@@ -93,6 +108,32 @@ const EscrowFlow = () => {
       bankCode: '000'
     });
   }, [buyerWalletAddress, trade]);
+
+  // Save session whenever important state changes
+  useEffect(() => {
+    if (currentStep > 0 && sessionId) {
+      saveSession({
+        id: sessionId,
+        type: 'escrow',
+        step: currentStep,
+        data: {
+          transactionId,
+          tradeAmount,
+          tradeCurrency,
+          fiatAmount,
+          userRole,
+          escrowAddress,
+          cryptoPaymentProof,
+          fiatPaymentProof,
+          systemConfirmedCrypto,
+          mode,
+          deliveryType,
+          deliveryAddress,
+          serviceFee
+        }
+      });
+    }
+  }, [currentStep, transactionId, escrowAddress, cryptoPaymentProof, fiatPaymentProof, systemConfirmedCrypto, sessionId]);
 
   const handleStatusUpdate = (status: string) => {
     switch (status) {
@@ -423,6 +464,30 @@ const EscrowFlow = () => {
     }
   };
 
+  const handleRestoreSession = (session: any) => {
+    setSessionId(session.id);
+    setCurrentStep(session.step);
+    setTransactionId(session.data.transactionId || transactionId);
+    setEscrowAddress(session.data.escrowAddress || '');
+    setCryptoPaymentProof(session.data.cryptoPaymentProof || '');
+    setFiatPaymentProof(session.data.fiatPaymentProof || '');
+    setSystemConfirmedCrypto(session.data.systemConfirmedCrypto || false);
+    setShowSessionModal(false);
+    
+    toast({
+      title: "Session Restored",
+      description: `Resumed your escrow transaction at step ${session.step}`,
+    });
+  };
+
+  const handleDismissSession = (sessionId: string) => {
+    removeSession(sessionId);
+    const remainingSessions = getActiveSessionsByType('escrow').filter(s => s.id !== sessionId);
+    if (remainingSessions.length === 0) {
+      setShowSessionModal(false);
+    }
+  };
+
   const renderStepContent = () => {
     switch (currentStep) {
       case 1:
@@ -717,20 +782,22 @@ const EscrowFlow = () => {
                   <p className="text-xs text-green-600 mt-1">Vendor will contact you for {deliveryType} details</p>
                 </div>
               </Card>
-            ) : userRole === 'merchant' && (
-              <Card className="p-4 border-orange-200 bg-orange-50">
-                <h4 className="font-medium text-orange-800 mb-2">Waiting for Cash Payment</h4>
-                <p className="text-sm text-orange-700 mb-4">
-                  Once you receive the cash payment in your bank account, click the button below to release the crypto from escrow.
-                </p>
-                
-                <Button
-                  onClick={handleCashReceived}
-                  className="w-full bg-green-600 hover:bg-green-700 text-white"
-                >
-                  I Have Received the Payment
-                </Button>
-              </Card>
+            ) : (
+              userRole === 'merchant' && (
+                <Card className="p-4 border-orange-200 bg-orange-50">
+                  <h4 className="font-medium text-orange-800 mb-2">Waiting for Cash Payment</h4>
+                  <p className="text-sm text-orange-700 mb-4">
+                    Once you receive the cash payment in your bank account, click the button below to release the crypto from escrow.
+                  </p>
+                  
+                  <Button
+                    onClick={handleCashReceived}
+                    className="w-full bg-green-600 hover:bg-green-700 text-white"
+                  >
+                    I Have Received the Payment
+                  </Button>
+                </Card>
+              )
             )}
 
             <Card className="p-4">
@@ -950,6 +1017,14 @@ const EscrowFlow = () => {
           </div>
         </div>
       )}
+      
+      {/* Session Recovery Modal */}
+      <SessionRecoveryModal
+        sessions={showSessionModal ? getActiveSessionsByType('escrow') : []}
+        onRestore={handleRestoreSession}
+        onDismiss={handleDismissSession}
+        onClose={() => setShowSessionModal(false)}
+      />
     </div>
   );
 };

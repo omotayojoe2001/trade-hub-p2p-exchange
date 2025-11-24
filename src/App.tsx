@@ -96,6 +96,7 @@ import SendNairaGetUSD from "./pages/SendNairaGetUSD";
 // import PremiumTradeCompleted from "./pages/PremiumTradeCompleted";
 import CashOrderThankYou from "./pages/CashOrderThankYou";
 import GlobalCodeTracker from "./components/GlobalCodeTracker";
+import GlobalSessionManager from "./components/GlobalSessionManager";
 import DeliveryStatus from "./pages/DeliveryStatus";
 import TradeRequests from "./pages/TradeRequests";
 import TradeRequestDetails from "./pages/TradeRequestDetails";
@@ -269,6 +270,7 @@ const AppContent = () => {
       {/* Only show notifications if not on auth pages */}
       {/* {!isOnAuthPage && <GlobalNotifications />} */}
       {!isOnAuthPage && <CreditAlert />}
+      {!isOnAuthPage && <GlobalSessionManager />}
       
       <GlobalCodeTracker />
       <div style={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
