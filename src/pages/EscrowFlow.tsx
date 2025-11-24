@@ -677,7 +677,6 @@ const EscrowFlow = () => {
                   </div>
                 </div>
               )}
-              )}
               
               {userRole === 'merchant' && systemConfirmedCrypto && (
                 <div className="bg-green-50 border border-green-200 rounded-lg p-4">
