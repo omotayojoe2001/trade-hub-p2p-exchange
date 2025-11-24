@@ -256,7 +256,7 @@ const SelectCoin = () => {
 
                 <Button 
                   onClick={() => handleCoinSelect(coin.id)}
-                  className={`w-full h-8 rounded-lg font-semibold text-sm ${
+                  className={`w-full h-8 rounded-lg font-semibold text-sm text-black ${
                     availableCount > 0 
                       ? mode === 'buy' 
                         ? 'bg-blue-600 hover:bg-blue-700' 
@@ -265,9 +265,7 @@ const SelectCoin = () => {
                   }`}
                   disabled={availableCount === 0}
                 >
-                  <span className={availableCount > 0 ? 'text-white' : 'text-gray-500'}>
-                    {getActionText(coin)}
-                  </span>
+                  {getActionText(coin)}
                 </Button>
               </Card>
             );
@@ -293,19 +291,19 @@ const SelectCoin = () => {
         <div className="flex space-x-4">
           <Button 
             onClick={handleAutoMatch}
-            className="flex-1 h-12 bg-gray-800 hover:bg-gray-900"
+            className="flex-1 h-12 bg-gray-800 hover:bg-gray-900 text-black"
           >
-            <svg className="w-4 h-4 mr-2 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
             </svg>
-            <span className="text-white">Auto Match</span>
+            Auto Match
           </Button>
           <Button 
             onClick={handleBrowseSellers}
-            className="flex-1 h-12 bg-blue-600 hover:bg-blue-700"
+            className="flex-1 h-12 bg-blue-600 hover:bg-blue-700 text-black"
           >
-            <Users size={16} className="mr-2 text-white" />
-            <span className="text-white">{mode === 'buy' ? 'Browse Sellers' : 'Browse Buyers'}</span>
+            <Users size={16} className="mr-2" />
+            {mode === 'buy' ? 'Browse Sellers' : 'Browse Buyers'}
           </Button>
         </div>
       </div>

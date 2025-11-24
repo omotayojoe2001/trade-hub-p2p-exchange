@@ -79,31 +79,31 @@ export const InAppPhotoPicker: React.FC<InAppPhotoPickerProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-end">
-      <div className="bg-white w-full max-h-[80vh] rounded-t-3xl overflow-hidden">
+    <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex items-end" style={{ paddingBottom: '80px' }}>
+      <div className="bg-white w-full max-h-[70vh] rounded-t-3xl overflow-hidden shadow-2xl">
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b">
-          <h3 className="text-lg font-semibold">{title}</h3>
-          <Button variant="ghost" size="icon" onClick={onClose}>
-            <X className="w-5 h-5" />
+        <div className="flex items-center justify-between p-6 border-b border-gray-100">
+          <h3 className="text-xl font-bold text-gray-900">{title}</h3>
+          <Button variant="ghost" size="icon" onClick={onClose} className="hover:bg-gray-100 rounded-full">
+            <X className="w-6 h-6 text-gray-600" />
           </Button>
         </div>
 
         {/* Content */}
-        <div className="p-4 space-y-4">
+        <div className="p-6 pb-8 space-y-6 overflow-y-auto max-h-[60vh]">
           {/* Quick Actions */}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-4">
             <Button
               onClick={handleTakePhoto}
-              className="flex items-center justify-center p-4 bg-blue-600 hover:bg-blue-700 text-white rounded-xl"
+              className="flex flex-col items-center justify-center p-6 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-2xl shadow-lg transition-all duration-200 transform hover:scale-105"
             >
-              <Camera className="w-5 h-5 mr-2" />
-              Take Photo
+              <Camera className="w-8 h-8 mb-2" />
+              <span className="font-semibold">Take Photo</span>
             </Button>
             
-            <label className="flex items-center justify-center p-4 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl cursor-pointer">
-              <Upload className="w-5 h-5 mr-2" />
-              Choose File
+            <label className="flex flex-col items-center justify-center p-6 bg-gradient-to-r from-gray-100 to-gray-200 hover:from-gray-200 hover:to-gray-300 text-gray-700 rounded-2xl cursor-pointer shadow-lg transition-all duration-200 transform hover:scale-105">
+              <Upload className="w-8 h-8 mb-2" />
+              <span className="font-semibold">Choose File</span>
               <input
                 type="file"
                 accept="image/*,application/pdf"
@@ -115,35 +115,37 @@ export const InAppPhotoPicker: React.FC<InAppPhotoPickerProps> = ({
 
           {/* Selected Photo Preview */}
           {selectedPhoto && (
-            <div className="space-y-3">
-              <div className="bg-gray-50 rounded-xl p-4">
+            <div className="space-y-4">
+              <div className="bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-200 rounded-2xl p-5">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                  <div className="flex items-center space-x-4">
+                    <div className="w-16 h-16 bg-white rounded-xl shadow-md flex items-center justify-center border-2 border-green-200">
                       {selectedPhoto.type.startsWith('image/') ? (
                         <img
                           src={URL.createObjectURL(selectedPhoto)}
                           alt="Selected"
-                          className="w-full h-full object-cover rounded-lg"
+                          className="w-full h-full object-cover rounded-xl"
                         />
                       ) : (
-                        <Upload className="w-6 h-6 text-blue-600" />
+                        <Upload className="w-8 h-8 text-green-600" />
                       )}
                     </div>
                     <div>
-                      <p className="font-medium text-sm">{selectedPhoto.name}</p>
-                      <p className="text-xs text-gray-500">
+                      <p className="font-bold text-gray-900 text-base">{selectedPhoto.name}</p>
+                      <p className="text-sm text-gray-600">
                         {(selectedPhoto.size / 1024 / 1024).toFixed(2)} MB
                       </p>
                     </div>
                   </div>
-                  <Check className="w-5 h-5 text-green-600" />
+                  <div className="bg-green-600 rounded-full p-2">
+                    <Check className="w-6 h-6 text-white" />
+                  </div>
                 </div>
               </div>
 
               <Button
                 onClick={handleConfirm}
-                className="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-xl"
+                className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white py-4 rounded-2xl font-bold text-lg shadow-lg transition-all duration-200 transform hover:scale-105"
               >
                 Use This File
               </Button>
@@ -184,9 +186,11 @@ export const InAppPhotoPicker: React.FC<InAppPhotoPickerProps> = ({
 
           {/* Empty State */}
           {!loading && recentPhotos.length === 0 && !selectedPhoto && (
-            <div className="text-center py-8">
-              <Upload className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-              <p className="text-gray-500 text-sm">
+            <div className="text-center py-12">
+              <div className="bg-gray-100 rounded-full p-6 w-24 h-24 mx-auto mb-4">
+                <Upload className="w-12 h-12 text-gray-400 mx-auto" />
+              </div>
+              <p className="text-gray-600 text-lg font-medium">
                 Take a photo or choose a file to get started
               </p>
             </div>

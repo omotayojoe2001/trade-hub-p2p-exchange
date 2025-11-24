@@ -44,7 +44,7 @@ const MerchantMatchingChoice = () => {
   };
 
   return (
-    <div className="min-h-screen bg-white font-['Poppins']">
+    <div className="min-h-screen bg-white font-['Poppins'] pb-20">
       {/* Header */}
       <div className="flex items-center p-4 bg-white border-b border-gray-200">
         <button onClick={() => navigate('/select-coin', { state: { mode } })} className="mr-3">
@@ -55,7 +55,7 @@ const MerchantMatchingChoice = () => {
         </h1>
       </div>
 
-      <div className="p-4">
+      <div className="p-4 pb-6">
         {/* Info Banner */}
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
           <div className="flex items-start">
@@ -119,14 +119,7 @@ const MerchantMatchingChoice = () => {
                     <span>Best available rates</span>
                   </div>
                 </div>
-                <div className="mt-3 p-3 bg-green-50 rounded-lg">
-                  <div className="flex items-center space-x-2">
-                    <Zap className="w-4 h-4 text-green-600" />
-                    <p className="text-sm text-green-800 font-medium">
-                      Fastest option - Usually matches within 30 seconds
-                    </p>
-                  </div>
-                </div>
+
               </div>
             </div>
           </CardContent>
@@ -181,14 +174,7 @@ const MerchantMatchingChoice = () => {
                     <span>Check response times and rates</span>
                   </div>
                 </div>
-                <div className="mt-3 p-3 bg-purple-50 rounded-lg">
-                  <div className="flex items-center space-x-2">
-                    <Users className="w-4 h-4 text-purple-600" />
-                    <p className="text-sm text-purple-800 font-medium">
-                      Full control - Choose exactly who you want to trade with
-                    </p>
-                  </div>
-                </div>
+
               </div>
             </div>
           </CardContent>

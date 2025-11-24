@@ -613,14 +613,12 @@ const EscrowFlow = () => {
                 </p>
               </div>
 
-              {bankDetails && systemConfirmedCrypto && (
+              {bankDetails && systemConfirmedCrypto && userRole === 'buyer' && (
                 <div className="space-y-4">
                   <div className="bg-blue-600 rounded-lg p-4">
                     <div className="flex items-center mb-3">
                       <CreditCard size={20} className="text-white mr-2" />
-                      <h3 className="font-medium text-white">
-                        {userRole === 'buyer' ? 'Send Payment To:' : 'Your Bank Details (shown to buyer):'}
-                      </h3>
+                      <h3 className="font-medium text-white">Send Payment To:</h3>
                     </div>
                     <div className="space-y-2">
                       <div className="flex justify-between">
@@ -631,16 +629,14 @@ const EscrowFlow = () => {
                         <span className="text-white">Account Number:</span>
                         <div className="flex items-center space-x-2">
                           <span className="font-medium text-white">{bankDetails.accountNumber}</span>
-                          {userRole === 'buyer' && (
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              className="text-white hover:bg-blue-500"
-                              onClick={() => copyToClipboard(bankDetails.accountNumber, 'Account number')}
-                            >
-                              <Copy size={14} />
-                            </Button>
-                          )}
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="text-white hover:bg-blue-500"
+                            onClick={() => copyToClipboard(bankDetails.accountNumber, 'Account number')}
+                          >
+                            <Copy size={14} />
+                          </Button>
                         </div>
                       </div>
                       <div className="flex justify-between">
@@ -648,39 +644,47 @@ const EscrowFlow = () => {
                         <span className="font-medium text-white">{bankDetails.bankName}</span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-white">Amount {userRole === 'buyer' ? 'to Send' : 'Expected'}:</span>
+                        <span className="text-white">Amount to Send:</span>
                         <span className="font-bold text-white text-lg">₦{fiatAmount.toLocaleString()}</span>
                       </div>
                     </div>
                   </div>
 
-                  {userRole === 'buyer' && (
-                    <div className="space-y-4">
-                      {/* Payment Proof Upload */}
-                      <div className="space-y-3">
-                        <Label htmlFor="fiat-proof">Upload Payment Proof (Optional)</Label>
-                        <div className="flex items-center space-x-2">
-                          <Input
-                            id="fiat-proof"
-                            placeholder="Receipt URL or transaction reference"
-                            value={fiatPaymentProof}
-                            onChange={(e) => setFiatPaymentProof(e.target.value)}
-                          />
-                          <Button size="sm" variant="outline">
-                            <Upload size={16} />
-                          </Button>
-                        </div>
+                  <div className="space-y-4">
+                    {/* Payment Proof Upload */}
+                    <div className="space-y-3">
+                      <Label htmlFor="fiat-proof">Upload Payment Proof (Optional)</Label>
+                      <div className="flex items-center space-x-2">
+                        <Input
+                          id="fiat-proof"
+                          placeholder="Receipt URL or transaction reference"
+                          value={fiatPaymentProof}
+                          onChange={(e) => setFiatPaymentProof(e.target.value)}
+                        />
+                        <Button size="sm" variant="outline">
+                          <Upload size={16} />
+                        </Button>
                       </div>
-
-                      {/* Buyer Confirmation Button */}
-                      <Button
-                        onClick={handleBuyerFiatPayment}
-                        className="w-full bg-blue-600 hover:bg-blue-700 text-white"
-                      >
-                        I Have Made the Payment
-                      </Button>
                     </div>
-                  )}
+
+                    {/* Buyer Confirmation Button */}
+                    <Button
+                      onClick={handleBuyerFiatPayment}
+                      className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                    >
+                      I Have Made the Payment
+                    </Button>
+                  </div>
+                </div>
+              )}
+              )}
+              
+              {userRole === 'merchant' && systemConfirmedCrypto && (
+                <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                  <p className="text-sm text-green-800 font-medium">✅ Crypto Secured in Escrow</p>
+                  <p className="text-sm text-green-700 mt-1">
+                    Buyer has been shown your bank details and can now send payment.
+                  </p>
                 </div>
               )}
               
@@ -688,7 +692,7 @@ const EscrowFlow = () => {
                 <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
                   <p className="text-sm text-orange-800 font-medium">Waiting for System Confirmation</p>
                   <p className="text-sm text-orange-700 mt-1">
-                    Bank details will be shown once BitGo confirms crypto deposit.
+                    Bank details will be shown to buyer once BitGo confirms crypto deposit.
                   </p>
                 </div>
               )}
@@ -879,7 +883,7 @@ const EscrowFlow = () => {
       <div className="p-4 bg-gray-50">
         <div className="flex items-center">
           {[1, 2, 3, 4].map((step) => (
-            <React.Fragment key={step}>
+            <div key={step} className="flex items-center">
               <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
                 currentStep >= step ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-600'
               }`}>
@@ -890,7 +894,7 @@ const EscrowFlow = () => {
                   currentStep > step ? 'bg-blue-500' : 'bg-gray-200'
                 }`} />
               )}
-            </React.Fragment>
+            </div>
           ))}
         </div>
         <div className="flex justify-between text-xs text-gray-600 mt-2">

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Copy, Upload, CheckCircle, Clock, AlertTriangle, DollarSign, QrCode } from 'lucide-react';
+import { ArrowLeft, Copy, Upload, CheckCircle, Clock, AlertTriangle, DollarSign, QrCode, Bitcoin, Coins } from 'lucide-react';
 import QRCode from 'qrcode';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -116,7 +116,11 @@ const CreditsPurchase = () => {
       const cryptoAmount = await cryptoPriceService.calculateCryptoAmount(currentPackage.credits, selectedCrypto);
       const tradeId = `credit-${Date.now()}`;
       
-      // Generate real BitGo payment address
+      // Debug: Log the selected crypto type
+      console.log('🔍 Selected crypto for address generation:', selectedCrypto);
+      console.log('🔍 Crypto amount:', cryptoAmount);
+      
+      // Generate payment address (real BitGo for BTC, mock for others)
       const address = await bitgoEscrow.generateEscrowAddress(
         tradeId, 
         selectedCrypto, 
@@ -165,8 +169,8 @@ const CreditsPurchase = () => {
       setCurrentStep(2);
 
       toast({
-        title: "Real Payment Address Generated",
-        description: `Send exactly ${cryptoAmount.toFixed(8)} ${selectedCrypto} to this real BitGo address`,
+        title: `${selectedCrypto} Payment Address Generated`,
+        description: `Send exactly ${cryptoAmount.toFixed(8)} ${selectedCrypto} to this ${selectedCrypto === 'BTC' ? 'real BitGo' : 'mock'} address`,
       });
 
     } catch (error) {
@@ -301,7 +305,7 @@ const CreditsPurchase = () => {
         </div>
       </div>
 
-      <div className="p-4 pb-24">
+      <div className="p-4 pb-32">
         {currentStep === 1 && (
           <div className="space-y-6">
             {/* Credit Value Info */}
@@ -328,148 +332,361 @@ const CreditsPurchase = () => {
               <CardHeader>
                 <CardTitle>Select Credit Package</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
-                {pricesLoading ? (
-                  <div className="p-4 text-center text-gray-500">
-                    Loading real-time prices...
-                  </div>
-                ) : (
-                  creditPackages.map((pkg) => (
-                  <div
-                    key={pkg.credits}
-                    className={`p-4 border rounded-lg cursor-pointer ${
-                      !isCustom && selectedPackage.credits === pkg.credits
-                        ? 'border-blue-500 bg-blue-500'
-                        : 'border-gray-200'
-                    }`}
-                    onClick={() => {
-                      setSelectedPackage(pkg);
-                      setIsCustom(false);
-                    }}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className={`font-semibold ${
-                            !isCustom && selectedPackage.credits === pkg.credits ? 'text-black' : 'text-gray-900'
-                          }`}>{pkg.credits} Credits</span>
-                          <span className={`font-medium ${
-                            !isCustom && selectedPackage.credits === pkg.credits ? 'text-black' : 'text-green-600'
-                          }`}>${pkg.usd}</span>
-                          {pkg.popular && (
-                            <span className="px-2 py-1 bg-orange-100 text-orange-600 text-xs rounded-full">
-                              Popular
-                            </span>
-                          )}
-                        </div>
-                        <div className={`text-sm mt-1 ${
-                          !isCustom && selectedPackage.credits === pkg.credits ? 'text-black' : 'text-gray-600'
-                        }`}>
-                          {pkg.btc.toFixed(8)} BTC • {pkg.usdt?.toFixed(2)} USDT
-                        </div>
-                      </div>
-                      <div className={`w-4 h-4 rounded-full border-2 ${
-                        !isCustom && selectedPackage.credits === pkg.credits
-                          ? 'border-white bg-blue-500'
-                          : 'border-gray-300'
-                      }`}>
-                        {!isCustom && selectedPackage.credits === pkg.credits && (
-                          <div className="w-2 h-2 rounded-full bg-white mx-auto mt-1" />
-                        )}
-                      </div>
+              <CardContent>
+                <div className="space-y-3">
+                  {pricesLoading ? (
+                    <div style={{ padding: '16px', textAlign: 'center', color: '#6b7280' }}>
+                      Loading real-time prices...
                     </div>
-                  </div>
-                  ))
-                )}
-                
-                {/* Custom Amount */}
-                <div
-                  className={`p-4 border rounded-lg cursor-pointer ${
-                    isCustom
-                      ? 'border-blue-500 bg-blue-50'
-                      : 'border-gray-200'
-                  }`}
-                  onClick={() => setIsCustom(true)}
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className="font-semibold">Custom Amount</span>
-                        <span className="text-blue-600 text-sm">(Min: 10 credits)</span>
-                      </div>
-                      {isCustom && (
-                        <div className="flex items-center gap-2">
-                          <Input
-                            type="number"
-                            placeholder="Enter credits"
-                            value={customCredits}
-                            onChange={(e) => setCustomCredits(e.target.value)}
-                            min="10"
-                            className="w-32"
-                          />
-                          <span className="text-sm text-gray-600">
-                            {customCredits && parseInt(customCredits) >= 10 && (
-                              <span className="text-green-600">
-                                = ${(parseInt(customCredits) * 0.01).toFixed(2)}
+                  ) : (
+                    creditPackages.map((pkg) => (
+                      <div
+                        key={pkg.credits}
+                        onClick={() => {
+                          setSelectedPackage(pkg);
+                          setIsCustom(false);
+                        }}
+                        style={{
+                          padding: '16px',
+                          border: '2px solid',
+                          borderRadius: '12px',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          backgroundColor: !isCustom && selectedPackage.credits === pkg.credits ? '#3b82f6' : '#ffffff',
+                          borderColor: !isCustom && selectedPackage.credits === pkg.credits ? '#3b82f6' : '#d1d5db',
+                          transition: 'all 0.2s ease'
+                        }}
+                        onMouseEnter={(e) => {
+                          if (isCustom || selectedPackage.credits !== pkg.credits) {
+                            e.currentTarget.style.backgroundColor = '#eff6ff';
+                            e.currentTarget.style.borderColor = '#93c5fd';
+                          }
+                        }}
+                        onMouseLeave={(e) => {
+                          if (isCustom || selectedPackage.credits !== pkg.credits) {
+                            e.currentTarget.style.backgroundColor = '#ffffff';
+                            e.currentTarget.style.borderColor = '#d1d5db';
+                          }
+                        }}
+                      >
+                        <div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                            <span 
+                              style={{ 
+                                fontWeight: '600',
+                                color: !isCustom && selectedPackage.credits === pkg.credits ? '#ffffff' : '#111827'
+                              }}
+                            >
+                              {pkg.credits} Credits
+                            </span>
+                            <span 
+                              style={{ 
+                                fontWeight: '500',
+                                color: !isCustom && selectedPackage.credits === pkg.credits ? '#ffffff' : '#059669'
+                              }}
+                            >
+                              ${pkg.usd}
+                            </span>
+                            {pkg.popular && (
+                              <span style={{
+                                padding: '4px 8px',
+                                backgroundColor: '#fed7aa',
+                                color: '#ea580c',
+                                fontSize: '12px',
+                                borderRadius: '9999px'
+                              }}>
+                                Popular
                               </span>
                             )}
-                          </span>
+                          </div>
+                          <div 
+                            style={{ 
+                              fontSize: '14px',
+                              color: !isCustom && selectedPackage.credits === pkg.credits ? '#ffffff' : '#6b7280'
+                            }}
+                          >
+                            {pkg.btc.toFixed(8)} BTC • {pkg.usdt?.toFixed(2)} USDT
+                          </div>
                         </div>
-                      )}
-                    </div>
-                    <div className={`w-4 h-4 rounded-full border-2 ${
-                      isCustom
-                        ? 'border-blue-500 bg-blue-500'
-                        : 'border-gray-300'
-                    }`}>
-                      {isCustom && (
-                        <div className="w-full h-full rounded-full bg-white scale-50" />
-                      )}
+                        <div 
+                          style={{
+                            width: '20px',
+                            height: '20px',
+                            borderRadius: '50%',
+                            border: '2px solid',
+                            borderColor: !isCustom && selectedPackage.credits === pkg.credits ? '#ffffff' : '#d1d5db',
+                            backgroundColor: !isCustom && selectedPackage.credits === pkg.credits ? '#ffffff' : 'transparent',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                          }}
+                        >
+                          {!isCustom && selectedPackage.credits === pkg.credits && (
+                            <div 
+                              style={{
+                                width: '8px',
+                                height: '8px',
+                                borderRadius: '50%',
+                                backgroundColor: '#3b82f6'
+                              }}
+                            />
+                          )}
+                        </div>
+                      </div>
+                    ))
+                  )}
+                  
+                  {/* Custom Amount */}
+                  <div
+                    onClick={() => setIsCustom(true)}
+                    style={{
+                      padding: '16px',
+                      border: '2px solid',
+                      borderRadius: '12px',
+                      cursor: 'pointer',
+                      backgroundColor: isCustom ? '#3b82f6' : '#ffffff',
+                      borderColor: isCustom ? '#3b82f6' : '#d1d5db',
+                      transition: 'all 0.2s ease'
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!isCustom) {
+                        e.currentTarget.style.backgroundColor = '#eff6ff';
+                        e.currentTarget.style.borderColor = '#93c5fd';
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!isCustom) {
+                        e.currentTarget.style.backgroundColor = '#ffffff';
+                        e.currentTarget.style.borderColor = '#d1d5db';
+                      }
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                          <span style={{ fontWeight: '600', color: isCustom ? '#ffffff' : '#111827' }}>Custom Amount</span>
+                          <span style={{ color: isCustom ? '#ffffff' : '#2563eb', fontSize: '14px' }}>(Min: 10 credits)</span>
+                        </div>
+                        {isCustom && (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <Input
+                              type="number"
+                              placeholder="Enter credits"
+                              value={customCredits}
+                              onChange={(e) => setCustomCredits(e.target.value)}
+                              min="10"
+                              style={{ width: '128px' }}
+                            />
+                            <span style={{ fontSize: '14px', color: '#6b7280' }}>
+                              {customCredits && parseInt(customCredits) >= 10 && (
+                                <span style={{ color: '#059669' }}>
+                                  = ${(parseInt(customCredits) * 0.01).toFixed(2)}
+                                </span>
+                              )}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                      <div 
+                        style={{
+                          width: '20px',
+                          height: '20px',
+                          borderRadius: '50%',
+                          border: '2px solid',
+                          borderColor: isCustom ? '#ffffff' : '#d1d5db',
+                          backgroundColor: isCustom ? '#ffffff' : 'transparent',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center'
+                        }}
+                      >
+                        {isCustom && (
+                          <div 
+                            style={{
+                              width: '8px',
+                              height: '8px',
+                              borderRadius: '50%',
+                              backgroundColor: '#3b82f6'
+                            }}
+                          />
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
               </CardContent>
             </Card>
 
-            {/* Crypto Selection */}
+            {/* Cryptocurrency Options */}
             <Card>
               <CardHeader>
-                <CardTitle>Payment Method</CardTitle>
+                <CardTitle>Choose Cryptocurrency</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-3">
                   <div
-                    className={`p-4 border rounded-lg cursor-pointer text-center ${
-                      selectedCrypto === 'BTC'
-                        ? 'border-blue-500 bg-blue-500 text-white'
-                        : 'border-gray-200 hover:border-gray-300'
-                    }`}
                     onClick={() => setSelectedCrypto('BTC')}
+                    className="crypto-option"
+                    style={{
+                      padding: '16px',
+                      border: '2px solid',
+                      borderRadius: '12px',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      backgroundColor: selectedCrypto === 'BTC' ? '#3b82f6' : '#ffffff',
+                      borderColor: selectedCrypto === 'BTC' ? '#3b82f6' : '#d1d5db',
+                      transition: 'all 0.2s ease'
+                    }}
+                    onMouseEnter={(e) => {
+                      if (selectedCrypto !== 'BTC') {
+                        e.currentTarget.style.backgroundColor = '#eff6ff';
+                        e.currentTarget.style.borderColor = '#93c5fd';
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (selectedCrypto !== 'BTC') {
+                        e.currentTarget.style.backgroundColor = '#ffffff';
+                        e.currentTarget.style.borderColor = '#d1d5db';
+                      }
+                    }}
                   >
-                    <div className={`font-semibold ${
-                      selectedCrypto === 'BTC' ? 'text-black' : 'text-gray-900'
-                    }`}>Bitcoin</div>
-                    <div className={`text-sm mt-1 ${
-                      selectedCrypto === 'BTC' ? 'text-black' : 'text-gray-600'
-                    }`}>
-                      {getCurrentPackage().btc?.toFixed(8) || '0.00000000'} BTC
+                    <div className="flex items-center">
+                      <Bitcoin 
+                        size={24} 
+                        style={{ 
+                          color: selectedCrypto === 'BTC' ? '#ffffff' : '#f97316',
+                          marginRight: '12px'
+                        }} 
+                      />
+                      <div>
+                        <div 
+                          style={{ 
+                            fontWeight: '600',
+                            color: selectedCrypto === 'BTC' ? '#ffffff' : '#111827'
+                          }}
+                        >
+                          Bitcoin
+                        </div>
+                        <div 
+                          style={{ 
+                            fontSize: '14px',
+                            color: selectedCrypto === 'BTC' ? '#ffffff' : '#6b7280',
+                            marginTop: '2px'
+                          }}
+                        >
+                          {getCurrentPackage().btc?.toFixed(8) || '0.00000000'} BTC
+                        </div>
+                      </div>
+                    </div>
+                    <div 
+                      style={{
+                        width: '20px',
+                        height: '20px',
+                        borderRadius: '50%',
+                        border: '2px solid',
+                        borderColor: selectedCrypto === 'BTC' ? '#ffffff' : '#d1d5db',
+                        backgroundColor: selectedCrypto === 'BTC' ? '#ffffff' : 'transparent',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                      }}
+                    >
+                      {selectedCrypto === 'BTC' && (
+                        <div 
+                          style={{
+                            width: '8px',
+                            height: '8px',
+                            borderRadius: '50%',
+                            backgroundColor: '#3b82f6'
+                          }}
+                        />
+                      )}
                     </div>
                   </div>
+
                   <div
-                    className={`p-4 border rounded-lg cursor-pointer text-center ${
-                      selectedCrypto === 'USDT'
-                        ? 'border-blue-500 bg-blue-500 text-white'
-                        : 'border-gray-200 hover:border-gray-300'
-                    }`}
                     onClick={() => setSelectedCrypto('USDT')}
+                    className="crypto-option"
+                    style={{
+                      padding: '16px',
+                      border: '2px solid',
+                      borderRadius: '12px',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      backgroundColor: selectedCrypto === 'USDT' ? '#3b82f6' : '#ffffff',
+                      borderColor: selectedCrypto === 'USDT' ? '#3b82f6' : '#d1d5db',
+                      transition: 'all 0.2s ease'
+                    }}
+                    onMouseEnter={(e) => {
+                      if (selectedCrypto !== 'USDT') {
+                        e.currentTarget.style.backgroundColor = '#eff6ff';
+                        e.currentTarget.style.borderColor = '#93c5fd';
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (selectedCrypto !== 'USDT') {
+                        e.currentTarget.style.backgroundColor = '#ffffff';
+                        e.currentTarget.style.borderColor = '#d1d5db';
+                      }
+                    }}
                   >
-                    <div className={`font-semibold ${
-                      selectedCrypto === 'USDT' ? 'text-black' : 'text-gray-900'
-                    }`}>USDT (Solana)</div>
-                    <div className={`text-sm mt-1 ${
-                      selectedCrypto === 'USDT' ? 'text-black' : 'text-gray-600'
-                    }`}>
-                      {getCurrentPackage().usdt?.toFixed(2) || '0.00'} USDT
+                    <div className="flex items-center">
+                      <Coins 
+                        size={24} 
+                        style={{ 
+                          color: selectedCrypto === 'USDT' ? '#ffffff' : '#10b981',
+                          marginRight: '12px'
+                        }} 
+                      />
+                      <div>
+                        <div 
+                          style={{ 
+                            fontWeight: '600',
+                            color: selectedCrypto === 'USDT' ? '#ffffff' : '#111827'
+                          }}
+                        >
+                          USDT (Solana)
+                        </div>
+                        <div 
+                          style={{ 
+                            fontSize: '14px',
+                            color: selectedCrypto === 'USDT' ? '#ffffff' : '#6b7280',
+                            marginTop: '2px'
+                          }}
+                        >
+                          {getCurrentPackage().usdt?.toFixed(2) || '0.00'} USDT
+                        </div>
+                      </div>
+                    </div>
+                    <div 
+                      style={{
+                        width: '20px',
+                        height: '20px',
+                        borderRadius: '50%',
+                        border: '2px solid',
+                        borderColor: selectedCrypto === 'USDT' ? '#ffffff' : '#d1d5db',
+                        backgroundColor: selectedCrypto === 'USDT' ? '#ffffff' : 'transparent',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                      }}
+                    >
+                      {selectedCrypto === 'USDT' && (
+                        <div 
+                          style={{
+                            width: '8px',
+                            height: '8px',
+                            borderRadius: '50%',
+                            backgroundColor: '#3b82f6'
+                          }}
+                        />
+                      )}
                     </div>
                   </div>
                 </div>
@@ -588,14 +805,16 @@ const CreditsPurchase = () => {
                   />
                 </div>
 
-                <Button
-                  onClick={handleSubmitPayment}
-                  disabled={!paymentProof && !transactionHash}
-                  className="w-full"
-                  size="lg"
-                >
-                  Submit Payment Proof
-                </Button>
+                <div className="sticky bottom-4 bg-white pt-4 -mx-6 px-6 border-t">
+                  <Button
+                    onClick={handleSubmitPayment}
+                    disabled={!paymentProof && !transactionHash}
+                    className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-4 text-lg"
+                    size="lg"
+                  >
+                    Submit Payment Proof
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           </div>

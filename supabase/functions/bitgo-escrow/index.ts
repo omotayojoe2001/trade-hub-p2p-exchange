@@ -13,9 +13,20 @@ serve(async (req) => {
   try {
     const { action, tradeId, coin, toAddress, amount } = await req.json();
     
+    // Map coin types to BitGo wallet endpoints
+    const walletMap = {
+      'BTC': { coin: 'btc', wallet: '68dd6fe94425f8b958244dcf157a6635' },
+      'USDT': { coin: 'sol', wallet: '68f23046ff389c3fefed72157e47503a' } // Solana USDT wallet
+    };
+    
+    const walletInfo = walletMap[coin];
+    if (!walletInfo) {
+      throw new Error(`Unsupported coin: ${coin}`);
+    }
+    
     if (action === 'release') {
       // FUND RELEASE: Transfer crypto from escrow to recipient
-      const response = await fetch(`http://13.53.167.64:3000/api/forward/api/v2/btc/wallet/68dd6fe94425f8b958244dcf157a6635/sendcoins`, {
+      const response = await fetch(`http://13.53.167.64:3000/api/forward/api/v2/${walletInfo.coin}/wallet/${walletInfo.wallet}/sendcoins`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -23,7 +34,7 @@ serve(async (req) => {
         },
         body: JSON.stringify({
           address: toAddress,
-          amount: Math.round(amount * 100000000), // Convert to satoshis
+          amount: coin === 'BTC' ? Math.round(amount * 100000000) : Math.round(amount * 1000000), // satoshis vs wei
           walletPassphrase: process.env.BITGO_WALLET_PASSPHRASE || 'your-wallet-passphrase'
         })
       });
@@ -43,14 +54,14 @@ serve(async (req) => {
       });
     } else {
       // ADDRESS GENERATION: Create new escrow address
-      const response = await fetch(`http://13.53.167.64:3000/api/forward/api/v2/btc/wallet/68dd6fe94425f8b958244dcf157a6635/address`, {
+      const response = await fetch(`http://13.53.167.64:3000/api/forward/api/v2/${walletInfo.coin}/wallet/${walletInfo.wallet}/address`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer v2x9eba10d23cb16b271fd072394d76a4021ae88719dba92ab5a383f389715492d0'
         },
         body: JSON.stringify({
-          label: `escrow-${tradeId}-${Date.now()}`
+          label: `escrow-${coin}-${tradeId}-${Date.now()}`
         })
       });
       

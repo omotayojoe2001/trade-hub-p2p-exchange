@@ -175,7 +175,7 @@ const BuyCryptoPaymentStep1 = () => {
   }
 
   return (
-    <div className="min-h-screen bg-white font-['Poppins']">
+    <div className="min-h-screen bg-white font-['Poppins'] pb-20">
       {/* Header */}
       <div className="sticky top-0 bg-white border-b border-[#EAEAEA] p-4 flex items-center justify-between">
         <Button variant="ghost" size="icon" onClick={() => {
@@ -198,7 +198,7 @@ const BuyCryptoPaymentStep1 = () => {
         <div className="w-10" />
       </div>
 
-      <div className="p-4 space-y-6">
+      <div className="p-4 space-y-6 pb-6">
         {/* Selected Info */}
         <Card>
           <CardHeader>
