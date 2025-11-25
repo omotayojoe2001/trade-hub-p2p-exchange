@@ -38,8 +38,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (!profileError && profileData) {
         // Check if user role matches current app context
-        const isVendorApp = window.location.pathname.startsWith('/vendor');
+        const currentPath = window.location.pathname;
+        const isVendorApp = currentPath.startsWith('/vendor');
         const isVendor = profileData.role === 'vendor';
+        
+        // CRITICAL PAYMENT ROUTES - NEVER REDIRECT THESE
+        const criticalPaymentRoutes = ['/credits-purchase', '/credits/purchase', '/buy-crypto', '/sell-crypto', '/escrow-flow', '/trade-details', '/payment'];
+        const isCriticalPaymentRoute = criticalPaymentRoutes.some(route => currentPath.includes(route));
+        
+        if (isCriticalPaymentRoute) {
+          console.log('🔒 useAuth: Protecting critical payment route from role-based redirect:', currentPath);
+          setProfile(profileData);
+          return;
+        }
         
         if (isVendorApp && !isVendor) {
           // User trying to access vendor app
@@ -110,6 +121,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signOut = async (reason: 'manual' | 'timeout' = 'manual') => {
     try {
+      // Check if user is on critical payment route
+      const currentPath = window.location.pathname;
+      const criticalPaymentRoutes = ['/credits-purchase', '/credits/purchase', '/buy-crypto', '/sell-crypto', '/escrow-flow', '/trade-details', '/payment'];
+      const isCriticalPaymentRoute = criticalPaymentRoutes.some(route => currentPath.includes(route));
+      
+      if (isCriticalPaymentRoute && reason === 'timeout') {
+        console.log('🔒 useAuth: Preventing signout on critical payment route:', currentPath);
+        return;
+      }
+      
       // Store logout reason and clear 2FA session verification
       localStorage.setItem('logout-reason', reason);
       

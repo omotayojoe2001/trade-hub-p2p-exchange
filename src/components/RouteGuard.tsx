@@ -27,12 +27,37 @@ const RouteGuard: React.FC<RouteGuardProps> = ({ children }) => {
     '/'
   ], []);
 
+  // CRITICAL PAYMENT ROUTES - NEVER REDIRECT THESE
+  const criticalPaymentRoutes = React.useMemo(() => [
+    '/credits-purchase',
+    '/credits/purchase', 
+    '/buy-crypto',
+    '/sell-crypto',
+    '/escrow-flow',
+    '/trade-details',
+    '/payment',
+    '/buy-crypto-payment',
+    '/sell-crypto-payment',
+    '/upload-payment-proof'
+  ], []);
+
   const isPublicRoute = React.useMemo(() => 
     publicRoutes.includes(location.pathname), 
     [publicRoutes, location.pathname]
   );
 
+  const isCriticalPaymentRoute = React.useMemo(() => 
+    criticalPaymentRoutes.some(route => location.pathname.includes(route)), 
+    [criticalPaymentRoutes, location.pathname]
+  );
+
   React.useEffect(() => {
+    // NEVER redirect from critical payment routes - preserve user sessions
+    if (isCriticalPaymentRoute) {
+      console.log('🔒 RouteGuard: Protecting critical payment route:', location.pathname);
+      return;
+    }
+
     // Prevent multiple redirects
     if (hasRedirected || loading) return;
     
@@ -42,22 +67,22 @@ const RouteGuard: React.FC<RouteGuardProps> = ({ children }) => {
       setHasRedirected(true);
       navigate('/auth', { replace: true });
     }
-  }, [user, loading, isPublicRoute, navigate, hasRedirected, location.pathname]);
+  }, [user, loading, isPublicRoute, isCriticalPaymentRoute, navigate, hasRedirected, location.pathname]);
 
   // Reset redirect flag when user changes or route changes to public
   React.useEffect(() => {
-    if (user || isPublicRoute) {
+    if (user || isPublicRoute || isCriticalPaymentRoute) {
       setHasRedirected(false);
     }
-  }, [user, isPublicRoute]);
+  }, [user, isPublicRoute, isCriticalPaymentRoute]);
 
-  // Show loader during auth check
-  if (loading) {
+  // Show loader during auth check (but not on critical payment routes)
+  if (loading && !isCriticalPaymentRoute) {
     return <GlobalLoader />;
   }
 
-  // Show loader while redirecting
-  if (!user && !isPublicRoute && hasRedirected) {
+  // Show loader while redirecting (but not on critical payment routes)
+  if (!user && !isPublicRoute && !isCriticalPaymentRoute && hasRedirected) {
     return <GlobalLoader />;
   }
 

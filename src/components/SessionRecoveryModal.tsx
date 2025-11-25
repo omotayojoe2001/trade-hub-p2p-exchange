@@ -77,14 +77,33 @@ const SessionRecoveryModal: React.FC<SessionRecoveryModalProps> = ({
   if (sessions.length === 0) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg max-w-md w-full max-h-[80vh] overflow-hidden">
+    <div 
+      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[99999] p-4"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) {
+          onClose();
+        }
+      }}
+    >
+      <div 
+        className="bg-white rounded-lg max-w-md w-full max-h-[80vh] overflow-hidden"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="flex items-center justify-between p-4 border-b">
           <div>
             <h2 className="text-lg font-semibold text-gray-900">Resume Transaction</h2>
             <p className="text-sm text-gray-600">You have unfinished transactions</p>
           </div>
-          <Button variant="ghost" size="sm" onClick={onClose}>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              console.log('❌ Close button clicked');
+              onClose();
+            }}
+          >
             <X size={16} />
           </Button>
         </div>
@@ -113,7 +132,12 @@ const SessionRecoveryModal: React.FC<SessionRecoveryModalProps> = ({
                 <div className="flex flex-col space-y-2 ml-3">
                   <Button
                     size="sm"
-                    onClick={() => onRestore(session)}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      console.log('🔄 Resume button clicked for session:', session.id);
+                      onRestore(session);
+                    }}
                     className="bg-blue-600 hover:bg-blue-700 text-white text-xs px-3 py-1"
                   >
                     <ArrowRight size={12} className="mr-1" />
@@ -122,7 +146,12 @@ const SessionRecoveryModal: React.FC<SessionRecoveryModalProps> = ({
                   <Button
                     size="sm"
                     variant="ghost"
-                    onClick={() => onDismiss(session.id)}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      console.log('❌ Dismiss button clicked for session:', session.id);
+                      onDismiss(session.id);
+                    }}
                     className="text-gray-500 hover:text-gray-700 text-xs px-3 py-1"
                   >
                     Dismiss

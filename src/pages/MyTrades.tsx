@@ -72,12 +72,23 @@ const MyTrades = () => {
         .eq('seller_id', user.id)
         .order('created_at', { ascending: false });
 
+      // Fetch credit purchase transactions
+      const { data: creditPurchases, error: creditError } = await supabase
+        .from('credit_purchase_transactions')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
       if (tradesError) {
         console.error('Error fetching trades:', tradesError);
       }
       
       if (cashError) {
         console.error('Error fetching cash orders:', cashError);
+      }
+
+      if (creditError) {
+        console.error('Error fetching credit purchases:', creditError);
       }
 
       // Combine and format data
@@ -94,6 +105,21 @@ const MyTrades = () => {
             amount_crypto: order.usd_amount,
             naira_amount: order.usd_amount * tradeRate,
             rate: tradeRate
+          };
+        }),
+        ...(creditPurchases || []).map(purchase => {
+          const usdAmount = purchase.credits_amount * 0.01; // 1 credit = $0.01
+          return {
+            ...purchase,
+            trade_type: 'credit_purchase',
+            crypto_type: 'CREDITS',
+            coin_type: 'CREDITS',
+            amount: purchase.credits_amount,
+            amount_crypto: purchase.credits_amount,
+            naira_amount: purchase.price_paid_naira || (usdAmount * usdToNgnRate),
+            rate: (purchase.price_paid_naira || (usdAmount * usdToNgnRate)) / purchase.credits_amount,
+            buyer_id: user.id,
+            seller_id: 'system'
           };
         })
       ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
@@ -132,6 +158,12 @@ const MyTrades = () => {
           text: 'Pending', 
           color: 'text-yellow-700', 
           bgColor: 'bg-yellow-100' 
+        };
+      case 'paid':
+        return { 
+          text: 'Paid', 
+          color: 'text-blue-700', 
+          bgColor: 'bg-blue-100' 
         };
       case 'completed':
         return { 
@@ -263,7 +295,7 @@ const MyTrades = () => {
     if (activeTab === 'All') return trades;
     
     const statusMap = {
-      'Ongoing': ['pending', 'in_progress', 'payment_proof_uploaded', 'vendor_paid', 'payment_confirmed', 'delivery_in_progress'],
+      'Ongoing': ['pending', 'in_progress', 'payment_proof_uploaded', 'vendor_paid', 'payment_confirmed', 'delivery_in_progress', 'paid'],
       'Completed': ['completed', 'cash_delivered'],
       'Cancelled': ['cancelled'],
       'Disputes': ['disputed', 'under_review']
@@ -471,7 +503,10 @@ const MyTrades = () => {
                       <div>
                         <div className="flex items-center space-x-1">
                           <span className="font-medium text-sm text-foreground">
-                            {userRole === 'buyer' ? 'Buy' : 'Sell'} {trade.crypto_type || trade.coin_type}
+                            {trade.trade_type === 'credit_purchase' 
+                              ? 'Credit Purchase' 
+                              : `${userRole === 'buyer' ? 'Buy' : 'Sell'} ${trade.crypto_type || trade.coin_type}`
+                            }
                           </span>
                           <span className={`px-1.5 py-0.5 rounded-full text-xs font-medium ${status.bgColor} ${status.color}`}>
                             {status.text}
@@ -489,7 +524,10 @@ const MyTrades = () => {
                     <div>
                       <div className="text-xs text-muted-foreground mb-0.5">Amount</div>
                       <div className="font-medium text-xs text-foreground">
-                        {(trade as any).amount_crypto || trade.amount} {trade.crypto_type || trade.coin_type}
+                        {trade.trade_type === 'credit_purchase' 
+                          ? `${trade.amount} Credits`
+                          : `${(trade as any).amount_crypto || trade.amount} ${trade.crypto_type || trade.coin_type}`
+                        }
                       </div>
                     </div>
                     <div>
@@ -501,7 +539,10 @@ const MyTrades = () => {
                     <div>
                       <div className="text-xs text-muted-foreground mb-0.5">Rate</div>
                       <div className="font-medium text-xs text-foreground">
-                        NGN {(trade as any).rate?.toLocaleString() || 'N/A'}
+                        {trade.trade_type === 'credit_purchase' 
+                          ? 'NGN 0.01/Credit'
+                          : `NGN ${(trade as any).rate?.toLocaleString() || 'N/A'}`
+                        }
                       </div>
                     </div>
                   </div>
@@ -509,7 +550,13 @@ const MyTrades = () => {
                   {/* Action Buttons */}
                   <div className="flex space-x-2">
                     <Link
-                      to={trade.trade_type === 'cash_order' ? `/cash-trade-status/${trade.id}` : `/trade-details/${trade.id}`}
+                      to={
+                        trade.trade_type === 'cash_order' 
+                          ? `/cash-trade-status/${trade.id}` 
+                          : trade.trade_type === 'credit_purchase'
+                          ? `/credits-history`
+                          : `/trade-details/${trade.id}`
+                      }
                       className="flex-1"
                     >
                       <NativeButton 
@@ -518,33 +565,35 @@ const MyTrades = () => {
                         className="w-full text-xs"
                         hapticFeedback="light"
                       >
-                        View Details
+                        {trade.trade_type === 'credit_purchase' ? 'View Receipt' : 'View Details'}
                       </NativeButton>
                     </Link>
                     
-                    <NativeButton
-                      variant="ghost"
-                      size="sm"
-                      className="px-3 text-xs"
-                      hapticFeedback="light"
-                      onClick={() => {
-                        const otherUserId = userRole === 'buyer' ? trade.seller_id : trade.buyer_id;
-                        if (otherUserId && otherUserId !== 'other-user') {
-                          setSelectedMessage({
-                            otherUserId,
-                            otherUserName: userRole === 'buyer' ? 'Seller' : 'Buyer',
-                            tradeId: trade.trade_type === 'cash_order' ? undefined : trade.id,
-                            cashTradeId: trade.trade_type === 'cash_order' ? trade.id : undefined,
-                            contextType: trade.trade_type === 'cash_order' ? 'cash_delivery' : 'crypto_trade'
-                          });
-                        } else {
-                          alert('Other user not found for this trade');
-                        }
-                      }}
-                    >
-                      <MessageCircle className="w-3 h-3 mr-1" />
-                      Message
-                    </NativeButton>
+                    {trade.trade_type !== 'credit_purchase' && (
+                      <NativeButton
+                        variant="ghost"
+                        size="sm"
+                        className="px-3 text-xs"
+                        hapticFeedback="light"
+                        onClick={() => {
+                          const otherUserId = userRole === 'buyer' ? trade.seller_id : trade.buyer_id;
+                          if (otherUserId && otherUserId !== 'other-user') {
+                            setSelectedMessage({
+                              otherUserId,
+                              otherUserName: userRole === 'buyer' ? 'Seller' : 'Buyer',
+                              tradeId: trade.trade_type === 'cash_order' ? undefined : trade.id,
+                              cashTradeId: trade.trade_type === 'cash_order' ? trade.id : undefined,
+                              contextType: trade.trade_type === 'cash_order' ? 'cash_delivery' : 'crypto_trade'
+                            });
+                          } else {
+                            alert('Other user not found for this trade');
+                          }
+                        }}
+                      >
+                        <MessageCircle className="w-3 h-3 mr-1" />
+                        Message
+                      </NativeButton>
+                    )}
                     
                     {shouldShowComplete && (
                       <NativeButton

@@ -96,7 +96,7 @@ import SendNairaGetUSD from "./pages/SendNairaGetUSD";
 // import PremiumTradeCompleted from "./pages/PremiumTradeCompleted";
 import CashOrderThankYou from "./pages/CashOrderThankYou";
 import GlobalCodeTracker from "./components/GlobalCodeTracker";
-import GlobalSessionManager from "./components/GlobalSessionManager";
+import SmartSessionManager from "./components/SmartSessionManager";
 import DeliveryStatus from "./pages/DeliveryStatus";
 import TradeRequests from "./pages/TradeRequests";
 import TradeRequestDetails from "./pages/TradeRequestDetails";
@@ -162,6 +162,7 @@ import ErrorBoundary from './utils/errorBoundary';
 import RouteGuard from './components/RouteGuard';
 import BottomNavigation from './components/BottomNavigation';
 import VendorBottomNavigation from './components/vendor/VendorBottomNavigation';
+import PaymentSessionGuard from './components/PaymentSessionGuard';
 import { usePageLoader } from './hooks/usePageLoader';
 import { usePageTransitions } from './hooks/usePageTransitions';
 // import { useHapticFeedback } from './hooks/useHapticFeedback';
@@ -183,24 +184,32 @@ const AppContent = () => {
   // Check if user is on auth-related pages
   const isOnAuthPage = ['/auth', '/onboarding', '/email-verification', '/forgot-password', '/reset-password', '/'].includes(location.pathname);
   
-  // Handle page reload protection
+  // Handle page reload protection - PREVENT navigation away from payment pages
   React.useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      // Only prevent reload on critical pages
-      const criticalPages = ['/buy-crypto', '/sell-crypto', '/trade-details', '/payment'];
+      // Prevent leaving payment/transaction pages
+      const criticalPages = ['/credits-purchase', '/credits/purchase', '/buy-crypto', '/sell-crypto', '/trade-details', '/payment', '/escrow-flow'];
       const isCriticalPage = criticalPages.some(page => location.pathname.includes(page));
       
       if (isCriticalPage) {
         e.preventDefault();
-        e.returnValue = '';
+        e.returnValue = 'You have an active transaction. Are you sure you want to leave?';
+        return 'You have an active transaction. Are you sure you want to leave?';
       }
     };
     
+    // REMOVED VISIBILITY CHANGE HANDLER - IT WAS CAUSING THE NAVIGATION ISSUE
+    // The visibility change handler was interfering with tab switching
+    
     window.addEventListener('beforeunload', handleBeforeUnload);
-    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+    
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
   }, [location.pathname]);
   
   // Save user data when logged in
+  // Save user data when logged in - but don't trigger navigation
   React.useEffect(() => {
     if (user) {
       saveUser({
@@ -211,14 +220,23 @@ const AppContent = () => {
     }
   }, [user, saveUser]);
 
-  // Direct navigation without splash
+  // Direct navigation without splash - ONLY redirect root path
   React.useEffect(() => {
     if (authLoading) return;
     
     const currentPath = location.pathname;
     
-    // Redirect root to appropriate page
-    if (currentPath === '/') {
+    // CRITICAL PAYMENT ROUTES - NEVER REDIRECT THESE
+    const criticalPaymentRoutes = ['/credits-purchase', '/credits/purchase', '/buy-crypto', '/sell-crypto', '/escrow-flow', '/trade-details', '/payment'];
+    const isCriticalPaymentRoute = criticalPaymentRoutes.some(route => currentPath.includes(route));
+    
+    if (isCriticalPaymentRoute) {
+      console.log('🔒 App.tsx: Protecting critical payment route from redirect:', currentPath);
+      return;
+    }
+    
+    // ONLY redirect root path - DO NOT redirect other pages
+    if (currentPath === '/' || currentPath === '') {
       if (user) {
         navigate('/home', { replace: true });
       } else {
@@ -270,12 +288,14 @@ const AppContent = () => {
       {/* Only show notifications if not on auth pages */}
       {/* {!isOnAuthPage && <GlobalNotifications />} */}
       {!isOnAuthPage && <CreditAlert />}
-      {!isOnAuthPage && <GlobalSessionManager />}
+      {!isOnAuthPage && <SmartSessionManager />}
       
       <GlobalCodeTracker />
-      <div style={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
-        <RouteGuard>
-          <RouteWrapper>
+      {/* DISABLED: PaymentSessionGuard causing infinite loops */}
+      {/* <PaymentSessionGuard> */}
+        <div style={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
+          <RouteGuard>
+            <RouteWrapper>
             <div style={{ flex: 1, overflowY: 'auto' }}>
               <Routes>
             <Route path="/" element={user ? <Index /> : <Auth />} />
@@ -480,18 +500,19 @@ const AppContent = () => {
             <Route path="*" element={<NotFound />} />
               </Routes>
             </div>
-          </RouteWrapper>
-        </RouteGuard>
-        {!isOnAuthPage && (
-          <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 99999 }}>
-            {location.pathname.startsWith('/vendor/') ? (
-              <VendorBottomNavigation />
-            ) : (
-              <BottomNavigation />
-            )}
-          </div>
-        )}
-      </div>
+            </RouteWrapper>
+          </RouteGuard>
+          {!isOnAuthPage && (
+            <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 99999 }}>
+              {location.pathname.startsWith('/vendor/') ? (
+                <VendorBottomNavigation />
+              ) : (
+                <BottomNavigation />
+              )}
+            </div>
+          )}
+        </div>
+      {/* </PaymentSessionGuard> */}
     </>
   );
 };

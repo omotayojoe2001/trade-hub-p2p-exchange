@@ -1,4 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
+import { addressPersistence } from '@/utils/addressPersistence';
 
 interface EscrowAddress {
   address: string;
@@ -10,6 +11,23 @@ interface EscrowAddress {
 class BitGoEscrowService {
   async generateEscrowAddress(tradeId: string, coin: 'BTC' | 'ETH' | 'USDT' | 'XRP' | 'BNB' | 'POLYGON', expectedAmount?: number): Promise<string> {
     console.log(`🔄 [BitGoEscrow] Generating ${coin} address for trade ${tradeId}`);
+    
+    // Clean expired addresses first
+    addressPersistence.cleanExpired();
+    
+    // For credit purchases, always generate new addresses (don't cache)
+    const isCreditPurchase = tradeId.startsWith('credit-');
+    
+    // Check if we already have an address for this trade (skip for credit purchases)
+    if (!isCreditPurchase) {
+      const existingAddress = addressPersistence.getAddress(tradeId, coin);
+      if (existingAddress) {
+        console.log(`🔄 [BitGoEscrow] Reusing existing ${coin} address:`, existingAddress);
+        return existingAddress;
+      }
+    } else {
+      console.log(`🔄 [BitGoEscrow] Credit purchase detected - generating fresh ${coin} address`);
+    }
     
     // BTC & USDT: Use Supabase edge function
     if (coin === 'BTC' || coin === 'USDT') {
@@ -30,6 +48,12 @@ class BitGoEscrowService {
       }
       
       console.log(`✅ [BitGoEscrow] Real ${coin} address generated:`, data.address);
+      
+      // Save the address for future use (except for credit purchases)
+      if (!isCreditPurchase) {
+        addressPersistence.saveAddress(tradeId, coin, data.address);
+      }
+      
       return data.address;
     }
     
@@ -37,6 +61,12 @@ class BitGoEscrowService {
     console.warn(`⚠️ BitGo escrow only supports BTC and USDT. Generating mock address for ${coin}`);
     const mockAddress = this.generateMockAddress(coin);
     console.log(`✅ Mock ${coin} address generated: ${mockAddress}`);
+    
+    // Save mock address too for consistency (except for credit purchases)
+    if (!tradeId.startsWith('credit-')) {
+      addressPersistence.saveAddress(tradeId, coin, mockAddress);
+    }
+    
     return mockAddress;
   }
 

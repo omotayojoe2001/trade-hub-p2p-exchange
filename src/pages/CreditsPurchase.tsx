@@ -49,6 +49,7 @@ const CreditsPurchase = () => {
   const [showPhotoPicker, setShowPhotoPicker] = useState(false);
   const [showSessionModal, setShowSessionModal] = useState(false);
   const [sessionId, setSessionId] = useState('');
+  const [showCancelDialog, setShowCancelDialog] = useState(false);
 
   // Disabled countdown timer to prevent scroll interference
   // useEffect(() => {
@@ -88,11 +89,44 @@ const CreditsPurchase = () => {
     };
   };
 
-  // Check for existing sessions on mount
+  // Initialize component and restore session if exists
   React.useEffect(() => {
-    const existingSessions = getActiveSessionsByType('credit_purchase');
-    if (existingSessions.length > 0) {
-      setShowSessionModal(true);
+    // Check for existing session on page load
+    const savedSession = sessionStorage.getItem('active_credit_purchase');
+    if (savedSession) {
+      try {
+        const sessionData = JSON.parse(savedSession);
+        // Only restore if session has payment address AND is not completed (step 3)
+        if (sessionData.data?.paymentAddress && sessionData.step < 3) {
+          console.log('🔄 Restoring active session on page load:', sessionData);
+          
+          setSessionId(sessionData.id);
+          setCurrentStep(sessionData.step);
+          setSelectedPackage(sessionData.data.selectedPackage || CREDIT_PACKAGES_BASE[1]);
+          setCustomCredits(sessionData.data.customCredits || '');
+          setIsCustom(sessionData.data.isCustom || false);
+          setSelectedCrypto(sessionData.data.selectedCrypto || 'BTC');
+          setPaymentAddress(sessionData.data.paymentAddress || '');
+          setPurchaseId(sessionData.data.purchaseId || '');
+          setTransactionHash(sessionData.data.transactionHash || '');
+          
+          // Regenerate QR code
+          if (sessionData.data.paymentAddress) {
+            QRCode.toDataURL(sessionData.data.paymentAddress, {
+              width: 200,
+              margin: 2,
+              color: { dark: '#000000', light: '#FFFFFF' }
+            }).then(setQrCodeUrl).catch(console.error);
+          }
+        } else if (sessionData.step >= 3) {
+          // Clear completed sessions
+          console.log('🗑️ Clearing completed session');
+          sessionStorage.removeItem('active_credit_purchase');
+        }
+      } catch (error) {
+        console.error('Error restoring session:', error);
+        sessionStorage.removeItem('active_credit_purchase');
+      }
     }
     
     setCreditPackages(CREDIT_PACKAGES_BASE.map(pkg => ({
@@ -104,12 +138,12 @@ const CreditsPurchase = () => {
     setPricesLoading(false);
   }, []);
 
-  // Save session whenever important state changes
-  React.useEffect(() => {
-    if (currentStep > 1 && sessionId) {
-      saveSession({
+  // ONLY save sessions when user has payment address (step 2+)
+  const savePaymentSession = () => {
+    if (currentStep >= 2 && sessionId && paymentAddress) {
+      const sessionData = {
         id: sessionId,
-        type: 'credit_purchase',
+        type: 'credit_purchase' as const,
         step: currentStep,
         data: {
           selectedPackage,
@@ -119,19 +153,50 @@ const CreditsPurchase = () => {
           paymentAddress,
           purchaseId,
           transactionHash,
-          credits: getCurrentPackage().credits,
-          usdAmount: getCurrentPackage().usd,
-          cryptoAmount: selectedCrypto === 'BTC' ? getCurrentPackage().btc : getCurrentPackage().usdt
+          timestamp: Date.now()
         }
-      });
+      };
+      
+      saveSession(sessionData);
+      sessionStorage.setItem('active_credit_purchase', JSON.stringify(sessionData));
+      console.log('💾 Payment session saved:', sessionData);
     }
-  }, [currentStep, selectedPackage, customCredits, isCustom, selectedCrypto, paymentAddress, purchaseId, transactionHash, sessionId]);
+  };
+  
+  // Force new address generation for each credit purchase
+  const generateUniqueTradeId = () => {
+    return `credit-${Date.now()}-${user?.id || 'anon'}-${Math.random().toString(36).substr(2, 9)}`;
+  };
+  
+  // Save session when user switches tabs or minimizes
+  React.useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden' && currentStep >= 2 && paymentAddress) {
+        savePaymentSession();
+        console.log('💾 Session saved on tab switch');
+      }
+    };
+    
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [currentStep, paymentAddress, sessionId, selectedPackage, customCredits, isCustom, selectedCrypto, purchaseId, transactionHash]);
 
   const handlePurchaseStart = async () => {
-    if (!user) return;
+    console.log('🚀 Purchase start clicked');
+    
+    if (!user) {
+      console.error('❌ No user found');
+      return;
+    }
 
     const currentPackage = getCurrentPackage();
+    console.log('📦 Current package:', currentPackage);
+    
     const validation = creditsService.validatePurchaseAmount(currentPackage.credits);
+    console.log('✅ Validation result:', validation);
     
     if (!validation.valid) {
       toast({
@@ -142,32 +207,42 @@ const CreditsPurchase = () => {
       return;
     }
 
-    // Generate session ID
+    // Generate session ID - DON'T save until payment address exists
     const newSessionId = `credit_${Date.now()}_${user.id}`;
     setSessionId(newSessionId);
+    console.log('🆔 Generated session ID:', newSessionId);
 
     setLoading(true);
+    console.log('⏳ Loading started');
+    
     try {
       // Use real Supabase + BitGo integration with real-time pricing
+      console.log('💰 Calculating crypto amount...');
       const cryptoAmount = await cryptoPriceService.calculateCryptoAmount(currentPackage.credits, selectedCrypto);
-      const tradeId = `credit-${Date.now()}`;
+      const tradeId = generateUniqueTradeId();
       
       // Debug: Log the selected crypto type
       console.log('🔍 Selected crypto for address generation:', selectedCrypto);
       console.log('🔍 Crypto amount:', cryptoAmount);
+      console.log('🔍 Unique trade ID:', tradeId);
+      console.log('🔍 Current package credits:', currentPackage.credits);
       
       // Generate payment address (real BitGo for BTC, mock for others)
+      console.log('🏦 Generating escrow address...');
       const address = await bitgoEscrow.generateEscrowAddress(
         tradeId, 
         selectedCrypto, 
         cryptoAmount
       );
+      console.log('🏦 Generated address:', address);
 
       if (!address) {
+        console.error('❌ No address returned from BitGo service');
         throw new Error('Failed to generate payment address');
       }
 
       // Create purchase record in real database
+      console.log('💾 Creating database record...');
       const { data: purchase, error } = await supabase
         .from('credit_purchase_transactions')
         .insert({
@@ -180,14 +255,18 @@ const CreditsPurchase = () => {
         .single();
 
       if (error) {
-        console.error('Database error:', error);
+        console.error('❌ Database error:', error);
         throw new Error(`Database error: ${error.message}`);
       }
+      
+      console.log('💾 Database record created:', purchase);
 
+      console.log('🔄 Setting payment state...');
       setPaymentAddress(address);
       setPurchaseId(purchase.id);
       
       // Generate QR code
+      console.log('📱 Generating QR code...');
       try {
         const qrUrl = await QRCode.toDataURL(address, {
           width: 200,
@@ -198,29 +277,17 @@ const CreditsPurchase = () => {
           }
         });
         setQrCodeUrl(qrUrl);
+        console.log('📱 QR code generated successfully');
       } catch (qrError) {
-        console.error('Error generating QR code:', qrError);
+        console.error('❌ Error generating QR code:', qrError);
       }
       
+      console.log('➡️ Moving to step 2');
       setCurrentStep(2);
 
-      // Save initial session
-      saveSession({
-        id: newSessionId,
-        type: 'credit_purchase',
-        step: 2,
-        data: {
-          selectedPackage,
-          customCredits,
-          isCustom,
-          selectedCrypto,
-          paymentAddress: address,
-          purchaseId: purchase.id,
-          credits: currentPackage.credits,
-          usdAmount: currentPackage.usd,
-          cryptoAmount
-        }
-      });
+      // Save session immediately after address generation
+      console.log('💾 Saving payment session...');
+      savePaymentSession();
 
       toast({
         title: `${selectedCrypto} Payment Address Generated`,
@@ -228,13 +295,14 @@ const CreditsPurchase = () => {
       });
 
     } catch (error) {
-      console.error('Error starting purchase:', error);
+      console.error('❌ Error starting purchase:', error);
       toast({
         title: "Error",
         description: error instanceof Error ? error.message : "Failed to generate payment address",
         variant: "destructive"
       });
     } finally {
+      console.log('✅ Loading finished');
       setLoading(false);
     }
   };
@@ -295,6 +363,13 @@ const CreditsPurchase = () => {
       }
 
       setCurrentStep(3);
+      
+      // CLEAR SESSION - address is now consumed
+      sessionStorage.removeItem('active_credit_purchase');
+      if (sessionId) {
+        removeSession(sessionId);
+      }
+      console.log('🗑️ Session cleared - address consumed');
 
       toast({
         title: "Payment Submitted to Real System",
@@ -312,39 +387,52 @@ const CreditsPurchase = () => {
   };
 
   const handleRestoreSession = (session: any) => {
-    setSessionId(session.id);
-    setCurrentStep(session.step);
-    setSelectedPackage(session.data.selectedPackage || CREDIT_PACKAGES_BASE[1]);
-    setCustomCredits(session.data.customCredits || '');
-    setIsCustom(session.data.isCustom || false);
-    setSelectedCrypto(session.data.selectedCrypto || 'BTC');
-    setPaymentAddress(session.data.paymentAddress || '');
-    setPurchaseId(session.data.purchaseId || '');
-    setTransactionHash(session.data.transactionHash || '');
-    
-    // Regenerate QR code if we have payment address
-    if (session.data.paymentAddress) {
+    // ONLY restore if session has payment address AND is not completed
+    if (session.data.paymentAddress && session.step < 3) {
+      setSessionId(session.id);
+      setCurrentStep(session.step);
+      setSelectedPackage(session.data.selectedPackage || CREDIT_PACKAGES_BASE[1]);
+      setCustomCredits(session.data.customCredits || '');
+      setIsCustom(session.data.isCustom || false);
+      setSelectedCrypto(session.data.selectedCrypto || 'BTC');
+      setPaymentAddress(session.data.paymentAddress || '');
+      setPurchaseId(session.data.purchaseId || '');
+      setTransactionHash(session.data.transactionHash || '');
+      
+      // Regenerate QR code
       QRCode.toDataURL(session.data.paymentAddress, {
         width: 200,
         margin: 2,
         color: { dark: '#000000', light: '#FFFFFF' }
       }).then(setQrCodeUrl).catch(console.error);
+      
+      toast({
+        title: "Session Restored",
+        description: `Resumed your credit purchase at step ${session.step}`,
+      });
     }
     
     setShowSessionModal(false);
-    
-    toast({
-      title: "Session Restored",
-      description: `Resumed your credit purchase at step ${session.step}`,
-    });
   };
 
   const handleDismissSession = (sessionId: string) => {
     removeSession(sessionId);
-    const remainingSessions = getActiveSessionsByType('credit_purchase').filter(s => s.id !== sessionId);
-    if (remainingSessions.length === 0) {
-      setShowSessionModal(false);
+    setShowSessionModal(false);
+  };
+
+  const handleCancelTransaction = () => {
+    // Clear session and navigate back
+    sessionStorage.removeItem('active_credit_purchase');
+    if (sessionId) {
+      removeSession(sessionId);
     }
+    setShowCancelDialog(false);
+    navigate(-1);
+    
+    toast({
+      title: "Transaction Cancelled",
+      description: "Your credit purchase has been cancelled",
+    });
   };
 
   const copyToClipboard = (text: string) => {
@@ -360,7 +448,18 @@ const CreditsPurchase = () => {
       {/* Header */}
       <div className="sticky top-0 bg-white border-b shadow-sm z-[99999] w-full">
         <div className="p-4 flex items-center justify-between bg-white w-full relative z-[99999]">
-          <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="bg-white hover:bg-gray-50 relative z-[99999]">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={() => {
+              if (currentStep >= 2 && paymentAddress) {
+                setShowCancelDialog(true);
+              } else {
+                navigate(-1);
+              }
+            }} 
+            className="bg-white hover:bg-gray-50 relative z-[99999]"
+          >
             <ArrowLeft className="w-5 h-5" />
           </Button>
           <h1 className="text-lg font-semibold bg-white px-4 py-2 rounded relative z-[99999]">Purchase Credits</h1>
@@ -393,398 +492,226 @@ const CreditsPurchase = () => {
         </div>
       </div>
 
-      <div className="p-4 pb-32">
+      <div className="p-4 pb-20">
         {currentStep === 1 && (
-          <div className="space-y-6">
+          <div className="space-y-4">
             {/* Credit Value Info */}
-            <Card className="bg-blue-50 border-blue-200">
-              <CardContent className="p-4">
-                <div className="flex items-center gap-2 text-blue-800">
-                  <DollarSign size={20} />
-                  <span className="font-medium">1 Credit = $0.01 USD</span>
-                  <span className="px-2 py-1 bg-green-100 text-green-600 text-xs rounded-full">
-                    Live System
-                  </span>
-                </div>
-                <p className="text-sm text-blue-600 mt-1">
-                  Use credits for cash pickup (50 credits), delivery (100 credits), and premium features
-                </p>
-                <p className="text-xs text-green-600 mt-2">
-                  Real BitGo addresses • Blockchain verification • Manual confirmation required
-                </p>
-              </CardContent>
-            </Card>
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+              <div className="flex items-center gap-2 text-blue-800 text-sm">
+                <DollarSign size={16} />
+                <span className="font-medium">1 Credit = $0.01 USD</span>
+                <span className="px-2 py-0.5 bg-green-100 text-green-600 text-xs rounded-full">
+                  Live
+                </span>
+              </div>
+            </div>
 
             {/* Package Selection */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Select Credit Package</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
+            <div className="bg-white border rounded-lg">
+              <div className="p-3 border-b">
+                <h3 className="font-semibold">Select Credit Package</h3>
+              </div>
+              <div className="p-3">
+                <div className="space-y-2">
                   {pricesLoading ? (
-                    <div style={{ padding: '16px', textAlign: 'center', color: '#6b7280' }}>
-                      Loading real-time prices...
+                    <div className="p-3 text-center text-gray-500 text-sm">
+                      Loading prices...
                     </div>
                   ) : (
-                    creditPackages.map((pkg) => (
-                      <div
-                        key={pkg.credits}
-                        onClick={() => {
-                          setSelectedPackage(pkg);
-                          setIsCustom(false);
-                        }}
-                        style={{
-                          padding: '16px',
-                          border: '2px solid',
-                          borderRadius: '12px',
-                          cursor: 'pointer',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                          backgroundColor: !isCustom && selectedPackage.credits === pkg.credits ? '#3b82f6' : '#ffffff',
-                          borderColor: !isCustom && selectedPackage.credits === pkg.credits ? '#3b82f6' : '#d1d5db',
-                          transition: 'all 0.2s ease'
-                        }}
-                        onMouseEnter={(e) => {
-                          if (isCustom || selectedPackage.credits !== pkg.credits) {
-                            e.currentTarget.style.backgroundColor = '#eff6ff';
-                            e.currentTarget.style.borderColor = '#93c5fd';
-                          }
-                        }}
-                        onMouseLeave={(e) => {
-                          if (isCustom || selectedPackage.credits !== pkg.credits) {
-                            e.currentTarget.style.backgroundColor = '#ffffff';
-                            e.currentTarget.style.borderColor = '#d1d5db';
-                          }
-                        }}
-                      >
-                        <div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                            <span 
-                              style={{ 
-                                fontWeight: '600',
-                                color: !isCustom && selectedPackage.credits === pkg.credits ? '#ffffff' : '#111827'
-                              }}
-                            >
-                              {pkg.credits} Credits
-                            </span>
-                            <span 
-                              style={{ 
-                                fontWeight: '500',
-                                color: !isCustom && selectedPackage.credits === pkg.credits ? '#ffffff' : '#059669'
-                              }}
-                            >
-                              ${pkg.usd}
-                            </span>
-                            {pkg.popular && (
-                              <span style={{
-                                padding: '4px 8px',
-                                backgroundColor: '#fed7aa',
-                                color: '#ea580c',
-                                fontSize: '12px',
-                                borderRadius: '9999px'
-                              }}>
-                                Popular
+                    creditPackages.map((pkg) => {
+                      const isSelected = !isCustom && selectedPackage.credits === pkg.credits;
+                      return (
+                        <div
+                          key={pkg.credits}
+                          onClick={() => {
+                            setSelectedPackage(pkg);
+                            setIsCustom(false);
+                          }}
+                          className={`p-3 border-2 rounded-lg cursor-pointer flex items-center justify-between transition-all ${
+                            isSelected 
+                              ? 'bg-blue-500 border-blue-500 text-white' 
+                              : 'bg-white border-gray-200 hover:bg-blue-50 hover:border-blue-300'
+                          }`}
+                        >
+                          <div>
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className="font-semibold text-sm">
+                                {pkg.credits} Credits
                               </span>
+                              <span className={`font-medium text-sm ${
+                                isSelected ? 'text-white' : 'text-green-600'
+                              }`}>
+                                ${pkg.usd}
+                              </span>
+                              {pkg.popular && (
+                                <span className="px-2 py-0.5 bg-orange-200 text-orange-700 text-xs rounded-full">
+                                  Popular
+                                </span>
+                              )}
+                            </div>
+                            <div className={`text-xs ${
+                              isSelected ? 'text-white' : 'text-gray-500'
+                            }`}>
+                              {pkg.btc.toFixed(8)} BTC • {pkg.usdt?.toFixed(2)} USDT
+                            </div>
+                          </div>
+                          <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+                            isSelected 
+                              ? 'border-white bg-white' 
+                              : 'border-gray-300'
+                          }`}>
+                            {isSelected && (
+                              <div className="w-2 h-2 rounded-full bg-blue-500" />
                             )}
                           </div>
-                          <div 
-                            style={{ 
-                              fontSize: '14px',
-                              color: !isCustom && selectedPackage.credits === pkg.credits ? '#ffffff' : '#6b7280'
-                            }}
-                          >
-                            {pkg.btc.toFixed(8)} BTC • {pkg.usdt?.toFixed(2)} USDT
-                          </div>
                         </div>
-                        <div 
-                          style={{
-                            width: '20px',
-                            height: '20px',
-                            borderRadius: '50%',
-                            border: '2px solid',
-                            borderColor: !isCustom && selectedPackage.credits === pkg.credits ? '#ffffff' : '#d1d5db',
-                            backgroundColor: !isCustom && selectedPackage.credits === pkg.credits ? '#ffffff' : 'transparent',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center'
-                          }}
-                        >
-                          {!isCustom && selectedPackage.credits === pkg.credits && (
-                            <div 
-                              style={{
-                                width: '8px',
-                                height: '8px',
-                                borderRadius: '50%',
-                                backgroundColor: '#3b82f6'
-                              }}
-                            />
-                          )}
-                        </div>
-                      </div>
-                    ))
+                      );
+                    })
                   )}
                   
                   {/* Custom Amount */}
                   <div
                     onClick={() => setIsCustom(true)}
-                    style={{
-                      padding: '16px',
-                      border: '2px solid',
-                      borderRadius: '12px',
-                      cursor: 'pointer',
-                      backgroundColor: isCustom ? '#3b82f6' : '#ffffff',
-                      borderColor: isCustom ? '#3b82f6' : '#d1d5db',
-                      transition: 'all 0.2s ease'
-                    }}
-                    onMouseEnter={(e) => {
-                      if (!isCustom) {
-                        e.currentTarget.style.backgroundColor = '#eff6ff';
-                        e.currentTarget.style.borderColor = '#93c5fd';
-                      }
-                    }}
-                    onMouseLeave={(e) => {
-                      if (!isCustom) {
-                        e.currentTarget.style.backgroundColor = '#ffffff';
-                        e.currentTarget.style.borderColor = '#d1d5db';
-                      }
-                    }}
+                    className={`p-3 border-2 rounded-lg cursor-pointer flex items-center justify-between transition-all ${
+                      isCustom 
+                        ? 'bg-blue-500 border-blue-500 text-white' 
+                        : 'bg-white border-gray-200 hover:bg-blue-50 hover:border-blue-300'
+                    }`}
                   >
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <div style={{ flex: 1 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-                          <span style={{ fontWeight: '600', color: isCustom ? '#ffffff' : '#111827' }}>Custom Amount</span>
-                          <span style={{ color: isCustom ? '#ffffff' : '#2563eb', fontSize: '14px' }}>(Min: 10 credits)</span>
-                        </div>
-                        {isCustom && (
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <Input
-                              type="number"
-                              placeholder="Enter credits"
-                              value={customCredits}
-                              onChange={(e) => setCustomCredits(e.target.value)}
-                              min="10"
-                              style={{ width: '128px' }}
-                            />
-                            <span style={{ fontSize: '14px', color: '#6b7280' }}>
-                              {customCredits && parseInt(customCredits) >= 10 && (
-                                <span style={{ color: '#059669' }}>
-                                  = ${(parseInt(customCredits) * 0.01).toFixed(2)}
-                                </span>
-                              )}
-                            </span>
-                          </div>
-                        )}
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="font-semibold text-sm">Custom Amount</span>
+                        <span className={`text-xs ${
+                          isCustom ? 'text-white' : 'text-blue-600'
+                        }`}>(Min: 10)</span>
                       </div>
-                      <div 
-                        style={{
-                          width: '20px',
-                          height: '20px',
-                          borderRadius: '50%',
-                          border: '2px solid',
-                          borderColor: isCustom ? '#ffffff' : '#d1d5db',
-                          backgroundColor: isCustom ? '#ffffff' : 'transparent',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center'
-                        }}
-                      >
-                        {isCustom && (
-                          <div 
-                            style={{
-                              width: '8px',
-                              height: '8px',
-                              borderRadius: '50%',
-                              backgroundColor: '#3b82f6'
-                            }}
+                      {isCustom && (
+                        <div className="flex items-center gap-2">
+                          <Input
+                            type="number"
+                            placeholder="Enter credits"
+                            value={customCredits}
+                            onChange={(e) => setCustomCredits(e.target.value)}
+                            min="10"
+                            className="w-24 h-8 text-sm"
                           />
-                        )}
-                      </div>
+                          {customCredits && parseInt(customCredits) >= 10 && (
+                            <span className="text-xs text-green-600">
+                              = ${(parseInt(customCredits) * 0.01).toFixed(2)}
+                            </span>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                    <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+                      isCustom 
+                        ? 'border-white bg-white' 
+                        : 'border-gray-300'
+                    }`}>
+                      {isCustom && (
+                        <div className="w-2 h-2 rounded-full bg-blue-500" />
+                      )}
                     </div>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
 
             {/* Cryptocurrency Options */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Choose Cryptocurrency</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
+            <div className="bg-white border rounded-lg">
+              <div className="p-3 border-b">
+                <h3 className="font-semibold">Choose Cryptocurrency</h3>
+              </div>
+              <div className="p-3">
+                <div className="space-y-2">
                   <div
                     onClick={() => setSelectedCrypto('BTC')}
-                    className="crypto-option"
-                    style={{
-                      padding: '16px',
-                      border: '2px solid',
-                      borderRadius: '12px',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      backgroundColor: selectedCrypto === 'BTC' ? '#3b82f6' : '#ffffff',
-                      borderColor: selectedCrypto === 'BTC' ? '#3b82f6' : '#d1d5db',
-                      transition: 'all 0.2s ease'
-                    }}
-                    onMouseEnter={(e) => {
-                      if (selectedCrypto !== 'BTC') {
-                        e.currentTarget.style.backgroundColor = '#eff6ff';
-                        e.currentTarget.style.borderColor = '#93c5fd';
-                      }
-                    }}
-                    onMouseLeave={(e) => {
-                      if (selectedCrypto !== 'BTC') {
-                        e.currentTarget.style.backgroundColor = '#ffffff';
-                        e.currentTarget.style.borderColor = '#d1d5db';
-                      }
-                    }}
+                    className={`p-3 border-2 rounded-lg cursor-pointer flex items-center justify-between transition-all ${
+                      selectedCrypto === 'BTC' 
+                        ? 'bg-blue-500 border-blue-500 text-white' 
+                        : 'bg-white border-gray-200 hover:bg-blue-50 hover:border-blue-300'
+                    }`}
                   >
                     <div className="flex items-center">
                       <Bitcoin 
-                        size={24} 
-                        style={{ 
-                          color: selectedCrypto === 'BTC' ? '#ffffff' : '#f97316',
-                          marginRight: '12px'
-                        }} 
+                        size={20} 
+                        className={`mr-3 ${
+                          selectedCrypto === 'BTC' ? 'text-white' : 'text-orange-500'
+                        }`}
                       />
                       <div>
-                        <div 
-                          style={{ 
-                            fontWeight: '600',
-                            color: selectedCrypto === 'BTC' ? '#ffffff' : '#111827'
-                          }}
-                        >
+                        <div className="font-semibold text-sm">
                           Bitcoin
                         </div>
-                        <div 
-                          style={{ 
-                            fontSize: '14px',
-                            color: selectedCrypto === 'BTC' ? '#ffffff' : '#6b7280',
-                            marginTop: '2px'
-                          }}
-                        >
+                        <div className={`text-xs ${
+                          selectedCrypto === 'BTC' ? 'text-white' : 'text-gray-500'
+                        }`}>
                           {getCurrentPackage().btc?.toFixed(8) || '0.00000000'} BTC
                         </div>
                       </div>
                     </div>
-                    <div 
-                      style={{
-                        width: '20px',
-                        height: '20px',
-                        borderRadius: '50%',
-                        border: '2px solid',
-                        borderColor: selectedCrypto === 'BTC' ? '#ffffff' : '#d1d5db',
-                        backgroundColor: selectedCrypto === 'BTC' ? '#ffffff' : 'transparent',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center'
-                      }}
-                    >
+                    <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+                      selectedCrypto === 'BTC' 
+                        ? 'border-white bg-white' 
+                        : 'border-gray-300'
+                    }`}>
                       {selectedCrypto === 'BTC' && (
-                        <div 
-                          style={{
-                            width: '8px',
-                            height: '8px',
-                            borderRadius: '50%',
-                            backgroundColor: '#3b82f6'
-                          }}
-                        />
+                        <div className="w-2 h-2 rounded-full bg-blue-500" />
                       )}
                     </div>
                   </div>
 
                   <div
                     onClick={() => setSelectedCrypto('USDT')}
-                    className="crypto-option"
-                    style={{
-                      padding: '16px',
-                      border: '2px solid',
-                      borderRadius: '12px',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      backgroundColor: selectedCrypto === 'USDT' ? '#3b82f6' : '#ffffff',
-                      borderColor: selectedCrypto === 'USDT' ? '#3b82f6' : '#d1d5db',
-                      transition: 'all 0.2s ease'
-                    }}
-                    onMouseEnter={(e) => {
-                      if (selectedCrypto !== 'USDT') {
-                        e.currentTarget.style.backgroundColor = '#eff6ff';
-                        e.currentTarget.style.borderColor = '#93c5fd';
-                      }
-                    }}
-                    onMouseLeave={(e) => {
-                      if (selectedCrypto !== 'USDT') {
-                        e.currentTarget.style.backgroundColor = '#ffffff';
-                        e.currentTarget.style.borderColor = '#d1d5db';
-                      }
-                    }}
+                    className={`p-3 border-2 rounded-lg cursor-pointer flex items-center justify-between transition-all ${
+                      selectedCrypto === 'USDT' 
+                        ? 'bg-blue-500 border-blue-500 text-white' 
+                        : 'bg-white border-gray-200 hover:bg-blue-50 hover:border-blue-300'
+                    }`}
                   >
                     <div className="flex items-center">
                       <Coins 
-                        size={24} 
-                        style={{ 
-                          color: selectedCrypto === 'USDT' ? '#ffffff' : '#10b981',
-                          marginRight: '12px'
-                        }} 
+                        size={20} 
+                        className={`mr-3 ${
+                          selectedCrypto === 'USDT' ? 'text-white' : 'text-green-500'
+                        }`}
                       />
                       <div>
-                        <div 
-                          style={{ 
-                            fontWeight: '600',
-                            color: selectedCrypto === 'USDT' ? '#ffffff' : '#111827'
-                          }}
-                        >
+                        <div className="font-semibold text-sm">
                           USDT (Solana)
                         </div>
-                        <div 
-                          style={{ 
-                            fontSize: '14px',
-                            color: selectedCrypto === 'USDT' ? '#ffffff' : '#6b7280',
-                            marginTop: '2px'
-                          }}
-                        >
+                        <div className={`text-xs ${
+                          selectedCrypto === 'USDT' ? 'text-white' : 'text-gray-500'
+                        }`}>
                           {getCurrentPackage().usdt?.toFixed(2) || '0.00'} USDT
                         </div>
                       </div>
                     </div>
-                    <div 
-                      style={{
-                        width: '20px',
-                        height: '20px',
-                        borderRadius: '50%',
-                        border: '2px solid',
-                        borderColor: selectedCrypto === 'USDT' ? '#ffffff' : '#d1d5db',
-                        backgroundColor: selectedCrypto === 'USDT' ? '#ffffff' : 'transparent',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center'
-                      }}
-                    >
+                    <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+                      selectedCrypto === 'USDT' 
+                        ? 'border-white bg-white' 
+                        : 'border-gray-300'
+                    }`}>
                       {selectedCrypto === 'USDT' && (
-                        <div 
-                          style={{
-                            width: '8px',
-                            height: '8px',
-                            borderRadius: '50%',
-                            backgroundColor: '#3b82f6'
-                          }}
-                        />
+                        <div className="w-2 h-2 rounded-full bg-blue-500" />
                       )}
                     </div>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
 
             <Button 
-              onClick={handlePurchaseStart} 
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-4 px-6 text-lg rounded-xl shadow-lg" 
-              size="lg"
+              onClick={() => {
+                console.log('💆 Button clicked!');
+                console.log('💆 Loading state:', loading);
+                console.log('💆 Is custom:', isCustom);
+                console.log('💆 Custom credits:', customCredits);
+                console.log('💆 Selected package:', selectedPackage);
+                console.log('💆 Selected crypto:', selectedCrypto);
+                handlePurchaseStart();
+              }}
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg" 
               disabled={loading || (isCustom && (!customCredits || parseInt(customCredits) < MIN_CREDIT_PURCHASE))}
             >
               {loading ? 'Processing...' : 'Continue to Payment'}
@@ -793,12 +720,12 @@ const CreditsPurchase = () => {
         )}
 
         {currentStep === 2 && (
-          <div className="space-y-6">
+          <div className="space-y-4">
             {/* Timer */}
-            <div className="p-4 bg-orange-50 border border-orange-200 rounded-lg">
-              <div className="flex items-center justify-center">
-                <Clock className="w-5 h-5 text-orange-600 mr-2" />
-                <span className="text-orange-800 font-semibold">
+            <div className="p-3 bg-orange-50 border border-orange-200 rounded-lg">
+              <div className="flex items-center justify-center text-sm">
+                <Clock className="w-4 h-4 text-orange-600 mr-2" />
+                <span className="text-orange-800 font-medium">
                   Time Remaining: {formatTime(countdown)}
                 </span>
               </div>
@@ -817,13 +744,13 @@ const CreditsPurchase = () => {
                   
                   {/* QR Code */}
                   {qrCodeUrl && (
-                    <div className="flex justify-center mb-4">
-                      <div className="bg-white p-4 rounded-lg shadow-sm">
-                        <img src={qrCodeUrl} alt="Payment QR Code" className="w-48 h-48" />
-                        <div className="text-center mt-2">
-                          <div className="flex items-center justify-center text-white text-xs bg-gray-800 px-2 py-1 rounded">
-                            <QrCode size={12} className="mr-1 text-white" />
-                            Scan to pay
+                    <div className="flex justify-center mb-3">
+                      <div className="bg-white p-3 rounded-lg shadow-sm">
+                        <img src={qrCodeUrl} alt="Payment QR Code" className="w-32 h-32" />
+                        <div className="text-center mt-1">
+                          <div className="flex items-center justify-center text-white text-xs bg-gray-800 px-2 py-0.5 rounded">
+                            <QrCode size={10} className="mr-1 text-white" />
+                            Scan
                           </div>
                         </div>
                       </div>
@@ -909,7 +836,7 @@ const CreditsPurchase = () => {
         )}
 
         {currentStep === 3 && (
-          <div className="space-y-6">
+          <div className="space-y-4">
             <Card>
               <CardContent className="p-6 text-center">
                 <CheckCircle size={64} className="text-green-500 mx-auto mb-4" />
@@ -953,7 +880,11 @@ const CreditsPurchase = () => {
               <Button variant="outline" onClick={() => navigate('/credits-history')}>
                 View History
               </Button>
-              <Button onClick={() => navigate('/')}>
+              <Button onClick={() => {
+                // Clear any remaining session data before going home
+                sessionStorage.removeItem('active_credit_purchase');
+                navigate('/');
+              }}>
                 Back to Home
               </Button>
             </div>
@@ -972,13 +903,39 @@ const CreditsPurchase = () => {
         title="Upload Payment Proof"
       />
       
-      {/* Session Recovery Modal */}
+      {/* Session Recovery Modal - ONLY show incomplete sessions with payment addresses */}
       <SessionRecoveryModal
-        sessions={showSessionModal ? getActiveSessionsByType('credit_purchase') : []}
+        sessions={showSessionModal ? getActiveSessionsByType('credit_purchase').filter(s => s.data?.paymentAddress && s.step < 3) : []}
         onRestore={handleRestoreSession}
         onDismiss={handleDismissSession}
         onClose={() => setShowSessionModal(false)}
       />
+      
+      {/* Cancel Transaction Dialog */}
+      {showCancelDialog && (
+        <div className="fixed inset-0 bg-black/50 z-[70] flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl p-6 max-w-sm w-full">
+            <h3 className="text-lg font-semibold mb-3">Cancel Transaction?</h3>
+            <p className="text-gray-600 mb-6">
+              Are you sure you want to cancel this credit purchase? Your payment address will be discarded.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowCancelDialog(false)}
+                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg font-medium hover:bg-gray-50"
+              >
+                Continue Payment
+              </button>
+              <button
+                onClick={handleCancelTransaction}
+                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700"
+              >
+                Yes, Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
