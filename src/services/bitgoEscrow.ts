@@ -9,43 +9,28 @@ interface EscrowAddress {
 
 class BitGoEscrowService {
   async generateEscrowAddress(tradeId: string, coin: 'BTC' | 'ETH' | 'USDT' | 'XRP' | 'BNB' | 'POLYGON', expectedAmount?: number): Promise<string> {
-    console.log(`🔄 Generating ${coin} address...`);
+    console.log(`🔄 [BitGoEscrow] Generating ${coin} address for trade ${tradeId}`);
     
-    // BTC: Use Supabase edge function (unchanged)
-    if (coin === 'BTC') {
+    // BTC & USDT: Use Supabase edge function
+    if (coin === 'BTC' || coin === 'USDT') {
+      console.log(`🔄 [BitGoEscrow] Calling edge function for ${coin}`);
+      
       const { data, error } = await supabase.functions.invoke('bitgo-escrow', {
         body: { tradeId, coin }
       });
       
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
-      
-      console.log(`✅ Real ${coin} address generated`);
-      return data.address;
-    }
-    
-    // USDT: Direct server call (temporary until edge function deployed)
-    if (coin === 'USDT') {
-      try {
-        const response = await fetch('http://13.53.167.64:3000/api/forward/api/v2/sol/wallet/68f23046ff389c3fefed72157e47503a/address', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer v2x9eba10d23cb16b271fd072394d76a4021ae88719dba92ab5a383f389715492d0'
-          },
-          body: JSON.stringify({
-            label: `escrow-usdt-${tradeId}-${Date.now()}`
-          })
-        });
-        
-        if (!response.ok) throw new Error(`USDT server call failed: ${response.status}`);
-        const data = await response.json();
-        console.log('✅ Real USDT address generated via direct server call');
-        return data.address;
-      } catch (error) {
-        console.error('USDT direct server call failed:', error);
+      if (error) {
+        console.error(`❌ [BitGoEscrow] Edge function error for ${coin}:`, error);
         throw error;
       }
+      
+      if (data?.error) {
+        console.error(`❌ [BitGoEscrow] Edge function returned error for ${coin}:`, data.error);
+        throw new Error(data.error);
+      }
+      
+      console.log(`✅ [BitGoEscrow] Real ${coin} address generated:`, data.address);
+      return data.address;
     }
     
     // Other coins: Mock addresses
@@ -68,10 +53,12 @@ class BitGoEscrowService {
   }
 
   async releaseFunds(tradeId: string, merchantAddress: string, amount: number, coin: 'BTC' | 'ETH' | 'USDT' | 'XRP' | 'BNB' | 'POLYGON'): Promise<string> {
+    console.log(`🔄 [BitGoEscrow] Releasing ${amount} ${coin} to ${merchantAddress}`);
+    
     if (coin !== 'BTC' && coin !== 'USDT') {
-      console.warn(`⚠️ BitGo escrow only supports BTC and USDT. Simulating release for ${coin}`);
+      console.warn(`⚠️ [BitGoEscrow] Only supports BTC and USDT. Simulating release for ${coin}`);
       const mockTxId = `mock-${coin.toLowerCase()}-tx-${Date.now()}`;
-      console.log(`✅ Mock ${coin} release simulated: ${mockTxId}`);
+      console.log(`✅ [BitGoEscrow] Mock ${coin} release simulated: ${mockTxId}`);
       return mockTxId;
     }
     
@@ -85,9 +72,17 @@ class BitGoEscrowService {
       }
     });
     
-    if (error) throw error;
-    if (data?.error) throw new Error(data.error);
+    if (error) {
+      console.error(`❌ [BitGoEscrow] Release error for ${coin}:`, error);
+      throw error;
+    }
     
+    if (data?.error) {
+      console.error(`❌ [BitGoEscrow] Release returned error for ${coin}:`, data.error);
+      throw new Error(data.error);
+    }
+    
+    console.log(`✅ [BitGoEscrow] ${coin} release successful:`, data?.txid);
     return data?.txid || 'release-pending';
   }
 

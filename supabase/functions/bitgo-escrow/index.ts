@@ -12,6 +12,7 @@ serve(async (req) => {
 
   try {
     const { action, tradeId, coin, toAddress, amount } = await req.json();
+    console.log(`🔄 BitGo Edge Function - ${action || 'generate'} for ${coin}`, { tradeId, coin, action });
     
     // Map coin types to BitGo wallet endpoints
     const walletMap = {
@@ -21,11 +22,15 @@ serve(async (req) => {
     
     const walletInfo = walletMap[coin];
     if (!walletInfo) {
+      console.error(`❌ Unsupported coin: ${coin}`);
       throw new Error(`Unsupported coin: ${coin}`);
     }
     
+    console.log(`✅ Using wallet: ${walletInfo.coin}/${walletInfo.wallet}`);
+    
     if (action === 'release') {
       // FUND RELEASE: Transfer crypto from escrow to recipient
+      console.log(`🔄 Releasing ${coin} funds to ${toAddress}`);
       const response = await fetch(`http://13.53.167.64:3000/api/forward/api/v2/${walletInfo.coin}/wallet/${walletInfo.wallet}/sendcoins`, {
         method: 'POST',
         headers: {
@@ -40,10 +45,12 @@ serve(async (req) => {
       });
       
       if (!response.ok) {
+        console.error(`❌ BitGo release failed: ${response.status}`);
         throw new Error(`BitGo release failed: ${response.status}`);
       }
       
       const data = await response.json();
+      console.log(`✅ ${coin} release successful:`, data.txid);
       
       return new Response(JSON.stringify({ 
         txid: data.txid,
@@ -54,6 +61,7 @@ serve(async (req) => {
       });
     } else {
       // ADDRESS GENERATION: Create new escrow address
+      console.log(`🔄 Generating ${coin} address via AWS proxy`);
       const response = await fetch(`http://13.53.167.64:3000/api/forward/api/v2/${walletInfo.coin}/wallet/${walletInfo.wallet}/address`, {
         method: 'POST',
         headers: {
@@ -66,10 +74,14 @@ serve(async (req) => {
       });
       
       if (!response.ok) {
-        throw new Error(`AWS Proxy failed: ${response.status}`);
+        console.error(`❌ AWS Proxy failed: ${response.status}`);
+        const errorText = await response.text();
+        console.error(`❌ Error details:`, errorText);
+        throw new Error(`AWS Proxy failed: ${response.status} - ${errorText}`);
       }
       
       const data = await response.json();
+      console.log(`✅ ${coin} address generated:`, data.address);
       
       return new Response(JSON.stringify({ 
         address: data.address,
@@ -80,6 +92,7 @@ serve(async (req) => {
     }
     
   } catch (error) {
+    console.error('❌ BitGo Edge Function Error:', error);
     return new Response(JSON.stringify({ error: error.message }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
