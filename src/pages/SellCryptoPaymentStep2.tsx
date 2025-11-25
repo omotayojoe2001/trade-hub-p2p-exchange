@@ -6,6 +6,7 @@ import { ArrowLeft, Clock, CheckCircle, Upload, Wallet, QrCode, Copy } from 'luc
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useSessionPersistence } from '@/hooks/useSessionPersistence';
 
 
 const SellCryptoPaymentStep2 = () => {
@@ -21,24 +22,77 @@ const SellCryptoPaymentStep2 = () => {
   const [depositProof, setDepositProof] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [escrowCreated, setEscrowCreated] = useState(false);
+  const [sessionId, setSessionId] = useState('');
+  
+  const { saveSession, removeSession } = useSessionPersistence();
 
 
   useEffect(() => {
+    // Check for existing session on page load
+    const savedSession = sessionStorage.getItem('active_sell_crypto_escrow');
+    if (savedSession) {
+      try {
+        const sessionData = JSON.parse(savedSession);
+        // Only restore if trade parameters match exactly
+        if (sessionData.data?.escrowAddress && 
+            sessionData.data.coinType === coinType &&
+            sessionData.data.cryptoAmount === cryptoAmount &&
+            sessionData.data.selectedMerchant?.user_id === selectedMerchant?.user_id) {
+          console.log('🔄 Restoring matching escrow session:', sessionData);
+          setSessionId(sessionData.id);
+          setEscrowAddress(sessionData.data.escrowAddress);
+          setVaultId(sessionData.data.vaultId);
+          setEscrowCreated(true);
+          return;
+        } else {
+          console.log('🗑️ Clearing mismatched session - trade parameters changed');
+          sessionStorage.removeItem('active_sell_crypto_escrow');
+        }
+      } catch (error) {
+        console.error('Error restoring session:', error);
+        sessionStorage.removeItem('active_sell_crypto_escrow');
+      }
+    }
+    
     if (coinType && cryptoAmount) {
       createEscrowVault();
     }
-  }, [coinType, cryptoAmount]);
+  }, [coinType, cryptoAmount, selectedMerchant]);
 
   const createEscrowVault = async () => {
     setLoading(true);
     try {
       const { bitgoEscrow } = await import('@/services/bitgoEscrow');
-      const tradeId = `trade_${Date.now()}`;
+      const tradeId = `trade_${Date.now()}_${user?.id}_${Math.random().toString(36).substr(2, 9)}`;
       const address = await bitgoEscrow.generateEscrowAddress(tradeId, coinType as 'BTC' | 'USDT' | 'XRP', parseFloat(cryptoAmount));
       
       setEscrowAddress(address);
       setVaultId(tradeId);
       setEscrowCreated(true);
+      
+      // Generate session ID and save session
+      const newSessionId = `sell_crypto_${Date.now()}_${user?.id}`;
+      setSessionId(newSessionId);
+      
+      const sessionData = {
+        id: newSessionId,
+        type: 'sell_crypto_escrow' as const,
+        data: {
+          escrowAddress: address,
+          vaultId: tradeId,
+          coinType,
+          cryptoAmount,
+          cashAmount,
+          netAmount,
+          selectedMerchant,
+          selectedAccount,
+          timestamp: Date.now()
+        }
+      };
+      
+      saveSession(sessionData);
+      sessionStorage.setItem('active_sell_crypto_escrow', JSON.stringify(sessionData));
+      console.log('💾 Escrow session saved:', sessionData);
       
       toast({
         title: "Escrow Ready",
@@ -155,6 +209,13 @@ const SellCryptoPaymentStep2 = () => {
         description: "Your crypto is secured in escrow. Merchants have been notified."
       });
 
+      // Clear session after successful trade creation
+      sessionStorage.removeItem('active_sell_crypto_escrow');
+      if (sessionId) {
+        removeSession(sessionId);
+      }
+      console.log('🗑️ Session cleared after trade creation');
+      
       navigate('/sell-crypto-waiting', {
         state: { 
           tradeRequestId: tradeRequest.id, 
@@ -211,158 +272,113 @@ const SellCryptoPaymentStep2 = () => {
         </div>
       </div>
 
-      <div className="p-4 space-y-6">
-        {/* Escrow Status */}
-        <Card>
-          <CardContent className="p-6 text-center">
-            {loading ? (
-              <>
-                <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-                <h2 className="text-xl font-semibold mb-2">Setting Up Escrow</h2>
-                <p className="text-muted-foreground">Creating secure BitGo escrow...</p>
-              </>
-            ) : escrowCreated ? (
-              <>
-                <CheckCircle className="w-8 h-8 text-green-500 mx-auto mb-4" />
-                <h2 className="text-xl font-semibold mb-2">Escrow Ready</h2>
-                <p className="text-muted-foreground">Deposit your crypto to the secure address below</p>
-              </>
-            ) : (
-              <>
-                <Wallet className="w-8 h-8 text-blue-500 mx-auto mb-4" />
-                <h2 className="text-xl font-semibold mb-2">Preparing Escrow</h2>
-                <p className="text-muted-foreground">Please wait...</p>
-              </>
-            )}
-          </CardContent>
-        </Card>
+      <div className="p-4 space-y-4">
+        {/* Save session on visibility change */}
+        {React.useEffect(() => {
+          const handleVisibilityChange = () => {
+            if (document.visibilityState === 'hidden' && escrowAddress && sessionId) {
+              const sessionData = {
+                id: sessionId,
+                type: 'sell_crypto_escrow' as const,
+                data: {
+                  escrowAddress,
+                  vaultId,
+                  coinType,
+                  cryptoAmount,
+                  cashAmount,
+                  netAmount,
+                  selectedMerchant,
+                  selectedAccount,
+                  timestamp: Date.now()
+                }
+              };
+              
+              saveSession(sessionData);
+              sessionStorage.setItem('active_sell_crypto_escrow', JSON.stringify(sessionData));
+              console.log('💾 Session saved on tab switch');
+            }
+          };
+          
+          document.addEventListener('visibilitychange', handleVisibilityChange);
+          
+          return () => {
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
+          };
+        }, [escrowAddress, sessionId, vaultId, coinType, cryptoAmount, cashAmount, netAmount, selectedMerchant, selectedAccount]) && null}
 
-        {/* Escrow Deposit Details */}
+
+        {/* Deposit Details */}
         {escrowCreated && escrowAddress && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-sm">Deposit {coinType} to Escrow</CardTitle>
-              <p className="text-xs text-muted-foreground">
-                Send exactly {cryptoAmount} {coinType} to the address below
-              </p>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
-                <div className="text-center space-y-4">
-                  <div>
-                    <p className="text-sm font-medium mb-2">Escrow Address</p>
-                    <div className="p-4 bg-white rounded-xl border border-gray-200">
-                      <p className="font-mono text-sm break-all text-gray-900">{escrowAddress}</p>
-                    </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="mt-2"
-                      onClick={() => copyToClipboard(escrowAddress)}
-                    >
-                      <Copy className="w-4 h-4 mr-2" />
-                      Copy Address
-                    </Button>
-                  </div>
-
-                  <div>
-                    <p className="text-sm font-medium mb-2">QR Code</p>
-                    <div className="flex justify-center">
-                      <div className="p-4 bg-white rounded-xl border border-gray-200">
-                        <img 
-                          src={`https://api.qrserver.com/v1/create-qr-code/?size=128x128&data=${escrowAddress}`}
-                          alt="QR Code"
-                          className="w-32 h-32 mx-auto"
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="p-4 bg-yellow-100 rounded-lg border-2 border-yellow-300">
-                    <p className="text-sm font-semibold text-yellow-900">
-                      <strong>⚠️ Important:</strong> Send exactly {cryptoAmount} {coinType}. 
-                      Any other amount will cause delays.
-                    </p>
-                  </div>
-
+          <div className="space-y-3">
+            <div className="bg-white border rounded-lg p-3">
+              <p className="text-sm font-medium mb-2">Send {cryptoAmount} {coinType} to:</p>
+              <div className="flex items-center gap-2">
+                <div className="flex-1 p-2 bg-gray-50 rounded font-mono text-xs break-all">
+                  {escrowAddress}
                 </div>
-              </div>
-
-
-
-              {/* Upload Proof */}
-              <div className="mt-6">
-                <label className="text-base font-semibold mb-3 block text-gray-900">Upload Deposit Proof</label>
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 bg-gray-50">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleFileUpload}
-                    className="hidden"
-                    id="deposit-proof"
-                  />
-                  <label htmlFor="deposit-proof" className="cursor-pointer">
-                    <div className="text-center">
-                      <Upload className="w-10 h-10 text-gray-600 mx-auto mb-3" />
-                      <p className="text-base font-medium text-gray-900">
-                        {depositProof ? depositProof.name : 'Upload transaction screenshot'}
-                      </p>
-                      <p className="text-sm text-gray-600 mt-1">
-                        Take a screenshot of your wallet transaction
-                      </p>
-                    </div>
-                  </label>
-                </div>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="space-y-4 mt-6">
-                <Button
-                  onClick={handleConfirmDeposit}
-                  disabled={!depositProof || loading}
-                  className="w-full bg-[#1A73E8] hover:bg-[#1557b0] text-white rounded-xl py-4 text-base font-semibold"
-                  size="lg"
+                <button
+                  onClick={() => copyToClipboard(escrowAddress)}
+                  className="p-2 hover:bg-gray-100 rounded"
                 >
-                  {loading ? 'Processing...' : 'Confirm Crypto Deposit & Send Trade Request'}
-                </Button>
-                
-                <div className="grid grid-cols-2 gap-3">
-                  <Button variant="outline" size="sm" className="py-3 text-sm font-medium">
-                    Send Reminder
-                  </Button>
-                  <Button variant="outline" size="sm" className="py-3 text-sm font-medium">
-                    Cancel Trade
-                  </Button>
-                </div>
+                  <Copy size={16} />
+                </button>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+            
+            <div className="bg-white border rounded-lg p-3 text-center">
+              <img 
+                src={`https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${escrowAddress}`}
+                alt="QR Code"
+                className="w-20 h-20 mx-auto mb-2"
+              />
+              <p className="text-xs text-gray-600">Scan to send</p>
+            </div>
+
+
+
+            <div className="bg-white border rounded-lg p-3">
+              <label className="text-sm font-medium mb-2 block">Upload Proof</label>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleFileUpload}
+                className="hidden"
+                id="deposit-proof"
+              />
+              <label htmlFor="deposit-proof" className="cursor-pointer">
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-3 text-center hover:border-gray-400">
+                  <Upload size={20} className="mx-auto mb-1 text-gray-500" />
+                  <p className="text-sm text-gray-600">
+                    {depositProof ? depositProof.name : 'Upload screenshot'}
+                  </p>
+                </div>
+              </label>
+            </div>
+
+            <Button
+              onClick={handleConfirmDeposit}
+              disabled={!depositProof || loading}
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-lg py-3 font-medium"
+            >
+              {loading ? 'Processing...' : 'Confirm Deposit'}
+            </Button>
+          </div>
         )}
 
         {/* Trade Summary */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-sm">Trade Summary</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
+        <div className="bg-white border rounded-lg p-3">
+          <p className="text-sm font-medium mb-2">Trade Summary</p>
+          <div className="space-y-1 text-sm">
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Selling:</span>
-              <span className="font-semibold">{cryptoAmount} {coinType}</span>
+              <span className="text-gray-600">Selling:</span>
+              <span className="font-medium">{cryptoAmount} {coinType}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-muted-foreground">You'll Receive:</span>
-              <span className="font-semibold text-primary">{netAmount?.toLocaleString()} NGN</span>
+              <span className="text-gray-600">You'll Receive:</span>
+              <span className="font-medium text-green-600">{netAmount?.toLocaleString()} NGN</span>
             </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Merchant:</span>
-              <span className="font-semibold">{selectedMerchant?.display_name}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Payment To:</span>
-              <span className="font-semibold">{selectedAccount?.bank_name}</span>
-            </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
     </div>
   );
