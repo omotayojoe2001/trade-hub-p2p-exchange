@@ -138,8 +138,8 @@ const SellCryptoPaymentStep2 = () => {
       const fileName = `${Date.now()}_deposit_proof.${fileExt}`;
       
       const { error: uploadError } = await supabase.storage
-        .from('payment-proofs')
-        .upload(fileName, depositProof);
+        .from('profiles')
+        .upload(`sell-crypto-payment-${user?.id}-${fileName}`, depositProof);
 
       if (uploadError) throw uploadError;
 
@@ -161,7 +161,7 @@ const SellCryptoPaymentStep2 = () => {
         user_account_name: selectedAccount.account_name,
         escrow_address: escrowAddress,
         vault_id: vaultId,
-        payment_proof_url: fileName,
+        payment_proof_url: `sell-crypto-payment-${user?.id}-${fileName}`,
         expires_at: expiresAt.toISOString()
       };
 

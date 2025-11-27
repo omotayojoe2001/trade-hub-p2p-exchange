@@ -49,15 +49,18 @@ const SellCryptoWaiting: React.FC = () => {
         filter: `id=eq.${tradeRequestId}`
       }, (payload) => {
         const updatedTrade = payload.new;
-        console.log('Real-time update:', updatedTrade);
+        console.log('🔄 Real-time trade_requests update:', updatedTrade);
+        console.log('🔄 Previous status:', trade?.status, '→ New status:', updatedTrade.status);
         setTrade(updatedTrade);
         
         if (updatedTrade.status === 'buyer_paid') {
+          console.log('✅ BUYER_PAID status received - button should be active now');
           toast({
             title: "Buyer Has Paid!",
             description: "The buyer has sent payment. Check your bank account and confirm when received.",
           });
         } else if (updatedTrade.status === 'payment_sent') {
+          console.log('✅ PAYMENT_SENT status received - button should be active now');
           toast({
             title: "Payment Sent!",
             description: "The merchant has sent your cash payment. Please check your bank account.",
@@ -81,7 +84,9 @@ const SellCryptoWaiting: React.FC = () => {
         .single();
 
       if (error) throw error;
-      console.log('Trade data fetched:', tradeData);
+      console.log('📊 Trade data fetched:', tradeData);
+      console.log('📊 Current trade status:', tradeData?.status);
+      console.log('📊 Button should be enabled:', tradeData?.status === 'buyer_paid' || tradeData?.status === 'payment_sent');
       setTrade(tradeData);
     } catch (error) {
       console.error('Error fetching trade data:', error);
@@ -324,7 +329,7 @@ const SellCryptoWaiting: React.FC = () => {
             ) : trade?.status === 'buyer_paid' || trade?.status === 'payment_sent' ? (
               "Confirm Payment Received"
             ) : (
-              "Waiting for Buyer Payment..."
+              `Waiting for Buyer Payment... (Status: ${trade?.status || 'loading'})`
             )}
           </Button>
 
