@@ -313,7 +313,7 @@ const SellCryptoWaiting: React.FC = () => {
                 }
               }
             }}
-            disabled={confirming || paymentReceived || (trade?.status !== 'payment_sent' && trade?.status !== 'buyer_paid')}
+            disabled={confirming || paymentReceived || trade?.status === 'pending'}
             className="w-full bg-green-600 hover:bg-green-700 text-white py-3"
           >
             {confirming ? (
