@@ -41,7 +41,7 @@ const SellCryptoWaiting: React.FC = () => {
 
     // Set up real-time subscription for trade request updates
     const channel = supabase
-      .channel('trade-request-updates')
+      .channel(`trade-request-${tradeRequestId}`)
       .on('postgres_changes', {
         event: 'UPDATE',
         schema: 'public',
@@ -53,24 +53,21 @@ const SellCryptoWaiting: React.FC = () => {
         console.log('🔄 Previous status:', trade?.status, '→ New status:', updatedTrade.status);
         setTrade(updatedTrade);
         
-        if (updatedTrade.status === 'buyer_paid') {
-          console.log('✅ BUYER_PAID status received - button should be active now');
-          toast({
-            title: "Buyer Has Paid!",
-            description: "The buyer has sent payment. Check your bank account and confirm when received.",
-          });
-        } else if (updatedTrade.status === 'payment_sent') {
+        if (updatedTrade.status === 'payment_sent') {
           console.log('✅ PAYMENT_SENT status received - button should be active now');
           toast({
-            title: "Payment Sent!",
-            description: "The merchant has sent your cash payment. Please check your bank account.",
+            title: "Payment Received!",
+            description: "The merchant has sent payment. Check your bank account and confirm when received.",
           });
         }
       })
       .subscribe();
+      
+    console.log('🔌 Subscribed to real-time updates for trade:', tradeRequestId);
 
     return () => {
       clearInterval(timer);
+      console.log('🔌 Unsubscribing from real-time updates');
       supabase.removeChannel(channel);
     };
   }, [user, tradeRequestId]);
