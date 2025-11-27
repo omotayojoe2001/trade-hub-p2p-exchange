@@ -101,13 +101,13 @@ const PaymentDetails = () => {
         <h1 className="text-lg font-semibold ml-2">Payment Details</h1>
       </div>
 
-      <div className="p-4 space-y-6">
+      <div className="p-3 space-y-3">
         {/* Trade Summary */}
         <Card>
           <CardHeader>
             <CardTitle>Trade Summary</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-3">
+          <CardContent className="space-y-2">
             <div className="flex justify-between">
               <span className="text-muted-foreground">Trade ID:</span>
               <span className="font-mono text-sm">{tradeRequest.id}</span>
@@ -167,7 +167,7 @@ const PaymentDetails = () => {
             <CardHeader>
               <CardTitle>Payment Proof</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-2">
               <div className="flex items-center justify-between p-4 border rounded-lg">
                 <div className="flex items-center">
                   <Eye className="w-5 h-5 text-muted-foreground mr-3" />
@@ -208,7 +208,7 @@ const PaymentDetails = () => {
             <CardTitle>Transaction Timeline</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
+            <div className="space-y-2">
               <div className="flex items-center">
                 <div className="w-3 h-3 bg-green-500 rounded-full mr-3"></div>
                 <div>
@@ -247,7 +247,7 @@ const PaymentDetails = () => {
         </Card>
 
         {/* Actions */}
-        <div className="space-y-3">
+        <div className="space-y-2">
           <Button 
             onClick={() => navigate('/trade-requests')} 
             className="w-full"

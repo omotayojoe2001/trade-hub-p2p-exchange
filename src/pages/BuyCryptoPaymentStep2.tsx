@@ -292,6 +292,12 @@ const BuyCryptoPaymentStep2 = () => {
 
       if (updateError) throw updateError;
 
+      // Also update trade_requests status to notify seller
+      await supabase
+        .from('trade_requests')
+        .update({ status: 'buyer_paid' })
+        .eq('id', tradeId);
+
       // Notify merchant about payment proof
       await supabase
         .from('notifications')

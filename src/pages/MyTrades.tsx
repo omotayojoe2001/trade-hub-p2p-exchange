@@ -11,6 +11,7 @@ import CryptoIcon from '@/components/CryptoIcon';
 import { toast } from '@/hooks/use-toast';
 import MessageThread from '@/components/MessageThread';
 import MobileLayout from '@/components/MobileLayout';
+import { useCustomAlert } from '@/components/ui/custom-alert';
 
 import { SwipeToDelete } from '@/components/ui/swipe-to-delete';
 import { NativeButton } from '@/components/ui/native-button';
@@ -37,6 +38,7 @@ interface Trade {
 const MyTrades = () => {
   const { user } = useAuth();
   const { impact, notification } = useHapticFeedback();
+  const { confirm, AlertComponent } = useCustomAlert();
 
   const [trades, setTrades] = useState<Trade[]>([]);
   const [loading, setLoading] = useState(true);
@@ -65,6 +67,13 @@ const MyTrades = () => {
         .or(`buyer_id.eq.${user.id},seller_id.eq.${user.id}`)
         .order('created_at', { ascending: false });
 
+      // Fetch sell crypto trade requests (both as seller and buyer)
+      const { data: tradeRequests, error: tradeRequestsError } = await supabase
+        .from('trade_requests')
+        .select('*')
+        .or(`seller_id.eq.${user.id},merchant_id.eq.${user.id}`)
+        .order('created_at', { ascending: false });
+
       // Fetch cash orders
       const { data: cashOrders, error: cashError } = await supabase
         .from('cash_trades')
@@ -82,6 +91,10 @@ const MyTrades = () => {
       if (tradesError) {
         console.error('Error fetching trades:', tradesError);
       }
+
+      if (tradeRequestsError) {
+        console.error('Error fetching trade requests:', tradeRequestsError);
+      }
       
       if (cashError) {
         console.error('Error fetching cash orders:', cashError);
@@ -94,6 +107,17 @@ const MyTrades = () => {
       // Combine and format data
       const allTrades = [
         ...(tradesData || []),
+        ...(tradeRequests || []).map(request => ({
+          ...request,
+          trade_type: 'sell_crypto',
+          crypto_type: request.coin_type,
+          amount: request.crypto_amount,
+          amount_crypto: request.crypto_amount,
+          naira_amount: request.naira_amount,
+          rate: request.naira_amount / request.crypto_amount,
+          buyer_id: request.merchant_id,
+          seller_id: request.seller_id
+        })),
         ...(cashOrders || []).map(order => {
           const tradeRate = order.exchange_rate || usdToNgnRate;
           return {
@@ -218,7 +242,12 @@ const MyTrades = () => {
   };
 
   const handleCancelAllTrades = async () => {
-    if (!confirm('Are you sure you want to cancel all ongoing trades? This action cannot be undone.')) {
+    const confirmed = await confirm(
+      'Cancel All Trades',
+      'Are you sure you want to cancel all ongoing trades? This action cannot be undone.'
+    );
+    
+    if (!confirmed) {
       return;
     }
 
@@ -586,7 +615,11 @@ const MyTrades = () => {
                               contextType: trade.trade_type === 'cash_order' ? 'cash_delivery' : 'crypto_trade'
                             });
                           } else {
-                            alert('Other user not found for this trade');
+                            toast({
+                              title: "Error",
+                              description: "Other user not found for this trade",
+                              variant: "destructive"
+                            });
                           }
                         }}
                       >
@@ -629,6 +662,8 @@ const MyTrades = () => {
           onClose={() => setSelectedMessage(null)}
         />
       )}
+      
+      <AlertComponent />
     </MobileLayout>
   );
 };

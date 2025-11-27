@@ -239,11 +239,11 @@ const SellCryptoCompleted: React.FC = () => {
         </div>
       </div>
 
-      <div className="p-4 space-y-6">
+      <div className="p-3 space-y-3">
         {/* Success Summary */}
         <Card className="border-green-200 bg-green-50">
-          <CardContent className="p-6 text-center">
-            <div className="space-y-3">
+          <CardContent className="p-4 text-center">
+            <div className="space-y-2">
               <div className="flex items-center justify-center">
                 <DollarSign className="text-green-600 mr-2" size={24} />
                 <span className="text-2xl font-bold text-green-900">{nairaAmount}</span>
@@ -268,7 +268,7 @@ const SellCryptoCompleted: React.FC = () => {
           <CardHeader>
             <CardTitle>Trade Summary</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-3">
+          <CardContent className="space-y-2">
             <div className="flex justify-between">
               <span className="text-gray-600">Trade ID:</span>
               <span className="font-mono text-sm">{tradeId}</span>
@@ -308,7 +308,7 @@ const SellCryptoCompleted: React.FC = () => {
           <CardHeader>
             <CardTitle>Transaction Timeline</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-2">
             <div className="flex items-center">
               <div className="w-3 h-3 bg-green-500 rounded-full mr-3"></div>
               <div className="flex-1">
@@ -341,7 +341,7 @@ const SellCryptoCompleted: React.FC = () => {
         </Card>
 
         {/* Actions */}
-        <div className="space-y-3">
+        <div className="space-y-2">
           <Button
             onClick={generateReceipt}
             variant="outline"
@@ -379,8 +379,8 @@ const SellCryptoCompleted: React.FC = () => {
 
         {/* Thank You Message */}
         <Card className="bg-blue-50 border-blue-200">
-          <CardContent className="p-4 text-center">
-            <h3 className="font-semibold text-blue-900 mb-2">Thank you for using our platform!</h3>
+          <CardContent className="p-3 text-center">
+            <h3 className="font-semibold text-white mb-2">Thank you for using Central Exchange!</h3>
             <p className="text-sm text-blue-700">
               Your trade was completed securely using our escrow system. 
               We hope you had a great experience.

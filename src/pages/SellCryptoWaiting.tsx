@@ -8,12 +8,14 @@ import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import BottomNavigation from '@/components/BottomNavigation';
+import { useCustomAlert } from '@/components/ui/custom-alert';
 
 const SellCryptoWaiting: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuth();
   const { toast } = useToast();
+  const { confirm, AlertComponent } = useCustomAlert();
   
   const [timeElapsed, setTimeElapsed] = useState(0);
   const [paymentReceived, setPaymentReceived] = useState(false);
@@ -50,7 +52,12 @@ const SellCryptoWaiting: React.FC = () => {
         console.log('Real-time update:', updatedTrade);
         setTrade(updatedTrade);
         
-        if (updatedTrade.status === 'payment_sent') {
+        if (updatedTrade.status === 'buyer_paid') {
+          toast({
+            title: "Buyer Has Paid!",
+            description: "The buyer has sent payment. Check your bank account and confirm when received.",
+          });
+        } else if (updatedTrade.status === 'payment_sent') {
           toast({
             title: "Payment Sent!",
             description: "The merchant has sent your cash payment. Please check your bank account.",
@@ -184,7 +191,7 @@ const SellCryptoWaiting: React.FC = () => {
         {/* Status Card */}
         <Card className="border-blue-200 bg-blue-50">
           <CardHeader>
-            <CardTitle className="flex items-center text-blue-900">
+            <CardTitle className="flex items-center text-white">
               <Shield className="mr-2" size={20} />
               Trade Status
             </CardTitle>
@@ -260,15 +267,20 @@ const SellCryptoWaiting: React.FC = () => {
         </Card>
 
         {/* Payment Status */}
-        {trade?.status === 'payment_sent' && (
+        {(trade?.status === 'buyer_paid' || trade?.status === 'payment_sent') && (
           <Card className="border-green-200 bg-green-50">
             <CardContent className="p-4">
               <div className="flex items-center">
                 <CheckCircle2 className="text-green-600 mr-2" size={20} />
                 <div>
-                  <p className="font-semibold text-green-900">Payment Sent!</p>
+                  <p className="font-semibold text-green-900">
+                    {trade?.status === 'buyer_paid' ? 'Buyer Has Paid!' : 'Payment Sent!'}
+                  </p>
                   <p className="text-sm text-green-700">
-                    The merchant has sent your payment. Please check your bank account.
+                    {trade?.status === 'buyer_paid' 
+                      ? 'The buyer has sent payment to your account. Please check and confirm when received.'
+                      : 'The merchant has sent your payment. Please check your bank account.'
+                    }
                   </p>
                 </div>
               </div>
@@ -279,8 +291,24 @@ const SellCryptoWaiting: React.FC = () => {
         {/* Action Buttons */}
         <div className="space-y-3">
           <Button
-            onClick={handleConfirmPayment}
-            disabled={confirming || paymentReceived || trade?.status !== 'payment_sent'}
+            onClick={async () => {
+              const confirmed = await confirm(
+                '⚠️ CRITICAL WARNING ⚠️',
+                `Only click YES if you have ACTUALLY RECEIVED ₦${netAmount?.toLocaleString()} in your bank account.\n\nClicking YES will:\n• Immediately release ${cryptoAmount} ${coinType} to the merchant\n• Complete the trade permanently\n• This action CANNOT be undone\n\nHave you confirmed the money is in your bank account?`
+              );
+              
+              if (confirmed) {
+                const doubleConfirm = await confirm(
+                  'FINAL CONFIRMATION',
+                  `You are about to release ${cryptoAmount} ${coinType} worth ₦${netAmount?.toLocaleString()}.\n\nThis is your LAST CHANCE to cancel.\n\nAre you 100% sure you received the payment?`
+                );
+                
+                if (doubleConfirm) {
+                  handleConfirmPayment();
+                }
+              }
+            }}
+            disabled={confirming || paymentReceived || (trade?.status !== 'payment_sent' && trade?.status !== 'buyer_paid')}
             className="w-full bg-green-600 hover:bg-green-700 text-white py-3"
           >
             {confirming ? (
@@ -293,8 +321,10 @@ const SellCryptoWaiting: React.FC = () => {
                 <CheckCircle2 className="mr-2" size={16} />
                 Payment Confirmed
               </div>
-            ) : (
+            ) : trade?.status === 'buyer_paid' || trade?.status === 'payment_sent' ? (
               "Confirm Payment Received"
+            ) : (
+              "Waiting for Buyer Payment..."
             )}
           </Button>
 
@@ -337,6 +367,7 @@ const SellCryptoWaiting: React.FC = () => {
       </div>
 
       <BottomNavigation />
+      <AlertComponent />
     </div>
   );
 };

@@ -166,8 +166,8 @@ const MessageThread: React.FC<MessageThreadProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="bg-white rounded-lg w-[95vw] max-w-md h-[80vh] max-h-[500px] flex flex-col shadow-xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 pb-20">
+      <div className="bg-white rounded-lg w-[95vw] max-w-md h-[75vh] max-h-[450px] flex flex-col shadow-xl mb-4">
         <div className="p-3 border-b flex items-center justify-between">
           <div className="flex items-center">
             <MessageCircle className="w-4 h-4 mr-2" />

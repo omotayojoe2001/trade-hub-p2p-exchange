@@ -291,7 +291,7 @@ const SellCryptoTradeRequestDetails = () => {
       const { error } = await supabase
         .from('trade_requests')
         .update({
-          status: 'payment_sent',
+          status: 'buyer_paid', // Use buyer_paid to activate seller's confirm button
           merchant_wallet_address: merchantWalletAddress,
           merchant_payment_proof: urlData.publicUrl
         })
