@@ -1,4 +1,4 @@
-package com.centralexchange.global;
+package ng.com.centralexchange.app;
 
 import com.getcapacitor.BridgeActivity;
 

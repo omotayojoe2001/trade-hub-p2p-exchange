@@ -1,7 +1,7 @@
 import { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'com.centralexchange.global',
+  appId: 'ng.com.centralexchange.app',
   appName: 'Central Exchange',
   webDir: 'dist',
   server: {
