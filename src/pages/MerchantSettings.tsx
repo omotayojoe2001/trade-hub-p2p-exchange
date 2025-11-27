@@ -7,7 +7,7 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Settings, TrendingUp, Shield, Clock, DollarSign, Coins, Globe, CreditCard, MapPin, Calendar, Save, Loader2 } from 'lucide-react';
+import { ArrowLeft, Settings, TrendingUp, Shield, Clock, DollarSign, Coins, Globe, CreditCard, MapPin, Calendar, Save, Loader2, Bitcoin, Banknote, CircleDollarSign } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -282,53 +282,41 @@ const MerchantSettings = () => {
   };
 
   return (
-    <div className="min-h-screen bg-white font-['Poppins'] pb-20">
+    <div className="min-h-screen bg-white pb-20">
       {/* Header */}
-      <div className="flex items-center justify-between p-4 bg-white border-b border-[#EAEAEA]">
-        <div className="flex items-center">
-          <Link to="/settings" className="mr-4">
-            <ArrowLeft size={20} className="text-gray-600" />
-          </Link>
-          <Settings size={20} className="text-[#1A73E8] mr-3" />
-          <h1 className="text-lg font-semibold text-gray-900">Merchant Settings</h1>
-        </div>
+      <div className="flex items-center p-3 bg-white border-b">
+        <Link to="/settings" className="mr-3">
+          <ArrowLeft size={20} className="text-gray-600" />
+        </Link>
+        <h1 className="text-lg font-semibold">Merchant Settings</h1>
       </div>
 
-      <div className="p-4 space-y-6">
+      <div className="p-3 space-y-2">
 
 
         {/* Supported Coins */}
-        <Card className="p-4">
-          <div className="flex items-center mb-4">
-            <Coins size={20} className="text-orange-600 mr-2" />
-            <h2 className="text-lg font-semibold text-gray-900">Supported Cryptocurrencies</h2>
+        <div className="bg-gray-50 rounded p-2 border">
+          <div className="flex items-center mb-1">
+            <Coins size={16} className="text-orange-600 mr-2" />
+            <h2 className="font-medium text-sm">Cryptocurrencies</h2>
           </div>
-          
-          <div className="bg-orange-50 p-3 rounded-lg mb-4">
-            <p className="text-sm text-orange-600 mb-1">⚠️ Only selected cryptocurrencies will show you to traders</p>
-            <p className="text-xs text-orange-500">If you only select BTC, you won't appear for USDT trades</p>
-          </div>
-          
-          <div className="space-y-3">
+          <div className="space-y-1">
             {availableCoins.map((coin) => (
-              <div key={coin} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50">
-                <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center">
+              <div key={coin} className="flex items-center justify-between p-1">
+                <div className="flex items-center space-x-2">
+                  <div className={`w-6 h-6 rounded-full flex items-center justify-center ${
+                    coin === 'BTC' ? 'bg-orange-100' : 'bg-green-100'
+                  }`}>
                     {coin === 'BTC' ? (
-                      <span className="text-orange-500 text-lg">₿</span>
-                    ) : coin === 'USDT' ? (
-                      <span className="text-green-600 text-lg">⊞</span>
+                      <Bitcoin size={14} className="text-orange-600" />
                     ) : (
-                      <span className="text-orange-600 font-bold text-sm">{coin}</span>
+                      <CircleDollarSign size={14} className="text-green-600" />
                     )}
                   </div>
-                  <div>
-                    <Label htmlFor={`coin-${coin}`} className="font-medium text-gray-900">{coin}</Label>
-                    <p className="text-xs text-gray-500">${currentPrices[coin]?.toLocaleString()}</p>
-                  </div>
+                  <span className="text-sm font-medium">{coin}</span>
+                  <span className="text-xs text-gray-500">${currentPrices[coin]?.toLocaleString()}</span>
                 </div>
                 <Switch
-                  id={`coin-${coin}`}
                   checked={settings.supported_coins.includes(coin)}
                   onCheckedChange={(checked) => {
                     setSettings(prev => ({
@@ -342,32 +330,30 @@ const MerchantSettings = () => {
               </div>
             ))}
           </div>
-        </Card>
+        </div>
 
         {/* Supported Currencies */}
-        <Card className="p-4">
-          <div className="flex items-center mb-4">
-            <Globe size={20} className="text-blue-600 mr-2" />
-            <h2 className="text-lg font-semibold text-gray-900">Supported Currencies</h2>
+        <div className="bg-gray-50 rounded p-2 border">
+          <div className="flex items-center mb-1">
+            <Globe size={16} className="text-blue-600 mr-2" />
+            <h2 className="font-medium text-sm">Currencies</h2>
           </div>
-          
-          <div className="space-y-3">
+          <div className="space-y-1">
             {availableCurrencies.map((currency) => (
-              <div key={currency} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50">
-                <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+              <div key={currency} className="flex items-center justify-between p-1">
+                <div className="flex items-center space-x-2">
+                  <div className={`w-6 h-6 rounded-full flex items-center justify-center ${
+                    currency === 'NGN' ? 'bg-green-100' : 'bg-blue-100'
+                  }`}>
                     {currency === 'NGN' ? (
-                      <span className="text-green-600 text-lg">₦</span>
-                    ) : currency === 'USD' ? (
-                      <span className="text-blue-600 text-lg">$</span>
+                      <Banknote size={14} className="text-green-600" />
                     ) : (
-                      <span className="text-blue-600 font-bold text-sm">{currency}</span>
+                      <DollarSign size={14} className="text-blue-600" />
                     )}
                   </div>
-                  <Label htmlFor={`currency-${currency}`} className="font-medium text-gray-900">{currency}</Label>
+                  <span className="text-sm font-medium">{currency}</span>
                 </div>
                 <Switch
-                  id={`currency-${currency}`}
                   checked={settings.supported_currencies.includes(currency)}
                   onCheckedChange={(checked) => {
                     setSettings(prev => ({
@@ -381,37 +367,26 @@ const MerchantSettings = () => {
               </div>
             ))}
           </div>
-        </Card>
+        </div>
 
         {/* Exchange Rates */}
-        <Card className="p-4">
-          <div className="flex items-center mb-4">
-            <TrendingUp size={20} className="text-green-600 mr-2" />
-            <h2 className="text-lg font-semibold text-gray-900">Exchange Rates</h2>
+        <div className="bg-gray-50 rounded p-2 border">
+          <div className="flex items-center mb-1">
+            <TrendingUp size={16} className="text-green-600 mr-2" />
+            <h2 className="font-medium text-sm">Exchange Rates</h2>
           </div>
-          
-          <div className="space-y-4">
-            <div className="bg-blue-50 p-3 rounded-lg">
-              <p className="text-sm text-blue-600 mb-2">Current Market Prices:</p>
-              <div className="grid grid-cols-2 gap-2 text-sm">
-                {settings.supported_coins.map(coin => (
-                  <span key={coin}>{coin}: ${currentPrices[coin]?.toLocaleString()}</span>
-                ))}
-              </div>
-              <p className="text-xs text-blue-500 mt-2">Set your rates with 1-3% margin</p>
-            </div>
-
+          <div className="space-y-1">
             {settings.supported_coins.map((coin) => (
-              <div key={coin} className="border rounded-lg p-3">
-                <h3 className="font-medium mb-2">{coin} Rates</h3>
-                <div className="grid grid-cols-2 gap-4">
+              <div key={coin} className="bg-white rounded p-2">
+                <p className="text-xs font-medium mb-1">{coin}</p>
+                <div className="grid grid-cols-2 gap-1">
                   {settings.supported_currencies.map((currency) => (
-                    <div key={`${coin}-${currency}`} className="space-y-2">
+                    <div key={`${coin}-${currency}`} className="space-y-1">
                       <div>
-                        <Label>Buy Rate ({currency})</Label>
+                        <Label className="text-xs">Buy ({currency})</Label>
                         <Input
                           type="number"
-                          placeholder={`${coin} buy rate in ${currency}`}
+                          className="h-7 text-xs"
                           value={settings.exchange_rates[coin]?.buy_rate || ''}
                           onChange={(e) => setSettings(prev => ({
                             ...prev,
@@ -426,10 +401,10 @@ const MerchantSettings = () => {
                         />
                       </div>
                       <div>
-                        <Label>Sell Rate ({currency})</Label>
+                        <Label className="text-xs">Sell ({currency})</Label>
                         <Input
                           type="number"
-                          placeholder={`${coin} sell rate in ${currency}`}
+                          className="h-7 text-xs"
                           value={settings.exchange_rates[coin]?.sell_rate || ''}
                           onChange={(e) => setSettings(prev => ({
                             ...prev,
@@ -449,28 +424,19 @@ const MerchantSettings = () => {
               </div>
             ))}
           </div>
-        </Card>
+        </div>
 
         {/* Payment Methods */}
-        <Card className="p-4">
-          <div className="flex items-center mb-4">
-            <CreditCard size={20} className="text-purple-600 mr-2" />
-            <h2 className="text-lg font-semibold text-gray-900">Payment Methods</h2>
+        <div className="bg-gray-50 rounded p-2 border">
+          <div className="flex items-center mb-1">
+            <CreditCard size={16} className="text-purple-600 mr-2" />
+            <h2 className="font-medium text-sm">Payment Methods</h2>
           </div>
-          
-          <div className="space-y-3">
+          <div className="space-y-1">
             {availablePaymentMethods.map((method) => (
-              <div key={method} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50">
-                <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
-                    <CreditCard size={18} className="text-purple-600" />
-                  </div>
-                  <Label htmlFor={`payment-${method}`} className="font-medium text-gray-900 capitalize">
-                    {method.replace('_', ' ')}
-                  </Label>
-                </div>
+              <div key={method} className="flex items-center justify-between p-1">
+                <span className="text-sm capitalize">{method.replace('_', ' ')}</span>
                 <Switch
-                  id={`payment-${method}`}
                   checked={settings.payment_methods.includes(method)}
                   onCheckedChange={(checked) => {
                     setSettings(prev => ({
@@ -484,23 +450,22 @@ const MerchantSettings = () => {
               </div>
             ))}
           </div>
-        </Card>
+        </div>
 
 
 
         {/* Trading Limits */}
-        <Card className="p-4">
-          <div className="flex items-center mb-4">
-            <DollarSign size={20} className="text-orange-600 mr-2" />
-            <h2 className="text-lg font-semibold text-gray-900">Trading Limits</h2>
+        <div className="bg-gray-50 rounded p-2 border">
+          <div className="flex items-center mb-1">
+            <DollarSign size={16} className="text-orange-600 mr-2" />
+            <h2 className="font-medium text-sm">Trading Limits</h2>
           </div>
-          
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-1">
             <div>
-              <Label htmlFor="min_amount">Minimum Trade (₦)</Label>
+              <Label className="text-xs">Min (₦)</Label>
               <Input
-                id="min_amount"
                 type="number"
+                className="h-7 text-xs"
                 value={settings.min_trade_amount}
                 onChange={(e) => setSettings(prev => ({ 
                   ...prev, 
@@ -508,12 +473,11 @@ const MerchantSettings = () => {
                 }))}
               />
             </div>
-
             <div>
-              <Label htmlFor="max_amount">Maximum Trade (₦)</Label>
+              <Label className="text-xs">Max (₦)</Label>
               <Input
-                id="max_amount"
                 type="number"
+                className="h-7 text-xs"
                 value={settings.max_trade_amount}
                 onChange={(e) => setSettings(prev => ({ 
                   ...prev, 
@@ -522,102 +486,90 @@ const MerchantSettings = () => {
               />
             </div>
           </div>
-        </Card>
+        </div>
 
 
 
         {/* Business Hours */}
-        <Card className="p-4">
-          <div className="flex items-center mb-4">
-            <Calendar size={20} className="text-indigo-600 mr-2" />
-            <h2 className="text-lg font-semibold text-gray-900">Business Hours</h2>
-          </div>
-          
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <Label>Enable Business Hours</Label>
-                <p className="text-sm text-gray-600">Set specific times when you accept trades</p>
-              </div>
-              <Switch
-                checked={settings.business_hours.enabled}
-                onCheckedChange={(checked) => setSettings(prev => ({ 
-                  ...prev, 
-                  business_hours: { ...prev.business_hours, enabled: checked }
-                }))}
-              />
+        <div className="bg-gray-50 rounded p-2 border">
+          <div className="flex items-center justify-between mb-1">
+            <div className="flex items-center">
+              <Calendar size={16} className="text-indigo-600 mr-2" />
+              <h2 className="font-medium text-sm">Business Hours</h2>
             </div>
-
-            {settings.business_hours.enabled && (
-              <div className="space-y-3">
-                {Object.entries(settings.business_hours).map(([day, hours]) => {
-                  if (day === 'enabled' || typeof hours === 'boolean') return null;
-                  const dayHours = hours as { start: string; end: string; enabled: boolean };
-                  return (
-                    <div key={day} className="flex items-center justify-between p-3 border rounded-lg">
-                      <Label className="capitalize font-medium text-gray-900">{day}</Label>
-                      <div className="flex items-center space-x-3">
-                        <Switch
-                          checked={dayHours.enabled}
-                          onCheckedChange={(checked) => setSettings(prev => ({
-                            ...prev,
-                            business_hours: {
-                              ...prev.business_hours,
-                              [day]: { ...dayHours, enabled: checked as boolean }
-                            }
-                          }))}
-                        />
-                        {dayHours.enabled && (
-                          <>
-                            <Input
-                              type="time"
-                              value={dayHours.start}
-                              onChange={(e) => setSettings(prev => ({
-                                ...prev,
-                                business_hours: {
-                                  ...prev.business_hours,
-                                  [day]: { ...dayHours, start: e.target.value }
-                                }
-                              }))}
-                              className="w-24"
-                            />
-                            <span>to</span>
-                            <Input
-                              type="time"
-                              value={dayHours.end}
-                              onChange={(e) => setSettings(prev => ({
-                                ...prev,
-                                business_hours: {
-                                  ...prev.business_hours,
-                                  [day]: { ...dayHours, end: e.target.value }
-                                }
-                              }))}
-                              className="w-24"
-                            />
-                          </>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
+            <Switch
+              checked={settings.business_hours.enabled}
+              onCheckedChange={(checked) => setSettings(prev => ({ 
+                ...prev, 
+                business_hours: { ...prev.business_hours, enabled: checked }
+              }))}
+            />
           </div>
-        </Card>
+          {settings.business_hours.enabled && (
+            <div className="space-y-1">
+              {Object.entries(settings.business_hours).map(([day, hours]) => {
+                if (day === 'enabled' || typeof hours === 'boolean') return null;
+                const dayHours = hours as { start: string; end: string; enabled: boolean };
+                return (
+                  <div key={day} className="flex items-center justify-between">
+                    <span className="text-xs w-12">{day.slice(0,3)}</span>
+                    <div className="flex items-center space-x-1">
+                      <Switch
+                        checked={dayHours.enabled}
+                        onCheckedChange={(checked) => setSettings(prev => ({
+                          ...prev,
+                          business_hours: {
+                            ...prev.business_hours,
+                            [day]: { ...dayHours, enabled: checked as boolean }
+                          }
+                        }))}
+                      />
+                      {dayHours.enabled && (
+                        <>
+                          <Input
+                            type="time"
+                            value={dayHours.start}
+                            onChange={(e) => setSettings(prev => ({
+                              ...prev,
+                              business_hours: {
+                                ...prev.business_hours,
+                                [day]: { ...dayHours, start: e.target.value }
+                              }
+                            }))}
+                            className="w-14 h-6 text-xs"
+                          />
+                          <span className="text-xs">-</span>
+                          <Input
+                            type="time"
+                            value={dayHours.end}
+                            onChange={(e) => setSettings(prev => ({
+                              ...prev,
+                              business_hours: {
+                                ...prev.business_hours,
+                                [day]: { ...dayHours, end: e.target.value }
+                              }
+                            }))}
+                            className="w-14 h-6 text-xs"
+                          />
+                        </>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
 
         {/* Status Settings */}
-        <Card className="p-4">
-          <div className="flex items-center mb-4">
-            <Clock size={20} className="text-purple-600 mr-2" />
-            <h2 className="text-lg font-semibold text-gray-900">Status & Availability</h2>
+        <div className="bg-gray-50 rounded p-2 border">
+          <div className="flex items-center mb-1">
+            <Clock size={16} className="text-purple-600 mr-2" />
+            <h2 className="font-medium text-sm">Availability</h2>
           </div>
-          
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <Label>Currently Online</Label>
-                <p className="text-sm text-gray-600">Accept new trades and respond to customers</p>
-              </div>
+          <div className="space-y-1">
+            <div className="flex items-center justify-between p-1">
+              <span className="text-sm">Online</span>
               <Switch
                 checked={settings.is_online}
                 onCheckedChange={(checked) => setSettings(prev => ({ 
@@ -626,12 +578,8 @@ const MerchantSettings = () => {
                 }))}
               />
             </div>
-
-            <div className="flex items-center justify-between">
-              <div>
-                <Label>Accept New Trades</Label>
-                <p className="text-sm text-gray-600">Allow customers to initiate new trades</p>
-              </div>
+            <div className="flex items-center justify-between p-1">
+              <span className="text-sm">Accept Trades</span>
               <Switch
                 checked={settings.accepts_new_trades}
                 onCheckedChange={(checked) => setSettings(prev => ({ 
@@ -640,12 +588,8 @@ const MerchantSettings = () => {
                 }))}
               />
             </div>
-
-            <div className="flex items-center justify-between">
-              <div>
-                <Label>Require KYC Verification</Label>
-                <p className="text-sm text-gray-600">Only trade with verified customers</p>
-              </div>
+            <div className="flex items-center justify-between p-1">
+              <span className="text-sm">Require KYC</span>
               <Switch
                 checked={settings.requires_kyc}
                 onCheckedChange={(checked) => setSettings(prev => ({ 
@@ -654,58 +598,58 @@ const MerchantSettings = () => {
                 }))}
               />
             </div>
-
-            <div>
-              <Label htmlFor="response_time">Average Response Time</Label>
-              <Select
-                value={settings.avg_response_time_minutes.toString()}
-                onValueChange={(value) => setSettings(prev => ({ 
-                  ...prev, 
-                  avg_response_time_minutes: Number(value) 
-                }))}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="5">5 minutes</SelectItem>
-                  <SelectItem value="10">10 minutes</SelectItem>
-                  <SelectItem value="15">15 minutes</SelectItem>
-                  <SelectItem value="30">30 minutes</SelectItem>
-                  <SelectItem value="60">1 hour</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <Label htmlFor="min_rating">Minimum Customer Rating</Label>
-              <Select
-                value={settings.min_customer_rating.toString()}
-                onValueChange={(value) => setSettings(prev => ({ 
-                  ...prev, 
-                  min_customer_rating: Number(value) 
-                }))}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="0">No minimum</SelectItem>
-                  <SelectItem value="3">3+ stars</SelectItem>
-                  <SelectItem value="4">4+ stars</SelectItem>
-                  <SelectItem value="4.5">4.5+ stars</SelectItem>
-                </SelectContent>
-              </Select>
+            <div className="grid grid-cols-2 gap-1">
+              <div>
+                <Label className="text-xs">Response Time</Label>
+                <Select
+                  value={settings.avg_response_time_minutes.toString()}
+                  onValueChange={(value) => setSettings(prev => ({ 
+                    ...prev, 
+                    avg_response_time_minutes: Number(value) 
+                  }))}
+                >
+                  <SelectTrigger className="h-7 text-xs">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="5">5 min</SelectItem>
+                    <SelectItem value="10">10 min</SelectItem>
+                    <SelectItem value="15">15 min</SelectItem>
+                    <SelectItem value="30">30 min</SelectItem>
+                    <SelectItem value="60">1 hour</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label className="text-xs">Min Rating</Label>
+                <Select
+                  value={settings.min_customer_rating.toString()}
+                  onValueChange={(value) => setSettings(prev => ({ 
+                    ...prev, 
+                    min_customer_rating: Number(value) 
+                  }))}
+                >
+                  <SelectTrigger className="h-7 text-xs">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="0">None</SelectItem>
+                    <SelectItem value="3">3+</SelectItem>
+                    <SelectItem value="4">4+</SelectItem>
+                    <SelectItem value="4.5">4.5+</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </div>
-        </Card>
+        </div>
 
         <Button 
           onClick={handleSave} 
-          className="w-full h-12 bg-[#1A73E8] hover:bg-[#1557b0] text-white"
+          className="w-full h-9 bg-blue-600 hover:bg-blue-700 text-white text-sm"
           disabled={loading}
         >
-          {loading ? 'Saving...' : 'Save Merchant Settings'}
+          {loading ? 'Saving...' : 'Save Settings'}
         </Button>
       </div>
 
