@@ -154,7 +154,7 @@ const SellCryptoPaymentStep2 = () => {
         amount_fiat: netAmount,
         rate: netAmount / parseFloat(cryptoAmount),
         payment_method: 'bank_transfer',
-        status: 'open',
+        status: 'pending',
         bank_account_id: selectedAccount.id,
         user_bank_name: selectedAccount.bank_name,
         user_account_number: selectedAccount.account_number,
