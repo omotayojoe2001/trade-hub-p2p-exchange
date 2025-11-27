@@ -267,14 +267,14 @@ const SellCryptoTradeRequestDetails = () => {
       const fileName = `sell-crypto-payment-${tradeRequestId}-${Date.now()}.${fileExt}`;
       
       const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('payment-proofs')
+        .from('profiles')
         .upload(fileName, paymentProof);
 
       if (uploadError) throw uploadError;
       
       // Get the public URL for the uploaded file
       const { data: urlData } = supabase.storage
-        .from('payment-proofs')
+        .from('profiles')
         .getPublicUrl(fileName);
         
       console.log('📄 DEBUG: Payment proof uploaded:', { fileName, url: urlData.publicUrl });
@@ -291,7 +291,7 @@ const SellCryptoTradeRequestDetails = () => {
       const { error } = await supabase
         .from('trade_requests')
         .update({
-          status: 'buyer_paid', // Use buyer_paid to activate seller's confirm button
+          status: 'payment_sent', // Use payment_sent to activate seller's confirm button
           merchant_wallet_address: merchantWalletAddress,
           merchant_payment_proof: urlData.publicUrl
         })
@@ -367,7 +367,7 @@ const SellCryptoTradeRequestDetails = () => {
       }
 
       toast({
-        title: "Payment Confirmed!",
+        title: "Payment Sent!",
         description: `Payment of NGN ${tradeRequest.amount_fiat?.toLocaleString()} sent. User will be notified to release ${tradeRequest.amount_crypto} ${tradeRequest.crypto_type} to your wallet.`,
         duration: 5000
       });
@@ -601,7 +601,7 @@ const SellCryptoTradeRequestDetails = () => {
                 className="w-full"
                 size="lg"
               >
-                {loading ? 'Processing...' : 'Confirm Payment Sent'}
+                {loading ? 'Processing...' : 'Send Payment'}
               </Button>
               
               {/* Additional Actions */}
@@ -628,12 +628,11 @@ const SellCryptoTradeRequestDetails = () => {
 
         {step === 'completed' && (
           <Card className="border-blue-200 bg-blue-50">
-            <CardContent className="p-6 text-center">
-              <CheckCircle className="w-12 h-12 text-blue-600 mx-auto mb-4" />
-              <h2 className="text-xl font-semibold mb-2">Payment Confirmed!</h2>
-              <div className="bg-white p-4 rounded-lg border mb-4">
-                <p className="text-sm text-muted-foreground mb-2">Payment Summary:</p>
-                <div className="space-y-1 text-sm">
+            <CardContent className="p-3 text-center">
+              <CheckCircle className="w-8 h-8 text-white bg-blue-600 rounded-full mx-auto mb-2" />
+              <h2 className="text-lg font-semibold mb-2">Payment Sent!</h2>
+              <div className="bg-white p-2 rounded-lg border mb-3">
+                <div className="space-y-1 text-xs">
                   <div className="flex justify-between">
                     <span>Amount Sent:</span>
                     <span className="font-semibold">NGN {tradeRequest.amount_fiat?.toLocaleString()}</span>
@@ -642,20 +641,16 @@ const SellCryptoTradeRequestDetails = () => {
                     <span>To Receive:</span>
                     <span className="font-semibold">{tradeRequest.amount_crypto} {tradeRequest.crypto_type}</span>
                   </div>
-                  <div className="flex justify-between">
-                    <span>Your Wallet:</span>
-                    <span className="font-mono text-xs">{merchantWalletAddress.slice(0, 10)}...{merchantWalletAddress.slice(-6)}</span>
-                  </div>
                 </div>
               </div>
-              <p className="text-muted-foreground mb-4">
-                User has been notified to confirm receipt. Crypto will be released to your wallet once confirmed.
+              <p className="text-muted-foreground mb-3 text-sm">
+                User notified to confirm receipt. Crypto will be released once confirmed.
               </p>
               <div className="space-y-2">
-                <Button onClick={() => navigate('/trade-requests')} className="w-full">
+                <Button onClick={() => navigate('/trade-requests')} className="w-full text-white">
                   Back to Dashboard
                 </Button>
-                <Button variant="outline" onClick={() => navigate(`/payment-details/${tradeRequestId}`)} className="w-full">
+                <Button variant="outline" onClick={() => navigate(`/payment-details/${tradeRequestId}`)} className="w-full text-white bg-blue-600 border-blue-600 hover:bg-blue-700">
                   View Payment Details
                 </Button>
               </div>
